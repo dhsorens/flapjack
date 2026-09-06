@@ -913,6 +913,8 @@ definitions, pass ordering, examples, and proof obligations.
   its return continuation.
 - [x] Add CakeML-aligned halt-PC lowering and assemble the runtime-backed
   Simple StackAlloc image through the RV64 pipeline.
+- [x] Add a target-level halt-aware Lab executor that follows the generated
+  jump and returns when the architectural PC reaches the linked halt PC.
 - [x] Add a linked StackLang evaluator that resolves generated label calls,
   executes the runtime collector stub, and resumes the explicit return
   continuation under fuel.

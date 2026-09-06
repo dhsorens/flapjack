@@ -406,6 +406,15 @@ def compileLabProgramWithHalt [NeZero width] (context : WordFfiContext)
   let code ← labCompileProgramSectionsWithHalt context labels 0 haltPc program
   pure (code ++ [.jal 0 0])
 
+def executeLabProgramWithHalt [NeZero width] (fuel : Nat)
+    (context : WordFfiContext) (program : LabProgram (Word width))
+    (state : State width) : Option (State width) :=
+  let haltPc := BitVec.ofNat width (4 * labProgramInstructionCount program)
+  match compileLabProgramWithHalt context program with
+  | some code =>
+      executeCodeUntil fuel 0 haltPc code { state with pc := 0 }
+  | none => none
+
 /-! A linker result that keeps section entry addresses alongside the flattened
     image. The plain `compileLabProgram` API is convenient for consumers that
     only need code; correctness proofs need the section boundary to initialize

@@ -55,6 +55,15 @@ example :
       some [.add 4 5 6] := by
   native_decide
 
+def haltLabProgram : LabProgram (Word 64) :=
+  [⟨1, [.labAsm (.halt : LabAsm (Word 64)) [] 0]⟩]
+
+example :
+    (executeLabProgramWithHalt 10 { services := [] } haltLabProgram
+      (zeroState 64)).map (fun state => state.pc) =
+      some (BitVec.ofNat 64 4) := by
+  native_decide
+
 example :
     compileLabSection (width := 64) { services := [] }
       ⟨3, [.asm (.shift .lsl 4 5 6) [] 0]⟩ =

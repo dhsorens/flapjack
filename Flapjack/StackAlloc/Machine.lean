@@ -144,6 +144,15 @@ def evalStackProgFuel [NeZero width] :
   fun fuel state program =>
     evalStackProgFuelWithCode fuel (fun _ => none) state program
 
+theorem evalStackGcMoveCode_immediate
+    (config : StackGcConfig) (fuel : Nat)
+    (state : WordStackMachineState 64)
+    (hvalue : state.registers 5 &&& BitVec.ofNat 64 1 = 0) :
+    evalStackProgFuel (fuel + 2) state (stackGcMoveCode config) =
+      some (.normal state) := by
+  simp [stackGcMoveCode, evalStackProgFuel, evalStackProgFuelWithCode,
+    stackMachineCondition, hvalue]
+
 def evalStackSectionsFuel [NeZero width]
     (fuel : Nat) (sections : List (Nat × StackProg Nat)) (entry : Nat)
     (state : WordStackMachineState width) :

@@ -121,22 +121,22 @@ def stackGcNatMoveRoots (config : StackGcConfig) :
         condition := moved.condition && rest.condition }
 
 def stackGcNatMoveList (config : StackGcConfig) :
-    Nat → Nat → Nat → Nat → (Nat → Nat) → (Nat → Bool) →
+    Nat → Nat → Nat → Nat → Nat → (Nat → Nat) → (Nat → Bool) →
       StackGcNatMoveListResult
-  | 0, address, index, destination, memory, _ =>
+  | 0, address, index, destination, _, memory, _ =>
       { nextScan := address
         nextIndex := index
         nextAddress := destination
         memory := memory
         condition := true }
-  | length + 1, address, index, destination, memory, domain =>
-      let moved := stackGcNatMove config (memory address) index destination 0
+  | length + 1, address, index, destination, oldBase, memory, domain =>
+      let moved := stackGcNatMove config (memory address) index destination oldBase
         memory domain
       let memory1 := fun current =>
         if current = address then moved.value else moved.memory current
       let rest := stackGcNatMoveList config length
         (address + config.bytesInWord) moved.nextIndex moved.nextAddress
-        memory1 domain
+        oldBase memory1 domain
       { nextScan := rest.nextScan
         nextIndex := rest.nextIndex
         nextAddress := rest.nextAddress
@@ -168,9 +168,9 @@ def stackGcNatMoveLoop (config : StackGcConfig) :
           stackGcNatMoveLoop config fuel
             (scan + (length + 1) * config.bytesInWord) index destination
             oldBase memory domain
-        else
+      else
           let moved := stackGcNatMoveList config length
-            (scan + config.bytesInWord) index destination memory domain
+            (scan + config.bytesInWord) index destination oldBase memory domain
           let rest := stackGcNatMoveLoop config fuel moved.nextScan
             moved.nextIndex moved.nextAddress oldBase moved.memory domain
           { nextIndex := rest.nextIndex
@@ -229,9 +229,9 @@ theorem stackGcNatMoveRoots_length
       simp [stackGcNatMoveRoots, ih]
 
 theorem stackGcNatMoveList_zero
-    (config : StackGcConfig) (address index destination : Nat)
+    (config : StackGcConfig) (address index destination oldBase : Nat)
     (memory : Nat → Nat) (domain : Nat → Bool) :
-    stackGcNatMoveList config 0 address index destination memory domain =
+    stackGcNatMoveList config 0 address index destination oldBase memory domain =
       { nextScan := address
         nextIndex := index
         nextAddress := destination

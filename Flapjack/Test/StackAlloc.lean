@@ -218,12 +218,12 @@ example :
   native_decide
 
 example :
-    (stackGcNatMoveList stackGcTestConfig 1 0 1 100
+    (stackGcNatMoveList stackGcTestConfig 1 0 1 100 0
       oneWordObjectNatMemory allAddressesInDomain).nextScan = 8 := by
   native_decide
 
 example :
-    (stackGcNatMoveList stackGcTestConfig 1 0 1 100
+    (stackGcNatMoveList stackGcTestConfig 1 0 1 100 0
       oneWordObjectNatMemory allAddressesInDomain).memory 100 = 3 := by
   native_decide
 
