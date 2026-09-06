@@ -1062,6 +1062,8 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Extend the copying one-item MoveList bridge to the full bounded
   machine/Nat memory relation, parameterized by the recursive copy-memory
   correspondence.
+- [x] Expose and relate the arbitrary-counter immediate MoveList body
+  transition, including scan advancement and the full bounded memory update.
 - [x] Expose a forwarding MoveList machine/Nat value bridge, parameterized by
   the explicit fixed-width forwarding-address correspondence.
 - [x] Expose a copying MoveList machine/Nat value bridge, parameterized by the
