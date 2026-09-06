@@ -34,6 +34,14 @@ def stackFrameMemcpyMemory [NeZero width]
         (destination + BitVec.ofNat width config.bytesInWord)
         (fun current => if current = destination then memory source else memory current) address
 
+structure StackFrameMemcpyCorrespondence (state : StackFrameMachineState width)
+    (words : Nat) (source destination : Word width)
+    (memory : Word width → Word width) : Prop where
+  count : state.machine.registers 0 = BitVec.ofNat width words
+  source : state.machine.registers 2 = source
+  destination : state.machine.registers 3 = destination
+  memory : state.machine.memory = memory
+
 theorem stackFrameMemcpyMemory_unchanged [NeZero width]
     (config : StackGcConfig) (words : Nat)
     (source destination : Word width) (memory : Word width → Word width)
@@ -177,6 +185,32 @@ theorem stackFrameMemcpyStep_memory_function [NeZero width]
   funext address
   rw [stackFrameMemcpyStep_memory]
   rfl
+
+theorem stackFrameMemcpyStep_correspondence [NeZero width]
+    (config : StackGcConfig) (words : Nat)
+    (state : StackFrameMachineState width)
+    (source destination : Word width) (memory : Word width → Word width)
+    (hstate : StackFrameMemcpyCorrespondence state (words + 1)
+      source destination memory)
+    (hscratch0 : config.immediateScratch ≠ 0)
+    (hscratch1 : config.immediateScratch ≠ 1)
+    (hscratch2 : config.immediateScratch ≠ 2)
+    (hscratch3 : config.immediateScratch ≠ 3) :
+    StackFrameMemcpyCorrespondence (stackFrameMemcpyStep config state) words
+      (source + BitVec.ofNat width config.bytesInWord)
+      (destination + BitVec.ofNat width config.bytesInWord)
+      (fun current => if current = destination then memory source else memory current) := by
+  refine { count := ?_, source := ?_, destination := ?_, memory := ?_ }
+  · exact stackFrameMemcpyStep_register_zero config words state
+      hscratch0 hscratch1 hscratch2 hscratch3 hstate.count
+  · simpa [wordStackMachineBinOp, hstate.source] using
+      stackFrameMemcpyStep_register_source config state hscratch2
+  · simpa [wordStackMachineBinOp, hstate.destination] using
+      stackFrameMemcpyStep_register_destination config state hscratch3
+  · rw [stackFrameMemcpyStep_memory_function config state, hstate.source,
+      hstate.destination, hstate.memory]
+    funext current
+    simp [wordStackMachineWriteMemory, hstate.memory]
 
 theorem evalStackFrameFuel_loop_normal [NeZero width]
     (fuel : Nat) (state state' : StackFrameMachineState width)
