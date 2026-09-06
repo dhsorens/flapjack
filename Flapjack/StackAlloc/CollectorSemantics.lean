@@ -52,6 +52,93 @@ theorem stackFrameMemcpyStep_register_zero [NeZero width]
     wordStackMachineBinOp, hcount, hsubtract, hscratch0',
     hscratch1, hscratch2, hscratch3]
 
+theorem evalStackFrameFuel_loop_normal [NeZero width]
+    (fuel : Nat) (state state' : StackFrameMachineState width)
+    (body : StackProg Nat)
+    (hbody :
+      evalStackFrameFuel fuel state body = some (.normal state')) :
+    evalStackFrameFuel (fuel + 1) state (.loop body) =
+      evalStackFrameFuel fuel state' (.loop body) := by
+  have hbody' :
+      evalStackFrameFuelWithCode fuel (fun _ => none) state body =
+        some (.normal state') := by
+    simpa [evalStackFrameFuel] using hbody
+  simp [evalStackFrameFuel, evalStackFrameFuelWithCode, hbody']
+
+theorem evalStackFrameFuel_stackGcMemcpy_iter [NeZero width]
+    (config : StackGcConfig) (fuel words : Nat)
+    (state : StackFrameMachineState width)
+    (hscratch0 : config.immediateScratch ≠ 0)
+    (hscratch1 : config.immediateScratch ≠ 1)
+    (hscratch2 : config.immediateScratch ≠ 2)
+    (hscratch3 : config.immediateScratch ≠ 3)
+    (hcount : state.machine.registers 0 = BitVec.ofNat width words)
+    (hbound : words < 2 ^ width)
+    (hheaderDomain : ∀ address, state.memoryDomain address = true) :
+    evalStackFrameFuel (fuel + words + 24) state
+        (stackGcMemcpy config) =
+      some (.normal (stackFrameMemcpyIter config words state)) := by
+  induction words generalizing fuel state with
+  | zero =>
+      have hcount' : state.machine.registers 0 = 0 := by
+        simpa using hcount
+      have hzero := evalStackFrameFuel_stackGcMemcpy_zero config (fuel + 20)
+        state hcount'
+      simpa [stackFrameMemcpyIter, Nat.add_assoc, Nat.add_left_comm,
+        Nat.add_comm] using hzero
+  | succ words ih =>
+      have hwords : words < 2 ^ width := by omega
+      have hzero : BitVec.ofNat width (words + 1) ≠ 0 := by
+        intro hzero
+        have hzero' := congrArg BitVec.toNat hzero
+        have hzero'' : words + 1 = 0 := by
+          simpa [BitVec.toNat_ofNat, Nat.mod_eq_of_lt hbound] using hzero'
+        omega
+      have hcondition :
+          stackMachineCondition state.machine .notEqual 0 (.imm 0) = true := by
+        have hz : BitVec.ofNat width (words + 1) ≠ (0#width) := by
+          exact hzero
+        simp only [stackMachineCondition]
+        rw [bne_iff_ne]
+        rw [hcount]
+        exact hz
+      have hstep :=
+        evalStackFrameFuel_stackGcMemcpyBody config (fuel + words + 3)
+          state hscratch0 hscratch1 hscratch2 hscratch3 hheaderDomain
+      have hite :
+          evalStackFrameFuel (fuel + words + 24) state
+              (.ite .notEqual 0 (.imm 0) (stackGcMemcpyBody config)
+                (.break 0)) =
+            evalStackFrameFuel (fuel + words + 23) state
+              (stackGcMemcpyBody config) := by
+        apply evalStackFrameFuel_ite_true
+        exact hcondition
+      have hbody :
+          evalStackFrameFuel (fuel + words + 24) state
+              (.ite .notEqual 0 (.imm 0) (stackGcMemcpyBody config)
+                (.break 0)) =
+            some (.normal (stackFrameMemcpyStep config state)) := by
+        rw [hite]
+        have hfuel : fuel + words + 3 + 20 = fuel + words + 23 := by omega
+        rw [hfuel] at hstep
+        exact hstep
+      have hloop := evalStackFrameFuel_loop_normal
+        (fuel + words + 24) state (stackFrameMemcpyStep config state)
+        (.ite .notEqual 0 (.imm 0) (stackGcMemcpyBody config) (.break 0))
+        hbody
+      have hcount' := stackFrameMemcpyStep_register_zero config words state
+        hscratch0 hscratch1 hscratch2 hscratch3 hcount
+      have hdomain' :
+          ∀ address, (stackFrameMemcpyStep config state).memoryDomain address = true := by
+        intro address
+        exact hheaderDomain address
+      have hrest := ih fuel (stackFrameMemcpyStep config state)
+        hcount' hwords hdomain'
+      have hfuel : fuel + (words + 1) + 24 = fuel + words + 25 := by omega
+      rw [hfuel]
+      simpa [stackGcMemcpy, stackGcWhile, stackFrameMemcpyIter,
+        Nat.add_assoc, Nat.add_left_comm, Nat.add_comm] using hloop.trans hrest
+
 theorem stackFrameMemcpyIter_zero [NeZero width]
     (config : StackGcConfig) (state : StackFrameMachineState width) :
     stackFrameMemcpyIter config 0 state = state := by
