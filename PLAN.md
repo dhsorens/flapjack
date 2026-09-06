@@ -1061,6 +1061,8 @@ definitions, pass ordering, examples, and proof obligations.
   explicit fixed-width copied-value correspondence.
 - [x] Align the machine MoveLoop termination condition with the Nat
   `scan != destination` condition under explicit word-width bounds.
+- [x] Bridge the machine data/code header test (`header &&& 4`) to the Nat
+  `header / 4 % 2` code tag under an explicit fixed-width bound.
 - [x] Prove the bounded machine transition for a code-object MoveLoop header,
   covering header load, length decoding, object-size scan advance, and the
   destination update without unfolding the nested MoveList loop.
@@ -1072,6 +1074,8 @@ definitions, pass ordering, examples, and proof obligations.
   prefix into an explicit MoveList evaluator handoff.
 - [x] Compose the MoveLoop data-object header load with the true-test branch,
   yielding the complete bounded machine data-step transition.
+- [x] Package the machine data-step with the Nat `MoveLoop` data-step equation
+  for direct outer-loop induction.
 - [x] Bridge the code-object MoveLoop machine step’s scan register to the Nat
   scan advance under explicit fixed-width memory and arithmetic hypotheses.
 - [x] Package the code-object machine scan bridge with the corresponding Nat
