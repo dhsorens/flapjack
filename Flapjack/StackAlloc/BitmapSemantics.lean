@@ -54,10 +54,10 @@ def stackGcNatFullReadBitmap (config : StackGcConfig)
 def stackGcNatEncodeStackFuel (config : StackGcConfig)
     (bitmaps : List Nat) : Nat → List StackGcNatValue → Option (List StackGcNatValue)
   | 0, _ => none
-  | fuel + 1, [] => none
-  | fuel + 1, [.word 0] => some []
-  | fuel + 1, .word 0 :: _ => none
-  | fuel + 1, value :: values =>
+  | Nat.succ fuel, [] => none
+  | Nat.succ fuel, [.word 0] => some []
+  | Nat.succ fuel, .word 0 :: _ => none
+  | Nat.succ fuel, value :: values =>
       match stackGcNatFullReadBitmap config bitmaps value with
       | none => none
       | some bits =>
@@ -77,11 +77,11 @@ def stackGcNatDecodeStackFuel (config : StackGcConfig)
     (bitmaps : List Nat) : Nat → List StackGcNatValue →
       List StackGcNatValue → Option (List StackGcNatValue)
   | 0, _, _ => none
-  | fuel + 1, _, [] => none
-  | fuel + 1, [], [.word 0] => some [.word 0]
-  | fuel + 1, _, [.word 0] => none
-  | fuel + 1, _, .word 0 :: _ => none
-  | fuel + 1, encoded, value :: values =>
+  | Nat.succ fuel, _, [] => none
+  | Nat.succ fuel, [], [.word 0] => some [.word 0]
+  | Nat.succ fuel, _, [.word 0] => none
+  | Nat.succ fuel, _, .word 0 :: _ => none
+  | Nat.succ fuel, encoded, value :: values =>
       match stackGcNatFullReadBitmap config bitmaps value with
       | none => none
       | some bits =>
@@ -553,6 +553,148 @@ theorem stackGcNatMapBitmap_length_partition
                               cases hvalues
                               exact ⟨by simp [hlength.1], by
                                 simpa [hlength.2, Nat.add_assoc, Nat.add_comm]⟩
+
+theorem stackGcNatDecodeStackFuel_length
+    (config : StackGcConfig) (bitmaps : List Nat) (fuel : Nat)
+    (encoded stack result : List StackGcNatValue)
+    (hresult : stackGcNatDecodeStackFuel config bitmaps fuel encoded stack =
+      some result) :
+    result.length = stack.length := by
+  induction fuel generalizing encoded stack result with
+  | zero =>
+      simp [stackGcNatDecodeStackFuel.eq_1] at hresult
+  | succ fuel ih =>
+      replace hresult :
+          stackGcNatDecodeStackFuel config bitmaps (Nat.succ fuel) encoded stack =
+            some result := by
+        simpa only [Nat.add_one] using hresult
+      cases stack with
+      | nil =>
+          simp [stackGcNatDecodeStackFuel.eq_2] at hresult
+      | cons value values =>
+          change stackGcNatDecodeStackFuel config bitmaps (Nat.succ fuel)
+              encoded (value :: values) = some result at hresult
+          cases value with
+          | loc left right =>
+              simp [stackGcNatDecodeStackFuel.eq_6,
+                stackGcNatFullReadBitmap] at hresult
+          | word value =>
+              by_cases hzero : value = 0
+              · subst value
+                cases values with
+                | nil =>
+                    cases encoded with
+                    | nil =>
+                        rw [stackGcNatDecodeStackFuel.eq_3] at hresult
+                        injection hresult with htuple
+                        cases htuple
+                        rfl
+                    | cons encodedValue encodedRest =>
+                        have hencoded :
+                            (encodedValue :: encodedRest : List StackGcNatValue) ≠ [] := by
+                          simp
+                        rw [stackGcNatDecodeStackFuel.eq_4 config bitmaps
+                          (encodedValue :: encodedRest) fuel hencoded] at hresult
+                        simp at hresult
+                | cons next rest =>
+                    have htail :
+                        (next :: rest : List StackGcNatValue) ≠ [] := by
+                      simp
+                    have hencoded :
+                        encoded = [] →
+                          (next :: rest : List StackGcNatValue) = [] → False := by
+                      simp
+                    rw [stackGcNatDecodeStackFuel.eq_5 config bitmaps encoded fuel
+                      (next :: rest) htail hencoded] at hresult
+                    simp at hresult
+              · cases hfull : stackGcNatFullReadBitmap config bitmaps (.word value) with
+                | none =>
+                    have hsentinel : (.word value : StackGcNatValue) ≠ .word 0 := by
+                      simp [hzero]
+                    have hvalues :
+                        (.word value : StackGcNatValue) = .word 0 →
+                          values = [] → False := by
+                      simp [hzero]
+                    have hencoded :
+                        encoded = [] →
+                          (.word value : StackGcNatValue) = .word 0 →
+                          values = [] → False := by
+                      simp [hzero]
+                    rw [stackGcNatDecodeStackFuel.eq_6 config bitmaps encoded fuel
+                      (.word value) values hvalues hsentinel hencoded] at hresult
+                    simp [hfull] at hresult
+                | some bits =>
+                    cases hmap : stackGcNatMapBitmap bits encoded values with
+                    | none =>
+                        have hsentinel : (.word value : StackGcNatValue) ≠ .word 0 := by
+                          simp [hzero]
+                        have hvalues :
+                            (.word value : StackGcNatValue) = .word 0 →
+                              values = [] → False := by
+                          simp [hzero]
+                        have hencoded :
+                            encoded = [] →
+                              (.word value : StackGcNatValue) = .word 0 →
+                              values = [] → False := by
+                          simp [hzero]
+                        rw [stackGcNatDecodeStackFuel.eq_6 config bitmaps encoded fuel
+                          (.word value) values hvalues hsentinel hencoded] at hresult
+                        simp [hfull, hmap] at hresult
+                    | some pair =>
+                        cases pair with
+                        | mk mapped restPair =>
+                            cases restPair with
+                            | mk restEncoded restValues =>
+                                cases hdecode : stackGcNatDecodeStackFuel config bitmaps fuel
+                                    restEncoded restValues with
+                                | none =>
+                                    have hsentinel : (.word value : StackGcNatValue) ≠ .word 0 := by
+                                      simp [hzero]
+                                    have hvalues :
+                                        (.word value : StackGcNatValue) = .word 0 →
+                                          values = [] → False := by
+                                      simp [hzero]
+                                    have hencoded :
+                                        encoded = [] →
+                                          (.word value : StackGcNatValue) = .word 0 →
+                                          values = [] → False := by
+                                      simp [hzero]
+                                    rw [stackGcNatDecodeStackFuel.eq_6 config bitmaps encoded fuel
+                                      (.word value) values hvalues hsentinel hencoded] at hresult
+                                    simp [hfull, hmap, hdecode] at hresult
+                                | some rest =>
+                                    have hsentinel : (.word value : StackGcNatValue) ≠ .word 0 := by
+                                      simp [hzero]
+                                    have hvalues :
+                                        (.word value : StackGcNatValue) = .word 0 →
+                                          values = [] → False := by
+                                      simp [hzero]
+                                    have hencoded :
+                                        encoded = [] →
+                                          (.word value : StackGcNatValue) = .word 0 →
+                                          values = [] → False := by
+                                      simp [hzero]
+                                    rw [stackGcNatDecodeStackFuel.eq_6 config bitmaps encoded fuel
+                                      (.word value) values hvalues hsentinel hencoded] at hresult
+                                    simp [hfull, hmap, hdecode] at hresult
+                                    have htuple :
+                                        (.word value :: mapped ++ rest) = result := by
+                                      exact hresult
+                                    have hpartition :=
+                                      stackGcNatMapBitmap_length_partition bits encoded values
+                                        mapped restEncoded restValues hmap
+                                    have hlength := ih restEncoded restValues rest hdecode
+                                    cases htuple
+                                    simp only [List.length_cons, List.length_append]
+                                    omega
+
+theorem stackGcNatDecodeStack_length
+    (config : StackGcConfig) (bitmaps : List Nat)
+    (encoded stack result : List StackGcNatValue)
+    (hresult : stackGcNatDecodeStack config bitmaps encoded stack = some result) :
+    result.length = stack.length := by
+  exact stackGcNatDecodeStackFuel_length config bitmaps (stack.length + 1)
+    encoded stack result hresult
 
 @[simp] theorem stackGcNatFullReadBitmap_zero (config : StackGcConfig)
     (bitmaps : List Nat) :
