@@ -754,4 +754,14 @@ theorem stackGcNatMoveCopySuffix_eq_move_copy
     stackGcNatIsForwardingPointer, hvalue, hnonforward',
     hheaderDomain, Nat.add_assoc]
 
+theorem stackGcNatMoveCopySuffix_condition_of_domain
+    (config : StackGcConfig) (words source destination index value : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool)
+    (hdomain : ∀ address, domain address = true) :
+    (stackGcNatMoveCopySuffix config words source destination index value
+      memory domain).condition = true := by
+  simp [stackGcNatMoveCopySuffix,
+    stackGcNatMemcpy_condition_of_domain config words source destination
+      memory domain hdomain]
+
 end Flapjack
