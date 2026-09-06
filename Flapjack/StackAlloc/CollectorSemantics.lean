@@ -494,4 +494,27 @@ theorem stackFrameMemcpyIter_correspondence [NeZero width]
   · simpa [hstate.source, hstate.destination, hstate.memory] using
       stackFrameMemcpyIter_memory config words state hscratch2 hscratch3
 
+theorem evalStackFrameFuel_stackGcMemcpy_correspondence [NeZero width]
+    (config : StackGcConfig) (fuel words : Nat)
+    (state : StackFrameMachineState width)
+    (source destination : Word width) (memory : Word width → Word width)
+    (hstate : StackFrameMemcpyCorrespondence state words source destination memory)
+    (hbound : words < 2 ^ width)
+    (hscratch0 : config.immediateScratch ≠ 0)
+    (hscratch1 : config.immediateScratch ≠ 1)
+    (hscratch2 : config.immediateScratch ≠ 2)
+    (hscratch3 : config.immediateScratch ≠ 3)
+    (hheaderDomain : ∀ address, state.memoryDomain address = true) :
+    evalStackFrameFuel (fuel + words + 24) state (stackGcMemcpy config) =
+        some (.normal (stackFrameMemcpyIter config words state)) ∧
+      StackFrameMemcpyCorrespondence (stackFrameMemcpyIter config words state) 0
+        (source + BitVec.ofNat width (words * config.bytesInWord))
+        (destination + BitVec.ofNat width (words * config.bytesInWord))
+        (fun address => stackFrameMemcpyMemory config words source destination memory address) := by
+  constructor
+  · exact evalStackFrameFuel_stackGcMemcpy_iter config fuel words state
+      hscratch0 hscratch1 hscratch2 hscratch3 hstate.count hbound hheaderDomain
+  · exact stackFrameMemcpyIter_correspondence config words state source destination memory
+      hstate hbound hscratch0 hscratch1 hscratch2 hscratch3
+
 end Flapjack.RiscV
