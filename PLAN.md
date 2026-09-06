@@ -994,6 +994,8 @@ definitions, pass ordering, examples, and proof obligations.
   correspondence, exposing an executable simulation boundary.
 - [x] Expose Nat projections for iterated source and destination registers,
   preserving the machine word-width modulo behavior.
+- [x] Prove the collector destination-memory update commutes with projection
+  from word addresses to the Nat memory model.
 - [ ] Prove the collector machine semantics and simulation theorem, and add
   generational support if it is needed by a selected target configuration.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state
