@@ -1080,6 +1080,8 @@ definitions, pass ordering, examples, and proof obligations.
   machine branch predicate from the combined scan/memory relation.
 - [x] Add an induction principle propagating the combined machine/Nat
   relation across iterated MoveLoop states.
+- [x] Package the fuel-indexed MoveList evaluator iteration together with
+  propagation of the combined machine/Nat relation.
 - [x] Prove the bounded machine transition for a code-object MoveLoop header,
   covering header load, length decoding, object-size scan advance, and the
   destination update without unfolding the nested MoveList loop.
