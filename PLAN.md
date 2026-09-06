@@ -1158,6 +1158,8 @@ definitions, pass ordering, examples, and proof obligations.
   extended machine/Nat state relation.
 - [x] Package data-object MoveLoop evaluation with the extended relation at
   the nested MoveList handoff and output.
+- [x] Lift the extended scan/index/destination/memory relation through
+  arbitrary MoveList loop iteration.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
