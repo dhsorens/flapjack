@@ -1154,6 +1154,8 @@ definitions, pass ordering, examples, and proof obligations.
   machine/Nat state relation.
 - [x] Prove code-object MoveLoop steps preserve the extended destination and
   index register relation under explicit scratch-register separation.
+- [x] Package code-object MoveLoop evaluation with preservation of the
+  extended machine/Nat state relation.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
