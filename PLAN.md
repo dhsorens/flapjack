@@ -918,7 +918,10 @@ definitions, pass ordering, examples, and proof obligations.
   continuation under fuel.
 - [x] Port the word-only CakeML collector specification for forwarding
   pointers, object copying, destination-memory updates, and preservation
-  equations. The full StackLang heap/bitmap simulation remains.
+  equations.
+- [x] Port the word-only collector root traversal, pointer-list traversal,
+  and bounded heap-scan recursion with condition and memory threading. The
+  full StackLang heap/bitmap simulation remains.
 - [ ] Prove the collector machine semantics and simulation theorem, and add
   generational support if it is needed by a selected target configuration.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state
