@@ -1177,6 +1177,8 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Port Nat-executable bitmap bit-length, word decoding, and full bitmap
   lookup semantics.
 - [x] Prove bitmap filtering and reconstruction remainder-length invariants.
+- [x] Port fuel-bounded bitmap stack encoding and decoding with sentinel and
+  malformed-input behavior.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
