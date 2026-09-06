@@ -1,5 +1,6 @@
 import Flapjack.RiscV.Allocator
 import Flapjack.RiscV.Backend
+import Flapjack.RiscV.RegAlloc
 import Flapjack.WordSemantics
 
 /-!
@@ -12,6 +13,76 @@ failure result for out-of-range virtual names.
 namespace Flapjack
 
 open RiscV
+
+theorem wordListRemap_lookup_preserves
+    (sources : List Nat) (bijection : WordBijection)
+    (source node : Nat)
+    (hlookup : lookupNatInfo source bijection.toNode = some node) :
+    lookupNatInfo source (wordListRemap sources bijection).toNode = some node := by
+  induction sources generalizing bijection with
+  | nil =>
+      simpa [wordListRemap] using hlookup
+  | cons head tail ih =>
+      simp only [wordListRemap]
+      split <;> rename_i hhead
+      · exact ih bijection hlookup
+      · by_cases heq : head = source
+        · subst head
+          simp [hlookup] at hhead
+        · apply ih
+          simp [lookupNatInfo, heq, hlookup]
+
+theorem wordListRemap_lookup_of_mem
+    (sources : List Nat) (bijection : WordBijection)
+    (source : Nat) (hsource : source ∈ sources) :
+    ∃ node, lookupNatInfo source (wordListRemap sources bijection).toNode = some node := by
+  induction sources generalizing bijection with
+  | nil =>
+      cases hsource
+  | cons head tail ih =>
+      rcases List.mem_cons.mp hsource with hsource_head | htail
+      · simp only [wordListRemap]
+        have hsource_eq : source = head := hsource_head
+        subst source
+        split <;> rename_i hhead
+        · exact ⟨_, wordListRemap_lookup_preserves tail bijection head _ hhead⟩
+        · have hinsert : lookupNatInfo head
+              ((head, bijection.next) :: bijection.toNode) = some bijection.next := by
+            simp [lookupNatInfo]
+          exact ⟨_, wordListRemap_lookup_preserves tail
+            { toNode := (head, bijection.next) :: bijection.toNode
+              fromNode := (bijection.next, head) :: bijection.fromNode
+              next := bijection.next + 1 } head bijection.next hinsert⟩
+      · simp only [wordListRemap]
+        split <;> rename_i hhead
+        · exact ih bijection htail
+        · exact ih
+            { toNode := (head, bijection.next) :: bijection.toNode
+              fromNode := (bijection.next, head) :: bijection.fromNode
+              next := bijection.next + 1 } htail
+
+theorem wordAllocateGraphFunctionWithStackOnlyRenamed_maps_parameters
+    (parameters : List Nat) (program : WordProg α)
+    (fixedSources : List Nat) (colours stackStart : Nat)
+    (state : WordSsaState) (renamedParameters : List Nat)
+    (allocation : WordGraphAllocation) (renamedProgram : WordProg α)
+    (halloc : wordAllocateGraphFunctionWithStackOnlyRenamed parameters program
+      fixedSources colours stackStart =
+      some (state, renamedParameters, allocation, renamedProgram)) :
+    ∀ name, name ∈ renamedParameters →
+      ∃ node, lookupNatInfo name allocation.bijection.toNode = some node := by
+  simp [wordAllocateGraphFunctionWithStackOnlyRenamed] at halloc
+  rcases halloc with ⟨allocation', hgraph, rfl, rfl, rfl, rfl⟩
+  simp [wordAllocateGraph] at hgraph
+  rcases hgraph with ⟨_, rfl⟩
+  intro name hname
+  have hnode := wordListRemap_lookup_of_mem
+    (wordSsaRenameFunction parameters program).2.fst
+    (wordClashTreeBijection
+      (wordClashTree (wordSsaRenameFunction parameters program).2.snd [])
+      { toNode := [], fromNode := [], next := 0 }) name hname
+  simpa [wordInitRegAlloc, wordMkBijection,
+    wordAllocateGraphFunctionWithStackOnlyRenamed, wordClashTreeBijection] using hnode
 
 def wordControlResultValues [NeZero width] :
     WordControlResult width → List (Word width)

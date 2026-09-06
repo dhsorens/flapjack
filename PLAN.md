@@ -478,6 +478,9 @@ definitions, pass ordering, examples, and proof obligations.
   register or stack location.
 - [x] Extend the concrete-location witness contract to preference-aware
   spill allocation, including the recursive lookup-preservation proof.
+- [x] Connect successful preference-aware function allocation to its
+  initialized source-to-node bijection, proving every renamed formal has a
+  concrete node witness (including unused formals).
 - [x] Prove every successfully allocated SSA function formal receives a
   concrete register or stack location for its ABI entry move.
 - [x] Prove every successfully allocated SSA program variable receives a
