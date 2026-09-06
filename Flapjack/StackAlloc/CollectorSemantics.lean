@@ -537,4 +537,22 @@ theorem stackFrameMemcpyIter_register_destination_toNat [NeZero width]
   simp [wordStackMachineBinOp, BitVec.toNat_add, BitVec.toNat_ofNat,
     Nat.add_mod, Nat.mod_mod]
 
+theorem stackFrameMemcpyMemory_update_toNat [NeZero width]
+    (source destination : Word width) (memory : Nat → Nat) :
+    (fun current : Word width =>
+        if current = destination then BitVec.ofNat width (memory source.toNat)
+        else BitVec.ofNat width (memory current.toNat)) =
+      (fun current : Word width =>
+        BitVec.ofNat width
+          (if current.toNat = destination.toNat then memory source.toNat
+           else memory current.toNat)) := by
+  funext current
+  by_cases hcurrent : current = destination
+  · simp [hcurrent]
+  · have hcurrent' : current.toNat ≠ destination.toNat := by
+      intro heq
+      apply hcurrent
+      exact BitVec.eq_of_toNat_eq heq
+    simp [hcurrent, hcurrent']
+
 end Flapjack.RiscV
