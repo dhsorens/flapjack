@@ -1076,6 +1076,8 @@ definitions, pass ordering, examples, and proof obligations.
   MoveLoop recursive-step equation for direct induction use.
 - [x] Prove that the code-object MoveLoop machine transition preserves the
   underlying machine memory, making it composable with the collector invariant.
+- [x] Introduce a bounded Nat memory-projection relation and prove that the
+  code-object MoveLoop state transition preserves it.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
