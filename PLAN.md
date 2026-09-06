@@ -1080,6 +1080,8 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Identify the Nat post-`Memcpy` copy suffix with the pure Nat `Move`
   copy branch for `decodeLength(header)+1` words.
 - [x] Prove the Nat copy-suffix success contract under a total memory domain.
+- [x] Name the Nat copying MoveList body result and identify it with the
+  one-item Nat MoveList copy equation.
 - [x] Relate the bounded post-`Memcpy` machine suffix evaluator to that Nat
   result, including the forwarding-header memory projection.
 - [x] Lift the arbitrary-word suffix relation through the bounded machine
