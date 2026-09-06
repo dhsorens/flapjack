@@ -944,6 +944,8 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Add reusable bounded fixed-slot frame equations and exercise the
   forwarding-pointer and object-copy `word_gc_move` cases against the pure
   Nat observations.
+- [x] Carry explicit main/shared memory domains through the bounded frame
+  evaluator and reject out-of-domain loads in both memory spaces.
 - [ ] Prove the collector machine semantics and simulation theorem, and add
   generational support if it is needed by a selected target configuration.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state

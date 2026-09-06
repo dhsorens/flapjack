@@ -111,6 +111,8 @@ state. The general collector machine simulation theorem remains open.
 Its immediate-pointer case is now related by theorem to the pure Nat
 `stackGcNatMove` specification; forwarding and copying cases still require
 the corresponding machine-state invariants.
+The frame state also carries explicit main/shared memory domains, with
+out-of-domain access rejected at the evaluator boundary.
 That module now also contains the first compositional Loop-to-Word agreements:
 constant and register-register ADD assignments are related at the destination
 local/register observation, under the explicit architectural x0 invariant.

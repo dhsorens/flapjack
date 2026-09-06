@@ -12,7 +12,9 @@ def frameMachineState : StackFrameMachineState 64 :=
         sharedMemory := fun _ => 0 }
     stackSpace := 8
     stackLimit := 16
-    bitmaps := [13, 29] }
+    bitmaps := [13, 29]
+    memoryDomain := fun _ => true
+    sharedMemoryDomain := fun _ => true }
 
 example :
     stackFrameNormalStackSpace
@@ -41,6 +43,29 @@ example :
   exact evalStackFrameFuel_stackLoad 1 frameMachineState 4 5 (by decide)
 
 example :
+    evalStackFrameFuel 2 frameMachineState
+        (.inst (.mem .load 4 0)) =
+      some (.normal (stackFrameWriteRegister frameMachineState 4
+        (frameMachineState.machine.memory (frameMachineState.machine.registers 0)))) := by
+  exact evalStackFrameFuel_memLoad 1 frameMachineState 4 0 (by decide)
+
+def frameNoMemoryState : StackFrameMachineState 64 :=
+  { frameMachineState with memoryDomain := fun _ => false }
+
+example :
+    (evalStackFrameFuel 2 frameNoMemoryState
+      (.inst (.mem .load 4 0))).isSome = false := by
+  native_decide
+
+def frameNoSharedMemoryState : StackFrameMachineState 64 :=
+  { frameMachineState with sharedMemoryDomain := fun _ => false }
+
+example :
+    (evalStackFrameFuel 2 frameNoSharedMemoryState
+      (.shMem .load 4 0)).isSome = false := by
+  native_decide
+
+example :
     (evalStackFrameFuel 2 frameMachineState (.stackLoadAny 4 3)).isSome := by
   native_decide
 
@@ -64,7 +89,9 @@ def frameCollectorState : StackFrameMachineState 64 :=
         sharedMemory := fun _ => 0 }
     stackSpace := 8
     stackLimit := 16
-    bitmaps := [0] }
+    bitmaps := [0]
+    memoryDomain := fun _ => true
+    sharedMemoryDomain := fun _ => true }
 
 def frameCollectorConfig : StackGcConfig :=
   { shiftLength := 11
@@ -84,7 +111,9 @@ def frameForwardingState : StackFrameMachineState 64 :=
         sharedMemory := fun _ => 0 }
     stackSpace := 8
     stackLimit := 16
-    bitmaps := [0] }
+    bitmaps := [0]
+    memoryDomain := fun _ => true
+    sharedMemoryDomain := fun _ => true }
 
 def frameCopyState : StackFrameMachineState 64 :=
   { machine :=
@@ -97,7 +126,9 @@ def frameCopyState : StackFrameMachineState 64 :=
         sharedMemory := fun _ => 0 }
     stackSpace := 8
     stackLimit := 16
-    bitmaps := [0] }
+    bitmaps := [0]
+    memoryDomain := fun _ => true
+    sharedMemoryDomain := fun _ => true }
 
 example :
     (evalStackFrameFuel 3000 frameCollectorState

@@ -23,6 +23,8 @@ structure StackFrameMachineState (width : Nat) where
   stackSpace : Nat
   stackLimit : Nat
   bitmaps : List (Word width)
+  memoryDomain : Word width → Bool
+  sharedMemoryDomain : Word width → Bool
 
 inductive StackFrameMachineControl (width : Nat) where
   | normal (state : StackFrameMachineState width)
@@ -61,6 +63,19 @@ def stackFrameBasic [NeZero width]
       some (.normal (stackFrameWriteRegister state destination
         (wordStackMachineShift operator (state.machine.registers left)
           (state.machine.registers right))))
+  | .inst (.mem .load destination address) =>
+      let address := state.machine.registers address
+      if state.memoryDomain address then
+        some (.normal (stackFrameWriteRegister state destination
+          (state.machine.memory address)))
+      else none
+  | .inst (.mem .store source address) =>
+      let address := state.machine.registers address
+      if state.memoryDomain address then
+        some (.normal { state with machine :=
+          (wordStackMachineWriteMemory state.machine address
+            (state.machine.registers source)) })
+      else none
   | .inst instruction =>
       (evalWordStackMachine state.machine (.inst instruction)).map
         (fun machine => .normal { state with machine := machine })
@@ -75,9 +90,19 @@ def stackFrameBasic [NeZero width]
       some (.normal (stackFrameWriteRegister state destination
         (wordStackMachineBinOp operator (state.machine.registers source)
           (state.machine.stores .currHeap))))
-  | .shMem operator source address =>
-      (evalWordStackMachine state.machine (.shMem operator source address)).map
-        (fun machine => .normal { state with machine := machine })
+  | .shMem .load destination address =>
+      let address := state.machine.registers address
+      if state.sharedMemoryDomain address then
+        some (.normal (stackFrameWriteRegister state destination
+          (state.machine.sharedMemory address)))
+      else none
+  | .shMem .store source address =>
+      let address := state.machine.registers address
+      if state.sharedMemoryDomain address then
+        some (.normal { state with machine :=
+          (wordStackMachineWriteSharedMemory state.machine address
+            (state.machine.registers source)) })
+      else none
   | _ => none
 
 def stackFrameSlotIndex (state : StackFrameMachineState width)
@@ -246,6 +271,29 @@ theorem evalStackFrameFuel_stackStore [NeZero width]
         (state.stackSpace + offset) (state.machine.registers register))) := by
   simp [evalStackFrameFuel, evalStackFrameFuelWithCode,
     stackFrameSlotIndex, stackFrameIndexValid, hvalid]
+
+theorem evalStackFrameFuel_memLoad [NeZero width]
+    (fuel : Nat) (state : StackFrameMachineState width)
+    (destination address : Nat)
+    (hdomain : state.memoryDomain (state.machine.registers address) = true) :
+    evalStackFrameFuel (fuel + 1) state
+        (.inst (.mem .load destination address)) =
+      some (.normal (stackFrameWriteRegister state destination
+        (state.machine.memory (state.machine.registers address)))) := by
+  simp [evalStackFrameFuel, evalStackFrameFuelWithCode, stackFrameBasic,
+    hdomain]
+
+theorem evalStackFrameFuel_memStore [NeZero width]
+    (fuel : Nat) (state : StackFrameMachineState width)
+    (source address : Nat)
+    (hdomain : state.memoryDomain (state.machine.registers address) = true) :
+    evalStackFrameFuel (fuel + 1) state
+        (.inst (.mem .store source address)) =
+      some (.normal { state with machine :=
+        (wordStackMachineWriteMemory state.machine
+          (state.machine.registers address) (state.machine.registers source)) }) := by
+  simp [evalStackFrameFuel, evalStackFrameFuelWithCode, stackFrameBasic,
+    hdomain]
 
 theorem evalStackFrameGcMoveCode_immediate [NeZero width]
     (config : StackGcConfig) (fuel : Nat)
