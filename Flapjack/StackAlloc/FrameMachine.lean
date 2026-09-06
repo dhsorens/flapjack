@@ -50,6 +50,27 @@ def stackFrameAnyOffset [NeZero width] (value : Word width) : Option Nat :=
   let offset := BitVec.ushiftRight value 3
   if BitVec.shiftLeft offset 3 == value then some offset.toNat else none
 
+def stackGcMachineMoveAddress [NeZero width]
+    (config : StackGcConfig) (state : StackFrameMachineState width) : Word width :=
+  let value := state.machine.registers 5
+  let shifted := wordStackMachineShift .lsl
+    (wordStackMachineShift .lsr value (BitVec.ofNat width config.shiftLength))
+    (BitVec.ofNat width config.wordShift)
+  wordStackMachineBinOp .add shifted (state.machine.stores .currHeap)
+
+def stackGcMachineForwardingValue [NeZero width]
+    (config : StackGcConfig) (state : StackFrameMachineState width) : Word width :=
+  let header := state.machine.memory (stackGcMachineMoveAddress config state)
+  let shiftedHeader := wordStackMachineShift .lsl
+    (wordStackMachineShift .lsr header (BitVec.ofNat width 2))
+    (BitVec.ofNat width config.shiftLength)
+  let clearShift := config.wordBits - (config.smallShiftLength - 1) - 1
+  let lowBits := wordStackMachineShift .lsr
+    (wordStackMachineShift .lsl (state.machine.registers 5)
+      (BitVec.ofNat width clearShift))
+    (BitVec.ofNat width clearShift)
+  wordStackMachineBinOp .or lowBits shiftedHeader
+
 def stackFrameFlatMemory (state : StackFrameMachineState width) :
     PanFlatMemory (Word width) :=
   fun address => some (state.machine.memory address)
@@ -372,6 +393,86 @@ theorem evalStackFrameGcMoveCode_immediate [NeZero width]
       some (.normal state) := by
   simp [stackGcMoveCode, evalStackFrameFuel, evalStackFrameFuelWithCode,
     stackFrameBasic, stackMachineCondition, hvalue]
+
+theorem evalStackFrameGcMoveCode_forwarding_register [NeZero width]
+    (config : StackGcConfig) (fuel : Nat)
+    (state : StackFrameMachineState width)
+    (hscratch0 : config.immediateScratch ≠ 0)
+    (hscratch1 : config.immediateScratch ≠ 1)
+    (hscratch5 : config.immediateScratch ≠ 5)
+    (hodd : state.machine.registers 5 &&& BitVec.ofNat width 1 ≠ 0)
+    (hdomain : state.memoryDomain (stackGcMachineMoveAddress config state) = true)
+    (hforward :
+      state.machine.memory (stackGcMachineMoveAddress config state) &&&
+        BitVec.ofNat width 3 = 0) :
+    stackFrameNormalRegisterNat
+      (evalStackFrameFuel (fuel + 40) state (stackGcMoveCode config)) 5 =
+      some (stackGcMachineForwardingValue config state).toNat := by
+  by_cases htest : state.machine.registers 5 &&& BitVec.ofNat width 1 == 0
+  · have hzero : state.machine.registers 5 &&& BitVec.ofNat width 1 = 0 := by
+      simpa using htest
+    exact False.elim (hodd hzero)
+  · have hnot : ¬ state.machine.registers 5 &&& BitVec.ofNat width 1 = 0 := by
+      intro hzero
+      apply htest
+      simp [hzero]
+    have hcondition :
+        stackMachineCondition state.machine .test 5 (.imm 1) = false := by
+      change (state.machine.registers 5 &&& BitVec.ofNat width 1 == 0) = false
+      cases hbool : (state.machine.registers 5 &&& BitVec.ofNat width 1 == 0) with
+      | false => simp [hbool]
+      | true => exact False.elim (htest hbool)
+    have hforwardBool :
+        ((state.machine.memory (stackGcMachineMoveAddress config state) &&&
+            BitVec.ofNat width 3) == 0) = true := by
+      simp [hforward]
+    have hscratch0' : 0 ≠ config.immediateScratch := Ne.symm hscratch0
+    have hscratch1' : 1 ≠ config.immediateScratch := Ne.symm hscratch1
+    have hscratch5' : 5 ≠ config.immediateScratch := Ne.symm hscratch5
+    have hdomain' :
+        state.memoryDomain
+            ((state.machine.registers 5 >>>
+                shiftAmount (BitVec.ofNat width config.shiftLength)) <<<
+              shiftAmount (BitVec.ofNat width config.wordShift) +
+              state.machine.stores .currHeap) = true := by
+      simpa [stackGcMachineMoveAddress, wordStackMachineShift,
+        wordStackMachineBinOp] using hdomain
+    have hforwardBool' :
+        ((state.machine.memory
+            ((state.machine.registers 5 >>>
+                shiftAmount (BitVec.ofNat width config.shiftLength)) <<<
+              shiftAmount (BitVec.ofNat width config.wordShift) +
+              state.machine.stores .currHeap) &&&
+            BitVec.ofNat width 3) == 0) = true := by
+      simpa [stackGcMachineMoveAddress, wordStackMachineShift,
+        wordStackMachineBinOp] using hforwardBool
+    have hforwardEq :
+        (state.machine.memory
+            ((state.machine.registers 5 >>>
+                shiftAmount (BitVec.ofNat width config.shiftLength)) <<<
+              shiftAmount (BitVec.ofNat width config.wordShift) +
+              state.machine.stores .currHeap) &&&
+            BitVec.ofNat width 3) = BitVec.ofNat width 0 := by
+      simpa [stackGcMachineMoveAddress, wordStackMachineShift,
+        wordStackMachineBinOp] using hforward
+    simp [stackGcMoveCode, evalStackFrameFuel, evalStackFrameFuelWithCode,
+      stackSeq, stackGcMove, stackGcShiftImmediate, stackGcAddImmediate,
+      stackGcConst, stackGcAdd, stackGcClearTop, stackFrameBasic,
+      stackMachineCondition, stackFrameWriteRegister, stackFrameWriteSlot,
+      wordStackMachineWriteRegister, wordStackMachineWriteStore,
+      wordStackMachineBinOp, wordStackMachineShift,
+      stackGcMachineMoveAddress,
+      stackGcMachineForwardingValue, hcondition, hodd, hdomain, hdomain', hforward,
+      hforwardBool, hforwardBool', hscratch0, hscratch1, hscratch5,
+      hscratch0', hscratch1', hscratch5']
+    have hoddEq :
+        ¬ (state.machine.registers 5 &&& BitVec.ofNat width 1) =
+            BitVec.ofNat width 0 := by
+      simpa using hodd
+    rw [if_neg hoddEq]
+    rw [if_pos hforwardEq]
+    simp [stackFrameNormalRegisterNat, stackGcMachineForwardingValue,
+      wordStackMachineShift, wordStackMachineBinOp]
 
 theorem evalStackFrameGcMoveCode_immediate_matches_nat [NeZero width]
     (config : StackGcConfig) (fuel : Nat)
