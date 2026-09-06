@@ -980,6 +980,8 @@ definitions, pass ordering, examples, and proof obligations.
   covering the count, loaded value, source, destination, and memory updates.
 - [x] Prove the iterated collector memcpy register equations, including
   bounded count exhaustion and source/destination address advancement.
+- [x] Define the recursive word-level memcpy memory transformer and prove the
+  iterated frame machine realizes it under scratch-register separation.
 - [ ] Prove the collector machine semantics and simulation theorem, and add
   generational support if it is needed by a selected target configuration.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state
