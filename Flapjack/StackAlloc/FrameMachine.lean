@@ -732,6 +732,88 @@ theorem evalStackFrameFuel_stackGcMemcpy_one [NeZero width]
     evalStackFrameFuelWithCode, hcondition, hstepCondition, hstep, hstep',
     hstepZero]
 
+theorem stackFrameMemcpyStep_count_two [NeZero width]
+    (config : StackGcConfig) (state : StackFrameMachineState width)
+    (hscratch0 : config.immediateScratch ≠ 0)
+    (hcount : state.machine.registers 0 = BitVec.ofNat width 2) :
+    (stackFrameMemcpyStep config state).machine.registers 0 =
+      BitVec.ofNat width 1 := by
+  have hcounter :
+      BitVec.ofNat width 2 - BitVec.ofNat width 1 =
+        BitVec.ofNat width 1 := by
+    exact BitVec.ofNat_sub_ofNat_of_le 2 1
+      (Nat.one_lt_pow (NeZero.ne width) (by decide)) (by omega)
+  simp [stackFrameMemcpyStep, hcount, stackFrameWriteRegister,
+    wordStackMachineWriteRegister, wordStackMachineWriteMemory,
+    wordStackMachineBinOp, hscratch0, Ne.symm hscratch0, hcounter]
+
+theorem evalStackFrameFuel_stackGcMemcpy_two [NeZero width]
+    (config : StackGcConfig) (fuel : Nat)
+    (state : StackFrameMachineState width)
+    (hscratch0 : config.immediateScratch ≠ 0)
+    (hscratch1 : config.immediateScratch ≠ 1)
+    (hscratch2 : config.immediateScratch ≠ 2)
+    (hscratch3 : config.immediateScratch ≠ 3)
+    (hcount : state.machine.registers 0 = BitVec.ofNat width 2)
+    (hcountNonzero : BitVec.ofNat width 2 ≠ 0)
+    (hheaderDomain : ∀ address, state.memoryDomain address = true) :
+    evalStackFrameFuel (fuel + 52) state (stackGcMemcpy config) =
+      some (.normal (stackFrameMemcpyStep config
+        (stackFrameMemcpyStep config state))) := by
+  have hcountStep := stackFrameMemcpyStep_count_two config state
+    hscratch0 hcount
+  have hcondition :
+      stackMachineCondition state.machine .notEqual 0 (.imm 0) = true := by
+    change (state.machine.registers 0 != BitVec.ofNat width 0) = true
+    simpa [hcount] using hcountNonzero
+  have hstep :=
+    evalStackFrameFuel_stackGcMemcpyBody config (fuel + 30) state
+      hscratch0 hscratch1 hscratch2 hscratch3 hheaderDomain
+  have hstep' :
+      evalStackFrameFuelWithCode (fuel + 50) (fun _ => none) state
+        (stackGcMemcpyBody config) =
+        some (.normal (stackFrameMemcpyStep config state)) := by
+    have hfuel : fuel + 30 + 20 = fuel + 50 := by omega
+    rw [hfuel] at hstep
+    simpa [evalStackFrameFuel] using hstep
+  have hrest :=
+    evalStackFrameFuel_stackGcMemcpy_one config (fuel + 27)
+      (stackFrameMemcpyStep config state)
+      hscratch0 hscratch1 hscratch2 hscratch3 hcountStep hheaderDomain
+  have hrest' :
+      evalStackFrameFuelWithCode (fuel + 51) (fun _ => none)
+        (stackFrameMemcpyStep config state) (stackGcMemcpy config) =
+        some (.normal (stackFrameMemcpyStep config
+          (stackFrameMemcpyStep config state))) := by
+    have hfuel : fuel + 27 + 24 = fuel + 51 := by omega
+    rw [hfuel] at hrest
+    simpa [evalStackFrameFuel] using hrest
+  have hbodyLoop :
+      evalStackFrameFuelWithCode (fuel + 51) (fun _ => none) state
+        (.ite .notEqual 0 (.imm 0) (stackGcMemcpyBody config) (.break 0)) =
+        some (.normal (stackFrameMemcpyStep config state)) := by
+    simp [evalStackFrameFuelWithCode, hcondition, hstep']
+  have hrestExpanded :
+      evalStackFrameFuelWithCode (fuel + 51) (fun _ => none)
+        (stackFrameMemcpyStep config state)
+        (.loop (.ite .notEqual 0 (.imm 0) (stackGcMemcpyBody config) (.break 0))) =
+        some (.normal (stackFrameMemcpyStep config
+          (stackFrameMemcpyStep config state))) := by
+    simpa [stackGcMemcpy, stackGcWhile] using hrest'
+  have hloop :
+      evalStackFrameFuelWithCode (fuel + 52) (fun _ => none) state
+        (.loop (.ite .notEqual 0 (.imm 0) (stackGcMemcpyBody config) (.break 0))) =
+        evalStackFrameFuelWithCode (fuel + 51) (fun _ => none)
+          (stackFrameMemcpyStep config state)
+          (.loop (.ite .notEqual 0 (.imm 0) (stackGcMemcpyBody config) (.break 0))) := by
+    have hfuel : fuel + 52 = (fuel + 51) + 1 := by omega
+    rw [hfuel]
+    simp only [evalStackFrameFuelWithCode]
+    rw [hbodyLoop]
+  change evalStackFrameFuelWithCode (fuel + 52) (fun _ => none) state
+      (.loop (.ite .notEqual 0 (.imm 0) (stackGcMemcpyBody config) (.break 0))) = _
+  exact hloop.trans hrestExpanded
+
 theorem evalStackFrameFuel_stackGcMoveCopySuffix_one [NeZero width]
     (config : StackGcConfig) (fuel : Nat)
     (state : StackFrameMachineState width)
