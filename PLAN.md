@@ -1004,6 +1004,8 @@ definitions, pass ordering, examples, and proof obligations.
   including load, count update, store, address advance, and loop termination.
 - [x] Generalize the forwarding-path `Move` evaluator to arbitrary surplus
   fuel for compositional outer-collector proofs.
+- [x] Prove the one-item forwarding-pointer `MoveList` frame transition,
+  including the forwarding `Move`, store, address advance, and termination.
 - [ ] Prove the collector machine semantics and simulation theorem, and add
   generational support if it is needed by a selected target configuration.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state
