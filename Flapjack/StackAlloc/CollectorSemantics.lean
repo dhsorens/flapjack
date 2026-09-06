@@ -293,6 +293,39 @@ theorem evalStackFrameFuel_loop_iterate [NeZero width]
       simpa [stackFrameIterate, Nat.add_assoc, Nat.add_left_comm, Nat.add_comm] using
         hloop.trans hrest
 
+theorem evalStackFrameFuel_stackGcMoveList_iterate [NeZero width]
+    (config : StackGcConfig) (fuel stepFuel iterations : Nat)
+    (state : StackFrameMachineState width)
+    (step : StackFrameMachineState width → StackFrameMachineState width)
+    (hcondition : ∀ current, current < iterations →
+      stackMachineCondition
+        (stackFrameIterate step current state).machine .notEqual 7 (.imm 0) = true)
+    (hbody : ∀ current extra, current < iterations →
+      evalStackFrameFuel (extra + stepFuel)
+        (stackFrameIterate step current state)
+        (stackSeq [
+          .inst (.mem .load 5 8),
+          stackGcSubOne config 7,
+          stackGcMoveCode config,
+          .inst (.mem .store 5 8),
+          stackGcAddBytes config 8]) =
+        some (.normal (stackFrameIterate step (current + 1) state)))
+    (hfinal :
+      stackMachineCondition
+        (stackFrameIterate step iterations state).machine .notEqual 7 (.imm 0) = false) :
+    evalStackFrameFuel (fuel + iterations + stepFuel + 3) state
+        (stackGcMoveListCode config) =
+      some (.normal (stackFrameIterate step iterations state)) := by
+  simpa [stackGcMoveListCode, stackGcWhile] using
+    (evalStackFrameFuel_loop_iterate fuel stepFuel iterations state
+      .notEqual 7 (.imm 0)
+      (stackSeq [
+        .inst (.mem .load 5 8),
+        stackGcSubOne config 7,
+        stackGcMoveCode config,
+        .inst (.mem .store 5 8),
+        stackGcAddBytes config 8]) step hcondition hbody hfinal)
+
 theorem evalStackFrameFuel_stackGcMemcpy_iter [NeZero width]
     (config : StackGcConfig) (fuel words : Nat)
     (state : StackFrameMachineState width)
