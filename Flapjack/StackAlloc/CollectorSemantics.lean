@@ -1793,6 +1793,35 @@ theorem stackGcMachineHeaderCondition_matches_nat [NeZero width]
     simpa only [Bool.eq_false_iff] using hneq
   exact htest.trans hcodeData.symm
 
+theorem stackGcMoveLoop_header_condition_matches_nat [NeZero width]
+    (state : StackFrameMachineState width) (scan : Nat)
+    (memory : Nat → Nat) (hwidth : 3 ≤ width)
+    (haddress : state.machine.registers 8 = BitVec.ofNat width scan)
+    (hmemory :
+      (state.machine.memory (state.machine.registers 8)).toNat =
+        memory scan) :
+    stackMachineCondition
+      (stackFrameWriteRegister state 7
+        (state.machine.memory (state.machine.registers 8))).machine
+      .test 7 (.imm 4) = true ↔
+      stackGcNatHeaderHasCode (memory scan) ≠ true := by
+  have hmemoryAt :
+      (state.machine.memory (BitVec.ofNat width scan)).toNat =
+        memory scan := by
+    simpa [haddress] using hmemory
+  have hbound : memory scan < 2 ^ width := by
+    rw [← hmemoryAt]
+    exact (state.machine.memory (BitVec.ofNat width scan)).isLt
+  have hword : state.machine.memory (BitVec.ofNat width scan) =
+      BitVec.ofNat width (memory scan) := by
+    apply BitVec.eq_of_toNat_eq
+    simpa [BitVec.toNat_ofNat, Nat.mod_eq_of_lt hbound] using hmemoryAt
+  have hheader := stackGcMachineHeaderCondition_matches_nat
+    (state.machine.memory (BitVec.ofNat width scan)) hwidth
+  simpa [stackMachineCondition, stackFrameWriteRegister,
+    wordStackMachineWriteRegister, haddress, hword,
+    Nat.mod_eq_of_lt hbound] using hheader
+
 /-! One machine transition for the header/code branch of `word_gc_move_loop`.
 The data branch delegates to the already established MoveList transition API;
 this branch only advances the scan pointer and is therefore a useful first

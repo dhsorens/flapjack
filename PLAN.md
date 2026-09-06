@@ -1063,6 +1063,8 @@ definitions, pass ordering, examples, and proof obligations.
   `scan != destination` condition under explicit word-width bounds.
 - [x] Bridge the machine data/code header test (`header &&& 4`) to the Nat
   `header / 4 % 2` code tag under an explicit fixed-width bound.
+- [x] Derive the machine MoveLoop branch condition directly from the Nat
+  header tag and the bounded machine/Nat memory correspondence.
 - [x] Prove the bounded machine transition for a code-object MoveLoop header,
   covering header load, length decoding, object-size scan advance, and the
   destination update without unfolding the nested MoveList loop.
