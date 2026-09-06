@@ -1750,6 +1750,13 @@ def stackGcMoveLoopCodeStepState [NeZero width]
     (wordStackMachineBinOp .add (afterWord.machine.registers 8)
       (afterWord.machine.registers 7))
 
+theorem stackGcMoveLoopCodeStepState_memory [NeZero width]
+    (config : StackGcConfig) (state : StackFrameMachineState width) :
+    (stackGcMoveLoopCodeStepState config state).machine.memory =
+      state.machine.memory := by
+  simp [stackGcMoveLoopCodeStepState, stackFrameWriteRegister,
+    wordStackMachineWriteRegister]
+
 theorem evalStackFrameFuel_stackGcMoveLoop_code_step [NeZero width]
     (config : StackGcConfig) (fuel : Nat)
     (state : StackFrameMachineState width)
