@@ -1014,6 +1014,8 @@ definitions, pass ordering, examples, and proof obligations.
   collector model, composing sequential MoveList segments and conditions.
 - [x] Prove that the Nat MoveList scan pointer advances by
   `length * bytesInWord`, independently of moved object contents.
+- [x] Add a fuel-indexed frame-machine theorem for iterated normal loop-body
+  transitions, exposing per-iteration conditions and state updates.
 - [ ] Prove the collector machine semantics and simulation theorem, and add
   generational support if it is needed by a selected target configuration.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state
