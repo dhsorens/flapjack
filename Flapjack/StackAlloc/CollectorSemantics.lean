@@ -5358,4 +5358,73 @@ theorem evalStackFrameFuel_stackGcMoveLoop_iterate_with_machine_nat_composition
     domain scans indices destinations memories conditions hnatstep
   exact ⟨hmachine.1, hnat, hmachine.2⟩
 
+theorem evalStackFrameFuel_stackGcMoveLoop_iterate_with_machine_nat_terminal
+    [NeZero width] (config : StackGcConfig)
+    (fuel stepFuel natFuel iterations : Nat)
+    (state final : StackFrameMachineState width)
+    (step : StackFrameMachineState width → StackFrameMachineState width)
+    (oldBase : Nat) (domain : Nat → Bool)
+    (scans indices destinations : Nat → Nat)
+    (memories : Nat → Nat → Nat) (conditions : Nat → Bool)
+    (hdestinationBound : destinations iterations < 2 ^ width)
+    (hcomposition :
+      evalStackFrameFuel (fuel + iterations + stepFuel + 3) state
+          (stackGcMoveLoopCode config) =
+        some (.normal final) ∧
+      stackGcNatMoveLoop config (natFuel + 1 + iterations)
+          (scans 0) (indices 0) (destinations 0) oldBase
+          (memories 0) domain (conditions 0) =
+        stackGcNatMoveLoop config (natFuel + 1)
+          (scans iterations) (indices iterations) (destinations iterations)
+          oldBase (memories iterations) domain (conditions iterations) ∧
+      stackGcMachineNatMoveLoopRelation final
+        (scans iterations) (indices iterations) (destinations iterations)
+        (memories iterations))
+    (hfinal :
+      stackMachineCondition final.machine .notEqual 3 (.reg 8) = false) :
+    evalStackFrameFuel (fuel + iterations + stepFuel + 3) state
+          (stackGcMoveLoopCode config) =
+        some (.normal final) ∧
+      stackGcNatMoveLoop config (natFuel + 1 + iterations)
+          (scans 0) (indices 0) (destinations 0) oldBase
+          (memories 0) domain (conditions 0) =
+        { nextIndex := indices iterations
+          nextAddress := destinations iterations
+          memory := memories iterations
+          condition := conditions iterations } ∧
+      stackGcMachineNatMoveLoopRelation final
+        (scans iterations) (indices iterations) (destinations iterations)
+        (memories iterations) := by
+  rcases hcomposition with ⟨heval, hnat, hrelation⟩
+  have hscanBound : scans iterations < 2 ^ width := by
+    rw [← hrelation.1.1]
+    exact (final.machine.registers 8).isLt
+  have hscanAddress : final.machine.registers 8 =
+      BitVec.ofNat width (scans iterations) := by
+    apply BitVec.eq_of_toNat_eq
+    simpa [stackGcMachineScanMatchesNat, BitVec.toNat_ofNat,
+      Nat.mod_eq_of_lt hscanBound] using
+      hrelation.1.1
+  have hconditionIff := stackGcMoveLoop_machine_condition_matches_nat
+    final (scans iterations) (destinations iterations) hscanBound
+    hdestinationBound hscanAddress hrelation.2.1
+  have hscanEq : scans iterations = destinations iterations := by
+    by_cases heq : scans iterations = destinations iterations
+    · exact heq
+    · exfalso
+      have htrue := hconditionIff.mpr heq
+      rw [hfinal] at htrue
+      cases htrue
+  have hterminal :
+      stackGcNatMoveLoop config (natFuel + 1)
+          (scans iterations) (indices iterations)
+          (destinations iterations) oldBase (memories iterations) domain
+          (conditions iterations) =
+        { nextIndex := indices iterations
+          nextAddress := destinations iterations
+          memory := memories iterations
+          condition := conditions iterations } := by
+    simp [stackGcNatMoveLoop, hscanEq]
+  exact ⟨heval, hnat.trans hterminal, hrelation⟩
+
 end Flapjack.RiscV

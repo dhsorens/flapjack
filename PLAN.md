@@ -1166,6 +1166,8 @@ definitions, pass ordering, examples, and proof obligations.
   composing arbitrary recursive step equations before termination.
 - [x] Compose machine and Nat MoveLoop iteration into one evaluator contract
   exposing execution, relation preservation, and the Nat result.
+- [x] Close the composed outer MoveLoop contract at machine termination,
+  reducing the residual Nat loop to its terminal result.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
