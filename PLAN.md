@@ -911,6 +911,8 @@ definitions, pass ordering, examples, and proof obligations.
   regressions; the full heap/bitmap simulation theorem remains. Add a
   call-aware runtime bridge that resolves the generated GC label and resumes
   its return continuation.
+- [x] Add CakeML-aligned halt-PC lowering and assemble the runtime-backed
+  Simple StackAlloc image through the RV64 pipeline.
 - [ ] Prove the collector machine semantics and simulation theorem, and add
   generational support if it is needed by a selected target configuration.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state

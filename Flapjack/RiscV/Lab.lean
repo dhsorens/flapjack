@@ -1,5 +1,6 @@
 import Flapjack.Lab
 import Flapjack.StackAlloc
+import Flapjack.StackAlloc.Runtime
 import Flapjack.RiscV.Ffi
 import Flapjack.RiscV.WordToStack
 
@@ -334,6 +335,77 @@ def compileLabProgram [NeZero width] (context : WordFfiContext)
   let labels := labCollectProgramLabels 0 program
   labCompileProgramSections context labels 0 program
 
+/-! CakeML's target assembler turns `Halt` into a jump to the target's halt
+    PC.  The existing ordinary compiler intentionally rejects that pseudo-op;
+    this parallel path computes a halt PC immediately after the linked image,
+    emits the jump, and appends a self-loop at that PC. -/
+def labCompileAsmWithHalt [NeZero width] (context : WordFfiContext)
+    (labels : List (Nat × Nat × Nat)) (position haltPc : Nat) :
+    LabAsm (Word width) → Option (List (Instruction width))
+  | .jump target => do
+      let target ← labResolveProgramRef labels target
+      pure [.jal 0 (labOffset target position)]
+  | .call target => do
+      let target ← labResolveProgramRef labels target
+      pure [.jal 1 (labOffset target position)]
+  | .locValue register target => do
+      let register ← registerOfNat register
+      let target ← labResolveProgramRef labels target
+      pure [.addi register 0 (BitVec.ofNat width target)]
+  | .jumpCmp operator condition right target => do
+      let (left, right, prelude) ← wordConditionOperands operator condition right
+      let target ← labResolveProgramRef labels target
+      let branchPosition := position + 4 * prelude.length
+      pure (prelude ++ [labBranch operator left right
+        (labOffset target branchPosition)])
+  | .callFfi function => do
+      let service ← lookupWordFfiService function context.services
+      pure [.addi 14 0 (BitVec.ofNat width service), .ecall]
+  | .halt => pure [.jal 0 (labOffset haltPc position)]
+  | .heapAlloc _ | .install => none
+
+def labCompileProgramLinesWithHalt [NeZero width]
+    (context : WordFfiContext) (labels : List (Nat × Nat × Nat))
+    (position haltPc : Nat) :
+    List (LabLine (Word width)) → Option (List (Instruction width))
+  | [] => some []
+  | .label _ _ _ :: lines =>
+      labCompileProgramLinesWithHalt context labels position haltPc lines
+  | .asm operation _ _ :: lines => do
+      let code ← labCompilePlain operation
+      let rest ← labCompileProgramLinesWithHalt context labels
+        (position + 4 * labLineInstructionCount (.asm operation [] 0)) haltPc lines
+      pure (code ++ rest)
+  | .labAsm operation _ _ :: lines => do
+      let code ← labCompileAsmWithHalt context labels position haltPc operation
+      let rest ← labCompileProgramLinesWithHalt context labels
+        (position + 4 * labLineInstructionCount (.labAsm operation [] 0)) haltPc lines
+      pure (code ++ rest)
+
+def labCompileProgramSectionsWithHalt [NeZero width]
+    (context : WordFfiContext) (labels : List (Nat × Nat × Nat))
+    (base haltPc : Nat) :
+    LabProgram (Word width) → Option (List (Instruction width))
+  | [] => some []
+  | sectionData :: sections => do
+      let code ← labCompileProgramLinesWithHalt context labels base haltPc
+        sectionData.lines
+      let rest ← labCompileProgramSectionsWithHalt context labels
+        (base + 4 * labSectionInstructionCount sectionData) haltPc sections
+      pure (code ++ rest)
+
+def labProgramInstructionCount : LabProgram (Word width) → Nat
+  | [] => 0
+  | sectionData :: sections =>
+      labSectionInstructionCount sectionData + labProgramInstructionCount sections
+
+def compileLabProgramWithHalt [NeZero width] (context : WordFfiContext)
+    (program : LabProgram (Word width)) : Option (List (Instruction width)) := do
+  let labels := labCollectProgramLabels 0 program
+  let haltPc := 4 * labProgramInstructionCount program
+  let code ← labCompileProgramSectionsWithHalt context labels 0 haltPc program
+  pure (code ++ [.jal 0 0])
+
 /-! A linker result that keeps section entry addresses alongside the flattened
     image. The plain `compileLabProgram` API is convenient for consumers that
     only need code; correctness proofs need the section boundary to initialize
@@ -375,6 +447,16 @@ def compileStackProgramNatListToRiscV [NeZero width]
       labProgramToEntrySection sectionId entryLabel initialLabel
         (stackRemoveComplete config program))).map labSectionNatToWord)
 
+def compileStackProgramNatListWithHaltToRiscV [NeZero width]
+    (context : WordFfiContext) (config : StackRemoveConfig)
+    (entryLabel initialLabel : Nat)
+    (programs : List (Nat × StackProg Nat)) :
+    Option (List (Instruction width)) :=
+  compileLabProgramWithHalt context
+    ((programs.map (fun (sectionId, program) =>
+      labProgramToEntrySection sectionId entryLabel initialLabel
+        (stackRemoveComplete config program))).map labSectionNatToWord)
+
 /-! StackAlloc-aware composition.  CakeML's allocator pass installs a runtime
     collector stub as a separate section and rewrites heap allocation into a
     call to that section. -/
@@ -386,6 +468,16 @@ def compileStackProgramNatListWithStackAllocToRiscV [NeZero width]
     Option (List (Instruction width)) :=
   let programs := stackAllocCompile allocConfig programs
   compileStackProgramNatListToRiscV context removeConfig entryLabel initialLabel programs
+
+def compileStackProgramNatListWithSimpleGcToRiscV [NeZero width]
+    (context : WordFfiContext) (removeConfig : StackRemoveConfig)
+    (allocConfig : StackAllocConfig) (gcConfig : StackGcConfig)
+    (entryLabel initialLabel : Nat)
+    (programs : List (Nat × StackProg Nat)) :
+    Option (List (Instruction width)) :=
+  compileStackProgramNatListWithHaltToRiscV context removeConfig
+    entryLabel initialLabel
+    (stackAllocCompileWithSimpleGc allocConfig gcConfig programs)
 
 def compileStackProgramNatListLinkedToRiscV [NeZero width]
     (context : WordFfiContext) (config : StackRemoveConfig)

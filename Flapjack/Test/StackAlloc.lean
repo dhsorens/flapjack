@@ -62,6 +62,12 @@ example :
       [(1, (.alloc 1 : StackProg Nat))]).isSome := by
   native_decide
 
+example :
+    (compileStackProgramNatListWithHaltToRiscV (width := 64)
+      { services := [] } stackAllocRemoveConfig 0 0
+      [(1, (.halt 1 : StackProg Nat))]).isSome := by
+  native_decide
+
 def stackGcTestConfig : StackGcConfig :=
   { shiftLength := 11
     smallShiftLength := 9
@@ -82,6 +88,12 @@ example :
         some (77, stackGcSimpleStub stackGcTestConfig) := by
   simp [stackAllocCompileWithSimpleGc, stackAllocSimpleStubs,
     stackAllocTestConfig]
+
+example :
+    (compileStackProgramNatListWithSimpleGcToRiscV (width := 64)
+      { services := [] } stackAllocRemoveConfig stackAllocTestConfig
+      stackGcTestConfig 0 0 [(1, (.alloc 1 : StackProg Nat))]).isSome := by
+  native_decide
 
 def zeroStackMachineState : RiscV.WordStackMachineState 64 :=
   { registers := fun _ => 0
