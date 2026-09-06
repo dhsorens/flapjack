@@ -1150,6 +1150,8 @@ definitions, pass ordering, examples, and proof obligations.
   terminal result and preservation of the machine/Nat relation.
 - [x] Derive terminal MoveLoop scan equality from the machine/Nat relation
   and the destination-register correspondence.
+- [x] Package MoveLoop destination and index registers into the terminal
+  machine/Nat state relation.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
