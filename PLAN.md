@@ -1049,6 +1049,8 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Bridge the immediate one-word machine MoveList evaluator to the Nat
   semantics for its moved value, scan pointer, count register, and stored
   memory projection.
+- [x] Expose a forwarding MoveList machine/Nat value bridge, parameterized by
+  the explicit fixed-width forwarding-address correspondence.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
