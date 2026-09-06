@@ -479,6 +479,31 @@ theorem stackGcNatMoveList_immediate_one
         condition := domain address } := by
   simp [stackGcNatMoveList, stackGcNatMove, hvalue]
 
+theorem stackGcNatMoveList_forwarding_one
+    (config : StackGcConfig) (address value index destination oldBase : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool)
+    (hvalue : value % 2 ≠ 0)
+    (hforward :
+      stackGcNatIsForwardingPointer
+        (memory (stackGcNatPointerAddress config oldBase value)))
+    (hloaded : memory address = value) :
+    stackGcNatMoveList config 1 address index destination oldBase memory domain =
+      { nextScan := address + config.bytesInWord
+        nextIndex := index
+        nextAddress := destination
+        memory := fun current =>
+          if current = address then
+            stackGcNatUpdateAddress config
+              (memory (stackGcNatPointerAddress config oldBase value) / 4) value
+          else memory current
+        condition := domain address &&
+          domain (stackGcNatPointerAddress config oldBase value) } := by
+  have hforward' :
+      memory (stackGcNatPointerAddress config oldBase value) % 4 = 0 := by
+    simpa [stackGcNatIsForwardingPointer] using hforward
+  simp [stackGcNatMoveList, stackGcNatMove, stackGcNatIsForwardingPointer,
+    hvalue, hforward', hloaded]
+
 theorem stackGcNatMoveList_append
     (config : StackGcConfig) (length length' address index destination oldBase : Nat)
     (memory : Nat → Nat) (domain : Nat → Bool) :
