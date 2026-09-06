@@ -1018,6 +1018,8 @@ definitions, pass ordering, examples, and proof obligations.
   transitions, exposing per-iteration conditions and state updates.
 - [x] Specialize the iterated frame-loop evaluator to the generated
   `stackGcMoveListCode` body for arbitrary concrete state transitions.
+- [x] Expose named Nat `MoveLoop` code-object and data-object transition
+  equations with fuel and condition threading.
 - [ ] Prove the collector machine semantics and simulation theorem, and add
   generational support if it is needed by a selected target configuration.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state
