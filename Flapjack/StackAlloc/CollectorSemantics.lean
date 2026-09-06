@@ -1921,4 +1921,77 @@ theorem evalStackFrameFuel_stackGcMoveLoop_iterate [NeZero width]
             stackGcShiftImmediate config .lsl 7 config.wordShift,
             stackGcAdd 8 7])]) step hcondition hbody hfinal)
 
+theorem evalStackFrameFuel_stackGcMoveLoop_data_branch [NeZero width]
+    (config : StackGcConfig) (fuel : Nat)
+    (state final : StackFrameMachineState width)
+    (hscratch7 : config.immediateScratch ≠ 7)
+    (hscratch8 : config.immediateScratch ≠ 8)
+    (hcondition : stackMachineCondition state.machine .test 7 (.imm 4) = true)
+    (hmove :
+      evalStackFrameFuel (fuel + 12)
+        (stackGcMoveLoopCodePrefixState config state)
+        (stackGcMoveListCode config) =
+      some (.normal final)) :
+    evalStackFrameFuel (fuel + 15) state
+        (.ite .test 7 (.imm 4)
+          (stackSeq [
+            stackGcShiftImmediate config .lsr 7
+              (config.wordBits - config.lenSize),
+            stackGcAddBytes config 8,
+            stackGcMoveListCode config])
+          (stackSeq [
+            stackGcShiftImmediate config .lsr 7
+              (config.wordBits - config.lenSize),
+            stackGcAddOne config 7,
+            stackGcShiftImmediate config .lsl 7 config.wordShift,
+            stackGcAdd 8 7])) =
+      some (.normal final) := by
+  let afterLength := stackFrameWriteRegister state config.immediateScratch
+    (BitVec.ofNat width (config.wordBits - config.lenSize))
+  let afterShift := stackFrameWriteRegister afterLength 7
+    (wordStackMachineShift .lsr (state.machine.registers 7)
+      (afterLength.machine.registers config.immediateScratch))
+  have hshift :
+      evalStackFrameFuel (fuel + 13) state
+        (stackGcShiftImmediate config .lsr 7
+          (config.wordBits - config.lenSize)) =
+      some (.normal afterShift) := by
+    simp [afterShift, afterLength, stackGcShiftImmediate,
+      stackGcAddImmediate, stackGcConst, stackSeq, evalStackFrameFuel,
+      evalStackFrameFuelWithCode, stackFrameBasic, stackFrameWriteRegister,
+      wordStackMachineWriteRegister, wordStackMachineShift, hscratch7,
+      Ne.symm hscratch7]
+  have hadd :
+      evalStackFrameFuel (fuel + 12) afterShift
+        (stackGcAddBytes config 8) =
+      some (.normal (stackGcMoveLoopCodePrefixState config state)) := by
+    simp [stackGcMoveLoopCodePrefixState, afterShift, afterLength,
+      stackGcAddBytes, stackGcAddImmediate, stackGcConst, stackGcAdd,
+      stackSeq, evalStackFrameFuel, evalStackFrameFuelWithCode,
+      stackFrameBasic, stackFrameWriteRegister, wordStackMachineWriteRegister,
+      wordStackMachineBinOp, hscratch8, Ne.symm hscratch8]
+  have hrest := evalStackFrameFuel_seq_normal (fuel + 12) afterShift
+    (stackGcMoveLoopCodePrefixState config state)
+    (stackGcAddBytes config 8) (stackGcMoveListCode config) hadd
+  rw [hmove] at hrest
+  have hwhole := evalStackFrameFuel_seq_normal (fuel + 13) state afterShift
+    (stackGcShiftImmediate config .lsr 7
+      (config.wordBits - config.lenSize))
+    (stackSeq [stackGcAddBytes config 8, stackGcMoveListCode config]) hshift
+  simp only [stackSeq] at hwhole
+  rw [hrest] at hwhole
+  rw [evalStackFrameFuel_ite_true (fuel + 14) state .test 7 (.imm 4)
+    (stackSeq [
+      stackGcShiftImmediate config .lsr 7
+        (config.wordBits - config.lenSize),
+      stackGcAddBytes config 8,
+      stackGcMoveListCode config])
+    (stackSeq [
+      stackGcShiftImmediate config .lsr 7
+        (config.wordBits - config.lenSize),
+      stackGcAddOne config 7,
+      stackGcShiftImmediate config .lsl 7 config.wordShift,
+      stackGcAdd 8 7]) hcondition]
+  simpa [stackSeq] using hwhole
+
 end Flapjack.RiscV
