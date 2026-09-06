@@ -293,6 +293,41 @@ def evalStackFrameFuel [NeZero width]
     (program : StackProg Nat) : Option (StackFrameMachineControl width) :=
   evalStackFrameFuelWithCode fuel (fun _ => none) state program
 
+theorem evalStackFrameFuel_seq_normal [NeZero width]
+    (fuel : Nat) (state state' : StackFrameMachineState width)
+    (first second : StackProg Nat)
+    (hfirst :
+      evalStackFrameFuel fuel state first = some (.normal state')) :
+    evalStackFrameFuel (fuel + 1) state (.seq first second) =
+      evalStackFrameFuel fuel state' second := by
+  have hfirst' :
+      evalStackFrameFuelWithCode fuel (fun _ => none) state first =
+        some (.normal state') := by
+    simpa [evalStackFrameFuel] using hfirst
+  simp [evalStackFrameFuel, evalStackFrameFuelWithCode, hfirst']
+
+theorem evalStackFrameFuel_ite_true [NeZero width]
+    (fuel : Nat) (state : StackFrameMachineState width)
+    (operator : Cmp) (condition : Nat) (right : WordRegImm Nat)
+    (thenBranch elseBranch : StackProg Nat)
+    (hcondition :
+      stackMachineCondition state.machine operator condition right = true) :
+    evalStackFrameFuel (fuel + 1) state
+        (.ite operator condition right thenBranch elseBranch) =
+      evalStackFrameFuel fuel state thenBranch := by
+  simp [evalStackFrameFuel, evalStackFrameFuelWithCode, hcondition]
+
+theorem evalStackFrameFuel_ite_false [NeZero width]
+    (fuel : Nat) (state : StackFrameMachineState width)
+    (operator : Cmp) (condition : Nat) (right : WordRegImm Nat)
+    (thenBranch elseBranch : StackProg Nat)
+    (hcondition :
+      stackMachineCondition state.machine operator condition right = false) :
+    evalStackFrameFuel (fuel + 1) state
+        (.ite operator condition right thenBranch elseBranch) =
+      evalStackFrameFuel fuel state elseBranch := by
+  simp [evalStackFrameFuel, evalStackFrameFuelWithCode, hcondition]
+
 def stackFrameNormalStackSpace [NeZero width]
     (result : Option (StackFrameMachineControl width)) : Option Nat :=
   match result with

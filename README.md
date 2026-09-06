@@ -117,6 +117,8 @@ Its RISC-V memory instructions expose little-endian byte, halfword, and
 32-bit adapter equations and reject unaligned accesses.
 The bounded machine also has the zero-word collector memcpy base-case
 equation, preserving the complete frame state.
+Reusable sequence and conditional equations expose the evaluator’s
+fuel-consuming composition rules for later collector simulation proofs.
 That module now also contains the first compositional Loop-to-Word agreements:
 constant and register-register ADD assignments are related at the destination
 local/register observation, under the explicit architectural x0 invariant.

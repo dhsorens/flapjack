@@ -951,6 +951,8 @@ definitions, pass ordering, examples, and proof obligations.
   alignment failures.
 - [x] Prove the bounded StackLang collector memcpy zero-word base case,
   preserving the complete frame state.
+- [x] Add reusable bounded-frame sequence and conditional evaluator equations
+  for compositional collector proofs.
 - [ ] Prove the collector machine semantics and simulation theorem, and add
   generational support if it is needed by a selected target configuration.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state
