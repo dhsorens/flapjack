@@ -1084,4 +1084,232 @@ theorem evalStackFrameFuel_stackGcMoveList_forwarding_one [NeZero width]
       simpa [stackGcMoveListForwardingState, afterFinal, afterScratch,
         afterStore, afterMove, afterCount] using hdone
 
+def stackGcMoveListCopyState [NeZero width]
+    (config : StackGcConfig) (state : StackFrameMachineState width) :
+    StackFrameMachineState width :=
+  let afterCount := stackGcMoveListAfterCount config state
+  let afterMove := stackGcMoveCopyState config afterCount
+  let afterStore := { afterMove with machine :=
+    (wordStackMachineWriteMemory afterMove.machine
+      (afterMove.machine.registers 8) (afterMove.machine.registers 5)) }
+  let afterScratch := stackFrameWriteRegister afterStore
+    config.immediateScratch (BitVec.ofNat width config.bytesInWord)
+  stackFrameWriteRegister afterScratch 8
+    (wordStackMachineBinOp .add (afterScratch.machine.registers 8)
+      (BitVec.ofNat width config.bytesInWord))
+
+theorem evalStackFrameFuel_stackGcMoveList_copy_one [NeZero width]
+    (config : StackGcConfig) (fuel : Nat)
+    (state : StackFrameMachineState width)
+    (hscratch0 : config.immediateScratch ≠ 0)
+    (hscratch1 : config.immediateScratch ≠ 1)
+    (hscratch2 : config.immediateScratch ≠ 2)
+    (hscratch3 : config.immediateScratch ≠ 3)
+    (hscratch4 : config.immediateScratch ≠ 4)
+    (hscratch5 : config.immediateScratch ≠ 5)
+    (hscratch6 : config.immediateScratch ≠ 6)
+    (hscratch7 : config.immediateScratch ≠ 7)
+    (hscratch8 : config.immediateScratch ≠ 8)
+    (hone : state.machine.registers 7 = BitVec.ofNat width 1)
+    (hdomain : state.memoryDomain (state.machine.registers 8) = true)
+    (hodd :
+      (stackGcMoveListAfterCount config state).machine.registers 5 &&&
+        BitVec.ofNat width 1 ≠ 0)
+    (hheaderDomain : ∀ address,
+      (stackGcMoveListAfterCount config state).memoryDomain address = true)
+    (hheaderLength :
+      (stackGcMoveListAfterCount config state).machine.memory
+          (stackGcMachineMoveAddress config
+            (stackGcMoveListAfterCount config state)) >>>
+        shiftAmount (BitVec.ofNat width
+          (config.wordBits - config.lenSize)) = 0)
+    (hnotforwarding :
+      (stackGcMoveListAfterCount config state).machine.memory
+          (stackGcMachineMoveAddress config
+            (stackGcMoveListAfterCount config state)) &&&
+        BitVec.ofNat width 3 ≠ 0)
+    (hstoreDomain :
+      (stackGcMoveCopyState config
+        (stackGcMoveListAfterCount config state)).memoryDomain
+          ((stackGcMoveCopyState config
+            (stackGcMoveListAfterCount config state)).machine.registers 8) = true) :
+    evalStackFrameFuel (fuel + 46) state (stackGcMoveListCode config) =
+      some (.normal (stackGcMoveListCopyState config state)) := by
+  let afterLoad := stackFrameWriteRegister state 5
+    (state.machine.memory (state.machine.registers 8))
+  let afterCount := stackGcMoveListAfterCount config state
+  let afterMove := stackGcMoveCopyState config afterCount
+  let afterStore := { afterMove with machine :=
+    (wordStackMachineWriteMemory afterMove.machine
+      (afterMove.machine.registers 8) (afterMove.machine.registers 5)) }
+  let afterScratch := stackFrameWriteRegister afterStore
+    config.immediateScratch (BitVec.ofNat width config.bytesInWord)
+  let afterFinal := stackFrameWriteRegister afterScratch 8
+    (wordStackMachineBinOp .add (afterScratch.machine.registers 8)
+      (BitVec.ofNat width config.bytesInWord))
+  have hsub : evalStackFrameFuel (fuel + 42) afterLoad
+      (stackGcSubOne config 7) = some (.normal afterCount) := by
+    simp [afterCount, afterLoad, stackGcMoveListAfterCount,
+      stackGcSubOne, stackGcSubImmediate, stackGcAddImmediate,
+      stackGcConst, stackGcSub, stackSeq, evalStackFrameFuel,
+      evalStackFrameFuelWithCode, stackFrameBasic, stackFrameWriteRegister,
+      wordStackMachineWriteRegister, wordStackMachineBinOp, hscratch7,
+      Ne.symm hscratch7]
+  have hodd' : afterCount.machine.registers 5 &&&
+      BitVec.ofNat width 1 ≠ 0 := by
+    simpa [afterCount] using hodd
+  have hmove := evalStackFrameFuel_stackGcMoveCode_copy_one_fuel config
+    (fuel + 12) afterCount hscratch0 hscratch1 hscratch2 hscratch3 hscratch4
+      hscratch5 hscratch6 hodd' hheaderDomain hheaderLength hnotforwarding
+  have hstore := evalStackFrameFuel_memStore (fuel + 39) afterMove 5 8
+    hstoreDomain
+  have hadd : evalStackFrameFuel (fuel + 40) afterStore
+      (stackGcAddBytes config 8) = some (.normal afterFinal) := by
+    simp [stackGcAddBytes, stackGcAddImmediate, stackGcConst, stackGcAdd,
+      stackSeq, evalStackFrameFuel, evalStackFrameFuelWithCode, stackFrameBasic,
+      stackFrameWriteRegister, wordStackMachineWriteRegister,
+      wordStackMachineBinOp, afterFinal, afterScratch, afterStore,
+      hscratch8, Ne.symm hscratch8]
+  have hload := evalStackFrameFuel_memLoad (fuel + 43) state 5 8 hdomain
+  have hbody : evalStackFrameFuel (fuel + 44) state
+      (stackSeq [
+        .inst (.mem .load 5 8),
+        stackGcSubOne config 7,
+        stackGcMoveCode config,
+        .inst (.mem .store 5 8),
+        stackGcAddBytes config 8]) = some (.normal afterFinal) := by
+    change evalStackFrameFuel (fuel + 44) state
+      (.seq (.inst (.mem .load 5 8))
+        (stackSeq [stackGcSubOne config 7, stackGcMoveCode config,
+          .inst (.mem .store 5 8), stackGcAddBytes config 8])) =
+      some (.normal afterFinal)
+    rw [evalStackFrameFuel_seq_normal (fuel + 43) state afterLoad
+      (.inst (.mem .load 5 8))
+      (stackSeq [stackGcSubOne config 7, stackGcMoveCode config,
+        .inst (.mem .store 5 8), stackGcAddBytes config 8]) hload]
+    change evalStackFrameFuel (fuel + 43) afterLoad
+      (.seq (stackGcSubOne config 7)
+        (stackSeq [stackGcMoveCode config,
+          .inst (.mem .store 5 8), stackGcAddBytes config 8])) =
+      some (.normal afterFinal)
+    rw [evalStackFrameFuel_seq_normal (fuel + 42) afterLoad afterCount
+      (stackGcSubOne config 7)
+      (stackSeq [stackGcMoveCode config, .inst (.mem .store 5 8),
+        stackGcAddBytes config 8]) hsub]
+    have hmove' : evalStackFrameFuel (fuel + 41) afterCount
+        (stackGcMoveCode config) = some (.normal afterMove) := by
+      simpa [afterMove, Nat.add_assoc] using hmove
+    change evalStackFrameFuel (fuel + 42) afterCount
+      (.seq (stackGcMoveCode config)
+        (stackSeq [.inst (.mem .store 5 8), stackGcAddBytes config 8])) =
+      some (.normal afterFinal)
+    rw [evalStackFrameFuel_seq_normal (fuel + 41) afterCount afterMove
+      (stackGcMoveCode config)
+      (stackSeq [.inst (.mem .store 5 8), stackGcAddBytes config 8]) hmove']
+    change evalStackFrameFuel (fuel + 41) afterMove
+      (.seq (.inst (.mem .store 5 8)) (stackGcAddBytes config 8)) =
+      some (.normal afterFinal)
+    have hstore' : evalStackFrameFuel (fuel + 40) afterMove
+        (.inst (.mem .store 5 8)) = some (.normal afterStore) := by
+      simpa [afterStore, Nat.add_assoc] using hstore
+    rw [evalStackFrameFuel_seq_normal (fuel + 40) afterMove afterStore
+      (.inst (.mem .store 5 8)) (stackGcAddBytes config 8) hstore']
+    simpa [Nat.add_assoc] using hadd
+  have hcondition :
+      stackMachineCondition state.machine .notEqual 7 (.imm 0) = true := by
+    simp [stackMachineCondition, hone, NeZero.ne width]
+  have haddress7 (source : StackFrameMachineState width) :
+      (stackGcMoveAddressState config source).machine.registers 7 =
+        source.machine.registers 7 := by
+    simp [stackGcMoveAddressState, stackFrameWriteRegister,
+      wordStackMachineWriteRegister, hscratch0, hscratch1,
+      hscratch7, Ne.symm hscratch0, Ne.symm hscratch1, Ne.symm hscratch7]
+  have hprefix7 (source : StackFrameMachineState width) :
+      (stackGcMoveCopyPrefixState config source).machine.registers 7 =
+        source.machine.registers 7 := by
+    simp [stackGcMoveCopyPrefixState, stackFrameWriteRegister,
+      wordStackMachineWriteRegister, hscratch0, hscratch1, hscratch2,
+      hscratch6, hscratch7, Ne.symm hscratch0, Ne.symm hscratch1,
+      Ne.symm hscratch2, Ne.symm hscratch6, Ne.symm hscratch7]
+  have hsuffix7 (source : StackFrameMachineState width) :
+      (stackGcMoveCopySuffixState config source).machine.registers 7 =
+        source.machine.registers 7 := by
+    simp [stackGcMoveCopySuffixState, stackFrameMemcpyStep,
+      stackFrameWriteRegister, wordStackMachineWriteRegister,
+      wordStackMachineWriteMemory, hscratch0, hscratch1, hscratch2,
+      hscratch3, hscratch4, hscratch5, hscratch6, hscratch7,
+      Ne.symm hscratch0, Ne.symm hscratch1, Ne.symm hscratch2,
+      Ne.symm hscratch3, Ne.symm hscratch4, Ne.symm hscratch5,
+      Ne.symm hscratch6, Ne.symm hscratch7]
+  have hcount7 : afterCount.machine.registers 7 = BitVec.ofNat width 0 := by
+    simp [afterCount, stackGcMoveListAfterCount, afterLoad,
+      stackFrameWriteRegister, wordStackMachineWriteRegister,
+      wordStackMachineBinOp, hone, hscratch7, Ne.symm hscratch7]
+  have hmove7 : afterMove.machine.registers 7 = afterCount.machine.registers 7 := by
+    simp only [afterMove, stackGcMoveCopyState]
+    rw [hsuffix7, hprefix7, haddress7]
+  have hfinal7 : afterFinal.machine.registers 7 = afterMove.machine.registers 7 := by
+    simp [afterFinal, afterScratch, afterStore, stackFrameWriteRegister,
+      wordStackMachineWriteRegister, wordStackMachineWriteMemory,
+      wordStackMachineBinOp, hscratch7, hscratch8,
+      Ne.symm hscratch7, Ne.symm hscratch8]
+  have hcondition' :
+      stackMachineCondition afterFinal.machine .notEqual 7 (.imm 0) = false := by
+    simp [stackMachineCondition, hfinal7, hmove7, hcount7, hone,
+      NeZero.ne width]
+  have hite : evalStackFrameFuel (fuel + 45) state
+      (.ite .notEqual 7 (.imm 0)
+        (stackSeq [
+          .inst (.mem .load 5 8),
+          stackGcSubOne config 7,
+          stackGcMoveCode config,
+          .inst (.mem .store 5 8),
+          stackGcAddBytes config 8])
+        (.break 0)) = some (.normal afterFinal) := by
+    rw [evalStackFrameFuel_ite_true (fuel + 44) state .notEqual 7 (.imm 0)
+      _ (.break 0) hcondition]
+    exact hbody
+  have hdone : evalStackFrameFuel (fuel + 45) afterFinal
+      (.loop (.ite .notEqual 7 (.imm 0)
+        (stackSeq [
+          .inst (.mem .load 5 8),
+          stackGcSubOne config 7,
+          stackGcMoveCode config,
+          .inst (.mem .store 5 8),
+          stackGcAddBytes config 8])
+        (.break 0))) = some (.normal afterFinal) := by
+    simp [evalStackFrameFuel, evalStackFrameFuelWithCode, hcondition']
+  calc
+    evalStackFrameFuel (fuel + 46) state (stackGcMoveListCode config) =
+        evalStackFrameFuel (fuel + 46) state
+          (.loop (.ite .notEqual 7 (.imm 0)
+            (stackSeq [
+              .inst (.mem .load 5 8),
+              stackGcSubOne config 7,
+              stackGcMoveCode config,
+              .inst (.mem .store 5 8),
+              stackGcAddBytes config 8])
+            (.break 0))) := by rfl
+    _ = evalStackFrameFuel (fuel + 45) afterFinal
+          (.loop (.ite .notEqual 7 (.imm 0)
+            (stackSeq [
+              .inst (.mem .load 5 8),
+              stackGcSubOne config 7,
+              stackGcMoveCode config,
+              .inst (.mem .store 5 8),
+              stackGcAddBytes config 8])
+            (.break 0))) := by
+      exact evalStackFrameFuel_loop_normal (fuel + 45) state afterFinal
+        (.ite .notEqual 7 (.imm 0)
+          (stackSeq [
+            .inst (.mem .load 5 8),
+            stackGcSubOne config 7,
+            stackGcMoveCode config,
+            .inst (.mem .store 5 8),
+            stackGcAddBytes config 8])
+          (.break 0)) hite
+    _ = some (.normal (stackGcMoveListCopyState config state)) := by
+      simpa [stackGcMoveListCopyState, afterFinal, afterScratch,
+        afterStore, afterMove, afterCount] using hdone
+
 end Flapjack.RiscV

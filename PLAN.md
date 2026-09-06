@@ -1008,6 +1008,8 @@ definitions, pass ordering, examples, and proof obligations.
   including the forwarding `Move`, store, address advance, and termination.
 - [x] Generalize the one-word object-copy `Move` evaluator to arbitrary
   surplus fuel for outer-collector composition.
+- [x] Prove the one-item object-copy `MoveList` frame transition, including
+  the copy `Move`, store, address advance, and loop termination.
 - [ ] Prove the collector machine semantics and simulation theorem, and add
   generational support if it is needed by a selected target configuration.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state
