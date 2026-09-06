@@ -4873,4 +4873,26 @@ theorem evalStackFrameFuel_stackGcMoveList_copy_body_iter_with_nat_relation
         Ne.symm hscratch4, Ne.symm hscratch5, Ne.symm hscratch6,
         Ne.symm hscratch7, Ne.symm hscratch8]
 
+theorem evalStackFrameFuel_stackGcMoveLoop_done_with_nat_relation
+    [NeZero width] (config : StackGcConfig) (fuel : Nat)
+    (state : StackFrameMachineState width)
+    (scan index destination oldBase : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool) (condition : Bool)
+    (hscan : scan = destination)
+    (hdone : state.machine.registers 3 = state.machine.registers 8)
+    (hrelation : stackGcMachineNatRelation state scan memory) :
+    evalStackFrameFuel (fuel + 3) state (stackGcMoveLoopCode config) =
+        some (.normal state) ∧
+      stackGcNatMoveLoop config (fuel + 1) scan index destination oldBase
+        memory domain condition =
+        { nextIndex := index
+          nextAddress := destination
+          memory := memory
+          condition := condition } ∧
+      stackGcMachineNatRelation state destination memory := by
+  have heval := evalStackFrameFuel_stackGcMoveLoop_done config fuel state hdone
+  refine ⟨heval, ?_, ?_⟩
+  · simp [stackGcNatMoveLoop, hscan]
+  · simpa [hscan] using hrelation
+
 end Flapjack.RiscV
