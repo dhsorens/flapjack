@@ -1957,6 +1957,67 @@ theorem evalStackFrameFuel_stackGcMoveLoop_code_step_scan_matches_nat
   simp [haddress, hmemory', BitVec.toNat_ofNat,
     Nat.mod_eq_of_lt hscanBound, Nat.mod_eq_of_lt hadvance]
 
+theorem evalStackFrameFuel_stackGcMoveLoop_code_step_matches_nat
+    [NeZero width] (config : StackGcConfig) (fuel : Nat)
+    (state : StackFrameMachineState width)
+    (scan index destination oldBase : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool) (condition : Bool)
+    (hscratch7 : config.immediateScratch ≠ 7)
+    (hscratch8 : config.immediateScratch ≠ 8)
+    (hdomain : state.memoryDomain (state.machine.registers 8) = true)
+    (haddress : state.machine.registers 8 = BitVec.ofNat width scan)
+    (hmemory :
+      (state.machine.memory (state.machine.registers 8)).toNat =
+        memory scan)
+    (hcode :
+      stackMachineCondition
+        (stackFrameWriteRegister state 7
+          (state.machine.memory (state.machine.registers 8))).machine
+        .test 7 (.imm 4) = false)
+    (hscan : scan ≠ destination)
+    (hcodeNat : stackGcNatHeaderHasCode (memory scan) = true)
+    (hadvance :
+      scan + (stackGcNatDecodeLength config (memory scan) + 1) *
+        config.bytesInWord < 2 ^ width)
+    (hcount :
+      (((state.machine.memory (state.machine.registers 8) >>>
+          shiftAmount (BitVec.ofNat width
+            (config.wordBits - config.lenSize))) + BitVec.ofNat width 1) <<<
+          shiftAmount (BitVec.ofNat width config.wordShift)).toNat =
+        (stackGcNatDecodeLength config (memory scan) + 1) *
+          config.bytesInWord) :
+    let nextScan :=
+      scan + (stackGcNatDecodeLength config (memory scan) + 1) *
+        config.bytesInWord
+    stackFrameNormalRegisterNat
+        (evalStackFrameFuel (fuel + 12) state
+          (stackSeq [
+            .inst (.mem .load 7 8),
+            .ite .test 7 (.imm 4)
+              (stackSeq [
+                stackGcShiftImmediate config .lsr 7
+                  (config.wordBits - config.lenSize),
+                stackGcAddBytes config 8,
+                stackGcMoveListCode config])
+              (stackSeq [
+                stackGcShiftImmediate config .lsr 7
+                  (config.wordBits - config.lenSize),
+                stackGcAddOne config 7,
+                stackGcShiftImmediate config .lsl 7 config.wordShift,
+                stackGcAdd 8 7])])) 8 =
+        some nextScan ∧
+      stackGcNatMoveLoop config (fuel + 1) scan index destination oldBase
+          memory domain condition =
+        stackGcNatMoveLoop config fuel nextScan index destination oldBase
+          memory domain (condition && domain scan) := by
+  dsimp
+  constructor
+  · exact evalStackFrameFuel_stackGcMoveLoop_code_step_scan_matches_nat
+      config fuel state scan memory domain hscratch7 hscratch8 hdomain
+      haddress hmemory hcode hadvance hcount
+  · exact stackGcNatMoveLoop_code_step config fuel scan index destination
+      oldBase memory domain condition hscan hcodeNat
+
 theorem evalStackFrameFuel_stackGcMoveLoop_iterate [NeZero width]
     (config : StackGcConfig) (fuel stepFuel iterations : Nat)
     (state : StackFrameMachineState width)

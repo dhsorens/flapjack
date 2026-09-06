@@ -1072,6 +1072,8 @@ definitions, pass ordering, examples, and proof obligations.
   prefix into an explicit MoveList evaluator handoff.
 - [x] Bridge the code-object MoveLoop machine step’s scan register to the Nat
   scan advance under explicit fixed-width memory and arithmetic hypotheses.
+- [x] Package the code-object machine scan bridge with the corresponding Nat
+  MoveLoop recursive-step equation for direct induction use.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
