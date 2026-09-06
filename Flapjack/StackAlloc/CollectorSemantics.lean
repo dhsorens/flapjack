@@ -225,6 +225,74 @@ theorem evalStackFrameFuel_loop_normal [NeZero width]
     simpa [evalStackFrameFuel] using hbody
   simp [evalStackFrameFuel, evalStackFrameFuelWithCode, hbody']
 
+def stackFrameIterate [NeZero width]
+    (step : StackFrameMachineState width → StackFrameMachineState width) :
+    Nat → StackFrameMachineState width → StackFrameMachineState width
+  | 0, state => state
+  | iterations + 1, state => stackFrameIterate step iterations (step state)
+
+theorem evalStackFrameFuel_loop_iterate [NeZero width]
+    (fuel stepFuel iterations : Nat)
+    (state : StackFrameMachineState width)
+    (operator : Cmp) (condition : Nat) (right : WordRegImm Nat)
+    (body : StackProg Nat)
+    (step : StackFrameMachineState width → StackFrameMachineState width)
+    (hcondition : ∀ current, current < iterations →
+      stackMachineCondition
+        (stackFrameIterate step current state).machine operator condition right = true)
+    (hbody : ∀ current extra, current < iterations →
+      evalStackFrameFuel (extra + stepFuel)
+        (stackFrameIterate step current state) body =
+        some (.normal (stackFrameIterate step (current + 1) state)))
+    (hfinal :
+      stackMachineCondition
+        (stackFrameIterate step iterations state).machine operator condition right = false) :
+    evalStackFrameFuel (fuel + iterations + stepFuel + 3) state
+        (.loop (.ite operator condition right body (.break 0))) =
+      some (.normal (stackFrameIterate step iterations state)) := by
+  induction iterations generalizing state with
+  | zero =>
+      have hfinal' :
+          stackMachineCondition state.machine operator condition right = false := by
+        simpa [stackFrameIterate] using hfinal
+      simp [stackFrameIterate, evalStackFrameFuel, evalStackFrameFuelWithCode,
+        hfinal']
+  | succ iterations ih =>
+      have hcondition0 := hcondition 0 (by omega)
+      have hbody0 := hbody 0 (fuel + iterations + 2) (by omega)
+      have hite :
+          evalStackFrameFuel (fuel + iterations + stepFuel + 3) state
+              (.ite operator condition right body (.break 0)) =
+            some (.normal (step state)) := by
+        rw [show fuel + iterations + stepFuel + 3 =
+          (fuel + iterations + stepFuel + 2) + 1 by omega]
+        rw [evalStackFrameFuel_ite_true
+          (fuel + iterations + stepFuel + 2) state operator condition right
+          body (.break 0) hcondition0]
+        have hfuel : fuel + iterations + 2 + stepFuel =
+            fuel + iterations + stepFuel + 2 := by omega
+        rw [hfuel] at hbody0
+        simpa [stackFrameIterate] using hbody0
+      have hloop := evalStackFrameFuel_loop_normal
+        (fuel + iterations + stepFuel + 3) state (step state)
+        (.ite operator condition right body (.break 0)) hite
+      have hcondition' : ∀ current, current < iterations →
+          stackMachineCondition
+            (stackFrameIterate step current (step state)).machine operator condition right = true := by
+        intro current hcurrent
+        simpa [stackFrameIterate] using
+          hcondition (current + 1) (by omega)
+      have hbody' : ∀ current extra, current < iterations →
+          evalStackFrameFuel (extra + stepFuel)
+            (stackFrameIterate step current (step state)) body =
+            some (.normal (stackFrameIterate step (current + 1) (step state))) := by
+        intro current extra hcurrent
+        simpa [stackFrameIterate, Nat.add_assoc] using
+          hbody (current + 1) extra (by omega)
+      have hrest := ih (state := step state) hcondition' hbody' hfinal
+      simpa [stackFrameIterate, Nat.add_assoc, Nat.add_left_comm, Nat.add_comm] using
+        hloop.trans hrest
+
 theorem evalStackFrameFuel_stackGcMemcpy_iter [NeZero width]
     (config : StackGcConfig) (fuel words : Nat)
     (state : StackFrameMachineState width)
