@@ -1059,6 +1059,9 @@ definitions, pass ordering, examples, and proof obligations.
   machine/Nat memory relation.
 - [x] Extend the forwarding one-item MoveList bridge to the full bounded
   machine/Nat memory relation.
+- [x] Extend the copying one-item MoveList bridge to the full bounded
+  machine/Nat memory relation, parameterized by the recursive copy-memory
+  correspondence.
 - [x] Expose a forwarding MoveList machine/Nat value bridge, parameterized by
   the explicit fixed-width forwarding-address correspondence.
 - [x] Expose a copying MoveList machine/Nat value bridge, parameterized by the
