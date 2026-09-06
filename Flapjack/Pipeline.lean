@@ -126,6 +126,38 @@ def pipelineWordFunctionsAllocatedWithSpills [NeZero width] :
       let rest ← pipelineWordFunctionsAllocatedWithSpills functions
       pure ((label, wordParameters, stackBody) :: rest)
 
+/-! Spill-aware pipeline with CakeML's append-only bitmap state.  The
+    location-aware Word-to-Stack boundary derives GC roots from the concrete
+    spill slots produced by the allocator and carries the updated bitmap
+    table into the next function. -/
+def pipelineWordFunctionsAllocatedWithSpillsAndBitmaps [NeZero width]
+    (bitmaps : RiscV.WordStackBitmapState) :
+    List (Nat × List Nat × LoopProg (RiscV.Word width)) →
+      Option
+        (List (Nat × List Nat × StackProg Nat) × RiscV.WordStackBitmapState)
+  | [] => some ([], bitmaps)
+  | (label, parameters, body) :: functions => do
+      let slots := loopAccVars body parameters
+      let context : WordContext :=
+        { vars := slots.map (fun name => (name, name + 2)) }
+      let wordParameters := parameters.map (fun name => name + 2)
+      let unallocatedBody := loopToWordProg context body
+      let (_, renamedParameters, renamedBody, allocation) ←
+        wordAllocateSsaFunctionWithClashTreeWithSpillsAndPreferences
+          wordParameters unallocatedBody
+      let config : RiscV.WordStackConfig :=
+        { locations := allocation.locations
+          scratch := 31
+          stackBase := 0
+          addressScratch := 29 }
+      let (stackBody, bitmaps) ←
+        RiscV.wordToStackFunctionWithParametersAndLocationBitmaps config
+          renamedParameters wordAllocatableRegisters.length config.scratch
+          allocation.nextSpill (some 1) bitmaps renamedBody
+      let (rest, bitmaps) ←
+        pipelineWordFunctionsAllocatedWithSpillsAndBitmaps bitmaps functions
+      pure ((label, wordParameters, stackBody) :: rest, bitmaps)
+
 /-! Graph-coloured Word-to-Stack pipeline.
 
 This is the first pipeline entry point that consumes the CakeML-shaped graph
@@ -351,6 +383,27 @@ def compileFlapjackRiscVViaAllocatedStack [NeZero width]
   let functions ← pipelineWordFunctionsAllocatedWithSpills pipeline.loop
   RiscV.compileStackProgramNatListToRiscV { services := services } removeConfig 0 0
     (functions.map (fun (label, _, body) => (label, body)))
+
+/-! Bitmap-carrying variant of the allocator-aware RISC-V entry point.  The
+    returned bitmap table is part of the artifact because the later runtime
+    initialization pass must place it in the bitmap buffer before execution. -/
+def compileFlapjackRiscVViaAllocatedStackWithBitmaps [NeZero width]
+    [BEq (RiscV.Word width)]
+    [OfNat (RiscV.Word width) 0] [OfNat (RiscV.Word width) 1]
+    [Add (RiscV.Word width)] [Mul (RiscV.Word width)]
+    (architecture : RiscV.Architecture) (bytesInWord : RiscV.Word width)
+    (fromNat : Nat → RiscV.Word width) (services : List (FunName × Nat))
+    (removeConfig : StackRemoveConfig)
+    (declarations : List (Decl (RiscV.Word width))) :
+    Option (RiscV.WordStackBitmapState × List (RiscV.Instruction width)) := do
+  let pipeline := compileFlapjack architecture bytesInWord fromNat declarations
+  let (functions, bitmaps) ←
+    pipelineWordFunctionsAllocatedWithSpillsAndBitmaps
+      (RiscV.wordStackInitialBitmaps false) pipeline.loop
+  let instructions ←
+    RiscV.compileStackProgramNatListToRiscV { services := services } removeConfig 0 0
+      (functions.map (fun (label, _, body) => (label, body)))
+  pure (bitmaps, instructions)
 
 /-! End-to-end entry point using the graph-coloured allocator.  This keeps the
 graph allocator selectable while its complete CakeML spill metadata is still

@@ -893,8 +893,12 @@ definitions, pass ordering, examples, and proof obligations.
   clash analysis, colouring, Word-to-Nat conversion, Word-to-Stack,
   StackRemove, and Lab flattening, with register/spill regressions. Bitmap-
   dependent `Alloc`/`StoreConsts` remain an explicit follow-up.
-- [ ] Port bitmap-aware `Alloc`/`StoreConsts` lowering and thread bitmap
-  metadata through the RISC-V stack pipeline.
+- [x] Port bitmap-aware `Alloc`/`StoreConsts` lowering and thread bitmap
+  metadata through the allocator-aware declaration and RISC-V artifact
+  pipeline, returning the generated bitmap table with the code.
+- [ ] Port CakeML's downstream StackAlloc GC insertion pass and its runtime
+  stub, so heap Alloc is lowered semantically instead of remaining an
+  explicit unsupported target marker.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state
   accumulator for Word-to-Stack Alloc/StoreConsts, including sequential
   state-threading and fixed-width regression tests.

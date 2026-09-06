@@ -36,6 +36,7 @@ def labLineInstructionCount : LabLine (Word width) → Nat
       | .jump _ | .call _ | .locValue _ _ | .install | .halt => 1
       | .jumpCmp operator _ right _ => 1 + labConditionPreludeCount operator right
       | .callFfi _ => 2
+      | .heapAlloc _ => 1
 
 def labCollectLabels (_sectionId : Nat) (position : Nat) :
     List (LabLine (Word width)) → List (Nat × Nat)
@@ -148,7 +149,7 @@ def labCompileAsm [NeZero width] (context : WordFfiContext)
   | .callFfi function => do
       let service ← lookupWordFfiService function context.services
       pure [.addi 14 0 (BitVec.ofNat width service), .ecall]
-  | .install | .halt => none
+  | .heapAlloc _ | .install | .halt => none
 
 def labCompileLines [NeZero width] (context : WordFfiContext)
     (sectionId : Nat) (labels : List (Nat × Nat)) (position : Nat) :
@@ -195,6 +196,7 @@ def labAsmNatToWord [NeZero width] : LabAsm Nat → LabAsm (Word width)
   | .call target => .call target
   | .locValue register target => .locValue register target
   | .callFfi function => .callFfi function
+  | .heapAlloc words => .heapAlloc words
   | .install => .install
   | .halt => .halt
 
@@ -297,7 +299,7 @@ def labCompileAsmProgram [NeZero width] (context : WordFfiContext)
   | .callFfi function => do
       let service ← lookupWordFfiService function context.services
       pure [.addi 14 0 (BitVec.ofNat width service), .ecall]
-  | .install | .halt => none
+  | .heapAlloc _ | .install | .halt => none
 
 def labCompileProgramLines [NeZero width] (context : WordFfiContext)
     (labels : List (Nat × Nat × Nat)) (position : Nat) :

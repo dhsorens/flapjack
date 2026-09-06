@@ -635,30 +635,56 @@ def wordStackLiveBitmap (registerCount frameSlots wordBits : Nat)
   let bits := (List.range frameSlots).map (fun slot => names.contains slot)
   wordStackBitmapWords (wordBits - 1) (bits ++ [true])
 
+/- In the allocated Lean pipeline the location map is retained separately
+   from the Word syntax.  Use its concrete spill slots when constructing a
+   frame bitmap; register-resident live values do not occupy stack roots. -/
+def wordStackLiveBitmapFromLocations (config : WordStackConfig)
+    (frameSlots wordBits : Nat) (live : List Nat) : List Nat :=
+  let slots := live.filterMap (fun name =>
+    match wordStackLocation config name with
+    | some (.stack slot) => some slot
+    | some (.register _) | none => none)
+  let bits := (List.range frameSlots).map (fun slot => slots.contains slot)
+  wordStackBitmapWords (wordBits - 1) (bits ++ [true])
+
 def wordStackInsertBitmap (state : WordStackBitmapState)
     (bitmap : List Nat) : WordStackBitmapState × Nat :=
   ({ data := state.data ++ bitmap,
       length := state.length + bitmap.length }, state.length)
 
-def wordStackBitmapWrite (config : WordStackConfig)
+def wordStackBitmapWriteWithBuilder (config : WordStackConfig)
     (bitmapRegister frameSlots : Nat) (state : WordStackBitmapState)
-    (live : List Nat) (registerCount wordBits : Nat) :
+    (live : List Nat) (bitmapBuilder : List Nat → List Nat) :
     StackProg Nat × WordStackBitmapState :=
   if frameSlots = 0 then
     (.skip, state)
   else
-    let bitmap := wordStackLiveBitmap registerCount frameSlots wordBits live
+    let bitmap := bitmapBuilder live
     let (newState, index) := wordStackInsertBitmap state bitmap
     (.seq (.const bitmapRegister (index + 1))
         (.stackStore bitmapRegister (wordStackOffset config 0)), newState)
+
+def wordStackAllocWithBitmapBuilder (config : WordStackConfig)
+    (bitmapRegister frameSlots : Nat) (state : WordStackBitmapState)
+    (live : List Nat) (bitmapBuilder : List Nat → List Nat) :
+    StackProg Nat × WordStackBitmapState :=
+  let (write, state) := wordStackBitmapWriteWithBuilder config bitmapRegister
+    frameSlots state live bitmapBuilder
+  (wordStackJoin write (.alloc 1), state)
+
+def wordStackBitmapWrite (config : WordStackConfig)
+    (bitmapRegister frameSlots : Nat) (state : WordStackBitmapState)
+    (live : List Nat) (registerCount wordBits : Nat) :
+    StackProg Nat × WordStackBitmapState :=
+  wordStackBitmapWriteWithBuilder config bitmapRegister frameSlots state live
+    (wordStackLiveBitmap registerCount frameSlots wordBits)
 
 def wordStackAllocWithBitmaps (config : WordStackConfig)
     (bitmapRegister frameSlots : Nat) (state : WordStackBitmapState)
     (live : List Nat) (registerCount wordBits : Nat) :
     StackProg Nat × WordStackBitmapState :=
-  let (write, state) := wordStackBitmapWrite config bitmapRegister frameSlots
-    state live registerCount wordBits
-  (wordStackJoin write (.alloc 1), state)
+  wordStackAllocWithBitmapBuilder config bitmapRegister frameSlots state live
+    (wordStackLiveBitmap registerCount frameSlots wordBits)
 
 def wordStackStoreConstsWithBitmaps (config : WordStackConfig)
     (registerCount specialScratch wordBits : Nat)
@@ -1805,26 +1831,30 @@ decreasing_by all_goals decreasing_trivial
     structured sequencing.  Other leaves use the existing lowering above;
     call-handler lowering will be migrated to this same state thread with
     the remaining handler/FFI pass. -/
-def wordToStackProgNatWithBitmaps [BEq Nat]
-    (config : WordStackConfig) (registerCount bitmapRegister frameSlots wordBits : Nat)
+def wordToStackProgNatWithBitmapBuilder [BEq Nat]
+    (config : WordStackConfig) (bitmapBuilder : List Nat → List Nat)
+    (registerCount bitmapRegister frameSlots wordBits : Nat)
     (storeConstsStub : Option Nat) (state : WordStackBitmapState) :
     WordProg Nat → Option (StackProg Nat × WordStackBitmapState)
   | .seq first second => do
-      let (first, state) ← wordToStackProgNatWithBitmaps config registerCount
+      let (first, state) ← wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+        registerCount
         bitmapRegister frameSlots wordBits storeConstsStub state first
-      let (second, state) ← wordToStackProgNatWithBitmaps config registerCount
+      let (second, state) ← wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+        registerCount
         bitmapRegister frameSlots wordBits storeConstsStub state second
       pure (.seq first second, state)
   | .loop liveIn body liveOut => do
-      let (body, state) ← wordToStackProgNatWithBitmaps config registerCount
+      let (body, state) ← wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+        registerCount
         bitmapRegister frameSlots wordBits storeConstsStub state body
       pure (.loop body, state)
   | .mustTerminate body =>
-      wordToStackProgNatWithBitmaps config registerCount bitmapRegister frameSlots
+      wordToStackProgNatWithBitmapBuilder config bitmapBuilder registerCount bitmapRegister frameSlots
         wordBits storeConstsStub state body
   | .alloc _ (_, live) =>
-      let (program, state) := wordStackAllocWithBitmaps config bitmapRegister
-        frameSlots state live registerCount wordBits
+      let (program, state) := wordStackAllocWithBitmapBuilder config bitmapRegister
+        frameSlots state live bitmapBuilder
       pure (program, state)
   | .storeConsts _ _ _ _ constants =>
       let (program, state) := wordStackStoreConstsWithBitmaps config registerCount
@@ -1834,6 +1864,22 @@ def wordToStackProgNatWithBitmaps [BEq Nat]
       (wordToStackProgNat config program).map (fun program => (program, state))
 termination_by program => sizeOf program
 decreasing_by all_goals decreasing_trivial
+
+def wordToStackProgNatWithBitmaps [BEq Nat]
+    (config : WordStackConfig) (registerCount bitmapRegister frameSlots wordBits : Nat)
+    (storeConstsStub : Option Nat) (state : WordStackBitmapState) :
+    WordProg Nat → Option (StackProg Nat × WordStackBitmapState) :=
+  wordToStackProgNatWithBitmapBuilder config
+    (wordStackLiveBitmap registerCount frameSlots wordBits)
+    registerCount bitmapRegister frameSlots wordBits storeConstsStub state
+
+def wordToStackProgNatWithLocationBitmaps [BEq Nat]
+    (config : WordStackConfig) (registerCount bitmapRegister frameSlots wordBits : Nat)
+    (storeConstsStub : Option Nat) (state : WordStackBitmapState) :
+    WordProg Nat → Option (StackProg Nat × WordStackBitmapState) :=
+  wordToStackProgNatWithBitmapBuilder config
+    (wordStackLiveBitmapFromLocations config frameSlots wordBits)
+    registerCount bitmapRegister frameSlots wordBits storeConstsStub state
 
 /-! The real Word pipeline is indexed by a fixed-width bit-vector type, while
     StackProg keeps constants as natural numbers so that StackRemove can
@@ -1934,6 +1980,14 @@ def wordToStackProgWordWithBitmaps [NeZero width]
   wordToStackProgNatWithBitmaps config registerCount bitmapRegister frameSlots width
     storeConstsStub state (wordProgToNat program)
 
+def wordToStackProgWordWithLocationBitmaps [NeZero width]
+    (config : WordStackConfig) (registerCount bitmapRegister frameSlots : Nat)
+    (storeConstsStub : Option Nat) (state : WordStackBitmapState)
+    (program : WordProg (Word width)) :
+    Option (StackProg Nat × WordStackBitmapState) :=
+  wordToStackProgNatWithLocationBitmaps config registerCount bitmapRegister frameSlots width
+    storeConstsStub state (wordProgToNat program)
+
 /-! Function-entry lowering for allocated Word programs.  Word calls place
     arguments in the even ABI registers beginning at x2; the allocator may
     place a formal parameter in a different register or in a spill slot.  The
@@ -1952,6 +2006,16 @@ def wordToStackFunctionWithParametersAndBitmaps [NeZero width]
     (state : WordStackBitmapState) (program : WordProg (Word width)) :
     Option (StackProg Nat × WordStackBitmapState) := do
   let (body, state) ← wordToStackProgWordWithBitmaps config registerCount
+    bitmapRegister frameSlots storeConstsStub state program
+  let parameterMoves ← wordStackMovesFromPhysical config parameters 2
+  pure (wordStackJoin parameterMoves body, state)
+
+def wordToStackFunctionWithParametersAndLocationBitmaps [NeZero width]
+    (config : WordStackConfig) (parameters : List Nat)
+    (registerCount bitmapRegister frameSlots : Nat) (storeConstsStub : Option Nat)
+    (state : WordStackBitmapState) (program : WordProg (Word width)) :
+    Option (StackProg Nat × WordStackBitmapState) := do
+  let (body, state) ← wordToStackProgWordWithLocationBitmaps config registerCount
     bitmapRegister frameSlots storeConstsStub state program
   let parameterMoves ← wordStackMovesFromPhysical config parameters 2
   pure (wordStackJoin parameterMoves body, state)

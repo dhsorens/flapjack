@@ -24,6 +24,7 @@ inductive LabAsm (α : Type u) where
   | call (target : LabRef)
   | locValue (register : Nat) (target : LabRef)
   | callFfi (function : FunName)
+  | heapAlloc (words : Nat)
   | install
   | halt
   deriving Repr
@@ -140,12 +141,14 @@ def labFlatten (tail : Bool) (sectionId counter : Nat)
       ⟨[.labAsm (.locValue returnAddress ⟨sectionId, counter⟩) [] 0,
         .labAsm (.callFfi function) [] 0, labLabel sectionId counter],
         false, counter + 1⟩
+  | .alloc words =>
+      ⟨[.labAsm (.heapAlloc words) [] 0], false, counter⟩
   | .locValue register label entry =>
       ⟨[.labAsm (.locValue register ⟨label, entry⟩) [] 0], false, counter⟩
   | .halt register =>
       ⟨[.labAsm .halt [] 0], true, counter⟩
   | .get _ _ | .set _ _ | .opCurrHeap _ _ _
-    | .alloc _ | .storeConsts _ _ _ | .stackAlloc _ | .stackFree _ | .stackStore _ _
+    | .storeConsts _ _ _ | .stackAlloc _ | .stackFree _ | .stackStore _ _
     | .stackStoreAny _ _
     | .stackLoad _ _ | .stackLoadAny _ _ | .stackGetSize _ | .stackSetSize _
     | .bitmapLoad _ _ | .dataBufferWrite _ _ =>
