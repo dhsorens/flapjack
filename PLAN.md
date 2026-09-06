@@ -548,6 +548,9 @@ definitions, pass ordering, examples, and proof obligations.
   over RISC-V word cells, with little-endian and alignment regressions.
 - [x] Extend the RISC-V flat source evaluator with size-aware shared-memory
   loads and stores for words, bytes, halfwords, and aligned 32-bit values.
+- [x] Add a fuel-bounded RISC-V flat source evaluator with structured control
+  results for loops, declaration calls, exceptions, primitive dispatch, FFI,
+  and RISC-V byte/32-bit/shared-memory operations.
 - [x] Prove model-level register agreements for unsigned RISC-V division and
   remainder, including the HOL/RISC-V zero-divisor results.
 - [x] Prove the AddCarry lowering preserves non-result registers outside its

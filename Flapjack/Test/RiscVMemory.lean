@@ -111,4 +111,45 @@ example :
     panRiscVStoreByte, panRiscVSetByte, riscvFlatTestDomain,
     riscvFlatZeroMemory, updatePanValueMap, byteAddress, aligned]
 
+def riscvFlatNoFfi : PanFlatFfiHandler (RiscV.Word 64) :=
+  fun _ _ _ _ _ locals => some locals
+
+def riscvFlatIncrementFunctions :
+    List (FunName × List VarName × Prog (RiscV.Word 64)) :=
+  [("increment", ["x"],
+    .return (.op .add [.var .local "x", .const (BitVec.ofNat 64 1)]))]
+
+def riscvFlatLocalResultNat
+    (result : PanFlatControlResult (RiscV.Word 64)) :
+    Option Nat :=
+  match result with
+  | .normal locals _ _ =>
+      match locals "result" with
+      | some (.word value) => some value.toNat
+      | _ => none
+  | _ => none
+
+example :
+    (evalPanRiscVFlatProgWithCallsAndFfi [] [] riscvFlatNoFfi
+      (BitVec.ofNat 64 0) (BitVec.ofNat 64 100) (BitVec.ofNat 64 8) 4
+      (fun _ => none) (fun _ => none) riscvFlatTestDomain
+      riscvFlatZeroMemory
+      (.while (.const (BitVec.ofNat 64 0))
+        (.assign .local "unused" (.const (BitVec.ofNat 64 1))))).map
+      (fun result => match result with
+      | .normal _ _ _ => true
+      | _ => false) = some true := by
+  native_decide
+
+example :
+    (evalPanRiscVFlatProgWithCallsAndFfi
+      [] riscvFlatIncrementFunctions riscvFlatNoFfi
+      (BitVec.ofNat 64 0) (BitVec.ofNat 64 100) (BitVec.ofNat 64 8) 20
+      (fun _ => none) (fun _ => none) riscvFlatTestDomain
+      riscvFlatZeroMemory
+      (.call (some (some (.local, "result"), none)) "increment"
+        [.const (BitVec.ofNat 64 41)])).bind riscvFlatLocalResultNat =
+      some 42 := by
+  native_decide
+
 end Flapjack

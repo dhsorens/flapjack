@@ -98,6 +98,11 @@ register-plus-constant address materialization as `shareInst`; global
 `TopAddr`/pseudo-store resolution remains a later target-configuration step.
 The first library-level source-to-RISC-V correctness theorem for this composed
 pipeline is in [`Flapjack/Correctness.lean`](Flapjack/Correctness.lean).
+The RISC-V flat source adapter in
+[`Flapjack/RiscV/PanMemory.lean`](Flapjack/RiscV/PanMemory.lean) also exposes
+a fuel-bounded structured evaluator for loops, calls, exceptions, primitive
+dispatch, FFI, and byte-addressed memory; its source-to-target simulation
+theorem remains a later milestone.
 That module now also contains the first compositional Loop-to-Word agreements:
 constant and register-register ADD assignments are related at the destination
 local/register observation, under the explicit architectural x0 invariant.
