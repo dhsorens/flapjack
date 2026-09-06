@@ -971,6 +971,8 @@ definitions, pass ordering, examples, and proof obligations.
   heap-scan, and bitmap-root loops.
 - [x] Prove the bounded one-element collector move-list transition around a
   verified `word_gc_move` result, including loop termination.
+- [x] Integrate the one-element move-list transition with the generalized
+  three-word non-forwarding copy branch.
 - [x] Complete the pure Nat collector copy-case equations for the copied
   value, next destination address, forwarding-header write, and success
   condition.

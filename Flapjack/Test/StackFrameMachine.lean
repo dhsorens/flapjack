@@ -157,6 +157,15 @@ def frameMoveListOneState : StackFrameMachineState 64 :=
       machine := { frameCollectorState.machine with
         registers := fun register => if register = 7 then 1 else 0 } }
 
+def frameMoveListCopyState : StackFrameMachineState 64 :=
+  { frameCollectorState with
+      machine := { frameCollectorState.machine with
+        registers := fun register =>
+          if register = 7 then 1 else if register = 8 then 100 else 0
+        memory := fun address =>
+          if address = 0 then BitVec.ofNat 64 0x200000003
+          else if address = 100 then BitVec.ofNat 64 3 else 0 } }
+
 def frameForwardingState : StackFrameMachineState 64 :=
   { machine :=
       { registers := fun register => if register = 5 then 3 else 0
@@ -250,6 +259,38 @@ example :
   · native_decide
   · apply evalStackFrameGcMoveCode_immediate
     native_decide
+  · native_decide
+  · native_decide
+  · native_decide
+
+example :
+    evalStackFrameFuel 90 frameMoveListCopyState
+      (stackGcMoveListCode frameCollectorConfig) =
+      some (.normal (stackGcMoveListOneState frameCollectorConfig
+        (stackGcMoveCopyIterState frameCollectorConfig 2
+          (stackGcMoveListOnePreState frameCollectorConfig
+            frameMoveListCopyState)))) := by
+  apply evalStackFrameFuel_stackGcMoveList_one
+  · native_decide
+  · native_decide
+  · native_decide
+  · native_decide
+  · native_decide
+  · apply evalStackFrameFuel_stackGcMoveCode_copy_iter
+    · native_decide
+    · native_decide
+    · native_decide
+    · native_decide
+    · native_decide
+    · native_decide
+    · native_decide
+    · native_decide
+    · intro address
+      rfl
+    · native_decide
+    · native_decide
+    · native_decide
+    · native_decide
   · native_decide
   · native_decide
   · native_decide

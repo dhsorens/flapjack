@@ -137,6 +137,8 @@ loops are also proved at the same bounded evaluator boundary.
 The one-element move-list transition is now proved compositionally around an
 arbitrary verified `word_gc_move` result, including load, counter update,
 store-back, address advance, and loop termination.
+The regression suite also composes this transition with the three-word
+non-forwarding copy branch for a concrete root-list entry.
 The pure Nat collector specification also exposes copy-case equations for
 the copied value, next destination address, forwarding-header write, and
 success condition.
