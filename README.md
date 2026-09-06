@@ -122,23 +122,13 @@ Reusable sequence and conditional equations expose the evaluator’s
 fuel-consuming composition rules for later collector simulation proofs.
 The named memcpy body now has an exact state-transition theorem, and its
 one-word loop case composes that theorem with the bounded loop evaluator.
-The same loop composition is now proved for bounded positive word counts,
-with a concrete three-word regression establishing the first reusable
-multi-iteration memcpy instance.
 The collector address/header prefix, copy preparation, and copy finalization
 are named machine transitions; their composition now proves the complete
 one-word non-forwarded copy branch at the bounded machine-state boundary.
-That non-forwarded branch is also generalized to arbitrary positive bounded
-object lengths, with the header length field driving the verified copy count.
 The forwarding suffix is likewise factored and its full branch composition is
 proved, including the unchanged memory and threaded frame components.
 The zero-iteration equations for the move-list, heap-scan, and bitmap-root
 loops are also proved at the same bounded evaluator boundary.
-The one-element move-list transition is now proved compositionally around an
-arbitrary verified `word_gc_move` result, including load, counter update,
-store-back, address advance, and loop termination.
-The regression suite also composes this transition with the three-word
-non-forwarding copy branch for a concrete root-list entry.
 The pure Nat collector specification also exposes copy-case equations for
 the copied value, next destination address, forwarding-header write, and
 success condition.

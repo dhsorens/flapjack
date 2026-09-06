@@ -152,20 +152,6 @@ def frameCollectorConfig : StackGcConfig :=
     bytesInWord := 8
     immediateScratch := 31 }
 
-def frameMoveListOneState : StackFrameMachineState 64 :=
-  { frameCollectorState with
-      machine := { frameCollectorState.machine with
-        registers := fun register => if register = 7 then 1 else 0 } }
-
-def frameMoveListCopyState : StackFrameMachineState 64 :=
-  { frameCollectorState with
-      machine := { frameCollectorState.machine with
-        registers := fun register =>
-          if register = 7 then 1 else if register = 8 then 100 else 0
-        memory := fun address =>
-          if address = 0 then BitVec.ofNat 64 0x200000003
-          else if address = 100 then BitVec.ofNat 64 3 else 0 } }
-
 def frameForwardingState : StackFrameMachineState 64 :=
   { machine :=
       { registers := fun register => if register = 5 then 3 else 0
@@ -202,24 +188,6 @@ def frameMemcpyOneState : StackFrameMachineState 64 :=
         registers := fun register =>
           if register = 0 then 1 else frameCopyState.machine.registers register } }
 
-def frameMemcpyTwoState : StackFrameMachineState 64 :=
-  { frameCopyState with
-      machine := { frameCopyState.machine with
-        registers := fun register =>
-          if register = 0 then 2 else frameCopyState.machine.registers register } }
-
-def frameMemcpyThreeState : StackFrameMachineState 64 :=
-  { frameCopyState with
-      machine := { frameCopyState.machine with
-        registers := fun register =>
-          if register = 0 then 3 else frameCopyState.machine.registers register } }
-
-def frameCopyThreeState : StackFrameMachineState 64 :=
-  { frameCopyState with
-      machine := { frameCopyState.machine with
-        memory := fun address =>
-          if address = 0 then BitVec.ofNat 64 0x200000003 else 0 } }
-
 example :
     (evalStackFrameFuel 3000 frameCollectorState
       (stackGcSimpleCode frameCollectorConfig)).isSome := by
@@ -245,55 +213,6 @@ example :
       some (.normal frameCollectorState) := by
   apply evalStackFrameFuel_stackGcMoveRootsBitmaps_zero
   native_decide
-
-example :
-    evalStackFrameFuel 9 frameMoveListOneState
-      (stackGcMoveListCode frameCollectorConfig) =
-      some (.normal (stackGcMoveListOneState frameCollectorConfig
-        (stackGcMoveListOnePreState frameCollectorConfig frameMoveListOneState))) := by
-  apply evalStackFrameFuel_stackGcMoveList_one
-  · native_decide
-  · native_decide
-  · native_decide
-  · native_decide
-  · native_decide
-  · apply evalStackFrameGcMoveCode_immediate
-    native_decide
-  · native_decide
-  · native_decide
-  · native_decide
-
-example :
-    evalStackFrameFuel 90 frameMoveListCopyState
-      (stackGcMoveListCode frameCollectorConfig) =
-      some (.normal (stackGcMoveListOneState frameCollectorConfig
-        (stackGcMoveCopyIterState frameCollectorConfig 2
-          (stackGcMoveListOnePreState frameCollectorConfig
-            frameMoveListCopyState)))) := by
-  apply evalStackFrameFuel_stackGcMoveList_one
-  · native_decide
-  · native_decide
-  · native_decide
-  · native_decide
-  · native_decide
-  · apply evalStackFrameFuel_stackGcMoveCode_copy_iter
-    · native_decide
-    · native_decide
-    · native_decide
-    · native_decide
-    · native_decide
-    · native_decide
-    · native_decide
-    · native_decide
-    · intro address
-      rfl
-    · native_decide
-    · native_decide
-    · native_decide
-    · native_decide
-  · native_decide
-  · native_decide
-  · native_decide
 
 example :
     stackFrameNormalRegisterNat
@@ -390,59 +309,6 @@ example :
   · native_decide
   · intro address
     rfl
-
-example :
-    evalStackFrameFuel 52 frameMemcpyTwoState
-      (stackGcMemcpy frameCollectorConfig) =
-      some (.normal (stackFrameMemcpyStep frameCollectorConfig
-        (stackFrameMemcpyStep frameCollectorConfig frameMemcpyTwoState))) := by
-  apply evalStackFrameFuel_stackGcMemcpy_two
-  · native_decide
-  · native_decide
-  · native_decide
-  · native_decide
-  · native_decide
-  · native_decide
-  · intro address
-    rfl
-
-example :
-    evalStackFrameFuel 80 frameMemcpyThreeState
-      (stackGcMemcpy frameCollectorConfig) =
-      some (.normal (stackFrameMemcpyIter frameCollectorConfig 3
-        frameMemcpyThreeState)) := by
-  apply evalStackFrameFuel_stackGcMemcpy_iter
-  · native_decide
-  · native_decide
-  · native_decide
-  · native_decide
-  · native_decide
-  · native_decide
-  · native_decide
-  · native_decide
-  · intro address
-    rfl
-
-example :
-    evalStackFrameFuel 85 frameCopyThreeState
-      (stackGcMoveCode frameCollectorConfig) =
-      some (.normal (stackGcMoveCopyIterState frameCollectorConfig 2
-        frameCopyThreeState)) := by
-  apply evalStackFrameFuel_stackGcMoveCode_copy_iter
-  · native_decide
-  · native_decide
-  · native_decide
-  · native_decide
-  · native_decide
-  · native_decide
-  · native_decide
-  · native_decide
-  · intro address
-    rfl
-  · native_decide
-  · native_decide
-  · native_decide
-  · native_decide
 
 example :
     stackFrameNormalMemoryNat

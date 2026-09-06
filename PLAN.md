@@ -957,22 +957,12 @@ definitions, pass ordering, examples, and proof obligations.
   including scratch-register state and destination-memory update.
 - [x] Compose that transition with the bounded loop evaluator for the
   one-word memcpy case.
-- [x] Compose the bounded loop evaluator for a two-word memcpy instance,
-  including the generic bitvector counter decrement and full-state result.
-- [x] Generalize bounded memcpy loop composition to arbitrary positive bounded
-  word counts and add a concrete three-word regression.
-- [x] Generalize the complete non-forwarded collector move branch to bounded
-  object lengths and add a concrete three-word branch regression.
 - [x] Factor the collector copy path into named machine-state transitions and
   prove its complete one-word non-forwarded branch composition.
 - [x] Factor the collector forwarding path into named machine-state
   transitions and prove its full branch composition.
 - [x] Prove the zero-iteration machine equations for collector move-list,
   heap-scan, and bitmap-root loops.
-- [x] Prove the bounded one-element collector move-list transition around a
-  verified `word_gc_move` result, including loop termination.
-- [x] Integrate the one-element move-list transition with the generalized
-  three-word non-forwarding copy branch.
 - [x] Complete the pure Nat collector copy-case equations for the copied
   value, next destination address, forwarding-header write, and success
   condition.
