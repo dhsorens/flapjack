@@ -629,6 +629,40 @@ theorem stackGcNatMoveLoop_data_step
         (condition && domain scan && moved.condition) := by
   simp [stackGcNatMoveLoop, hscan, hcode, Bool.and_assoc]
 
+theorem stackGcNatMoveLoop_iterate_of_step
+    (config : StackGcConfig) (fuel iterations oldBase : Nat)
+    (domain : Nat → Bool)
+    (scans indices destinations : Nat → Nat)
+    (memories : Nat → Nat → Nat)
+    (conditions : Nat → Bool)
+    (hstep : ∀ current remaining, current < iterations →
+      stackGcNatMoveLoop config (remaining + 1)
+        (scans current) (indices current) (destinations current) oldBase
+        (memories current) domain (conditions current) =
+      stackGcNatMoveLoop config remaining
+        (scans (current + 1)) (indices (current + 1))
+        (destinations (current + 1)) oldBase
+        (memories (current + 1)) domain (conditions (current + 1))) :
+    stackGcNatMoveLoop config (fuel + iterations)
+        (scans 0) (indices 0) (destinations 0) oldBase
+        (memories 0) domain (conditions 0) =
+      stackGcNatMoveLoop config fuel
+        (scans iterations) (indices iterations) (destinations iterations)
+        oldBase (memories iterations) domain (conditions iterations) := by
+  induction iterations generalizing scans indices destinations memories conditions with
+  | zero => rfl
+  | succ iterations ih =>
+      have hfirst := hstep 0 (fuel + iterations) (by omega)
+      have hrest := ih
+        (scans := fun current => scans (current + 1))
+        (indices := fun current => indices (current + 1))
+        (destinations := fun current => destinations (current + 1))
+        (memories := fun current => memories (current + 1))
+        (conditions := fun current => conditions (current + 1))
+        (hstep := fun current remaining hcurrent =>
+          hstep (current + 1) remaining (by omega))
+      simpa [Nat.add_assoc, Nat.succ_eq_add_one] using hfirst.trans hrest
+
 theorem stackGcNatMoveLoop_zero
     (config : StackGcConfig) (scan index destination oldBase : Nat)
     (memory : Nat → Nat) (domain : Nat → Bool) :
