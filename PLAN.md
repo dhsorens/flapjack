@@ -1080,6 +1080,8 @@ definitions, pass ordering, examples, and proof obligations.
   code-object MoveLoop state transition preserves it.
 - [x] Introduce the corresponding Nat scan-register relation and prove its
   preservation across the code-object MoveLoop transition.
+- [x] Package the scan and bounded memory projections into a combined
+  machine/Nat MoveLoop relation and prove code-object-step preservation.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
