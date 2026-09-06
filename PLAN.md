@@ -452,6 +452,8 @@ definitions, pass ordering, examples, and proof obligations.
   edge safety, and the clash-tree witness at the function boundary.
 - [x] Add the spill-aware function allocator contract exposing clash safety,
   special-instruction safety, and the spill clash-tree witness.
+- [x] Expose location witnesses for every renamed program variable at the
+  preference-aware spill allocator boundary, in addition to formal parameters.
 - [x] Route the spill-aware RISC-V pipeline through the implemented
   clash-tree/preference allocator and retain its allocation witness at the
   Word-to-Stack boundary.
