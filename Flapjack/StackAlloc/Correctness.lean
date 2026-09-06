@@ -42,6 +42,13 @@ structure StackGcNatMoveLoopResult where
   memory : Nat → Nat
   condition : Bool
 
+structure StackGcNatFullResult where
+  values : List Nat
+  nextIndex : Nat
+  nextAddress : Nat
+  memory : Nat → Nat
+  condition : Bool
+
 def stackGcNatPointerAddress (config : StackGcConfig)
     (base value : Nat) : Nat :=
   base + (value / 2 ^ config.shiftLength) * config.bytesInWord
@@ -147,36 +154,47 @@ def stackGcNatHeaderHasCode (header : Nat) : Bool :=
   (header / 4) % 2 = 1
 
 def stackGcNatMoveLoop (config : StackGcConfig) :
-    Nat → Nat → Nat → Nat → Nat → (Nat → Nat) → (Nat → Bool) →
+    Nat → Nat → Nat → Nat → Nat → (Nat → Nat) → (Nat → Bool) → Bool →
       StackGcNatMoveLoopResult
-  | 0, _, index, destination, _, memory, _ =>
+  | 0, _, index, destination, _, memory, _, _ =>
       { nextIndex := index
         nextAddress := destination
         memory := memory
         condition := false }
-  | fuel + 1, scan, index, destination, oldBase, memory, domain =>
+  | fuel + 1, scan, index, destination, oldBase, memory, domain, condition =>
       if scan = destination then
         { nextIndex := index
           nextAddress := destination
           memory := memory
-          condition := true }
+          condition := condition }
       else
         let header := memory scan
-        let condition := domain scan
+        let condition := condition && domain scan
         let length := stackGcNatDecodeLength config header
         if stackGcNatHeaderHasCode header then
           stackGcNatMoveLoop config fuel
             (scan + (length + 1) * config.bytesInWord) index destination
-            oldBase memory domain
-      else
+            oldBase memory domain condition
+        else
           let moved := stackGcNatMoveList config length
             (scan + config.bytesInWord) index destination oldBase memory domain
           let rest := stackGcNatMoveLoop config fuel moved.nextScan
             moved.nextIndex moved.nextAddress oldBase moved.memory domain
-          { nextIndex := rest.nextIndex
-            nextAddress := rest.nextAddress
-            memory := rest.memory
-            condition := condition && moved.condition && rest.condition }
+            (condition && moved.condition)
+          rest
+
+def stackGcNatFull (config : StackGcConfig)
+    (values : List Nat) (newBase oldBase : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool) (fuel : Nat) :
+    StackGcNatFullResult :=
+  let moved := stackGcNatMoveRoots config values 0 newBase oldBase memory domain
+  let scanned := stackGcNatMoveLoop config fuel newBase moved.nextIndex
+    moved.nextAddress oldBase moved.memory domain moved.condition
+  { values := moved.values
+    nextIndex := scanned.nextIndex
+    nextAddress := scanned.nextAddress
+    memory := scanned.memory
+    condition := scanned.condition }
 
 theorem stackGcNatMove_immediate
     (config : StackGcConfig) (value index destination oldBase : Nat)
@@ -242,7 +260,7 @@ theorem stackGcNatMoveList_zero
 theorem stackGcNatMoveLoop_zero
     (config : StackGcConfig) (scan index destination oldBase : Nat)
     (memory : Nat → Nat) (domain : Nat → Bool) :
-    (stackGcNatMoveLoop config 0 scan index destination oldBase memory domain).condition =
+    (stackGcNatMoveLoop config 0 scan index destination oldBase memory domain true).condition =
       false := by
   rfl
 

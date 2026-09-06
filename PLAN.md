@@ -923,7 +923,8 @@ definitions, pass ordering, examples, and proof obligations.
   equations.
 - [x] Port the word-only collector root traversal, pointer-list traversal,
   and bounded heap-scan recursion with condition and memory threading. The
-  full StackLang heap/bitmap simulation remains.
+  word-level full-collection composition is included; the full StackLang
+  heap/bitmap simulation remains.
 - [ ] Prove the collector machine semantics and simulation theorem, and add
   generational support if it is needed by a selected target configuration.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state

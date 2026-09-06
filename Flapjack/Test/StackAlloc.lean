@@ -227,4 +227,13 @@ example :
       oneWordObjectNatMemory allAddressesInDomain).memory 100 = 3 := by
   native_decide
 
+example :
+    (stackGcNatFull stackGcTestConfig [3] 100 0
+      oneWordObjectNatMemory allAddressesInDomain 10).values = [3] ∧
+      (stackGcNatFull stackGcTestConfig [3] 100 0
+        oneWordObjectNatMemory allAddressesInDomain 10).nextAddress = 108 ∧
+      (stackGcNatFull stackGcTestConfig [3] 100 0
+        oneWordObjectNatMemory allAddressesInDomain 10).condition = true := by
+  native_decide
+
 end Flapjack
