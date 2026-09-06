@@ -904,9 +904,11 @@ definitions, pass ordering, examples, and proof obligations.
   compiler, including fresh-label reservation, continuation recursion, and
   the generated GC-stub section. The collector body remains a separate
   semantic port.
-- [ ] Port CakeML's copying-collector body and machine-level simulation, so
-  the StackAlloc runtime stub becomes semantically executable rather than a
-  placeholder return.
+- [x] Port CakeML's non-generational (`Simple`) copying-collector StackLang
+  body and expose a runtime-backed Nat section compiler. The generated code
+  still needs the machine-level heap/bitmap simulation proof.
+- [ ] Port the collector machine semantics and simulation theorem, and add
+  generational support if it is needed by a selected target configuration.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state
   accumulator for Word-to-Stack Alloc/StoreConsts, including sequential
   state-threading and fixed-width regression tests.

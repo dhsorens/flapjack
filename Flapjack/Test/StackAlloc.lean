@@ -1,4 +1,5 @@
 import Flapjack.RiscV.Lab
+import Flapjack.StackAlloc.Runtime
 
 namespace Flapjack
 
@@ -59,5 +60,26 @@ example :
       { services := [] } stackAllocRemoveConfig stackAllocTestConfig 0 0
       [(1, (.alloc 1 : StackProg Nat))]).isSome := by
   native_decide
+
+def stackGcTestConfig : StackGcConfig :=
+  { shiftLength := 11
+    smallShiftLength := 9
+    lenSize := 32
+    wordShift := 3
+    wordBits := 64
+    bytesInWord := 8
+    immediateScratch := 31 }
+
+example :
+    stackGcSimpleStub stackGcTestConfig =
+      stackSeq [stackGcSimpleCode stackGcTestConfig, .return 0] := by
+  rfl
+
+example :
+    (stackAllocCompileWithSimpleGc stackAllocTestConfig stackGcTestConfig
+      [(1, (.alloc 1 : StackProg Nat))]).head? =
+        some (77, stackGcSimpleStub stackGcTestConfig) := by
+  simp [stackAllocCompileWithSimpleGc, stackAllocSimpleStubs,
+    stackAllocTestConfig]
 
 end Flapjack
