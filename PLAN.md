@@ -1003,6 +1003,9 @@ definitions, pass ordering, examples, and proof obligations.
   memcpy result under explicit memory-range and no-wrap hypotheses.
 - [x] Prove an end-to-end bounded memcpy simulation boundary combining the
   frame evaluator, final destination address, and projected Nat memory.
+- [x] Prove total-domain condition contracts for Nat collector `Move` and
+  `MoveList`, establishing the condition-preservation premise for machine
+  simulation over valid memory ranges.
 - [x] Prove the one-item immediate-pointer `MoveList` frame transition,
   including load, count update, store, address advance, and loop termination.
 - [x] Generalize the forwarding-path `Move` evaluator to arbitrary surplus
