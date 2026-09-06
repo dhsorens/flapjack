@@ -1322,6 +1322,82 @@ theorem evalStackFrameFuel_stackGcMoveList_forwarding_one [NeZero width]
       simpa [stackGcMoveListForwardingState, afterFinal, afterScratch,
         afterStore, afterMove, afterCount] using hdone
 
+theorem evalStackFrameFuel_stackGcMoveList_forwarding_one_matches_nat
+    [NeZero width] (config : StackGcConfig) (fuel : Nat)
+    (state : StackFrameMachineState width)
+    (address value index destination oldBase : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool)
+    (hscratch0 : config.immediateScratch ≠ 0)
+    (hscratch1 : config.immediateScratch ≠ 1)
+    (hscratch5 : config.immediateScratch ≠ 5)
+    (hscratch7 : config.immediateScratch ≠ 7)
+    (hscratch8 : config.immediateScratch ≠ 8)
+    (hone : state.machine.registers 7 = BitVec.ofNat width 1)
+    (hdomain : state.memoryDomain (state.machine.registers 8) = true)
+    (hmemory : (state.machine.memory (state.machine.registers 8)).toNat =
+      memory address)
+    (hloaded : (state.machine.memory (state.machine.registers 8)).toNat = value)
+    (hvalue : value % 2 ≠ 0)
+    (hodd :
+      (stackGcMoveListAfterCount config state).machine.registers 5 &&&
+        BitVec.ofNat width 1 ≠ 0)
+    (hheaderDomain : ∀ pointer,
+      (stackGcMoveListAfterCount config state).memoryDomain pointer = true)
+    (hforward :
+      (stackGcMoveListAfterCount config state).machine.memory
+          (stackGcMachineMoveAddress config
+            (stackGcMoveListAfterCount config state)) &&&
+        BitVec.ofNat width 3 = 0)
+    (hstoreDomain :
+      (stackGcMoveForwardingState config
+        (stackGcMoveListAfterCount config state)).memoryDomain
+          ((stackGcMoveForwardingState config
+            (stackGcMoveListAfterCount config state)).machine.registers 8) = true)
+    (hforwardNat :
+      stackGcNatIsForwardingPointer
+        (memory (stackGcNatPointerAddress config oldBase value)))
+    (hforwardValue :
+      (stackGcMachineForwardingValue config
+        (stackGcMoveListAfterCount config state)).toNat =
+        stackGcNatUpdateAddress config
+          (memory (stackGcNatPointerAddress config oldBase value) / 4) value) :
+    stackFrameNormalRegisterNat
+      (evalStackFrameFuel (fuel + 40) state
+        (stackGcMoveListCode config)) 5 =
+      some ((stackGcNatMoveList config 1 address index destination oldBase
+        memory domain).memory address) := by
+  have hloadedNat : memory address = value := hmemory.symm.trans hloaded
+  have hnat := stackGcNatMoveList_forwarding_one config address value index
+    destination oldBase memory domain hvalue hforwardNat hloadedNat
+  have heval := evalStackFrameFuel_stackGcMoveList_forwarding_one config fuel
+    state hscratch0 hscratch1 hscratch5 hscratch7 hscratch8 hone hdomain hodd
+    hheaderDomain hforward hstoreDomain
+  have hafterMove5 :
+      (stackGcMoveForwardingState config
+        (stackGcMoveListAfterCount config state)).machine.registers 5 =
+        stackGcMachineForwardingValue config
+          (stackGcMoveListAfterCount config state) := by
+    simp [stackGcMoveForwardingState, stackGcMoveForwardingSuffixState,
+      stackGcMoveAddressState, stackFrameWriteRegister,
+      wordStackMachineWriteRegister, wordStackMachineBinOp,
+      wordStackMachineShift, stackGcMachineForwardingValue,
+      stackGcMachineMoveAddress,
+      hscratch0, hscratch1, hscratch5, Ne.symm hscratch0,
+      Ne.symm hscratch1, Ne.symm hscratch5]
+  have hfinal5 :
+      (stackGcMoveListForwardingState config state).machine.registers 5 =
+        (stackGcMoveForwardingState config
+          (stackGcMoveListAfterCount config state)).machine.registers 5 := by
+    simp [stackGcMoveListForwardingState, stackFrameWriteRegister,
+      wordStackMachineWriteRegister, wordStackMachineWriteMemory,
+      hscratch5, hscratch8, Ne.symm hscratch5, Ne.symm hscratch8]
+  rw [hnat]
+  rw [heval]
+  simp only [stackFrameNormalRegisterNat, if_pos rfl]
+  congr 1
+  rw [hfinal5, hafterMove5, hforwardValue]
+  simp
+
 def stackGcMoveListCopyState [NeZero width]
     (config : StackGcConfig) (state : StackFrameMachineState width) :
     StackFrameMachineState width :=
