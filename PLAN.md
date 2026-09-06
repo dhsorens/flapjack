@@ -1068,6 +1068,8 @@ definitions, pass ordering, examples, and proof obligations.
   transition, leaving the nested MoveList execution as an explicit handoff.
 - [x] Specialize the bounded frame-loop induction to `stackGcMoveLoopCode`,
   exposing per-iteration body transitions and final scan termination.
+- [x] Compose the true-test MoveLoop data branch through its length-decoding
+  prefix into an explicit MoveList evaluator handoff.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
