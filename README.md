@@ -115,6 +115,8 @@ The frame state also carries explicit main/shared memory domains, with
 out-of-domain access rejected at the evaluator boundary.
 Its RISC-V memory instructions expose little-endian byte, halfword, and
 32-bit adapter equations and reject unaligned accesses.
+The bounded machine also has the zero-word collector memcpy base-case
+equation, preserving the complete frame state.
 That module now also contains the first compositional Loop-to-Word agreements:
 constant and register-register ADD assignments are related at the destination
 local/register observation, under the explicit architectural x0 invariant.

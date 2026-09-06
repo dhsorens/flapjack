@@ -385,6 +385,15 @@ theorem evalStackFrameFuel_memStore32 [NeZero width]
         (fun state => .normal state) := by
   rfl
 
+theorem evalStackFrameFuel_stackGcMemcpy_zero [NeZero width]
+    (config : StackGcConfig) (fuel : Nat)
+    (state : StackFrameMachineState width)
+    (hzero : state.machine.registers 0 = 0) :
+    evalStackFrameFuel (fuel + 4) state (stackGcMemcpy config) =
+      some (.normal state) := by
+  simp [stackGcMemcpy, stackGcWhile, evalStackFrameFuel,
+    evalStackFrameFuelWithCode, stackMachineCondition, hzero]
+
 theorem evalStackFrameGcMoveCode_immediate [NeZero width]
     (config : StackGcConfig) (fuel : Nat)
     (state : StackFrameMachineState width)

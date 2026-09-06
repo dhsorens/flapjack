@@ -217,6 +217,13 @@ example :
   native_decide
 
 example :
+    evalStackFrameFuel 4 frameCopyState
+      (stackGcMemcpy frameCollectorConfig) =
+      some (.normal frameCopyState) := by
+  apply evalStackFrameFuel_stackGcMemcpy_zero
+  native_decide
+
+example :
     stackFrameNormalMemoryNat
       (evalStackFrameFuel 1000 frameCopyState
         (stackGcMoveCode frameCollectorConfig)) 100 = some 3 := by

@@ -949,6 +949,8 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Expose the RISC-V little-endian byte, halfword, and 32-bit memory
   equations at the bounded StackLang frame-machine boundary, including
   alignment failures.
+- [x] Prove the bounded StackLang collector memcpy zero-word base case,
+  preserving the complete frame state.
 - [ ] Prove the collector machine semantics and simulation theorem, and add
   generational support if it is needed by a selected target configuration.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state
