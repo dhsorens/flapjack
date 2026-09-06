@@ -34,6 +34,36 @@ def stackFrameMemcpyMemory [NeZero width]
         (destination + BitVec.ofNat width config.bytesInWord)
         (fun current => if current = destination then memory source else memory current) address
 
+theorem stackFrameMemcpyMemory_unchanged [NeZero width]
+    (config : StackGcConfig) (words : Nat)
+    (source destination : Word width) (memory : Word width → Word width)
+    (address : Word width)
+    (haddress : ∀ index, index < words →
+      address ≠ destination + BitVec.ofNat width
+        (index * config.bytesInWord)) :
+    stackFrameMemcpyMemory config words source destination memory address =
+      memory address := by
+  induction words generalizing source destination memory with
+  | zero => rfl
+  | succ words ih =>
+      have hdestination : address ≠ destination := by
+        intro heq
+        apply haddress 0 (by omega)
+        simpa using heq
+      have hrest : ∀ index, index < words →
+          address ≠ (destination + BitVec.ofNat width config.bytesInWord) +
+            BitVec.ofNat width (index * config.bytesInWord) := by
+        intro index hindex heq
+        apply haddress (index + 1) (by omega)
+        simpa [Nat.succ_mul, BitVec.ofNat_add, BitVec.add_assoc,
+          BitVec.add_comm] using heq
+      have hmemory := ih
+        (source + BitVec.ofNat width config.bytesInWord)
+        (destination + BitVec.ofNat width config.bytesInWord)
+        (fun current => if current = destination then memory source
+          else memory current) hrest
+      simp [stackFrameMemcpyMemory, hmemory, hdestination]
+
 theorem bitVec_ofNat_succ_sub_one [NeZero width] (words : Nat) :
     BitVec.ofNat width (words + 1) - BitVec.ofNat width 1 =
       BitVec.ofNat width words := by
