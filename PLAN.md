@@ -1006,6 +1006,8 @@ definitions, pass ordering, examples, and proof obligations.
   fuel for compositional outer-collector proofs.
 - [x] Prove the one-item forwarding-pointer `MoveList` frame transition,
   including the forwarding `Move`, store, address advance, and termination.
+- [x] Generalize the one-word object-copy `Move` evaluator to arbitrary
+  surplus fuel for outer-collector composition.
 - [ ] Prove the collector machine semantics and simulation theorem, and add
   generational support if it is needed by a selected target configuration.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state
