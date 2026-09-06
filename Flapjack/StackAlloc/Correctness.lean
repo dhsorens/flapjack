@@ -660,4 +660,64 @@ theorem stackGcNatMoveLoop_ok
       simp [hfalse] at hresult
   | true => rfl
 
+/-! The post-`Memcpy` part of a non-forwarded move.  Keeping this as a
+    separate Nat result mirrors `stackGcMoveCopySuffixAfterMemcpy` and makes
+    the arbitrary-object copy proof compositional. -/
+
+def stackGcNatMoveCopySuffix (config : StackGcConfig)
+    (words source destination index value : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool) : StackGcNatMoveResult :=
+  let copied := stackGcNatMemcpy config words source destination memory domain
+  { value := stackGcNatUpdateAddress config index value
+    nextIndex := index + words
+    nextAddress := copied.nextAddress
+    memory := fun current =>
+      if current = source then index * 4 else copied.memory current
+    condition := copied.condition }
+
+@[simp] theorem stackGcNatMoveCopySuffix_value
+    (config : StackGcConfig) (words source destination index value : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool) :
+    (stackGcNatMoveCopySuffix config words source destination index value
+      memory domain).value = stackGcNatUpdateAddress config index value := by
+  rfl
+
+@[simp] theorem stackGcNatMoveCopySuffix_nextIndex
+    (config : StackGcConfig) (words source destination index value : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool) :
+    (stackGcNatMoveCopySuffix config words source destination index value
+      memory domain).nextIndex = index + words := by
+  rfl
+
+theorem stackGcNatMoveCopySuffix_nextAddress
+    (config : StackGcConfig) (words source destination index value : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool) :
+    (stackGcNatMoveCopySuffix config words source destination index value
+      memory domain).nextAddress = destination + words * config.bytesInWord := by
+  simp [stackGcNatMoveCopySuffix, stackGcNatMemcpy_nextAddress]
+
+theorem stackGcNatMoveCopySuffix_condition
+    (config : StackGcConfig) (words source destination index value : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool) :
+    (stackGcNatMoveCopySuffix config words source destination index value
+      memory domain).condition =
+      (stackGcNatMemcpy config words source destination memory domain).condition := by
+  rfl
+
+theorem stackGcNatMoveCopySuffix_memory_source
+    (config : StackGcConfig) (words source destination index value : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool) :
+    (stackGcNatMoveCopySuffix config words source destination index value
+      memory domain).memory source = index * 4 := by
+  simp [stackGcNatMoveCopySuffix]
+
+theorem stackGcNatMoveCopySuffix_memory_of_ne
+    (config : StackGcConfig) (words source destination index value : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool) (target : Nat)
+    (htarget : target ≠ source) :
+    (stackGcNatMoveCopySuffix config words source destination index value
+      memory domain).memory target =
+      (stackGcNatMemcpy config words source destination memory domain).memory target := by
+  simp [stackGcNatMoveCopySuffix, htarget]
+
 end Flapjack
