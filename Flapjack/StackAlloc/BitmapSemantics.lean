@@ -46,6 +46,10 @@ def stackGcNatFullReadBitmap (config : StackGcConfig)
       else stackGcNatReadBitmap config (bitmaps.drop (value - 1))
   | .loc _ _ => none
 
+def stackGcNatValueRootValid : StackGcNatValue → Prop
+  | .loc _ right => right = 0
+  | .word _ => True
+
 /-! Fuel-bounded counterparts of the CakeML stack codec.  The wrapper
     supplies one more step than the input stack length, which is enough for
     every successful recursive call because each frame consumes its header.
@@ -856,6 +860,33 @@ theorem stackGcNatMoveRootsBitmaps_length
           simp [hencode, hdecode, moved] at hresult
           cases hresult
           exact hlength
+
+theorem stackGcNatMoveValueRoots_condition_of_domain (config : StackGcConfig)
+    (values : List StackGcNatValue) (index destination oldBase : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool)
+    (hvalid : ∀ value, value ∈ values → stackGcNatValueRootValid value)
+    (hdomain : ∀ address, domain address = true) :
+    (stackGcNatMoveValueRoots config values index destination oldBase
+      memory domain).condition = true := by
+  induction values generalizing index destination memory with
+  | nil => simp [stackGcNatMoveValueRoots]
+  | cons value values ih =>
+      let moved := stackGcValueMove config value index destination oldBase
+        memory domain
+      have hmove : moved.condition = true := by
+        cases value with
+        | loc left right =>
+            have hright := hvalid (.loc left right) (by simp)
+            simp [stackGcNatValueRootValid] at hright
+            simp [moved, stackGcValueMove, hright]
+        | word value =>
+            have hnat := stackGcNatMove_condition_of_domain config value
+              index destination oldBase memory domain hdomain
+            simpa [moved, stackGcValueMove] using hnat
+      have hrest := ih moved.nextIndex moved.nextAddress moved.memory (by
+        intro nextValue hnext
+        exact hvalid nextValue (by simp [hnext]))
+      simp [stackGcNatMoveValueRoots, moved, hmove, hrest]
 
 theorem stackGcNatFullBitmaps_length
     (config : StackGcConfig) (bitmaps : List Nat)

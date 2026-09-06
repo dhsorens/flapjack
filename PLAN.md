@@ -951,6 +951,8 @@ definitions, pass ordering, examples, and proof obligations.
   and bounded heap-scan recursion with condition and memory threading. The
   word-level full-collection composition is included; the full StackLang
   heap/bitmap simulation remains.
+- [x] Preserve the total-domain condition invariant through location-valid
+  bitmap root values during Nat root traversal.
 - [x] Port the collector scan-condition invariants corresponding to CakeML's
   `word_gc_move_loop_F` and `word_gc_move_loop_ok` theorems.
 - [x] Add a bounded StackLang frame-state evaluator matching CakeML's
