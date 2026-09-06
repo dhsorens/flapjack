@@ -1142,6 +1142,8 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Prove the bounded arbitrary-word MoveList copying-body evaluator,
   including the load/count prefix, copied-word MoveCode, store, and scan
   advancement.
+- [x] Relate the arbitrary-word copying-body evaluator to the Nat body
+  specification, including final registers and bounded memory projection.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 

@@ -4633,4 +4633,247 @@ theorem evalStackFrameFuel_stackGcMoveList_copy_body_iter [NeZero width]
   simpa [stackGcMoveListCopyIterState, afterFinal, afterScratch,
     afterStore, afterMove, afterCount, afterLoad] using hbody
 
+theorem evalStackFrameFuel_stackGcMoveList_copy_body_iter_with_nat_relation
+    [NeZero width] (config : StackGcConfig) (fuel words : Nat)
+    (state : StackFrameMachineState width)
+    (scan source destination index value : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool)
+    (hscratch0 : config.immediateScratch ≠ 0)
+    (hscratch1 : config.immediateScratch ≠ 1)
+    (hscratch2 : config.immediateScratch ≠ 2)
+    (hscratch3 : config.immediateScratch ≠ 3)
+    (hscratch4 : config.immediateScratch ≠ 4)
+    (hscratch5 : config.immediateScratch ≠ 5)
+    (hscratch6 : config.immediateScratch ≠ 6)
+    (hscratch7 : config.immediateScratch ≠ 7)
+    (hscratch8 : config.immediateScratch ≠ 8)
+    (hdomain : state.memoryDomain (state.machine.registers 8) = true)
+    (haddress : state.machine.registers 8 = BitVec.ofNat width scan)
+    (hscanBound : scan < 2 ^ width)
+    (hnextBound : scan + config.bytesInWord < 2 ^ width)
+    (hmemory : ∀ current, current < 2 ^ width →
+      (state.machine.memory (BitVec.ofNat width current)).toNat =
+        memory current)
+    (hloadedNat : memory scan = value)
+    (hvalue : value % 2 ≠ 0)
+    (hodd :
+      (stackGcMoveListAfterCount config state).machine.registers 5 &&&
+        BitVec.ofNat width 1 ≠ 0)
+    (hheaderDomain : ∀ address,
+      (stackGcMoveListAfterCount config state).memoryDomain address = true)
+    (hnotforwarding :
+      (stackGcMoveListAfterCount config state).machine.memory
+          (stackGcMachineMoveAddress config
+            (stackGcMoveListAfterCount config state)) &&&
+        BitVec.ofNat width 3 ≠ 0)
+    (hcopyCount :
+      (stackGcMoveCopyPrefixState config
+        (stackGcMoveAddressState config
+          (stackGcMoveListAfterCount config state))).machine.registers 0 =
+            BitVec.ofNat width words)
+    (hbound : words < 2 ^ width)
+    (hcopyDomain : ∀ address,
+      (stackGcMoveCopyPrefixState config
+        (stackGcMoveAddressState config
+          (stackGcMoveListAfterCount config state))).memoryDomain address = true)
+    (hstate : StackFrameMemcpyCorrespondence
+      (stackGcMoveCopyPrefixState config
+        (stackGcMoveAddressState config
+          (stackGcMoveListAfterCount config state))) words
+      (BitVec.ofNat width source) (BitVec.ofNat width destination)
+      (fun current => BitVec.ofNat width (memory current.toNat)))
+    (hmemoryBound : ∀ address, memory address < 2 ^ width)
+    (hsource : ∀ offset, offset ≤ words →
+      source + offset * config.bytesInWord < 2 ^ width)
+    (hdestination : ∀ offset, offset ≤ words →
+      destination + offset * config.bytesInWord < 2 ^ width)
+    (hwriteAddress :
+      (stackGcMoveCopySuffixStateAfterMemcpy config
+        (stackFrameMemcpyIter config words
+          (stackGcMoveCopyPrefixState config
+            (stackGcMoveAddressState config
+              (stackGcMoveListAfterCount config state))))).machine.registers 2 =
+        BitVec.ofNat width source)
+    (hwriteValue :
+      ((stackGcMoveCopySuffixStateAfterMemcpy config
+        (stackFrameMemcpyIter config words
+          (stackGcMoveCopyPrefixState config
+            (stackGcMoveAddressState config
+              (stackGcMoveListAfterCount config state))))).machine.registers 0).toNat =
+        index * 4)
+    (hfinalDestination :
+      ((stackGcMoveCopySuffixStateAfterMemcpy config
+        (stackFrameMemcpyIter config words
+          (stackGcMoveCopyPrefixState config
+            (stackGcMoveAddressState config
+              (stackGcMoveListAfterCount config state))))).machine.registers 3).toNat =
+        destination + words * config.bytesInWord)
+    (hfinalValue :
+      ((stackGcMoveCopySuffixStateAfterMemcpy config
+        (stackFrameMemcpyIter config words
+          (stackGcMoveCopyPrefixState config
+            (stackGcMoveAddressState config
+              (stackGcMoveListAfterCount config state))))).machine.registers 5).toNat =
+        stackGcNatUpdateAddress config index value)
+    (hfinalIndex :
+      ((stackGcMoveCopySuffixStateAfterMemcpy config
+        (stackFrameMemcpyIter config words
+          (stackGcMoveCopyPrefixState config
+            (stackGcMoveAddressState config
+              (stackGcMoveListAfterCount config state))))).machine.registers 4).toNat =
+        index + words)
+    (hsourceBound : source < 2 ^ width)
+    (hcopyAddress :
+      (stackGcMoveCopySuffixIterState config words
+        (stackGcMoveCopyPrefixState config
+          (stackGcMoveAddressState config
+            (stackGcMoveListAfterCount config state)))).machine.registers 8 =
+        state.machine.registers 8)
+    (hstoreDomain :
+      (stackGcMoveCopySuffixIterState config words
+        (stackGcMoveCopyPrefixState config
+          (stackGcMoveAddressState config
+            (stackGcMoveListAfterCount config state)))).memoryDomain
+        ((stackGcMoveCopySuffixIterState config words
+          (stackGcMoveCopyPrefixState config
+            (stackGcMoveAddressState config
+              (stackGcMoveListAfterCount config state)))).machine.registers 8) =
+          true)
+    (hnonforward :
+      ¬ stackGcNatIsForwardingPointer
+        (memory (stackGcNatPointerAddress config 0 value))) :
+    evalStackFrameFuel (fuel + words + 44) state
+        (stackSeq [
+          .inst (.mem .load 5 8),
+          stackGcSubOne config 7,
+          stackGcMoveCode config,
+          .inst (.mem .store 5 8),
+          stackGcAddBytes config 8]) =
+      some (.normal (stackGcMoveListCopyIterState config words state)) ∧
+      ((stackGcMoveListCopyIterState config words state).machine.registers 8).toNat =
+        (stackGcNatMoveListCopyBody config words scan source destination index value
+          memory domain).nextScan ∧
+      ((stackGcMoveListCopyIterState config words state).machine.registers 4).toNat =
+        (stackGcNatMoveListCopyBody config words scan source destination index value
+          memory domain).nextIndex ∧
+      ((stackGcMoveListCopyIterState config words state).machine.registers 3).toNat =
+        (stackGcNatMoveListCopyBody config words scan source destination index value
+          memory domain).nextAddress ∧
+      ((stackGcMoveListCopyIterState config words state).machine.registers 5).toNat =
+        (stackGcNatMoveListCopyBody config words scan source destination index value
+          memory domain).memory scan ∧
+      ∀ target, target < 2 ^ width →
+        ((stackGcMoveListCopyIterState config words state).machine.memory
+          (BitVec.ofNat width target)).toNat =
+          (stackGcNatMoveListCopyBody config words scan source destination index value
+            memory domain).memory target := by
+  let afterCount := stackGcMoveListAfterCount config state
+  let afterMove := stackGcMoveCopySuffixIterState config words
+    (stackGcMoveCopyPrefixState config
+      (stackGcMoveAddressState config afterCount))
+  let afterStore := { afterMove with machine :=
+    (wordStackMachineWriteMemory afterMove.machine
+      (afterMove.machine.registers 8) (afterMove.machine.registers 5)) }
+  let afterScratch := stackFrameWriteRegister afterStore
+    config.immediateScratch (BitVec.ofNat width config.bytesInWord)
+  let afterFinal := stackFrameWriteRegister afterScratch 8
+    (wordStackMachineBinOp .add (afterScratch.machine.registers 8)
+      (BitVec.ofNat width config.bytesInWord))
+  have hmoveAddress : afterMove.machine.registers 8 = BitVec.ofNat width scan := by
+    dsimp [afterMove, afterCount]
+    rw [hcopyAddress, haddress]
+  have hmove := evalStackFrameFuel_stackGcMoveCode_copy_iter_with_nat_relation
+    config (fuel + 12) words afterCount source destination index value memory domain
+    hscratch0 hscratch1 hscratch2 hscratch3 hscratch4 hscratch5 hscratch6 hodd
+    hheaderDomain hnotforwarding hcopyCount hbound hcopyDomain hstate hmemoryBound
+    hsource hdestination hwriteAddress hwriteValue hfinalDestination hfinalValue
+    hfinalIndex hsourceBound
+  have heval := evalStackFrameFuel_stackGcMoveList_copy_body_iter config fuel words
+    state hscratch0 hscratch1 hscratch2 hscratch3 hscratch4 hscratch5 hscratch6
+    hscratch7 hscratch8 hdomain hodd hheaderDomain hnotforwarding hcopyCount hbound
+    hstoreDomain
+  refine ⟨heval, ?_, ?_, ?_, ?_, ?_⟩
+  · change (afterFinal.machine.registers 8).toNat =
+      (stackGcNatMoveListCopyBody config words scan source destination index value
+        memory domain).nextScan
+    have hbytes : config.bytesInWord < 2 ^ width := by omega
+    simp [afterFinal, afterScratch, afterStore,
+      stackFrameWriteRegister, wordStackMachineWriteRegister,
+      wordStackMachineWriteMemory, wordStackMachineBinOp, haddress,
+      hmoveAddress, hbytes, hnextBound, BitVec.toNat_add,
+      BitVec.toNat_ofNat, Nat.mod_eq_of_lt hnextBound, hscratch5,
+      hscratch7, hscratch8, Ne.symm hscratch5, Ne.symm hscratch7,
+      Ne.symm hscratch8, stackGcNatMoveListCopyBody]
+  · change (afterFinal.machine.registers 4).toNat =
+      (stackGcNatMoveListCopyBody config words scan source destination index value
+        memory domain).nextIndex
+    simpa [afterFinal, afterScratch, afterStore, afterMove,
+      stackGcNatMoveListCopyBody, stackFrameWriteRegister,
+      wordStackMachineWriteRegister, wordStackMachineWriteMemory,
+      wordStackMachineBinOp,
+      hscratch0, hscratch1, hscratch2, hscratch3, hscratch4,
+      hscratch5, hscratch6, hscratch7, hscratch8,
+      Ne.symm hscratch0, Ne.symm hscratch1, Ne.symm hscratch2,
+      Ne.symm hscratch3, Ne.symm hscratch4, Ne.symm hscratch5,
+      Ne.symm hscratch6, Ne.symm hscratch7, Ne.symm hscratch8] using hmove.2.2.1
+  · change (afterFinal.machine.registers 3).toNat =
+      (stackGcNatMoveListCopyBody config words scan source destination index value
+        memory domain).nextAddress
+    simpa [afterFinal, afterScratch, afterStore, afterMove,
+      stackGcNatMoveListCopyBody, stackFrameWriteRegister,
+      wordStackMachineWriteRegister, wordStackMachineWriteMemory,
+      wordStackMachineBinOp,
+      hscratch0, hscratch1, hscratch2, hscratch3, hscratch4,
+      hscratch5, hscratch6, hscratch7, hscratch8,
+      Ne.symm hscratch0, Ne.symm hscratch1, Ne.symm hscratch2,
+      Ne.symm hscratch3, Ne.symm hscratch4, Ne.symm hscratch5,
+      Ne.symm hscratch6, Ne.symm hscratch7, Ne.symm hscratch8] using hmove.2.1
+  · change (afterFinal.machine.registers 5).toNat =
+      (stackGcNatMoveListCopyBody config words scan source destination index value
+        memory domain).memory scan
+    simpa [afterFinal, afterScratch, afterStore, afterMove,
+      stackGcNatMoveListCopyBody, stackFrameWriteRegister,
+      wordStackMachineWriteRegister, wordStackMachineWriteMemory,
+      wordStackMachineBinOp,
+      hscratch0, hscratch1, hscratch2, hscratch3, hscratch4,
+      hscratch5, hscratch6, hscratch7, hscratch8,
+      Ne.symm hscratch0, Ne.symm hscratch1, Ne.symm hscratch2,
+      Ne.symm hscratch3, Ne.symm hscratch4, Ne.symm hscratch5,
+      Ne.symm hscratch6, Ne.symm hscratch7, Ne.symm hscratch8] using hmove.2.2.2.1
+  · intro target htarget
+    change (afterFinal.machine.memory (BitVec.ofNat width target)).toNat =
+      (stackGcNatMoveListCopyBody config words scan source destination index value
+        memory domain).memory target
+    by_cases htargetScan : target = scan
+    · subst target
+      have hvalue' := hmove.2.2.2.1
+      simp [afterFinal, afterScratch, afterStore, afterMove,
+        stackGcNatMoveListCopyBody,
+        stackFrameWriteRegister, wordStackMachineWriteRegister,
+        wordStackMachineWriteMemory, wordStackMachineBinOp, haddress,
+        hcopyAddress, hmoveAddress, hvalue', hloadedNat, hscratch0,
+        hscratch1, hscratch2, hscratch3, hscratch4, hscratch5,
+        hscratch6, hscratch7, hscratch8, Ne.symm hscratch0,
+        Ne.symm hscratch1, Ne.symm hscratch2, Ne.symm hscratch3,
+        Ne.symm hscratch4, Ne.symm hscratch5, Ne.symm hscratch6,
+        Ne.symm hscratch7, Ne.symm hscratch8]
+    · have hcopy := hmove.2.2.2.2 target htarget
+      have htargetWord : BitVec.ofNat width target ≠ afterMove.machine.registers 8 := by
+        rw [hcopyAddress, haddress]
+        intro heq
+        have hto := congrArg BitVec.toNat heq
+        apply htargetScan
+        simpa [BitVec.toNat_ofNat, Nat.mod_eq_of_lt htarget,
+          Nat.mod_eq_of_lt hscanBound] using hto
+      simp [afterFinal, afterScratch, afterStore, afterMove,
+        stackGcNatMoveListCopyBody,
+        stackFrameWriteRegister, wordStackMachineWriteRegister,
+        wordStackMachineWriteMemory, wordStackMachineBinOp, haddress,
+        hcopyAddress, htargetWord, htargetScan, hcopy, hscratch0,
+        hscratch1, hscratch2, hscratch3, hscratch4, hscratch5,
+        hscratch6, hscratch7, hscratch8, Ne.symm hscratch0,
+        Ne.symm hscratch1, Ne.symm hscratch2, Ne.symm hscratch3,
+        Ne.symm hscratch4, Ne.symm hscratch5, Ne.symm hscratch6,
+        Ne.symm hscratch7, Ne.symm hscratch8]
+
 end Flapjack.RiscV
