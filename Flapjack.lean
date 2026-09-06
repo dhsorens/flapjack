@@ -45,6 +45,7 @@ import Flapjack.Stack
 import Flapjack.StackAlloc
 import Flapjack.StackAlloc.Runtime
 import Flapjack.StackAlloc.Machine
+import Flapjack.StackAlloc.Correctness
 import Flapjack.StackRemove
 import Flapjack.Lab
 import Flapjack.RiscV.Lab

@@ -1,6 +1,7 @@
 import Flapjack.RiscV.Lab
 import Flapjack.StackAlloc.Runtime
 import Flapjack.StackAlloc.Machine
+import Flapjack.StackAlloc.Correctness
 
 namespace Flapjack
 
@@ -170,6 +171,45 @@ example :
       (fun target => if target = 77 then
         some (stackGcSimpleStub stackGcTestConfig) else none)
       zeroStackMachineState 77 (.skip : StackProg Nat)).isSome := by
+  native_decide
+
+example :
+    (evalStackSectionsFuel 6000
+      (stackAllocCompileWithSimpleGc stackAllocTestConfig stackGcTestConfig
+        [(1, (.alloc 1 : StackProg Nat))])
+      1 zeroStackMachineState).isSome := by
+  native_decide
+
+example :
+    stackGcSimpleZeroObservation
+      (evalStackSectionsFuel 6000
+        (stackAllocCompileWithSimpleGc stackAllocTestConfig stackGcTestConfig
+          [(1, (.alloc 1 : StackProg Nat))])
+        1 zeroStackMachineState) = true := by
+  native_decide
+
+def oneWordObjectNatMemory : Nat → Nat :=
+  fun address => if address = 0 then 3 else 0
+
+def allAddressesInDomain : Nat → Bool :=
+  fun _ => true
+
+example :
+    (stackGcNatMove stackGcTestConfig 3 1 100 0
+      oneWordObjectNatMemory allAddressesInDomain).value = 2051 := by
+  native_decide
+
+example :
+    (stackGcNatMove stackGcTestConfig 3 1 100 0
+      oneWordObjectNatMemory allAddressesInDomain).memory 100 = 3 := by
+  native_decide
+
+example :
+    stackMachineNormalRegisterNat
+      (evalStackProgFuel 1000 oneWordObjectState
+        (stackGcMoveCode stackGcTestConfig)) 5 =
+      some (stackGcNatMove stackGcTestConfig 3 1 100 0
+        oneWordObjectNatMemory allAddressesInDomain).value := by
   native_decide
 
 end Flapjack

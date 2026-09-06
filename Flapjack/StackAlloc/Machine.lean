@@ -21,6 +21,12 @@ inductive StackMachineControl (width : Nat) where
   | returned (state : WordStackMachineState width) (value : Word width)
   | halted (state : WordStackMachineState width) (value : Word width)
 
+def stackMachineLookup : List (Nat × StackProg Nat) → Nat →
+    Option (StackProg Nat)
+  | [], _ => none
+  | (label, program) :: sections, target =>
+      if label = target then some program else stackMachineLookup sections target
+
 def stackMachineCondition [NeZero width] (state : WordStackMachineState width)
     (operator : Cmp) (condition : Nat) (right : WordRegImm Nat) : Bool :=
   let leftValue := state.registers condition
@@ -53,70 +59,99 @@ def stackMachineWriteBitmap [NeZero width]
   wordStackMachineWriteRegister state destination
     (state.memory (state.stores .bitmapBase + state.registers address))
 
-def evalStackProgFuel [NeZero width] :
-    Nat → WordStackMachineState width → StackProg Nat →
-      Option (StackMachineControl width)
-  | 0, _, _ => none
-  | fuel + 1, state, .skip => some (.normal state)
-  | fuel + 1, state, .const destination value =>
+def evalStackProgFuelWithCode [NeZero width] :
+    Nat → (Nat → Option (StackProg Nat)) → WordStackMachineState width →
+      StackProg Nat →
+    Option (StackMachineControl width)
+  | 0, _, _, _ => none
+  | fuel + 1, _, state, .skip => some (.normal state)
+  | fuel + 1, _, state, .const destination value =>
       some (.normal (wordStackMachineWriteRegister state destination
         (BitVec.ofNat width value)))
-  | fuel + 1, state, .arith operator destination left right =>
+  | fuel + 1, _, state, .arith operator destination left right =>
       some (.normal (wordStackMachineWriteRegister state destination
         (wordStackMachineBinOp operator (state.registers left)
           (state.registers right))))
-  | fuel + 1, state, .shift operator destination left right =>
+  | fuel + 1, _, state, .shift operator destination left right =>
       some (.normal (wordStackMachineWriteRegister state destination
         (wordStackMachineShift operator (state.registers left)
           (state.registers right))))
-  | fuel + 1, state, .inst instruction =>
+  | fuel + 1, _, state, .inst instruction =>
       (evalWordStackMachine state (.inst instruction)).map .normal
-  | fuel + 1, state, .get destination store =>
+  | fuel + 1, _, state, .get destination store =>
       some (.normal (wordStackMachineWriteRegister state destination
         (state.stores store)))
-  | fuel + 1, state, .set store source =>
+  | fuel + 1, _, state, .set store source =>
       some (.normal (wordStackMachineWriteStore state store
         (state.registers source)))
-  | fuel + 1, state, .opCurrHeap operator destination source =>
+  | fuel + 1, _, state, .opCurrHeap operator destination source =>
       some (.normal (wordStackMachineWriteRegister state destination
         (wordStackMachineBinOp operator (state.registers source)
           (state.stores .currHeap))))
-  | fuel + 1, state, .stackLoad register offset =>
+  | fuel + 1, _, state, .stackLoad register offset =>
       some (.normal (wordStackMachineWriteRegister state register
         (state.stack offset)))
-  | fuel + 1, state, .stackStore register offset =>
+  | fuel + 1, _, state, .stackStore register offset =>
       some (.normal (wordStackMachineWriteSlot state offset
         (state.registers register)))
-  | fuel + 1, state, .stackLoadAny register offsetRegister =>
+  | fuel + 1, _, state, .stackLoadAny register offsetRegister =>
       some (.normal (wordStackMachineWriteRegister state register
         (stackMachineReadAny state offsetRegister)))
-  | fuel + 1, state, .stackStoreAny register offsetRegister =>
+  | fuel + 1, _, state, .stackStoreAny register offsetRegister =>
       some (.normal (stackMachineWriteAny state register offsetRegister
         (state.registers register)))
-  | fuel + 1, state, .bitmapLoad destination address =>
+  | fuel + 1, _, state, .bitmapLoad destination address =>
       some (.normal (stackMachineWriteBitmap state destination address))
-  | fuel + 1, state, .seq first second =>
-      match evalStackProgFuel fuel state first with
-      | some (.normal state) => evalStackProgFuel fuel state second
+  | fuel + 1, code, state, .seq first second =>
+      match evalStackProgFuelWithCode fuel code state first with
+      | some (.normal state) => evalStackProgFuelWithCode fuel code state second
       | result => result
-  | fuel + 1, state, .ite operator condition right thenBranch elseBranch =>
+  | fuel + 1, code, state, .ite operator condition right thenBranch elseBranch =>
       if stackMachineCondition state operator condition right then
-        evalStackProgFuel fuel state thenBranch
+        evalStackProgFuelWithCode fuel code state thenBranch
       else
-        evalStackProgFuel fuel state elseBranch
-  | fuel + 1, state, .loop body =>
-      match evalStackProgFuel fuel state body with
-      | some (.normal state) => evalStackProgFuel fuel state (.loop body)
-      | some (.continue state) => evalStackProgFuel fuel state (.loop body)
+        evalStackProgFuelWithCode fuel code state elseBranch
+  | fuel + 1, code, state, .loop body =>
+      match evalStackProgFuelWithCode fuel code state body with
+      | some (.normal state) => evalStackProgFuelWithCode fuel code state (.loop body)
+      | some (.continue state) => evalStackProgFuelWithCode fuel code state (.loop body)
       | some (.break state) => some (.normal state)
       | result => result
-  | fuel + 1, state, .break _ => some (.break state)
-  | fuel + 1, state, .continue _ => some (.continue state)
-  | fuel + 1, state, .return register =>
+  | fuel + 1, _, state, .break _ => some (.break state)
+  | fuel + 1, _, state, .continue _ => some (.continue state)
+  | fuel + 1, _, state, .return register =>
       some (.returned state (state.registers register))
-  | fuel + 1, state, .halt register =>
+  | fuel + 1, _, state, .halt register =>
       some (.halted state (state.registers register))
-  | _, _, _ => none
+  | fuel + 1, code, state, .call returnHandler (.label target) none =>
+      match code target with
+      | none => none
+      | some callee =>
+          match evalStackProgFuelWithCode fuel code state callee with
+          | some (.returned state value) =>
+              match returnHandler with
+              | some (returnCode, _, _, _) =>
+                  evalStackProgFuelWithCode fuel code state returnCode
+              | none => some (.returned state value)
+          | some (.halted state value) => some (.halted state value)
+          | _ => none
+  | fuel + 1, _, _, .call _ _ _ => none
+  | _, _, _, _ => none
+
+def evalStackProgFuel [NeZero width] :
+    Nat → WordStackMachineState width → StackProg Nat →
+    Option (StackMachineControl width) :=
+  fun fuel state program =>
+    evalStackProgFuelWithCode fuel (fun _ => none) state program
+
+def evalStackSectionsFuel [NeZero width]
+    (fuel : Nat) (sections : List (Nat × StackProg Nat)) (entry : Nat)
+    (state : WordStackMachineState width) :
+    Option (StackMachineControl width) :=
+  match stackMachineLookup sections entry with
+  | some program =>
+      evalStackProgFuelWithCode fuel (stackMachineLookup sections) state program
+  | none => none
 
 def stackGcSimpleZeroObservation [NeZero width]
     (result : Option (StackMachineControl width)) : Bool :=
@@ -188,6 +223,13 @@ theorem evalStackProgFuel_loop_break [NeZero width]
     (fuel : Nat) (state : WordStackMachineState width) :
     evalStackProgFuel (fuel + 2) state
       (.loop (.break 0) : StackProg Nat) = some (.normal state) := by
-  simp [evalStackProgFuel]
+  simp [evalStackProgFuel, evalStackProgFuelWithCode]
+
+theorem evalStackSectionsFuel_unknown [NeZero width]
+    (fuel : Nat) (sections : List (Nat × StackProg Nat))
+    (entry : Nat) (state : WordStackMachineState width)
+    (hunknown : stackMachineLookup sections entry = none) :
+    evalStackSectionsFuel fuel sections entry state = none := by
+  simp [evalStackSectionsFuel, hunknown]
 
 end Flapjack.RiscV

@@ -913,6 +913,12 @@ definitions, pass ordering, examples, and proof obligations.
   its return continuation.
 - [x] Add CakeML-aligned halt-PC lowering and assemble the runtime-backed
   Simple StackAlloc image through the RV64 pipeline.
+- [x] Add a linked StackLang evaluator that resolves generated label calls,
+  executes the runtime collector stub, and resumes the explicit return
+  continuation under fuel.
+- [x] Port the word-only CakeML collector specification for forwarding
+  pointers, object copying, destination-memory updates, and preservation
+  equations. The full StackLang heap/bitmap simulation remains.
 - [ ] Prove the collector machine semantics and simulation theorem, and add
   generational support if it is needed by a selected target configuration.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state
