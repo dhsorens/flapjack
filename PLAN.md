@@ -1017,6 +1017,8 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Compose the frame-machine immediate `MoveList` evaluator with the Nat
   immediate transition, proving the machine’s loaded value matches the
   projected Nat result under explicit address and memory correspondence.
+- [x] Relate the immediate frame `MoveList` scan pointer to the Nat
+  `nextScan` field under an explicit no-wrap bound.
 - [x] Prove the total-domain condition contract for the recursive Nat root
   traversal, completing condition propagation through root `Move` calls.
 - [x] Prove the one-item immediate-pointer `MoveList` frame transition,
