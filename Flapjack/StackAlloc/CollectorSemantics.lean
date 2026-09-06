@@ -3037,4 +3037,46 @@ theorem stackGcMachineNatRelation_stackFrameIterate_of_step
       have hnext := hstep iterations (by omega) hprevious
       simpa [Nat.succ_eq_add_one] using hnext
 
+theorem evalStackFrameFuel_stackGcMoveList_iterate_with_nat_relation
+    [NeZero width] (config : StackGcConfig)
+    (fuel stepFuel iterations : Nat)
+    (state : StackFrameMachineState width)
+    (step : StackFrameMachineState width → StackFrameMachineState width)
+    (scans : Nat → Nat) (memories : Nat → Nat → Nat)
+    (hinitial : stackGcMachineNatRelation state (scans 0) (memories 0))
+    (hcondition : ∀ current, current < iterations →
+      stackMachineCondition
+        (stackFrameIterate step current state).machine .notEqual 7 (.imm 0) = true)
+    (hbody : ∀ current extra, current < iterations →
+      evalStackFrameFuel (extra + stepFuel)
+        (stackFrameIterate step current state)
+        (stackSeq [
+          .inst (.mem .load 5 8),
+          stackGcSubOne config 7,
+          stackGcMoveCode config,
+          .inst (.mem .store 5 8),
+          stackGcAddBytes config 8]) =
+        some (.normal (stackFrameIterate step (current + 1) state)))
+    (hfinal :
+      stackMachineCondition
+        (stackFrameIterate step iterations state).machine .notEqual 7 (.imm 0) = false)
+    (hstep : ∀ current, current < iterations →
+      stackGcMachineNatRelation
+          (stackFrameIterate step current state)
+          (scans current) (memories current) →
+      stackGcMachineNatRelation
+          (stackFrameIterate step (current + 1) state)
+          (scans (current + 1)) (memories (current + 1))) :
+    evalStackFrameFuel (fuel + iterations + stepFuel + 3) state
+        (stackGcMoveListCode config) =
+      some (.normal (stackFrameIterate step iterations state)) ∧
+      stackGcMachineNatRelation
+        (stackFrameIterate step iterations state)
+        (scans iterations) (memories iterations) := by
+  constructor
+  · exact evalStackFrameFuel_stackGcMoveList_iterate config fuel stepFuel
+      iterations state step hcondition hbody hfinal
+  · exact stackGcMachineNatRelation_stackFrameIterate_of_step iterations
+      state step scans memories hinitial hstep
+
 end Flapjack.RiscV
