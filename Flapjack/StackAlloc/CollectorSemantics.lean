@@ -24,6 +24,34 @@ def stackFrameMemcpyIter [NeZero width]
   | words + 1, state =>
       stackFrameMemcpyIter config words (stackFrameMemcpyStep config state)
 
+theorem bitVec_ofNat_succ_sub_one [NeZero width] (words : Nat) :
+    BitVec.ofNat width (words + 1) - BitVec.ofNat width 1 =
+      BitVec.ofNat width words := by
+  rw [BitVec.ofNat_sub_ofNat_of_le]
+  · rfl
+  · exact Nat.one_lt_two_pow (NeZero.ne width)
+  · omega
+
+theorem stackFrameMemcpyStep_register_zero [NeZero width]
+    (config : StackGcConfig) (words : Nat)
+    (state : StackFrameMachineState width)
+    (hscratch0 : config.immediateScratch ≠ 0)
+    (hscratch1 : config.immediateScratch ≠ 1)
+    (hscratch2 : config.immediateScratch ≠ 2)
+    (hscratch3 : config.immediateScratch ≠ 3)
+    (hcount : state.machine.registers 0 = BitVec.ofNat width (words + 1)) :
+    (stackFrameMemcpyStep config state).machine.registers 0 =
+      BitVec.ofNat width words := by
+  have hscratch0' : 0 ≠ config.immediateScratch := Ne.symm hscratch0
+  have hsubtract :
+      BitVec.ofNat width (words + 1) - BitVec.ofNat width 1 =
+        BitVec.ofNat width words :=
+    bitVec_ofNat_succ_sub_one words
+  simp [stackFrameMemcpyStep, stackFrameWriteRegister,
+    wordStackMachineWriteRegister, wordStackMachineWriteMemory,
+    wordStackMachineBinOp, hcount, hsubtract, hscratch0',
+    hscratch1, hscratch2, hscratch3]
+
 theorem stackFrameMemcpyIter_zero [NeZero width]
     (config : StackGcConfig) (state : StackFrameMachineState width) :
     stackFrameMemcpyIter config 0 state = state := by
