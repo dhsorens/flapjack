@@ -998,6 +998,8 @@ definitions, pass ordering, examples, and proof obligations.
   from word addresses to the Nat memory model.
 - [x] Relate the recursive word-level memcpy memory transformer to the Nat
   memcpy result under explicit memory-range and no-wrap hypotheses.
+- [x] Prove an end-to-end bounded memcpy simulation boundary combining the
+  frame evaluator, final destination address, and projected Nat memory.
 - [ ] Prove the collector machine semantics and simulation theorem, and add
   generational support if it is needed by a selected target configuration.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state
