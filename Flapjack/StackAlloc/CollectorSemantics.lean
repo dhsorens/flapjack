@@ -555,4 +555,87 @@ theorem stackFrameMemcpyMemory_update_toNat [NeZero width]
       exact BitVec.eq_of_toNat_eq heq
     simp [hcurrent, hcurrent']
 
+theorem stackFrameMemcpyMemory_toNat [NeZero width]
+    (config : StackGcConfig) (words : Nat)
+    (source destination : Word width) (memory : Nat → Nat)
+    (hmemory : ∀ address, memory address < 2 ^ width)
+    (hsource : ∀ index, index ≤ words →
+      source.toNat + index * config.bytesInWord < 2 ^ width)
+    (hdestination : ∀ index, index ≤ words →
+      destination.toNat + index * config.bytesInWord < 2 ^ width)
+    (address : Word width) :
+    (stackFrameMemcpyMemory config words source destination
+      (fun current => BitVec.ofNat width (memory current.toNat)) address).toNat =
+      (stackGcNatMemcpy config words source.toNat destination.toNat memory
+        (fun _ => true)).memory address.toNat := by
+  induction words generalizing source destination memory address with
+  | zero =>
+      simp [stackFrameMemcpyMemory, stackGcNatMemcpy,
+        BitVec.toNat_ofNat, Nat.mod_eq_of_lt (hmemory _)]
+  | succ words ih =>
+      have hbytes : config.bytesInWord < 2 ^ width := by
+        have h := hsource 1 (by omega)
+        omega
+      have hsource_add :
+          (source + BitVec.ofNat width config.bytesInWord).toNat =
+            source.toNat + config.bytesInWord := by
+        have hsum : source.toNat + config.bytesInWord < 2 ^ width := by
+          simpa using hsource 1 (by omega)
+        simp only [BitVec.toNat_add, BitVec.toNat_ofNat,
+          Nat.mod_eq_of_lt hbytes]
+        exact Nat.mod_eq_of_lt hsum
+      have hdestination_add :
+          (destination + BitVec.ofNat width config.bytesInWord).toNat =
+            destination.toNat + config.bytesInWord := by
+        have hsum : destination.toNat + config.bytesInWord < 2 ^ width := by
+          simpa using hdestination 1 (by omega)
+        simp only [BitVec.toNat_add, BitVec.toNat_ofNat,
+          Nat.mod_eq_of_lt hbytes]
+        exact Nat.mod_eq_of_lt hsum
+      let memory' : Nat → Nat := fun current =>
+        if current = destination.toNat then memory source.toNat else memory current
+      have hmemory' : ∀ current, memory' current < 2 ^ width := by
+        intro current
+        simp only [memory']
+        split
+        · exact hmemory _
+        · exact hmemory _
+      have hsource' : ∀ index, index ≤ words →
+          (source + BitVec.ofNat width config.bytesInWord).toNat +
+              index * config.bytesInWord < 2 ^ width := by
+        intro index hindex
+        rw [hsource_add]
+        have h := hsource (index + 1) (by omega)
+        simpa [Nat.succ_mul, Nat.add_assoc, Nat.add_comm,
+          Nat.add_left_comm] using h
+      have hdestination' : ∀ index, index ≤ words →
+          (destination + BitVec.ofNat width config.bytesInWord).toNat +
+              index * config.bytesInWord < 2 ^ width := by
+        intro index hindex
+        rw [hdestination_add]
+        have h := hdestination (index + 1) (by omega)
+        simpa [Nat.succ_mul, Nat.add_assoc, Nat.add_comm,
+          Nat.add_left_comm] using h
+      have hmemoryWord :
+          (fun current : Word width =>
+            if current = destination then
+              BitVec.ofNat width (memory source.toNat)
+            else BitVec.ofNat width (memory current.toNat)) =
+            (fun current => BitVec.ofNat width (memory' current.toNat)) := by
+        simpa [memory'] using
+          stackFrameMemcpyMemory_update_toNat source destination memory
+      rw [show stackFrameMemcpyMemory config (words + 1) source destination
+          (fun current => BitVec.ofNat width (memory current.toNat)) address =
+          stackFrameMemcpyMemory config words
+            (source + BitVec.ofNat width config.bytesInWord)
+            (destination + BitVec.ofNat width config.bytesInWord)
+            (fun current => if current = destination then
+              BitVec.ofNat width (memory source.toNat)
+            else BitVec.ofNat width (memory current.toNat)) address by rfl]
+      rw [hmemoryWord]
+      rw [ih (source + BitVec.ofNat width config.bytesInWord)
+        (destination + BitVec.ofNat width config.bytesInWord) memory'
+        hmemory' hsource' hdestination' address]
+      simp [stackGcNatMemcpy, memory', hsource_add, hdestination_add]
+
 end Flapjack.RiscV
