@@ -2641,4 +2641,29 @@ theorem evalStackFrameFuel_stackGcMoveLoop_code_step_matches_nat_of_memory
     state scan index destination oldBase memory domain condition hscratch7
     hscratch8 hdomain haddress hmemory hcode hscan hcodeNat hadvance hcount
 
+theorem stackGcMachineNatRelation_stackFrameIterate_of_step
+    [NeZero width] (iterations : Nat)
+    (state : StackFrameMachineState width)
+    (step : StackFrameMachineState width → StackFrameMachineState width)
+    (scans : Nat → Nat) (memories : Nat → Nat → Nat)
+    (hinitial : stackGcMachineNatRelation state (scans 0) (memories 0))
+    (hstep : ∀ current, current < iterations →
+      stackGcMachineNatRelation
+          (stackFrameIterate step current state)
+          (scans current) (memories current) →
+      stackGcMachineNatRelation
+          (stackFrameIterate step (current + 1) state)
+          (scans (current + 1)) (memories (current + 1))) :
+    stackGcMachineNatRelation
+      (stackFrameIterate step iterations state)
+      (scans iterations) (memories iterations) := by
+  induction iterations with
+  | zero =>
+      simpa [stackFrameIterate] using hinitial
+  | succ iterations ih =>
+      have hprevious := ih (hstep := fun current hcurrent hrelation =>
+        hstep current (by omega) hrelation)
+      have hnext := hstep iterations (by omega) hprevious
+      simpa [Nat.succ_eq_add_one] using hnext
+
 end Flapjack.RiscV
