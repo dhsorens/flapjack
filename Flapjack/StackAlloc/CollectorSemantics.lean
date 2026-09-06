@@ -1872,6 +1872,91 @@ theorem evalStackFrameFuel_stackGcMoveLoop_code_prefix [NeZero width]
     wordStackMachineBinOp, wordStackMachineShift, hscratch7, hscratch8,
     Ne.symm hscratch7, Ne.symm hscratch8]
 
+theorem evalStackFrameFuel_stackGcMoveLoop_code_step_scan_matches_nat
+    [NeZero width] (config : StackGcConfig) (fuel : Nat)
+    (state : StackFrameMachineState width)
+    (scan : Nat) (memory : Nat → Nat) (domain : Nat → Bool)
+    (hscratch7 : config.immediateScratch ≠ 7)
+    (hscratch8 : config.immediateScratch ≠ 8)
+    (hdomain : state.memoryDomain (state.machine.registers 8) = true)
+    (haddress : state.machine.registers 8 = BitVec.ofNat width scan)
+    (hmemory :
+      (state.machine.memory (state.machine.registers 8)).toNat =
+        memory scan)
+    (hcode : stackMachineCondition
+      (stackFrameWriteRegister state 7
+        (state.machine.memory (state.machine.registers 8))).machine
+      .test 7 (.imm 4) = false)
+    (hadvance :
+      scan + (stackGcNatDecodeLength config (memory scan) + 1) *
+        config.bytesInWord < 2 ^ width)
+    (hcount :
+      (((state.machine.memory (state.machine.registers 8) >>>
+          shiftAmount (BitVec.ofNat width (config.wordBits - config.lenSize))) +
+        BitVec.ofNat width 1) <<<
+          shiftAmount (BitVec.ofNat width config.wordShift)).toNat =
+        (stackGcNatDecodeLength config (memory scan) + 1) *
+          config.bytesInWord) :
+    stackFrameNormalRegisterNat
+      (evalStackFrameFuel (fuel + 12) state
+        (stackSeq [
+          .inst (.mem .load 7 8),
+          .ite .test 7 (.imm 4)
+            (stackSeq [
+              stackGcShiftImmediate config .lsr 7
+                (config.wordBits - config.lenSize),
+              stackGcAddBytes config 8,
+              stackGcMoveListCode config])
+            (stackSeq [
+              stackGcShiftImmediate config .lsr 7
+                (config.wordBits - config.lenSize),
+              stackGcAddOne config 7,
+              stackGcShiftImmediate config .lsl 7 config.wordShift,
+              stackGcAdd 8 7])])) 8 =
+      some (scan + (stackGcNatDecodeLength config (memory scan) + 1) *
+        config.bytesInWord) := by
+  have heval := evalStackFrameFuel_stackGcMoveLoop_code_step config fuel
+    state hscratch7 hscratch8 hdomain hcode
+  have hscanBound : scan < 2 ^ width := by omega
+  have hmemory' :
+      (state.machine.memory (BitVec.ofNat width scan)).toNat =
+        memory scan := by
+    simpa [haddress] using hmemory
+  have hmemoryBound : memory scan < 2 ^ width := by
+    rw [← hmemory']
+    exact (state.machine.memory (BitVec.ofNat width scan)).isLt
+  have hmemWord :
+      state.machine.memory (BitVec.ofNat width scan) =
+        BitVec.ofNat width (memory scan) := by
+    apply BitVec.eq_of_toNat_eq
+    simpa [BitVec.toNat_ofNat, Nat.mod_eq_of_lt hmemoryBound] using
+      hmemory'
+  have hcount' :
+      (((BitVec.ofNat width (memory scan) >>>
+          shiftAmount (BitVec.ofNat width (config.wordBits - config.lenSize))) +
+        BitVec.ofNat width 1) <<<
+          shiftAmount (BitVec.ofNat width config.wordShift)).toNat =
+        (stackGcNatDecodeLength config (memory scan) + 1) *
+          config.bytesInWord := by
+    simpa [haddress, hmemWord] using hcount
+  rw [heval]
+  simp only [stackFrameNormalRegisterNat]
+  have hreg :
+      (stackGcMoveLoopCodeStepState config state).machine.registers 8 =
+        state.machine.registers 8 +
+          (((state.machine.memory (state.machine.registers 8) >>>
+              shiftAmount (BitVec.ofNat width
+                (config.wordBits - config.lenSize))) +
+            BitVec.ofNat width 1) <<<
+              shiftAmount (BitVec.ofNat width config.wordShift)) := by
+    simp [stackGcMoveLoopCodeStepState, stackFrameWriteRegister,
+      wordStackMachineWriteRegister, wordStackMachineBinOp,
+      wordStackMachineShift, hscratch8, Ne.symm hscratch8]
+  rw [hreg, BitVec.toNat_add]
+  rw [hcount]
+  simp [haddress, hmemory', BitVec.toNat_ofNat,
+    Nat.mod_eq_of_lt hscanBound, Nat.mod_eq_of_lt hadvance]
+
 theorem evalStackFrameFuel_stackGcMoveLoop_iterate [NeZero width]
     (config : StackGcConfig) (fuel stepFuel iterations : Nat)
     (state : StackFrameMachineState width)
