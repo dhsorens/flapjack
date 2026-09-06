@@ -1193,6 +1193,8 @@ definitions, pass ordering, examples, and proof obligations.
   and the untouched source remainder.
 - [x] Prove that successful fuel-bounded bitmap decoding preserves stack
   length, including the public decoder wrapper.
+- [x] Prove that successful bitmap root collection preserves the input stack
+  length after encode, root movement, and decode.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 

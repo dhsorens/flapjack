@@ -696,6 +696,34 @@ theorem stackGcNatDecodeStack_length
   exact stackGcNatDecodeStackFuel_length config bitmaps (stack.length + 1)
     encoded stack result hresult
 
+theorem stackGcNatMoveRootsBitmaps_length
+    (config : StackGcConfig) (bitmaps : List Nat)
+    (stack : List StackGcNatValue)
+    (index destination oldBase : Nat) (memory : Nat → Nat)
+    (domain : Nat → Bool) (result : StackGcValueRootsResult)
+    (hresult :
+      stackGcNatMoveRootsBitmaps config bitmaps stack index destination oldBase
+        memory domain = some result) :
+    result.values.length = stack.length := by
+  unfold stackGcNatMoveRootsBitmaps at hresult
+  cases hencode :
+      stackGcNatEncodeStack config bitmaps stack with
+  | none =>
+      simp [hencode] at hresult
+  | some encoded =>
+      let moved := stackGcNatMoveValueRoots config encoded index destination
+        oldBase memory domain
+      cases hdecode :
+          stackGcNatDecodeStack config bitmaps moved.values stack with
+      | none =>
+          simp [hencode, hdecode, moved] at hresult
+      | some values =>
+          have hlength := stackGcNatDecodeStack_length config bitmaps
+            moved.values stack values hdecode
+          simp [hencode, hdecode, moved] at hresult
+          cases hresult
+          exact hlength
+
 @[simp] theorem stackGcNatFullReadBitmap_zero (config : StackGcConfig)
     (bitmaps : List Nat) :
     stackGcNatFullReadBitmap config bitmaps (.word 0) = none := by
