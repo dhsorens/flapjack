@@ -125,6 +125,38 @@ def stackGcNatMoveValueRoots (config : StackGcConfig) :
         memory := rest.memory
         condition := moved.condition && rest.condition }
 
+structure StackGcBitmapMoveResult where
+  values : List StackGcNatValue
+  remainder : List StackGcNatValue
+  nextIndex : Nat
+  nextAddress : Nat
+  memory : Nat → Nat
+  condition : Bool
+
+def stackGcNatMoveBitmap (config : StackGcConfig)
+    (bitmaps : List Nat) (descriptor : StackGcNatValue)
+    (stack : List StackGcNatValue) (index destination oldBase : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool) :
+    Option StackGcBitmapMoveResult :=
+  match stackGcNatFullReadBitmap config bitmaps descriptor with
+  | none => none
+  | some bits =>
+      match stackGcNatFilterBitmap bits stack with
+      | none => none
+      | some (selected, remainder) =>
+          let moved := stackGcNatMoveValueRoots config selected index destination
+            oldBase memory domain
+          match stackGcNatMapBitmap bits moved.values stack with
+          | none => none
+          | some (values, _, _) =>
+              some
+                { values := values
+                  remainder := remainder
+                  nextIndex := moved.nextIndex
+                  nextAddress := moved.nextAddress
+                  memory := moved.memory
+                  condition := moved.condition }
+
 theorem stackGcNatMoveValueRoots_length (config : StackGcConfig)
     (values : List StackGcNatValue) (index destination oldBase : Nat)
     (memory : Nat → Nat) (domain : Nat → Bool) :
@@ -165,6 +197,23 @@ example :
 example :
     (stackGcNatMoveValueRoots { wordBits := 8 }
       [.loc 4 1] 0 100 0 (fun _ => 0) (fun _ => true)).condition = false := by
+  native_decide
+
+example :
+    (stackGcNatMoveBitmap { wordBits := 8 } [3] (.word 1)
+      [.word 2, .word 0] 0 100 0 (fun _ => 0) (fun _ => true)).map
+        (fun result => result.values) = some [.word 2] := by
+  native_decide
+
+example :
+    (stackGcNatMoveBitmap { wordBits := 8 } [3] (.word 1)
+      [.word 2, .word 0] 0 100 0 (fun _ => 0) (fun _ => true)).map
+        (fun result => result.remainder) = some [.word 0] := by
+  native_decide
+
+example :
+    stackGcNatMoveBitmap { wordBits := 8 } [3] (.loc 1 0)
+      [.word 2, .word 0] 0 100 0 (fun _ => 0) (fun _ => true) = none := by
   native_decide
 
 
