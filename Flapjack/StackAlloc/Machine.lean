@@ -133,6 +133,21 @@ def stackMachineNormalRegisterEquals [NeZero width]
   | some (.normal state) => state.registers register == BitVec.ofNat width value
   | _ => false
 
+def stackMachineNormalMemoryEquals [NeZero width]
+    (result : Option (StackMachineControl width))
+    (address value : Nat) : Bool :=
+  match result with
+  | some (.normal state) =>
+      state.memory (BitVec.ofNat width address) == BitVec.ofNat width value
+  | _ => false
+
+def stackMachineNormalRegisterNat [NeZero width]
+    (result : Option (StackMachineControl width))
+    (register : Nat) : Option Nat :=
+  match result with
+  | some (.normal state) => some (state.registers register).toNat
+  | _ => none
+
 /-! A small call resolver for the runtime path.  The collector stub returns
     through the call's explicit return continuation; unresolved labels and
     non-returning callees remain failures instead of being treated as normal
