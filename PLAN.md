@@ -454,6 +454,8 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Preserve CakeML WordLang's `MustTerminate` wrapper through Word
   semantics, SSA/clash analysis, colouring, Word-to-Stack, and RISC-V lowering,
   with focused regressions.
+- [x] Lower CakeML/Loop-to-Word tail calls (`Call NONE`) through Word-to-Stack,
+  preserving the even-numbered ABI argument moves and terminal call carrier.
 - [x] Expose witness-level allocator contracts showing every successfully
   coloured SSA slot maps to an allocatable RISC-V register.
 - [x] Port CakeML-style move preference edges for Word copy nodes and feed

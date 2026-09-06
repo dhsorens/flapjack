@@ -34,7 +34,7 @@ inductive WordArith where
   | longDiv (destinationLeft destinationRight sourceLeft sourceRight quotient : Nat)
   | addCarry (destination resultCarry sourceLeft sourceRight carryIn : Nat)
   | div (destination dividend divisor : Nat)
-  deriving Repr
+  deriving DecidableEq, Repr
 
 inductive WordMemOp where
   | load
@@ -50,7 +50,7 @@ inductive WordMemOp where
 inductive WordInst where
   | arith (operation : WordArith)
   | mem (operator : WordMemOp) (destination address : Nat)
-  deriving Repr
+  deriving DecidableEq, Repr
 
 inductive WordProg (α : Type u) where
   | skip

@@ -1509,6 +1509,10 @@ def wordToStackProg [BEq α] [OfNat α 0] [OfNat α 1] [Add α] [Mul α]
   | .continue label => pure (.continue label)
   | .raise exception => pure (wordToStackRaise exception)
   | .return _ values => wordStackReturn config values
+  | .call none (some target) arguments none => do
+      let argumentMoves ← wordStackMovesToPhysical config arguments 2
+      pure (wordStackJoin argumentMoves
+        (.call none (.label target) none))
   | .tick => pure .tick
   | .call returns (some target) arguments none => do
       let argumentMoves ← wordStackMovesToPhysical config arguments 2
@@ -1568,6 +1572,10 @@ def wordToStackProgNat [BEq Nat] (config : WordStackConfig) :
   | .continue label => pure (.continue label)
   | .raise exception => pure (wordToStackRaise exception)
   | .return _ values => wordStackReturn config values
+  | .call none (some target) arguments none => do
+      let argumentMoves ← wordStackMovesToPhysical config arguments 2
+      pure (wordStackJoin argumentMoves
+        (.call none (.label target) none))
   | .tick => pure .tick
   | .call returns (some target) arguments none => do
       let argumentMoves ← wordStackMovesToPhysical config arguments 2
