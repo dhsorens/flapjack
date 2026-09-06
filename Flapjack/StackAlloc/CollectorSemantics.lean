@@ -3079,4 +3079,123 @@ theorem evalStackFrameFuel_stackGcMoveList_iterate_with_nat_relation
   · exact stackGcMachineNatRelation_stackFrameIterate_of_step iterations
       state step scans memories hinitial hstep
 
+theorem evalStackFrameFuel_stackGcMoveLoop_data_step_with_nat_relation
+    [NeZero width] (config : StackGcConfig) (fuel scan index destination oldBase : Nat)
+    (state final : StackFrameMachineState width)
+    (memory : Nat → Nat) (domain : Nat → Bool) (condition : Bool)
+    (hwidth : 3 ≤ width)
+    (hscratch7 : config.immediateScratch ≠ 7)
+    (hscratch8 : config.immediateScratch ≠ 8)
+    (hdomain : state.memoryDomain (state.machine.registers 8) = true)
+    (haddress : state.machine.registers 8 = BitVec.ofNat width scan)
+    (hmemory :
+      (state.machine.memory (state.machine.registers 8)).toNat =
+        memory scan)
+    (hscan : scan ≠ destination)
+    (hcodeNat : stackGcNatHeaderHasCode (memory scan) ≠ true)
+    (hmove :
+      evalStackFrameFuel (fuel + 12)
+        (stackGcMoveLoopCodePrefixState config
+          (stackFrameWriteRegister state 7
+            (state.machine.memory (state.machine.registers 8))))
+        (stackGcMoveListCode config) =
+      some (.normal final))
+    (hrelation :
+      stackGcMachineNatRelation final
+        (stackGcNatMoveList config
+          (stackGcNatDecodeLength config (memory scan))
+          (scan + config.bytesInWord) index destination oldBase memory domain).nextScan
+        (stackGcNatMoveList config
+          (stackGcNatDecodeLength config (memory scan))
+          (scan + config.bytesInWord) index destination oldBase memory domain).memory) :
+    let moved := stackGcNatMoveList config
+      (stackGcNatDecodeLength config (memory scan))
+      (scan + config.bytesInWord) index destination oldBase memory domain
+    evalStackFrameFuel (fuel + 16) state
+        (stackSeq [
+          .inst (.mem .load 7 8),
+          .ite .test 7 (.imm 4)
+            (stackSeq [
+              stackGcShiftImmediate config .lsr 7
+                (config.wordBits - config.lenSize),
+              stackGcAddBytes config 8,
+              stackGcMoveListCode config])
+            (stackSeq [
+              stackGcShiftImmediate config .lsr 7
+                (config.wordBits - config.lenSize),
+              stackGcAddOne config 7,
+              stackGcShiftImmediate config .lsl 7 config.wordShift,
+              stackGcAdd 8 7])]) =
+        some (.normal final) ∧
+      stackGcMachineNatRelation final moved.nextScan moved.memory := by
+  dsimp
+  have hconditionIff := stackGcMoveLoop_header_condition_matches_nat
+    state scan memory hwidth haddress hmemory
+  have hcondition := hconditionIff.mpr hcodeNat
+  constructor
+  · exact evalStackFrameFuel_stackGcMoveLoop_data_step config fuel state final
+      hscratch7 hscratch8 hdomain hcondition hmove
+  · exact hrelation
+
+theorem evalStackFrameFuel_stackGcMoveLoop_code_step_with_nat_relation
+    [NeZero width] (config : StackGcConfig) (fuel scan : Nat)
+    (state : StackFrameMachineState width)
+    (memory : Nat → Nat) (domain : Nat → Bool)
+    (hwidth : 3 ≤ width)
+    (hscratch7 : config.immediateScratch ≠ 7)
+    (hscratch8 : config.immediateScratch ≠ 8)
+    (hdomain : state.memoryDomain (state.machine.registers 8) = true)
+    (haddress : state.machine.registers 8 = BitVec.ofNat width scan)
+    (hmemory :
+      (state.machine.memory (state.machine.registers 8)).toNat =
+        memory scan)
+    (hrelation : stackGcMachineNatRelation state scan memory)
+    (hcodeNat : stackGcNatHeaderHasCode (memory scan) = true)
+    (hadvance :
+      scan + (stackGcNatDecodeLength config (memory scan) + 1) *
+        config.bytesInWord < 2 ^ width)
+    (hcount :
+      (((state.machine.memory (state.machine.registers 8) >>>
+          shiftAmount (BitVec.ofNat width
+            (config.wordBits - config.lenSize))) +
+        BitVec.ofNat width 1) <<<
+          shiftAmount (BitVec.ofNat width config.wordShift)).toNat =
+        (stackGcNatDecodeLength config (memory scan) + 1) *
+          config.bytesInWord) :
+    evalStackFrameFuel (fuel + 12) state
+        (stackSeq [
+          .inst (.mem .load 7 8),
+          .ite .test 7 (.imm 4)
+            (stackSeq [
+              stackGcShiftImmediate config .lsr 7
+                (config.wordBits - config.lenSize),
+              stackGcAddBytes config 8,
+              stackGcMoveListCode config])
+            (stackSeq [
+              stackGcShiftImmediate config .lsr 7
+                (config.wordBits - config.lenSize),
+              stackGcAddOne config 7,
+              stackGcShiftImmediate config .lsl 7 config.wordShift,
+              stackGcAdd 8 7])]) =
+        some (.normal (stackGcMoveLoopCodeStepState config state)) ∧
+      stackGcMachineNatRelation
+        (stackGcMoveLoopCodeStepState config state)
+        (scan + (stackGcNatDecodeLength config (memory scan) + 1) *
+          config.bytesInWord) memory := by
+  have hconditionIff := stackGcMoveLoop_header_condition_matches_nat
+    state scan memory hwidth haddress hmemory
+  have hcode : stackMachineCondition
+      (stackFrameWriteRegister state 7
+        (state.machine.memory (state.machine.registers 8))).machine
+      .test 7 (.imm 4) = false := by
+    apply (Bool.eq_false_iff).mpr
+    intro htrue
+    exact (hconditionIff.mp htrue) hcodeNat
+  constructor
+  · exact evalStackFrameFuel_stackGcMoveLoop_code_step config fuel state
+      hscratch7 hscratch8 hdomain hcode
+  · exact stackGcMoveLoopCodeStepState_preserves_nat_relation_of_memory
+      config fuel state scan memory domain hwidth hscratch7 hscratch8 hdomain
+      haddress hrelation hcodeNat hadvance hcount
+
 end Flapjack.RiscV
