@@ -483,6 +483,77 @@ theorem stackGcNatFilterBitmap_mapBitmap_remainders
                                       cases hvaluesRest
                                       exact hbridge
 
+theorem stackGcNatMapBitmap_length_partition
+    (bits : List Bool) (moved values mapped restMoved restValues :
+      List StackGcNatValue)
+    (hresult : stackGcNatMapBitmap bits moved values =
+      some (mapped, restMoved, restValues)) :
+    mapped.length = bits.length ∧
+      values.length = mapped.length + restValues.length := by
+  induction bits generalizing moved values mapped restMoved restValues with
+  | nil =>
+      have htuple : ([], moved, values) = (mapped, restMoved, restValues) := by
+        simpa [stackGcNatMapBitmap] using hresult
+      cases htuple
+      simp
+  | cons bit bits ih =>
+      cases values with
+      | nil =>
+          simp [stackGcNatMapBitmap] at hresult
+      | cons value values =>
+          cases bit with
+          | false =>
+              cases hrecursive : stackGcNatMapBitmap bits moved values with
+              | none =>
+                  simp [stackGcNatMapBitmap, hrecursive] at hresult
+              | some pair =>
+                  cases pair with
+                  | mk mappedNext restPair =>
+                      cases restPair with
+                      | mk restMovedNext restValuesNext =>
+                          have htuple :
+                              (value :: mappedNext, restMovedNext, restValuesNext) =
+                                (mapped, restMoved, restValues) := by
+                            simpa [stackGcNatMapBitmap, hrecursive] using hresult
+                          have hlength := ih moved values mappedNext restMovedNext
+                            restValuesNext hrecursive
+                          have hmapped : value :: mappedNext = mapped :=
+                            congrArg Prod.fst htuple
+                          have hvalues : restValuesNext = restValues :=
+                            congrArg (fun triple => triple.2.2) htuple
+                          cases hmapped
+                          cases hvalues
+                          exact ⟨by simp [hlength.1], by
+                            simpa [hlength.2, Nat.add_assoc, Nat.add_comm]⟩
+          | true =>
+              cases moved with
+              | nil =>
+                  simp [stackGcNatMapBitmap] at hresult
+              | cons movedValue moved =>
+                  cases hrecursive : stackGcNatMapBitmap bits moved values with
+                  | none =>
+                      simp [stackGcNatMapBitmap, hrecursive] at hresult
+                  | some pair =>
+                      cases pair with
+                      | mk mappedNext restPair =>
+                          cases restPair with
+                          | mk restMovedNext restValuesNext =>
+                              have htuple :
+                                  (movedValue :: mappedNext, restMovedNext,
+                                    restValuesNext) =
+                                      (mapped, restMoved, restValues) := by
+                                simpa [stackGcNatMapBitmap, hrecursive] using hresult
+                              have hlength := ih moved values mappedNext restMovedNext
+                                restValuesNext hrecursive
+                              have hmapped : movedValue :: mappedNext = mapped :=
+                                congrArg Prod.fst htuple
+                              have hvalues : restValuesNext = restValues :=
+                                congrArg (fun triple => triple.2.2) htuple
+                              cases hmapped
+                              cases hvalues
+                              exact ⟨by simp [hlength.1], by
+                                simpa [hlength.2, Nat.add_assoc, Nat.add_comm]⟩
+
 @[simp] theorem stackGcNatFullReadBitmap_zero (config : StackGcConfig)
     (bitmaps : List Nat) :
     stackGcNatFullReadBitmap config bitmaps (.word 0) = none := by
