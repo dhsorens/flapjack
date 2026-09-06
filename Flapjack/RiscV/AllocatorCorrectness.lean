@@ -137,6 +137,34 @@ theorem wordAllocateSsaFunctionWithClashTreeWithSpillsAndPreferences_sound
     inner hinner
   exact ⟨hclash, hspecial, htreeChecked⟩
 
+theorem wordAllocateSsaFunctionWithClashTreeWithSpillsAndPreferences_maps_variables
+    (parameters : List Nat) (program : WordProg α)
+    (state : WordSsaState) (renamedParameters : List Nat)
+    (renamedProgram : WordProg α) (allocation : WordSpillState)
+    (halloc :
+      wordAllocateSsaFunctionWithClashTreeWithSpillsAndPreferences parameters
+        program =
+        some (state, renamedParameters, renamedProgram, allocation)) :
+    ∀ name, name ∈ wordProgVariables renamedProgram →
+      ∃ location, lookupNatInfo name allocation.locations = some location := by
+  simp [wordAllocateSsaFunctionWithClashTreeWithSpillsAndPreferences] at halloc
+  split at halloc <;> simp_all
+  rcases halloc with ⟨_, rfl, rfl, rfl, rfl⟩
+  rename_i _ alloc _ hallocation
+  have hslots := wordAllocateVarsWithSpillsAndPreferences_maps_slots
+    ((wordSsaRenameFunction parameters program).2.fst ++
+      (wordProgVariables (wordSsaRenameFunction parameters program).2.snd ++
+        (wordClashTreeAnalyze
+          (wordClashTree (wordSsaRenameFunction parameters program).2.snd [])
+          []).fst))
+    (wordClashTreeAnalyze
+      (wordClashTree (wordSsaRenameFunction parameters program).2.snd []) []).snd
+    (wordProgPreferenceEdges (wordSsaRenameFunction parameters program).2.snd)
+    alloc hallocation
+  intro name hname
+  apply hslots name
+  simp [hname]
+
 def wordControlResultValues [NeZero width] :
     WordControlResult width → List (Word width)
   | .returned _ values => values
