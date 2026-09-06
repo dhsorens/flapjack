@@ -921,6 +921,8 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Port the word-only CakeML collector specification for forwarding
   pointers, object copying, destination-memory updates, and preservation
   equations.
+- [x] Preserve the location-valued collector input case and its success
+  condition from CakeML's word_gc_move definition.
 - [x] Port the word-only collector root traversal, pointer-list traversal,
   and bounded heap-scan recursion with condition and memory threading. The
   word-level full-collection composition is included; the full StackLang

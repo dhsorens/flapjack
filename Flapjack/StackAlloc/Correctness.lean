@@ -49,6 +49,18 @@ structure StackGcNatFullResult where
   memory : Nat → Nat
   condition : Bool
 
+inductive StackGcNatValue where
+  | loc (left right : Nat)
+  | word (value : Nat)
+  deriving DecidableEq, Repr
+
+structure StackGcValueMoveResult where
+  value : StackGcNatValue
+  nextIndex : Nat
+  nextAddress : Nat
+  memory : Nat → Nat
+  condition : Bool
+
 def stackGcNatPointerAddress (config : StackGcConfig)
     (base value : Nat) : Nat :=
   base + (value / 2 ^ config.shiftLength) * config.bytesInWord
@@ -106,6 +118,25 @@ def stackGcNatMove (config : StackGcConfig)
           if address = headerAddress then index * 4
           else copied.memory address
         condition := domain headerAddress && copied.condition }
+
+def stackGcValueMove (config : StackGcConfig)
+    (value : StackGcNatValue) (index destination oldBase : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool) : StackGcValueMoveResult :=
+  match value with
+  | .loc left right =>
+      { value := .loc left right
+        nextIndex := index
+        nextAddress := destination
+        memory := memory
+        condition := right == 0 }
+  | .word value =>
+      let moved := stackGcNatMove config value index destination oldBase
+        memory domain
+      { value := .word moved.value
+        nextIndex := moved.nextIndex
+        nextAddress := moved.nextAddress
+        memory := moved.memory
+        condition := moved.condition }
 
 def stackGcNatMoveRoots (config : StackGcConfig) :
     List Nat → Nat → Nat → Nat → (Nat → Nat) → (Nat → Bool) →
@@ -203,6 +234,18 @@ theorem stackGcNatMove_immediate
     (stackGcNatMove config value index destination oldBase memory domain).value =
       value := by
   simp [stackGcNatMove, hvalue]
+
+theorem stackGcValueMove_loc
+    (config : StackGcConfig) (left right index destination oldBase : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool) :
+    stackGcValueMove config (.loc left right) index destination oldBase
+      memory domain =
+      { value := .loc left right
+        nextIndex := index
+        nextAddress := destination
+        memory := memory
+        condition := right == 0 } := by
+  rfl
 
 theorem stackGcNatMove_forwarding
     (config : StackGcConfig) (value index destination oldBase : Nat)
