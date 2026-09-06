@@ -976,6 +976,8 @@ definitions, pass ordering, examples, and proof obligations.
   fuel.
 - [x] Add Nat-level memcpy framing lemmas for domain success and
   non-destination memory preservation.
+- [x] Expose named one-step frame-machine equations for collector memcpy,
+  covering the count, loaded value, source, destination, and memory updates.
 - [ ] Prove the collector machine semantics and simulation theorem, and add
   generational support if it is needed by a selected target configuration.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state

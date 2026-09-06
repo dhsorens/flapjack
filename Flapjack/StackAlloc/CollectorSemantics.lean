@@ -52,6 +52,82 @@ theorem stackFrameMemcpyStep_register_zero [NeZero width]
     wordStackMachineBinOp, hcount, hsubtract, hscratch0',
     hscratch1, hscratch2, hscratch3]
 
+theorem stackFrameMemcpyStep_register_zero_eq [NeZero width]
+    (config : StackGcConfig) (state : StackFrameMachineState width)
+    (hscratch0 : config.immediateScratch ≠ 0) :
+    (stackFrameMemcpyStep config state).machine.registers 0 =
+      wordStackMachineBinOp .sub (state.machine.registers 0)
+        (BitVec.ofNat width 1) := by
+  simp [stackFrameMemcpyStep, stackFrameWriteRegister,
+    wordStackMachineWriteRegister, wordStackMachineWriteMemory,
+    wordStackMachineBinOp, hscratch0, Ne.symm hscratch0]
+
+theorem stackFrameMemcpyStep_register_one [NeZero width]
+    (config : StackGcConfig) (state : StackFrameMachineState width)
+    (hscratch1 : config.immediateScratch ≠ 1) :
+    (stackFrameMemcpyStep config state).machine.registers 1 =
+      state.machine.memory (state.machine.registers 2) := by
+  simp [stackFrameMemcpyStep, stackFrameWriteRegister,
+    wordStackMachineWriteRegister, wordStackMachineWriteMemory,
+    wordStackMachineBinOp, hscratch1, Ne.symm hscratch1]
+
+theorem stackFrameMemcpyStep_register_source [NeZero width]
+    (config : StackGcConfig) (state : StackFrameMachineState width)
+    (hscratch2 : config.immediateScratch ≠ 2) :
+    (stackFrameMemcpyStep config state).machine.registers 2 =
+      wordStackMachineBinOp .add (state.machine.registers 2)
+        (BitVec.ofNat width config.bytesInWord) := by
+  simp [stackFrameMemcpyStep, stackFrameWriteRegister,
+    wordStackMachineWriteRegister, wordStackMachineWriteMemory,
+    wordStackMachineBinOp, hscratch2, Ne.symm hscratch2]
+
+theorem stackFrameMemcpyStep_register_destination [NeZero width]
+    (config : StackGcConfig) (state : StackFrameMachineState width)
+    (hscratch3 : config.immediateScratch ≠ 3) :
+    (stackFrameMemcpyStep config state).machine.registers 3 =
+      wordStackMachineBinOp .add (state.machine.registers 3)
+        (BitVec.ofNat width config.bytesInWord) := by
+  simp [stackFrameMemcpyStep, stackFrameWriteRegister,
+    wordStackMachineWriteRegister, wordStackMachineWriteMemory,
+    wordStackMachineBinOp, hscratch3, Ne.symm hscratch3]
+
+theorem stackFrameWriteRegister_memory [NeZero width]
+    (state : StackFrameMachineState width) (register : Nat)
+    (value address : Word width) :
+    (stackFrameWriteRegister state register value).machine.memory address =
+      state.machine.memory address := by
+  rfl
+
+theorem stackFrameWriteRegister_memory_function [NeZero width]
+    (state : StackFrameMachineState width) (register : Nat)
+    (value : Word width) :
+    (stackFrameWriteRegister state register value).machine.memory =
+      state.machine.memory := by
+  rfl
+
+theorem stackFrameWriteRegister_register_of_ne [NeZero width]
+    (state : StackFrameMachineState width) (register target : Nat)
+    (value : Word width) (htarget : target ≠ register) :
+    (stackFrameWriteRegister state register value).machine.registers target =
+      state.machine.registers target := by
+  simp [stackFrameWriteRegister, wordStackMachineWriteRegister, htarget]
+
+theorem stackFrameMemcpyStep_memory [NeZero width]
+    (config : StackGcConfig) (state : StackFrameMachineState width)
+    (address : Word width) :
+    (stackFrameMemcpyStep config state).machine.memory address =
+      if address = state.machine.registers 3 then
+        state.machine.memory (state.machine.registers 2)
+      else
+        state.machine.memory address := by
+  by_cases haddress : address = state.machine.registers 3
+  · simp [stackFrameMemcpyStep, stackFrameWriteRegister,
+      wordStackMachineWriteRegister, wordStackMachineWriteMemory,
+      wordStackMachineBinOp, haddress]
+  · simp [stackFrameMemcpyStep, stackFrameWriteRegister,
+      wordStackMachineWriteRegister, wordStackMachineWriteMemory,
+      wordStackMachineBinOp, haddress, Ne.symm haddress]
+
 theorem evalStackFrameFuel_loop_normal [NeZero width]
     (fuel : Nat) (state state' : StackFrameMachineState width)
     (body : StackProg Nat)
