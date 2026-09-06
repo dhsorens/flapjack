@@ -349,6 +349,27 @@ def stackFrameNormalMemoryNat [NeZero width]
       some (state.machine.memory (BitVec.ofNat width address)).toNat
   | _ => none
 
+def stackFrameMemcpyStep [NeZero width]
+    (config : StackGcConfig) (state : StackFrameMachineState width) :
+    StackFrameMachineState width :=
+  let value := state.machine.memory (state.machine.registers 2)
+  let afterLoad := stackFrameWriteRegister state 1 value
+  let afterSourceStep := stackFrameWriteRegister afterLoad 2
+    (wordStackMachineBinOp .add (afterLoad.machine.registers 2)
+      (BitVec.ofNat width config.bytesInWord))
+  let afterCountStep := stackFrameWriteRegister afterSourceStep 0
+    (wordStackMachineBinOp .sub (afterSourceStep.machine.registers 0)
+      (BitVec.ofNat width 1))
+  let afterStore := { afterCountStep with machine :=
+    (wordStackMachineWriteMemory afterCountStep.machine
+      (afterCountStep.machine.registers 3)
+      (afterCountStep.machine.registers 1)) }
+  let afterScratch := stackFrameWriteRegister afterStore config.immediateScratch
+    (BitVec.ofNat width config.bytesInWord)
+  stackFrameWriteRegister afterScratch 3
+    (wordStackMachineBinOp .add (afterScratch.machine.registers 3)
+      (BitVec.ofNat width config.bytesInWord))
+
 theorem evalStackFrameFuel_stackGetSize [NeZero width]
     (fuel : Nat) (state : StackFrameMachineState width) (register : Nat) :
     evalStackFrameFuel (fuel + 1) state (.stackGetSize register) =
@@ -428,6 +449,86 @@ theorem evalStackFrameFuel_stackGcMemcpy_zero [NeZero width]
       some (.normal state) := by
   simp [stackGcMemcpy, stackGcWhile, evalStackFrameFuel,
     evalStackFrameFuelWithCode, stackMachineCondition, hzero]
+
+theorem evalStackFrameFuel_stackGcMemcpyBody [NeZero width]
+    (config : StackGcConfig) (fuel : Nat)
+    (state : StackFrameMachineState width)
+    (hscratch0 : config.immediateScratch ≠ 0)
+    (hscratch1 : config.immediateScratch ≠ 1)
+    (hscratch2 : config.immediateScratch ≠ 2)
+    (hscratch3 : config.immediateScratch ≠ 3)
+    (hheaderDomain : ∀ address, state.memoryDomain address = true) :
+    evalStackFrameFuel (fuel + 20) state (stackGcMemcpyBody config) =
+      some (.normal (stackFrameMemcpyStep config state)) := by
+  have hscratch0' : 0 ≠ config.immediateScratch := Ne.symm hscratch0
+  have hscratch1' : 1 ≠ config.immediateScratch := Ne.symm hscratch1
+  have hscratch2' : 2 ≠ config.immediateScratch := Ne.symm hscratch2
+  have hscratch3' : 3 ≠ config.immediateScratch := Ne.symm hscratch3
+  simp [stackGcMemcpyBody, stackFrameMemcpyStep, stackSeq,
+    stackGcAddBytes, stackGcSubOne, stackGcAddImmediate, stackGcSubImmediate,
+    stackGcConst, stackGcAdd, stackGcSub, evalStackFrameFuel,
+    evalStackFrameFuelWithCode, stackFrameBasic,
+    stackFrameWriteRegister, stackFrameWriteSlot,
+    wordStackMachineWriteRegister, wordStackMachineWriteMemory,
+    wordStackMachineBinOp, wordStackMachineShift, hheaderDomain,
+    hscratch0, hscratch1, hscratch2, hscratch3,
+    hscratch0', hscratch1', hscratch2', hscratch3']
+  funext current
+  by_cases h3 : current = 3
+  · simp [h3, hscratch3, hscratch3']
+  · by_cases hs : current = config.immediateScratch
+    · simp [h3, hs]
+    · by_cases h0 : current = 0
+      · simp [h3, hs, h0, hscratch0']
+      · by_cases h2 : current = 2
+        · simp [h3, hs, h0, h2, hscratch2']
+        · by_cases h1 : current = 1
+          · simp [h3, hs, h0, h2, h1, hscratch1']
+          · simp [h3, hs, h0, h2, h1, hscratch1',
+              hscratch2', hscratch0']
+
+theorem evalStackFrameFuel_stackGcMemcpy_one [NeZero width]
+    (config : StackGcConfig) (fuel : Nat)
+    (state : StackFrameMachineState width)
+    (hscratch0 : config.immediateScratch ≠ 0)
+    (hscratch1 : config.immediateScratch ≠ 1)
+    (hscratch2 : config.immediateScratch ≠ 2)
+    (hscratch3 : config.immediateScratch ≠ 3)
+    (hone : state.machine.registers 0 = BitVec.ofNat width 1)
+    (hheaderDomain : ∀ address, state.memoryDomain address = true) :
+    evalStackFrameFuel (fuel + 24) state (stackGcMemcpy config) =
+      some (.normal (stackFrameMemcpyStep config state)) := by
+  have hscratch0' : 0 ≠ config.immediateScratch := Ne.symm hscratch0
+  have hscratch1' : 1 ≠ config.immediateScratch := Ne.symm hscratch1
+  have hscratch2' : 2 ≠ config.immediateScratch := Ne.symm hscratch2
+  have hscratch3' : 3 ≠ config.immediateScratch := Ne.symm hscratch3
+  have hstep :=
+    evalStackFrameFuel_stackGcMemcpyBody config (fuel + 2) state
+      hscratch0 hscratch1 hscratch2 hscratch3 hheaderDomain
+  have hstep' :
+      evalStackFrameFuelWithCode (fuel + 22) (fun _ => none) state
+        (stackGcMemcpyBody config) =
+        some (.normal (stackFrameMemcpyStep config state)) := by
+    have hfuel : fuel + 2 + 20 = fuel + 22 := by omega
+    rw [hfuel] at hstep
+    simpa [evalStackFrameFuel] using hstep
+  have hstepZero :
+      (stackFrameMemcpyStep config state).machine.registers 0 = 0 := by
+    simp [stackFrameMemcpyStep, hone, hscratch0, hscratch0', hscratch1,
+      hscratch1', hscratch2, hscratch2', hscratch3, hscratch3',
+      stackFrameWriteRegister, wordStackMachineWriteRegister,
+      wordStackMachineWriteMemory, wordStackMachineBinOp]
+  have hwidth : width ≠ 0 := NeZero.ne width
+  have hcondition :
+      stackMachineCondition state.machine .notEqual 0 (.imm 0) = true := by
+    simp [stackMachineCondition, hone, hwidth]
+  have hstepCondition :
+      stackMachineCondition (stackFrameMemcpyStep config state).machine
+        .notEqual 0 (.imm 0) = false := by
+    simp [stackMachineCondition, hstepZero]
+  simp [stackGcMemcpy, stackGcWhile, evalStackFrameFuel,
+    evalStackFrameFuelWithCode, hcondition, hstepCondition, hstep, hstep',
+    hstepZero]
 
 theorem evalStackFrameGcMoveCode_immediate [NeZero width]
     (config : StackGcConfig) (fuel : Nat)

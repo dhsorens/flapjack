@@ -119,6 +119,8 @@ The bounded machine also has the zero-word collector memcpy base-case
 equation, preserving the complete frame state.
 Reusable sequence and conditional equations expose the evaluator’s
 fuel-consuming composition rules for later collector simulation proofs.
+The named memcpy body now has an exact state-transition theorem, and its
+one-word loop case composes that theorem with the bounded loop evaluator.
 That module now also contains the first compositional Loop-to-Word agreements:
 constant and register-register ADD assignments are related at the destination
 local/register observation, under the explicit architectural x0 invariant.

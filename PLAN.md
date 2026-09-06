@@ -953,6 +953,10 @@ definitions, pass ordering, examples, and proof obligations.
   preserving the complete frame state.
 - [x] Add reusable bounded-frame sequence and conditional evaluator equations
   for compositional collector proofs.
+- [x] Prove the exact bounded-frame collector memcpy-body transition,
+  including scratch-register state and destination-memory update.
+- [x] Compose that transition with the bounded loop evaluator for the
+  one-word memcpy case.
 - [ ] Prove the collector machine semantics and simulation theorem, and add
   generational support if it is needed by a selected target configuration.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state

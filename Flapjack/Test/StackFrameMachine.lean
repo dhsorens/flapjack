@@ -182,6 +182,12 @@ def frameCopyState : StackFrameMachineState 64 :=
     memoryDomain := fun _ => true
     sharedMemoryDomain := fun _ => true }
 
+def frameMemcpyOneState : StackFrameMachineState 64 :=
+  { frameCopyState with
+      machine := { frameCopyState.machine with
+        registers := fun register =>
+          if register = 0 then 1 else frameCopyState.machine.registers register } }
+
 example :
     (evalStackFrameFuel 3000 frameCollectorState
       (stackGcSimpleCode frameCollectorConfig)).isSome := by
@@ -222,6 +228,20 @@ example :
       some (.normal frameCopyState) := by
   apply evalStackFrameFuel_stackGcMemcpy_zero
   native_decide
+
+example :
+    evalStackFrameFuel 24 frameMemcpyOneState
+      (stackGcMemcpy frameCollectorConfig) =
+      some (.normal (stackFrameMemcpyStep frameCollectorConfig
+        frameMemcpyOneState)) := by
+  apply evalStackFrameFuel_stackGcMemcpy_one
+  · native_decide
+  · native_decide
+  · native_decide
+  · native_decide
+  · native_decide
+  · intro address
+    rfl
 
 example :
     stackFrameNormalMemoryNat

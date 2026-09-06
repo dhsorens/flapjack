@@ -74,13 +74,16 @@ def stackGcWhile (operator : Cmp) (condition : Nat) (right : WordRegImm Nat)
     (body : StackProg Nat) : StackProg Nat :=
   .loop (.ite operator condition right body (.break 0))
 
-def stackGcMemcpy (config : StackGcConfig) : StackProg Nat :=
-  stackGcWhile .notEqual 0 (.imm 0) (stackSeq [
+def stackGcMemcpyBody (config : StackGcConfig) : StackProg Nat :=
+  stackSeq [
     .inst (.mem .load 1 2),
     stackGcAddBytes config 2,
     stackGcSubOne config 0,
     .inst (.mem .store 1 3),
-    stackGcAddBytes config 3])
+    stackGcAddBytes config 3]
+
+def stackGcMemcpy (config : StackGcConfig) : StackProg Nat :=
+  stackGcWhile .notEqual 0 (.imm 0) (stackGcMemcpyBody config)
 
 def stackGcMoveCode (config : StackGcConfig) : StackProg Nat :=
   .ite .test 5 (.imm 1) .skip (stackSeq [
