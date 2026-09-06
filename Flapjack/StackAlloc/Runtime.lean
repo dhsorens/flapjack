@@ -102,9 +102,8 @@ def stackGcMoveCopyPrefix (config : StackGcConfig) : StackProg Nat :=
     stackGcMove 2 0,
     stackGcMove 0 1]
 
-def stackGcMoveCopySuffix (config : StackGcConfig) : StackProg Nat :=
+def stackGcMoveCopySuffixAfterMemcpy (config : StackGcConfig) : StackProg Nat :=
   stackSeq [
-    stackGcMemcpy config,
     stackGcMove 0 6,
     stackGcShiftImmediate config .lsl 0 config.wordShift,
     stackGcSub 2 0,
@@ -116,6 +115,9 @@ def stackGcMoveCopySuffix (config : StackGcConfig) : StackProg Nat :=
     stackGcShiftImmediate config .lsl 1 config.shiftLength,
     .arith .or 5 5 1,
     stackGcAdd 4 6]
+
+def stackGcMoveCopySuffix (config : StackGcConfig) : StackProg Nat :=
+  stackSeq [stackGcMemcpy config, stackGcMoveCopySuffixAfterMemcpy config]
 
 def stackGcMoveForwardingSuffix (config : StackGcConfig) : StackProg Nat :=
   stackSeq [

@@ -4002,4 +4002,69 @@ theorem evalStackFrameFuel_stackGcMoveList_copy_body_with_nat_relation
       exact hcopy
   exact ⟨heval, hscanOut, hmemoryOut⟩
 
+def stackGcMoveCopySuffixIterState [NeZero width]
+    (config : StackGcConfig) (words : Nat)
+    (state : StackFrameMachineState width) :
+    StackFrameMachineState width :=
+  stackGcMoveCopySuffixStateAfterMemcpy config
+    (stackFrameMemcpyIter config words state)
+
+theorem evalStackFrameFuel_stackGcMoveCopySuffixAfterMemcpy [NeZero width]
+    (config : StackGcConfig) (fuel : Nat)
+    (state : StackFrameMachineState width)
+    (hscratch0 : config.immediateScratch ≠ 0)
+    (hscratch1 : config.immediateScratch ≠ 1)
+    (hscratch2 : config.immediateScratch ≠ 2)
+    (hscratch3 : config.immediateScratch ≠ 3)
+    (hscratch4 : config.immediateScratch ≠ 4)
+    (hscratch5 : config.immediateScratch ≠ 5)
+    (hscratch6 : config.immediateScratch ≠ 6)
+    (hdomain : ∀ address, state.memoryDomain address = true) :
+    evalStackFrameFuel (fuel + 24) state
+        (stackGcMoveCopySuffixAfterMemcpy config) =
+      some (.normal (stackGcMoveCopySuffixStateAfterMemcpy config state)) := by
+  simp [stackGcMoveCopySuffixAfterMemcpy,
+    stackGcMoveCopySuffixStateAfterMemcpy, evalStackFrameFuel,
+    evalStackFrameFuelWithCode, stackSeq, stackGcMove, stackGcShiftImmediate,
+    stackGcAddImmediate, stackGcAddBytes, stackGcSubImmediate,
+    stackGcConst, stackGcAdd, stackGcSub, stackGcClearTop, stackFrameBasic,
+    stackFrameWriteRegister, wordStackMachineWriteRegister,
+    wordStackMachineWriteMemory, wordStackMachineBinOp, wordStackMachineShift,
+    hdomain, hscratch0, hscratch1, hscratch2, hscratch3, hscratch4,
+    hscratch5, hscratch6, Ne.symm hscratch0, Ne.symm hscratch1,
+    Ne.symm hscratch2, Ne.symm hscratch3, Ne.symm hscratch4,
+    Ne.symm hscratch5, Ne.symm hscratch6]
+
+theorem evalStackFrameFuel_stackGcMoveCopySuffix_iter [NeZero width]
+    (config : StackGcConfig) (fuel words : Nat)
+    (state : StackFrameMachineState width)
+    (hscratch0 : config.immediateScratch ≠ 0)
+    (hscratch1 : config.immediateScratch ≠ 1)
+    (hscratch2 : config.immediateScratch ≠ 2)
+    (hscratch3 : config.immediateScratch ≠ 3)
+    (hscratch4 : config.immediateScratch ≠ 4)
+    (hscratch5 : config.immediateScratch ≠ 5)
+    (hscratch6 : config.immediateScratch ≠ 6)
+    (hcount : state.machine.registers 0 = BitVec.ofNat width words)
+    (hbound : words < 2 ^ width)
+    (hheaderDomain : ∀ address, state.memoryDomain address = true) :
+    evalStackFrameFuel (fuel + words + 25) state
+        (stackGcMoveCopySuffix config) =
+      some (.normal (stackGcMoveCopySuffixIterState config words state)) := by
+  have hstep := evalStackFrameFuel_stackGcMemcpy_iter config fuel words state
+    hscratch0 hscratch1 hscratch2 hscratch3 hcount hbound hheaderDomain
+  have hdomain' :
+      (stackFrameMemcpyIter config words state).memoryDomain =
+        state.memoryDomain :=
+    stackFrameMemcpyIter_memoryDomain config words state
+  have htail := evalStackFrameFuel_stackGcMoveCopySuffixAfterMemcpy
+    config (fuel + words) (stackFrameMemcpyIter config words state)
+    hscratch0 hscratch1 hscratch2 hscratch3 hscratch4 hscratch5 hscratch6
+    (by intro address; rw [hdomain']; exact hheaderDomain address)
+  have hseq := evalStackFrameFuel_seq_normal (fuel + words + 24) state
+    (stackFrameMemcpyIter config words state)
+    (stackGcMemcpy config) (stackGcMoveCopySuffixAfterMemcpy config) hstep
+  simpa [stackGcMoveCopySuffix, stackGcMoveCopySuffixIterState,
+    stackSeq, Nat.add_assoc] using hseq.trans htail
+
 end Flapjack.RiscV

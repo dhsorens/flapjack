@@ -1073,6 +1073,8 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Relate the arbitrary-counter copying MoveList body to its full bounded
   machine/Nat memory update and scan advancement, parameterized by the
   recursive-copy and copy-address correspondences.
+- [x] Generalize the copying MoveList suffix evaluator to arbitrary copied-word
+  counts, reusing the fuel-indexed machine/Nat `Memcpy` bridge.
 - [x] Expose a forwarding MoveList machine/Nat value bridge, parameterized by
   the explicit fixed-width forwarding-address correspondence.
 - [x] Expose a copying MoveList machine/Nat value bridge, parameterized by the
