@@ -127,6 +127,8 @@ are named machine transitions; their composition now proves the complete
 one-word non-forwarded copy branch at the bounded machine-state boundary.
 The forwarding suffix is likewise factored and its full branch composition is
 proved, including the unchanged memory and threaded frame components.
+The zero-iteration equations for the move-list, heap-scan, and bitmap-root
+loops are also proved at the same bounded evaluator boundary.
 The pure Nat collector specification also exposes copy-case equations for
 the copied value, next destination address, forwarding-header write, and
 success condition.

@@ -194,6 +194,27 @@ example :
   native_decide
 
 example :
+    evalStackFrameFuel 3 frameCollectorState
+      (stackGcMoveListCode frameCollectorConfig) =
+      some (.normal frameCollectorState) := by
+  apply evalStackFrameFuel_stackGcMoveList_zero
+  native_decide
+
+example :
+    evalStackFrameFuel 3 frameCollectorState
+      (stackGcMoveLoopCode frameCollectorConfig) =
+      some (.normal frameCollectorState) := by
+  apply evalStackFrameFuel_stackGcMoveLoop_done
+  native_decide
+
+example :
+    evalStackFrameFuel 3 frameCollectorState
+      (stackGcMoveRootsBitmapsCode frameCollectorConfig) =
+      some (.normal frameCollectorState) := by
+  apply evalStackFrameFuel_stackGcMoveRootsBitmaps_zero
+  native_decide
+
+example :
     stackFrameNormalRegisterNat
       (evalStackFrameFuel 2 frameMachineState
         (stackGcMoveCode frameCollectorConfig)) 5 =

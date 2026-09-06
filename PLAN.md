@@ -961,6 +961,8 @@ definitions, pass ordering, examples, and proof obligations.
   prove its complete one-word non-forwarded branch composition.
 - [x] Factor the collector forwarding path into named machine-state
   transitions and prove its full branch composition.
+- [x] Prove the zero-iteration machine equations for collector move-list,
+  heap-scan, and bitmap-root loops.
 - [x] Complete the pure Nat collector copy-case equations for the copied
   value, next destination address, forwarding-header write, and success
   condition.

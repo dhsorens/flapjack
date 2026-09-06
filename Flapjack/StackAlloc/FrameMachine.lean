@@ -950,6 +950,34 @@ theorem evalStackFrameFuel_stackGcMoveCode_forwarding [NeZero width]
     evalStackFrameFuelWithCode, houter, hinner, hprefix, hprefix',
     hsuffix, hsuffix', stackGcMoveForwardingState]
 
+theorem evalStackFrameFuel_stackGcMoveList_zero [NeZero width]
+    (config : StackGcConfig) (fuel : Nat)
+    (state : StackFrameMachineState width)
+    (hzero : state.machine.registers 7 = BitVec.ofNat width 0) :
+    evalStackFrameFuel (fuel + 3) state (stackGcMoveListCode config) =
+      some (.normal state) := by
+  simp [stackGcMoveListCode, stackGcWhile, evalStackFrameFuel,
+    evalStackFrameFuelWithCode, stackMachineCondition, hzero]
+
+theorem evalStackFrameFuel_stackGcMoveLoop_done [NeZero width]
+    (config : StackGcConfig) (fuel : Nat)
+    (state : StackFrameMachineState width)
+    (hdone : state.machine.registers 3 = state.machine.registers 8) :
+    evalStackFrameFuel (fuel + 3) state (stackGcMoveLoopCode config) =
+      some (.normal state) := by
+  simp [stackGcMoveLoopCode, stackGcWhile, evalStackFrameFuel,
+    evalStackFrameFuelWithCode, stackMachineCondition, hdone]
+
+theorem evalStackFrameFuel_stackGcMoveRootsBitmaps_zero [NeZero width]
+    (config : StackGcConfig) (fuel : Nat)
+    (state : StackFrameMachineState width)
+    (hzero : state.machine.registers 9 = BitVec.ofNat width 0) :
+    evalStackFrameFuel (fuel + 3) state
+        (stackGcMoveRootsBitmapsCode config) =
+      some (.normal state) := by
+  simp [stackGcMoveRootsBitmapsCode, stackGcWhile, evalStackFrameFuel,
+    evalStackFrameFuelWithCode, stackMachineCondition, hzero]
+
 theorem evalStackFrameGcMoveCode_immediate [NeZero width]
     (config : StackGcConfig) (fuel : Nat)
     (state : StackFrameMachineState width)
