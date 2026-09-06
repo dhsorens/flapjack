@@ -230,6 +230,19 @@ example :
   native_decide
 
 example :
+    evalStackFrameFuel 20 frameMemcpyOneState
+      (stackGcMemcpyBody frameCollectorConfig) =
+      some (.normal (stackFrameMemcpyStep frameCollectorConfig
+        frameMemcpyOneState)) := by
+  apply evalStackFrameFuel_stackGcMemcpyBody
+  · native_decide
+  · native_decide
+  · native_decide
+  · native_decide
+  · intro address
+    rfl
+
+example :
     evalStackFrameFuel 24 frameMemcpyOneState
       (stackGcMemcpy frameCollectorConfig) =
       some (.normal (stackFrameMemcpyStep frameCollectorConfig
