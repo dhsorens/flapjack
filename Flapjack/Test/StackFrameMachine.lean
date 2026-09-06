@@ -214,6 +214,20 @@ example :
   native_decide
 
 example :
+    evalStackFrameFuel 23 frameForwardingState
+      (stackGcMoveCode frameCollectorConfig) =
+      some (.normal (stackGcMoveForwardingState frameCollectorConfig
+        frameForwardingState)) := by
+  apply evalStackFrameFuel_stackGcMoveCode_forwarding
+  · native_decide
+  · native_decide
+  · native_decide
+  · native_decide
+  · intro address
+    rfl
+  · native_decide
+
+example :
     stackFrameNormalRegisterNat
       (evalStackFrameFuel 1000 frameCopyState
         (stackGcMoveCode frameCollectorConfig)) 5 =

@@ -125,6 +125,8 @@ one-word loop case composes that theorem with the bounded loop evaluator.
 The collector address/header prefix, copy preparation, and copy finalization
 are named machine transitions; their composition now proves the complete
 one-word non-forwarded copy branch at the bounded machine-state boundary.
+The forwarding suffix is likewise factored and its full branch composition is
+proved, including the unchanged memory and threaded frame components.
 The pure Nat collector specification also exposes copy-case equations for
 the copied value, next destination address, forwarding-header write, and
 success condition.

@@ -117,15 +117,18 @@ def stackGcMoveCopySuffix (config : StackGcConfig) : StackProg Nat :=
     .arith .or 5 5 1,
     stackGcAdd 4 6]
 
+def stackGcMoveForwardingSuffix (config : StackGcConfig) : StackProg Nat :=
+  stackSeq [
+    stackGcShiftImmediate config .lsr 1 2,
+    stackGcShiftImmediate config .lsl 1 config.shiftLength,
+    stackGcClearTop config 5 (config.smallShiftLength - 1),
+    .arith .or 5 5 1]
+
 def stackGcMoveCode (config : StackGcConfig) : StackProg Nat :=
   .ite .test 5 (.imm 1) .skip (stackSeq [
     stackGcMoveAddressPrefix config,
     .ite .test 1 (.imm 3)
-      (stackSeq [
-        stackGcShiftImmediate config .lsr 1 2,
-        stackGcShiftImmediate config .lsl 1 config.shiftLength,
-        stackGcClearTop config 5 (config.smallShiftLength - 1),
-        .arith .or 5 5 1])
+      (stackGcMoveForwardingSuffix config)
       (stackSeq [stackGcMoveCopyPrefix config,
         stackGcMoveCopySuffix config])])
 
