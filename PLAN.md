@@ -1082,6 +1082,8 @@ definitions, pass ordering, examples, and proof obligations.
   relation across iterated MoveLoop states.
 - [x] Package the fuel-indexed MoveList evaluator iteration together with
   propagation of the combined machine/Nat relation.
+- [x] Package the fuel-indexed MoveLoop evaluator iteration together with
+  propagation of the combined machine/Nat relation.
 - [x] Prove the bounded machine transition for a code-object MoveLoop header,
   covering header load, length decoding, object-size scan advance, and the
   destination update without unfolding the nested MoveList loop.
