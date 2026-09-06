@@ -307,4 +307,38 @@ theorem stackGcNatMoveLoop_zero
       false := by
   rfl
 
+theorem stackGcNatMoveLoop_false
+    (config : StackGcConfig) (fuel scan index destination oldBase : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool) :
+    (stackGcNatMoveLoop config fuel scan index destination oldBase memory domain false).condition =
+      false := by
+  induction fuel generalizing scan index destination memory with
+  | zero => rfl
+  | succ fuel ih =>
+      by_cases hscan : scan = destination
+      · simp [stackGcNatMoveLoop, hscan]
+      · by_cases hcode : stackGcNatHeaderHasCode (memory scan) = true
+        · simpa [stackGcNatMoveLoop, hscan, hcode] using
+            (ih (scan + (stackGcNatDecodeLength config (memory scan) + 1) * config.bytesInWord)
+              index destination memory)
+        · let moved := stackGcNatMoveList config
+            (stackGcNatDecodeLength config (memory scan))
+            (scan + config.bytesInWord) index destination oldBase memory domain
+          simpa [stackGcNatMoveLoop, hscan, hcode, moved] using
+            (ih moved.nextScan moved.nextIndex moved.nextAddress moved.memory)
+
+theorem stackGcNatMoveLoop_ok
+    (config : StackGcConfig) (fuel scan index destination oldBase : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool) (condition : Bool)
+    (hresult :
+      (stackGcNatMoveLoop config fuel scan index destination oldBase memory domain condition).condition =
+        true) :
+    condition = true := by
+  cases condition with
+  | false =>
+      have hfalse := stackGcNatMoveLoop_false config fuel scan index destination oldBase
+        memory domain
+      simp [hfalse] at hresult
+  | true => rfl
+
 end Flapjack
