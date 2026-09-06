@@ -1067,6 +1067,8 @@ definitions, pass ordering, examples, and proof obligations.
   header tag and the bounded machine/Nat memory correspondence.
 - [x] Specialize the data-step machine/Nat contract to derive its branch
   condition from the bounded memory correspondence.
+- [x] Specialize the code-step machine/Nat contract to derive its branch
+  condition from the bounded memory correspondence.
 - [x] Prove the bounded machine transition for a code-object MoveLoop header,
   covering header load, length decoding, object-size scan advance, and the
   destination update without unfolding the nested MoveList loop.
