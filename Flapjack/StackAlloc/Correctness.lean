@@ -449,6 +449,19 @@ theorem stackGcNatMoveList_zero
         condition := true } := by
   rfl
 
+theorem stackGcNatMoveList_immediate_one
+    (config : StackGcConfig) (address index destination oldBase : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool)
+    (hvalue : memory address % 2 = 0) :
+    stackGcNatMoveList config 1 address index destination oldBase memory domain =
+      { nextScan := address + config.bytesInWord
+        nextIndex := index
+        nextAddress := destination
+        memory := fun current =>
+          if current = address then memory address else memory current
+        condition := domain address } := by
+  simp [stackGcNatMoveList, stackGcNatMove, hvalue]
+
 theorem stackGcNatMoveList_append
     (config : StackGcConfig) (length length' address index destination oldBase : Nat)
     (memory : Nat → Nat) (domain : Nat → Bool) :
