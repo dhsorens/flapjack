@@ -1174,6 +1174,8 @@ definitions, pass ordering, examples, and proof obligations.
   recursive-step equation, and extended relation preservation.
 - [x] Port executable bitmap filtering and reconstruction combinators for the
   root/bitmap collector wrappers.
+- [x] Port Nat-executable bitmap bit-length, word decoding, and full bitmap
+  lookup semantics.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 

@@ -48,6 +48,7 @@ import Flapjack.StackAlloc.Machine
 import Flapjack.StackAlloc.FrameMachine
 import Flapjack.StackAlloc.CollectorSemantics
 import Flapjack.StackAlloc.Correctness
+import Flapjack.StackAlloc.BitmapSemantics
 import Flapjack.StackRemove
 import Flapjack.Lab
 import Flapjack.RiscV.Lab
