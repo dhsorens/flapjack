@@ -1012,6 +1012,8 @@ definitions, pass ordering, examples, and proof obligations.
   the copy `Move`, store, address advance, and loop termination.
 - [x] Port the CakeML `word_gc_move_list_append` decomposition to the Nat
   collector model, composing sequential MoveList segments and conditions.
+- [x] Prove that the Nat MoveList scan pointer advances by
+  `length * bytesInWord`, independently of moved object contents.
 - [ ] Prove the collector machine semantics and simulation theorem, and add
   generational support if it is needed by a selected target configuration.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state

@@ -454,6 +454,18 @@ theorem stackGcNatMoveList_append
       rw [Nat.succ_add]
       simp [stackGcNatMoveList, ih, Bool.and_assoc]
 
+theorem stackGcNatMoveList_nextScan
+    (config : StackGcConfig) (length address index destination oldBase : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool) :
+    (stackGcNatMoveList config length address index destination oldBase memory domain).nextScan =
+      address + length * config.bytesInWord := by
+  induction length generalizing address index destination memory with
+  | zero =>
+      simp [stackGcNatMoveList]
+  | succ length ih =>
+      simp [stackGcNatMoveList, ih, Nat.succ_mul, Nat.add_assoc,
+        Nat.add_comm, Nat.add_left_comm]
+
 theorem stackGcNatMoveLoop_zero
     (config : StackGcConfig) (scan index destination oldBase : Nat)
     (memory : Nat → Nat) (domain : Nat → Bool) :
