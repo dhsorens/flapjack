@@ -4942,4 +4942,39 @@ theorem evalStackFrameFuel_stackGcMoveLoop_done_with_nat_relation_of_destination
     state scan index destination oldBase memory domain condition hscanEq hdone
     hrelation
 
+def stackGcMachineNatMoveLoopRelation [NeZero width]
+    (state : StackFrameMachineState width)
+    (scan index destination : Nat) (memory : Nat → Nat) : Prop :=
+  stackGcMachineNatRelation state scan memory ∧
+    state.machine.registers 3 = BitVec.ofNat width destination ∧
+    state.machine.registers 4 = BitVec.ofNat width index
+
+theorem evalStackFrameFuel_stackGcMoveLoop_done_with_state_relation
+    [NeZero width] (config : StackGcConfig) (fuel : Nat)
+    (state : StackFrameMachineState width)
+    (scan index destination oldBase : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool) (condition : Bool)
+    (hscan : state.machine.registers 8 = BitVec.ofNat width scan)
+    (hrelation : stackGcMachineNatMoveLoopRelation
+      state scan index destination memory)
+    (hdone : state.machine.registers 3 = state.machine.registers 8)
+    (hdestinationBound : destination < 2 ^ width) :
+    evalStackFrameFuel (fuel + 3) state (stackGcMoveLoopCode config) =
+        some (.normal state) ∧
+      stackGcNatMoveLoop config (fuel + 1) scan index destination oldBase
+        memory domain condition =
+        { nextIndex := index
+          nextAddress := destination
+          memory := memory
+          condition := condition } ∧
+      stackGcMachineNatMoveLoopRelation
+        state destination index destination memory := by
+  rcases hrelation with ⟨hbase, hdestination, hindex⟩
+  have hterminal :=
+    evalStackFrameFuel_stackGcMoveLoop_done_with_nat_relation_of_destination
+      config fuel state scan index destination oldBase memory domain condition
+      hscan hdestination hbase hdone hdestinationBound
+  rcases hterminal with ⟨heval, hnat, hbaseOut⟩
+  exact ⟨heval, hnat, hbaseOut, hdestination, hindex⟩
+
 end Flapjack.RiscV
