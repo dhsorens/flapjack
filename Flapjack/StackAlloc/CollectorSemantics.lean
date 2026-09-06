@@ -24,6 +24,16 @@ def stackFrameMemcpyIter [NeZero width]
   | words + 1, state =>
       stackFrameMemcpyIter config words (stackFrameMemcpyStep config state)
 
+def stackFrameMemcpyMemory [NeZero width]
+    (config : StackGcConfig) : Nat → Word width → Word width →
+      (Word width → Word width) → Word width → Word width
+  | 0, _, _, memory, address => memory address
+  | words + 1, source, destination, memory, address =>
+      stackFrameMemcpyMemory config words
+        (source + BitVec.ofNat width config.bytesInWord)
+        (destination + BitVec.ofNat width config.bytesInWord)
+        (fun current => if current = destination then memory source else memory current) address
+
 theorem bitVec_ofNat_succ_sub_one [NeZero width] (words : Nat) :
     BitVec.ofNat width (words + 1) - BitVec.ofNat width 1 =
       BitVec.ofNat width words := by
@@ -127,6 +137,16 @@ theorem stackFrameMemcpyStep_memory [NeZero width]
   · simp [stackFrameMemcpyStep, stackFrameWriteRegister,
       wordStackMachineWriteRegister, wordStackMachineWriteMemory,
       wordStackMachineBinOp, haddress, Ne.symm haddress]
+
+theorem stackFrameMemcpyStep_memory_function [NeZero width]
+    (config : StackGcConfig) (state : StackFrameMachineState width) :
+    (stackFrameMemcpyStep config state).machine.memory =
+      (wordStackMachineWriteMemory state.machine
+        (state.machine.registers 3)
+        (state.machine.memory (state.machine.registers 2))).memory := by
+  funext address
+  rw [stackFrameMemcpyStep_memory]
+  rfl
 
 theorem evalStackFrameFuel_loop_normal [NeZero width]
     (fuel : Nat) (state state' : StackFrameMachineState width)
@@ -305,5 +325,85 @@ theorem stackFrameMemcpyIter_sharedMemoryDomain [NeZero width]
         state.sharedMemoryDomain
       rw [ih]
       rfl
+
+theorem stackFrameMemcpyIter_memory [NeZero width]
+    (config : StackGcConfig) (words : Nat)
+    (state : StackFrameMachineState width)
+    (hscratch2 : config.immediateScratch ≠ 2)
+    (hscratch3 : config.immediateScratch ≠ 3) :
+    (stackFrameMemcpyIter config words state).machine.memory =
+      fun address => stackFrameMemcpyMemory config words
+        (state.machine.registers 2) (state.machine.registers 3)
+        state.machine.memory address := by
+  induction words generalizing state with
+  | zero => rfl
+  | succ words ih =>
+      change (stackFrameMemcpyIter config words
+        (stackFrameMemcpyStep config state)).machine.memory = _
+      rw [ih]
+      rw [stackFrameMemcpyStep_register_source config state hscratch2]
+      rw [stackFrameMemcpyStep_register_destination config state hscratch3]
+      rw [stackFrameMemcpyStep_memory_function config state]
+      rfl
+
+theorem stackFrameMemcpyIter_register_zero [NeZero width]
+    (config : StackGcConfig) (words : Nat)
+    (state : StackFrameMachineState width)
+    (hscratch0 : config.immediateScratch ≠ 0)
+    (hscratch1 : config.immediateScratch ≠ 1)
+    (hscratch2 : config.immediateScratch ≠ 2)
+    (hscratch3 : config.immediateScratch ≠ 3)
+    (hcount : state.machine.registers 0 = BitVec.ofNat width words)
+    (hbound : words < 2 ^ width) :
+    (stackFrameMemcpyIter config words state).machine.registers 0 = 0 := by
+  induction words generalizing state with
+  | zero => simpa [stackFrameMemcpyIter] using hcount
+  | succ words ih =>
+      have hbound' : words < 2 ^ width := by omega
+      have hcount' := stackFrameMemcpyStep_register_zero config words state
+        hscratch0 hscratch1 hscratch2 hscratch3 hcount
+      change (stackFrameMemcpyIter config words
+        (stackFrameMemcpyStep config state)).machine.registers 0 = 0
+      exact ih (stackFrameMemcpyStep config state) hcount' hbound'
+
+theorem stackFrameMemcpyIter_register_source [NeZero width]
+    (config : StackGcConfig) (words : Nat)
+    (state : StackFrameMachineState width)
+    (hscratch2 : config.immediateScratch ≠ 2) :
+    (stackFrameMemcpyIter config words state).machine.registers 2 =
+      wordStackMachineBinOp .add (state.machine.registers 2)
+        (BitVec.ofNat width (words * config.bytesInWord)) := by
+  induction words generalizing state with
+  | zero => simp [stackFrameMemcpyIter, wordStackMachineBinOp]
+  | succ words ih =>
+      change (stackFrameMemcpyIter config words
+        (stackFrameMemcpyStep config state)).machine.registers 2 = _
+      rw [ih]
+      rw [stackFrameMemcpyStep_register_source config state hscratch2]
+      simp only [wordStackMachineBinOp, Nat.succ_mul, Nat.one_mul,
+        BitVec.ofNat_add]
+      rw [BitVec.add_assoc]
+      congr 1
+      exact BitVec.add_comm _ _
+
+theorem stackFrameMemcpyIter_register_destination [NeZero width]
+    (config : StackGcConfig) (words : Nat)
+    (state : StackFrameMachineState width)
+    (hscratch3 : config.immediateScratch ≠ 3) :
+    (stackFrameMemcpyIter config words state).machine.registers 3 =
+      wordStackMachineBinOp .add (state.machine.registers 3)
+        (BitVec.ofNat width (words * config.bytesInWord)) := by
+  induction words generalizing state with
+  | zero => simp [stackFrameMemcpyIter, wordStackMachineBinOp]
+  | succ words ih =>
+      change (stackFrameMemcpyIter config words
+        (stackFrameMemcpyStep config state)).machine.registers 3 = _
+      rw [ih]
+      rw [stackFrameMemcpyStep_register_destination config state hscratch3]
+      simp only [wordStackMachineBinOp, Nat.succ_mul, Nat.one_mul,
+        BitVec.ofNat_add]
+      rw [BitVec.add_assoc]
+      congr 1
+      exact BitVec.add_comm _ _
 
 end Flapjack.RiscV
