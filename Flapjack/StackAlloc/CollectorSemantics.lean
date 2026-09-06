@@ -4372,4 +4372,112 @@ theorem evalStackFrameFuel_stackGcMoveCopySuffix_iter_with_nat_relation
   simpa [stackGcMoveCopySuffix, stackGcMoveCopySuffixIterState,
     stackSeq, Nat.add_assoc] using hseq.trans htail.1
 
+theorem evalStackFrameFuel_stackGcMoveCode_copy_iter_with_nat_relation
+    [NeZero width] (config : StackGcConfig) (fuel words : Nat)
+    (state : StackFrameMachineState width)
+    (source destination index value : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool)
+    (hscratch0 : config.immediateScratch ≠ 0)
+    (hscratch1 : config.immediateScratch ≠ 1)
+    (hscratch2 : config.immediateScratch ≠ 2)
+    (hscratch3 : config.immediateScratch ≠ 3)
+    (hscratch4 : config.immediateScratch ≠ 4)
+    (hscratch5 : config.immediateScratch ≠ 5)
+    (hscratch6 : config.immediateScratch ≠ 6)
+    (hodd : state.machine.registers 5 &&&
+      BitVec.ofNat width 1 ≠ 0)
+    (hheaderDomain : ∀ address, state.memoryDomain address = true)
+    (hnotforwarding :
+      state.machine.memory (stackGcMachineMoveAddress config state) &&&
+        BitVec.ofNat width 3 ≠ 0)
+    (hcopyCount :
+      (stackGcMoveCopyPrefixState config
+        (stackGcMoveAddressState config state)).machine.registers 0 =
+          BitVec.ofNat width words)
+    (hbound : words < 2 ^ width)
+    (hcopyDomain : ∀ address,
+      (stackGcMoveCopyPrefixState config
+        (stackGcMoveAddressState config state)).memoryDomain address = true)
+    (hstate : StackFrameMemcpyCorrespondence
+      (stackGcMoveCopyPrefixState config
+        (stackGcMoveAddressState config state)) words
+      (BitVec.ofNat width source) (BitVec.ofNat width destination)
+      (fun current => BitVec.ofNat width (memory current.toNat)))
+    (hmemory : ∀ address, memory address < 2 ^ width)
+    (hsource : ∀ index, index ≤ words →
+      source + index * config.bytesInWord < 2 ^ width)
+    (hdestination : ∀ index, index ≤ words →
+      destination + index * config.bytesInWord < 2 ^ width)
+    (hwriteAddress :
+      (stackGcMoveCopySuffixStateAfterMemcpy config
+        (stackFrameMemcpyIter config words
+          (stackGcMoveCopyPrefixState config
+            (stackGcMoveAddressState config state)))).machine.registers 2 =
+        BitVec.ofNat width source)
+    (hwriteValue :
+      ((stackGcMoveCopySuffixStateAfterMemcpy config
+        (stackFrameMemcpyIter config words
+          (stackGcMoveCopyPrefixState config
+            (stackGcMoveAddressState config state)))).machine.registers 0).toNat =
+        index * 4)
+    (hfinalDestination :
+      ((stackGcMoveCopySuffixStateAfterMemcpy config
+        (stackFrameMemcpyIter config words
+          (stackGcMoveCopyPrefixState config
+            (stackGcMoveAddressState config state)))).machine.registers 3).toNat =
+        destination + words * config.bytesInWord)
+    (hfinalValue :
+      ((stackGcMoveCopySuffixStateAfterMemcpy config
+        (stackFrameMemcpyIter config words
+          (stackGcMoveCopyPrefixState config
+            (stackGcMoveAddressState config state)))).machine.registers 5).toNat =
+        stackGcNatUpdateAddress config index value)
+    (hfinalIndex :
+      ((stackGcMoveCopySuffixStateAfterMemcpy config
+        (stackFrameMemcpyIter config words
+          (stackGcMoveCopyPrefixState config
+            (stackGcMoveAddressState config state)))).machine.registers 4).toNat =
+        index + words)
+    (hsourceBound : source < 2 ^ width) :
+    evalStackFrameFuel (fuel + words + 29) state
+        (stackGcMoveCode config) =
+      some (.normal (stackGcMoveCopySuffixIterState config words
+        (stackGcMoveCopyPrefixState config
+          (stackGcMoveAddressState config state)))) ∧
+      ((stackGcMoveCopySuffixIterState config words
+        (stackGcMoveCopyPrefixState config
+          (stackGcMoveAddressState config state))).machine.registers 3).toNat =
+        (stackGcNatMoveCopySuffix config words source destination index value
+          memory domain).nextAddress ∧
+      ((stackGcMoveCopySuffixIterState config words
+        (stackGcMoveCopyPrefixState config
+          (stackGcMoveAddressState config state))).machine.registers 4).toNat =
+        (stackGcNatMoveCopySuffix config words source destination index value
+          memory domain).nextIndex ∧
+      ((stackGcMoveCopySuffixIterState config words
+        (stackGcMoveCopyPrefixState config
+          (stackGcMoveAddressState config state))).machine.registers 5).toNat =
+        (stackGcNatMoveCopySuffix config words source destination index value
+          memory domain).value ∧
+      ∀ target, target < 2 ^ width →
+        ((stackGcMoveCopySuffixIterState config words
+          (stackGcMoveCopyPrefixState config
+            (stackGcMoveAddressState config state))).machine.memory
+          (BitVec.ofNat width target)).toNat =
+          (stackGcNatMoveCopySuffix config words source destination index value
+            memory domain).memory target := by
+  have hcode := evalStackFrameFuel_stackGcMoveCode_copy_iter config fuel words state
+    hscratch0 hscratch1 hscratch2 hscratch3 hscratch4 hscratch5 hscratch6 hodd
+    hheaderDomain hnotforwarding hcopyCount hbound
+  have htail :=
+    evalStackFrameFuel_stackGcMoveCopySuffix_iter_with_nat_relation config
+      (fuel + 4) words source destination index value
+      (stackGcMoveCopyPrefixState config
+        (stackGcMoveAddressState config state)) memory domain
+      hscratch0 hscratch1 hscratch2 hscratch3 hscratch4 hscratch5 hscratch6
+      hcopyDomain hstate hmemory hsource hdestination hbound hwriteAddress
+      hwriteValue hfinalDestination hfinalValue hfinalIndex hsourceBound
+  refine ⟨?_, htail.2.1, htail.2.2.1, htail.2.2.2.1, htail.2.2.2.2⟩
+  simpa [Nat.add_assoc, Nat.add_comm, Nat.add_left_comm] using hcode
+
 end Flapjack.RiscV

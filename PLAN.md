@@ -1081,6 +1081,8 @@ definitions, pass ordering, examples, and proof obligations.
   result, including the forwarding-header memory projection.
 - [x] Lift the arbitrary-word suffix relation through the bounded machine
   `Memcpy` loop, including the domain-independent Nat memory projection.
+- [x] Package the arbitrary-word copying `MoveCode` evaluator with the
+  corresponding Nat suffix relation at the code-branch boundary.
 - [x] Generalize the copying `MoveCode` evaluator to arbitrary copied-word
   counts, with an explicit prefix count correspondence and bounded count.
 - [x] Expose a forwarding MoveList machine/Nat value bridge, parameterized by
