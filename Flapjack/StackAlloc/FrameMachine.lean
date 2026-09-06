@@ -212,12 +212,40 @@ def stackFrameNormalRegisterNat [NeZero width]
   | some (.normal state) => some (state.machine.registers register).toNat
   | _ => none
 
+def stackFrameNormalMemoryNat [NeZero width]
+    (result : Option (StackFrameMachineControl width))
+    (address : Nat) : Option Nat :=
+  match result with
+  | some (.normal state) =>
+      some (state.machine.memory (BitVec.ofNat width address)).toNat
+  | _ => none
+
 theorem evalStackFrameFuel_stackGetSize [NeZero width]
     (fuel : Nat) (state : StackFrameMachineState width) (register : Nat) :
     evalStackFrameFuel (fuel + 1) state (.stackGetSize register) =
       some (.normal (stackFrameWriteRegister state register
         (BitVec.ofNat width state.stackSpace))) := by
   rfl
+
+theorem evalStackFrameFuel_stackLoad [NeZero width]
+    (fuel : Nat) (state : StackFrameMachineState width)
+    (register offset : Nat)
+    (hvalid : state.stackSpace + offset < state.stackLimit) :
+    evalStackFrameFuel (fuel + 1) state (.stackLoad register offset) =
+      some (.normal (stackFrameWriteRegister state register
+        (state.machine.stack (state.stackSpace + offset)))) := by
+  simp [evalStackFrameFuel, evalStackFrameFuelWithCode,
+    stackFrameSlotIndex, stackFrameIndexValid, hvalid]
+
+theorem evalStackFrameFuel_stackStore [NeZero width]
+    (fuel : Nat) (state : StackFrameMachineState width)
+    (register offset : Nat)
+    (hvalid : state.stackSpace + offset < state.stackLimit) :
+    evalStackFrameFuel (fuel + 1) state (.stackStore register offset) =
+      some (.normal (stackFrameWriteSlot state
+        (state.stackSpace + offset) (state.machine.registers register))) := by
+  simp [evalStackFrameFuel, evalStackFrameFuelWithCode,
+    stackFrameSlotIndex, stackFrameIndexValid, hvalid]
 
 theorem evalStackFrameGcMoveCode_immediate [NeZero width]
     (config : StackGcConfig) (fuel : Nat)

@@ -35,6 +35,12 @@ example :
   native_decide
 
 example :
+    evalStackFrameFuel 2 frameMachineState (.stackLoad 4 5) =
+      some (.normal (stackFrameWriteRegister frameMachineState 4
+        (frameMachineState.machine.stack (frameMachineState.stackSpace + 5)))) := by
+  exact evalStackFrameFuel_stackLoad 1 frameMachineState 4 5 (by decide)
+
+example :
     (evalStackFrameFuel 2 frameMachineState (.stackLoadAny 4 3)).isSome := by
   native_decide
 
@@ -69,6 +75,30 @@ def frameCollectorConfig : StackGcConfig :=
     bytesInWord := 8
     immediateScratch := 31 }
 
+def frameForwardingState : StackFrameMachineState 64 :=
+  { machine :=
+      { registers := fun register => if register = 5 then 3 else 0
+        stack := fun _ => 0
+        stores := fun _ => 0
+        memory := fun address => if address = 0 then 4 else 0
+        sharedMemory := fun _ => 0 }
+    stackSpace := 8
+    stackLimit := 16
+    bitmaps := [0] }
+
+def frameCopyState : StackFrameMachineState 64 :=
+  { machine :=
+      { registers := fun register =>
+          if register = 3 then 100 else
+            if register = 4 then 1 else if register = 5 then 3 else 0
+        stack := fun _ => 0
+        stores := fun _ => 0
+        memory := fun address => if address = 0 then 3 else 0
+        sharedMemory := fun _ => 0 }
+    stackSpace := 8
+    stackLimit := 16
+    bitmaps := [0] }
+
 example :
     (evalStackFrameFuel 3000 frameCollectorState
       (stackGcSimpleCode frameCollectorConfig)).isSome := by
@@ -84,5 +114,29 @@ example :
   apply evalStackFrameGcMoveCode_immediate_matches_nat
   · native_decide
   · native_decide
+
+example :
+    stackFrameNormalRegisterNat
+      (evalStackFrameFuel 1000 frameForwardingState
+        (stackGcMoveCode frameCollectorConfig)) 5 =
+      some (stackGcNatMove frameCollectorConfig 3 0 0 0
+        (fun address => if address = 0 then 4 else 0)
+        (fun _ => true)).value := by
+  native_decide
+
+example :
+    stackFrameNormalRegisterNat
+      (evalStackFrameFuel 1000 frameCopyState
+        (stackGcMoveCode frameCollectorConfig)) 5 =
+      some (stackGcNatMove frameCollectorConfig 3 1 100 0
+        (fun address => if address = 0 then 3 else 0)
+        (fun _ => true)).value := by
+  native_decide
+
+example :
+    stackFrameNormalMemoryNat
+      (evalStackFrameFuel 1000 frameCopyState
+        (stackGcMoveCode frameCollectorConfig)) 100 = some 3 := by
+  native_decide
 
 end Flapjack.RiscV

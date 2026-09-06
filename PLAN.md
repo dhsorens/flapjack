@@ -941,6 +941,9 @@ definitions, pass ordering, examples, and proof obligations.
   frame evaluator on a zero-heap state.
 - [x] Prove the immediate-pointer StackLang collector case against the pure
   Nat `stackGcNatMove` specification at the machine-result boundary.
+- [x] Add reusable bounded fixed-slot frame equations and exercise the
+  forwarding-pointer and object-copy `word_gc_move` cases against the pure
+  Nat observations.
 - [ ] Prove the collector machine semantics and simulation theorem, and add
   generational support if it is needed by a selected target configuration.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state
