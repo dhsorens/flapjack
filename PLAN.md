@@ -1146,6 +1146,8 @@ definitions, pass ordering, examples, and proof obligations.
   specification, including final registers and bounded memory projection.
 - [x] Keep the arbitrary-word body relation independent of branch-specific
   Nat copy conditions, so it can be reused by later MoveList induction.
+- [x] Package the terminal `MoveLoop` machine transition with the Nat
+  terminal result and preservation of the machine/Nat relation.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
