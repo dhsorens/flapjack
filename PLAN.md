@@ -990,6 +990,8 @@ definitions, pass ordering, examples, and proof obligations.
   compositional frame-state correspondence predicate.
 - [x] Lift the collector memcpy correspondence across a bounded iteration,
   including the final registers and recursive word-level memory transformer.
+- [x] Compose the bounded collector memcpy evaluator with the iterated
+  correspondence, exposing an executable simulation boundary.
 - [ ] Prove the collector machine semantics and simulation theorem, and add
   generational support if it is needed by a selected target configuration.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state
