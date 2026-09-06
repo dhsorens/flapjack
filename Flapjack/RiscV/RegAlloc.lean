@@ -929,7 +929,7 @@ def wordProgForcedClashes : WordProg α → List (Nat × Nat)
       wordProgForcedClashes thenBranch ++ wordProgForcedClashes elseBranch
   | .loop _ body _ => wordProgForcedClashes body
   | .call _ _ _ none => []
-  | .call _ _ _ (some (_, body)) => wordProgForcedClashes body
+  | .call _ _ _ (some (_, body, _, _)) => wordProgForcedClashes body
   | .shareInst _ _ _ => []
 termination_by program => sizeOf program
 decreasing_by all_goals decreasing_trivial
@@ -1060,10 +1060,11 @@ def wordStackOnlyProgramAux (program : WordProg α)
     | .call returns _ arguments handler =>
         let state := match handler with
           | none => state
-          | some (_, body) => wordStackOnlyProgramAux body state
+          | some (_, body, _, _) => wordStackOnlyProgramAux body state
         let returnNames := match returns with
           | none => []
-          | some (values, live) => values ++ live
+          | some (values, cutsets, _, _, _) =>
+              values ++ cutsets.1 ++ cutsets.2
         wordStackOnlyRemoveTemps (arguments ++ returnNames) state
 
 def wordStackOnly (program : WordProg α) : WordStackOnlyState :=

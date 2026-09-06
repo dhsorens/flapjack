@@ -35,7 +35,7 @@ example :
         (executeInstructionsWithFfi ffiMachineHost ffiMachineState code).map
           (fun result => (result, ([] : List (Word 64))))) =
       evalWordFfi ffiMachineWordHandler 1 ffiMachineState
-        (.ffi "echo" 2 3 4 5 []) := by
+        (.ffi "echo" 2 3 4 5 ([], [])) := by
   apply wordFfiToRiscV_execute_agreement
     ({ services := [("echo", 7)] } : WordFfiContext)
     ffiMachineHost ffiMachineWordHandler ffiMachineState "echo"
@@ -46,11 +46,11 @@ example :
 example :
     (wordFunctionToRiscVWithCallsAndFfi
       ({ targets := [], services := [("echo", 7)] } : WordCallFfiContext 64)
-      (.ffi "echo" 2 3 4 5 [])).bind (fun result =>
+      (.ffi "echo" 2 3 4 5 ([], []))).bind (fun result =>
         (executeInstructionsWithFfi ffiMachineHost ffiMachineState result.1).map
           (fun final => (final, ([] : List (Word 64))))) =
       evalWordFunctionWithCallsAndFfi [] ffiMachineWordHandler 1 ffiMachineState
-        (.ffi "echo" 2 3 4 5 []) := by
+        (.ffi "echo" 2 3 4 5 ([], [])) := by
   apply wordFunctionToRiscVWithCallsAndFfi_ffi_simulation
     ({ services := [("echo", 7)] } : WordFfiContext)
     ffiMachineHost ffiMachineWordHandler ffiMachineState "echo"

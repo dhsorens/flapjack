@@ -108,9 +108,11 @@ The correctness module separately proves the corresponding generic
 Loop-to-Word destination-register agreement.
 Word-level function-table call semantics are in
 [`Flapjack/WordSemantics.lean`](Flapjack/WordSemantics.lean).
+The Word call carrier now follows CakeML's exact return cut-set, embedded
+return-program, and handler-label shape, and FFI carries its paired cut sets.
 That module also exposes a fuel-bounded Word FFI evaluator whose host handler
-is explicit in the semantic interface; target code generation for FFI remains
-staged until the external calling convention is fixed.
+is explicit in the semantic interface; complete recursive handler lowering and
+the final target FFI proof remain staged.
 It also exposes a control-result evaluator for handler-aware calls, making the
 normal, returned, and raised paths explicit and testing exception-handler
 resumption independently of target calling-convention lowering.

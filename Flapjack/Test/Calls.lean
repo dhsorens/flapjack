@@ -36,7 +36,7 @@ example [NeZero width] :
     RiscV.wordFunctionToRiscVWithCalls
       { targets := [(7, BitVec.ofNat width 32, [2], [10])] }
       (.seq
-        (.call (some ([4], [])) (some 7) [6] none)
+        (.call (some ([4], ([], []), .skip, 0, 0)) (some 7) [6] none)
         (.return 0 [4])) =
       some ([.addi 2 6 0, .addi 30 30 (0 - BitVec.ofNat width (width / 8)),
         .storeWord 1 30, .addi 31 0 (BitVec.ofNat width 32),
@@ -106,7 +106,7 @@ def selectedLinkedCallCode : List (RiscV.Instruction 64) :=
   match RiscV.wordFunctionToRiscVWithCalls
       { targets := [(7, (32 : RiscV.Word 64), [2], [10])] }
       (.seq
-        (.call (some ([4], [])) (some 7) [6] none)
+        (.call (some ([4], ([], []), .skip, 0, 0)) (some 7) [6] none)
         (.return 0 [4])) with
   | some (code, _) => code ++
       [.addi 0 0 0, .addi 0 0 0, .addi 0 0 0, .addi 0 0 0,
@@ -123,7 +123,7 @@ def linkedWordCallFunctions :
     List (Nat × List Nat × WordProg (RiscV.Word 64)) :=
   [(7, [2], .return 0 [2]),
    (8, [6], .seq
-      (.call (some ([4], [])) (some 7) [6] none)
+      (.call (some ([4], ([], []), .skip, 0, 0)) (some 7) [6] none)
       (.return 0 [4]))]
 
 example :
@@ -188,7 +188,7 @@ example :
     (RiscV.evalWordFunctionWithCalls
       [(7, [2], (.return 0 [2] : WordProg (RiscV.Word 64)))] 10
       (RiscV.writeRegister (RiscV.zeroState 64) 2 9)
-      (.call (some ([3], [])) (some 7) [2] none)).map (fun result =>
+      (.call (some ([3], ([], []), .skip, 0, 0)) (some 7) [2] none)).map (fun result =>
         result.1.registers 3) = some 9 := by
   native_decide
 
@@ -197,8 +197,8 @@ example :
       [(7, [2], (.seq (.assign 4 (.const (9 : RiscV.Word 64)))
         (.raise 4) : WordProg (RiscV.Word 64)))] 10
       (RiscV.zeroState 64)
-      (.call (some ([3], [])) (some 7) [2]
-        (some (5, (.return 0 [5] : WordProg (RiscV.Word 64)))))).map
+      (.call (some ([3], ([], []), .skip, 0, 0)) (some 7) [2]
+        (some (5, (.return 0 [5] : WordProg (RiscV.Word 64)), 0, 0)))).map
         (fun result =>
           match result with
           | .returned state values => (RiscV.readRegister state 5, values)
@@ -222,7 +222,7 @@ def wordFfiTestHandler : FunName → RiscV.Word 64 → RiscV.Word 64 →
 
 example :
     (RiscV.evalWordFfi wordFfiTestHandler 10 wordFfiTestState
-      (.ffi "sum" 1 2 3 4 [])).map (fun result =>
+      (.ffi "sum" 1 2 3 4 ([], []))).map (fun result =>
         RiscV.readRegister result.1 5) = some 33 := by
   native_decide
 

@@ -83,7 +83,7 @@ example :
 example [NeZero width] :
     wordFunctionToRiscVWithCallsAndFfi
       ({ targets := [], services := [("sum", 7)] } : WordCallFfiContext width)
-      (.seq (.ffi "sum" 2 3 4 5 []) (.return 0 [6])) =
+      (.seq (.ffi "sum" 2 3 4 5 ([], [])) (.return 0 [6])) =
       some ([.addi 10 2 0, .addi 11 3 0, .addi 12 4 0, .addi 13 5 0,
         .addi 14 0 (BitVec.ofNat width 7), .ecall], [6]) := by
   simp [wordFunctionToRiscVWithCallsAndFfi, wordFfiToRiscV,
@@ -93,28 +93,28 @@ example [NeZero width] :
 example :
     ((wordFunctionToRiscVWithCallsAndFfi
         ({ targets := [], services := [("sum", 7)] } : WordCallFfiContext 64)
-        (.seq (.ffi "sum" 2 3 4 5 []) (.return 0 [6]))).bind
+        (.seq (.ffi "sum" 2 3 4 5 ([], [])) (.return 0 [6]))).bind
       (fun result => executeInstructionsWithFfi ffiAbiHost ffiAbiState result.1)).map
         (fun state => readRegister state 6) = some 33 := by
   native_decide
 
 example :
     (evalWordFunctionWithCallsAndFfi [] ffiWordHandler 10 ffiAbiState
-      (.seq (.ffi "sum" 2 3 4 5 []) (.return 0 [6]))).map
+        (.seq (.ffi "sum" 2 3 4 5 ([], [])) (.return 0 [6]))).map
         (fun result => result.2) = some [33] := by
   native_decide
 
 example :
     wordFunctionToRiscVWithCallsAndFfiAndLoops
       ({ targets := [], services := [("sum", 7)] } : WordCallFfiContext 64)
-      (.loop [] (.seq (.ffi "sum" 2 3 4 5 []) (.break 0)) []) =
+      (.loop [] (.seq (.ffi "sum" 2 3 4 5 ([], [])) (.break 0)) []) =
       some ([.addi 10 2 0, .addi 11 3 0, .addi 12 4 0, .addi 13 5 0,
         .addi 14 0 7, .ecall, .jal 0 8, .jal 0 (0 - BitVec.ofNat 64 28)], []) := by
   native_decide
 
 example :
     linkWordFunctionsWithFfi (0 : Word 64) [("sum", 7)]
-      [(7, [], (.seq (.ffi "sum" 2 3 4 5 []) (.return 0 [6])))] =
+      [(7, [], (.seq (.ffi "sum" 2 3 4 5 ([], [])) (.return 0 [6])))] =
       some [(7, 0, [],
         [.addi 10 2 0, .addi 11 3 0, .addi 12 4 0, .addi 13 5 0,
           .addi 14 0 7, .ecall, .jalr 0 1 0], [6])] := by
@@ -138,13 +138,13 @@ def combinedFfiHost : FunName → Word 64 → Word 64 → Word 64 → Word 64 �
 
 def combinedFfiFunctions : List (Nat × List Nat × WordProg (Word 64)) :=
   [(7, [2], .seq
-    (.ffi "inc" 2 3 4 5 [])
+    (.ffi "inc" 2 3 4 5 ([], []))
     (.return 0 [2]))]
 
 example :
     (evalWordFunctionWithHandlersAndFfi combinedFfiFunctions combinedFfiHost 10
       (writeRegister (zeroState 64) 1 41)
-      (.call (some ([6], [])) (some 7) [1] none)).map
+      (.call (some ([6], ([], []), .skip, 0, 0)) (some 7) [1] none)).map
         (fun result => match result with
         | .normal state => readRegister state 6
         | _ => 0) = some 42 := by
@@ -156,8 +156,8 @@ def combinedHandlerFunctions : List (Nat × List Nat × WordProg (Word 64)) :=
 example :
     (evalWordFunctionWithHandlersAndFfi combinedHandlerFunctions combinedFfiHost 10
       (writeRegister (zeroState 64) 3 9)
-      (.call (some ([], [])) (some 8) [3]
-        (some (8, .assign 7 (.var 8))))).map
+      (.call (some ([], ([], []), .skip, 0, 0)) (some 8) [3]
+        (some (8, .assign 7 (.var 8), 0, 0)))).map
         (fun result => match result with
         | .normal state => readRegister state 7
         | _ => 0) = some 9 := by

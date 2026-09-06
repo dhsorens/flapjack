@@ -109,7 +109,7 @@ example [NeZero width] :
 
 example :
     pipelineRiscVFunctionsWithFfi (width := 64) [("sum", 7)]
-      [(7, [], (.seq (.ffi "sum" 2 3 4 5 []) (.return 0 [6])))] =
+      [(7, [], (.seq (.ffi "sum" 2 3 4 5 ([], [])) (.return 0 [6])))] =
       [(7, [], some ([.addi 10 2 0, .addi 11 3 0, .addi 12 4 0,
         .addi 13 5 0, .addi 14 0 7, .ecall], [6]))] := by
   native_decide
@@ -117,7 +117,7 @@ example :
 example :
     let result := pipelineRiscVFunctionsWithFfi (width := 64) []
       [(7, [2], (.return 0 [2])),
-       (8, [6], (.call (some ([4], [])) (some 7) [6] none))]
+       (8, [6], (.call (some ([4], ([], []), .skip, 0, 0)) (some 7) [6] none))]
     result.length = 2 && result.all (fun (_, _, artifact) => artifact.isSome) := by
   native_decide
 

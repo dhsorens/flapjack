@@ -46,12 +46,12 @@ example :
 example :
     wordSsaRenameProgram
         ({ current := [(2, 100)], next := 200 } : WordSsaState)
-        ((.call (some ([3, 4], [2])) (some 7) [2, 5] none) : WordProg Nat) =
+        ((.call (some ([3, 4], ([2], []), .skip, 0, 0)) (some 7) [2, 5] none) : WordProg Nat) =
       ({ current := [(4, 204), (3, 200), (2, 100)], next := 208 },
-        .call (some ([200, 204], [100])) (some 7) [100, 5] none) := by
+        .call (some ([200, 204], ([100], []), .skip, 0, 0)) (some 7) [100, 5] none) := by
   simp [wordSsaRenameProgram, wordSsaRenameProgramWithLoops,
     wordSsaRenameReturns, wordSsaFreshList, wordSsaFresh, wordSsaRead,
-    lookupNatInfo]
+        lookupNatInfo, wordSsaReadCutsets]
 
 example :
     wordSsaRenameProgram
@@ -64,28 +64,29 @@ example :
 
 example :
     wordProgReadVars
-        ((.call (some ([5], [6])) (some 7) [8]
-          (some (9, .return 0 [10])) : WordProg Nat)) = [8, 6, 10] := by
+        ((.call (some ([5], ([6], []), .skip, 0, 0)) (some 7) [8]
+          (some (9, .return 0 [10], 0, 0)) : WordProg Nat)) = [8, 6, 10] := by
   rfl
 
 example :
     wordProgWriteVars
-        ((.call (some ([5], [6])) (some 7) [8]
-          (some (9, .return 0 [10])) : WordProg Nat)) = [5, 9] := by
+        ((.call (some ([5], ([6], []), .skip, 0, 0)) (some 7) [8]
+          (some (9, .return 0 [10], 0, 0)) : WordProg Nat)) = [5, 9] := by
   rfl
 
 example :
     wordSsaRenameProgram
         ({ current := [(1, 100)], next := 200 } : WordSsaState)
-        ((.call (some ([2], [1])) (some 7) [1]
-          (some (3, .assign 4 (.var 1))) : WordProg Nat)) =
+        ((.call (some ([2], ([1], []), .skip, 0, 0)) (some 7) [1]
+          (some (3, .assign 4 (.var 1), 0, 0)) : WordProg Nat)) =
         ({ current := [(2, 200), (1, 100)], next := 212 },
-        .call (some ([200], [100])) (some 7) [100]
+        .call (some ([200], ([100], []), .skip, 0, 0)) (some 7) [100]
           (some (204,
             .seq (.assign 208 (.var 100))
-              (.assign 200 (.var 2))))) := by
+              (.assign 200 (.var 2)), 0, 0))) := by
   simp [wordSsaRenameProgram, wordSsaRenameProgramWithLoops,
-    wordSsaRenameCallHandler, wordSsaRenameReturns, wordSsaFreshList,
+    wordSsaRenameCallHandler, wordSsaRenameReturns, wordSsaReadCutsets,
+    wordSsaFreshList,
     wordSsaFresh, wordSsaRenameExp, wordSsaRead, wordSsaKeys,
     wordSsaReconcileTo, wordSsaSeq, lookupNatInfo]
 
@@ -97,13 +98,13 @@ example :
     let functions : List (Nat × List Nat × WordProg (RiscV.Word 64)) :=
       [(7, [], .raise 3)]
     let original : WordProg (RiscV.Word 64) :=
-      .call (some ([2], [1])) (some 7) [1]
-        (some (3, .assign 4 (.var 1)))
+      .call (some ([2], ([1], []), .skip, 0, 0)) (some 7) [1]
+        (some (3, .assign 4 (.var 1), 0, 0))
     let renamed : WordProg (RiscV.Word 64) :=
-      .call (some ([200], [100])) (some 7) [100]
+      .call (some ([200], ([100], []), .skip, 0, 0)) (some 7) [100]
         (some (201,
           .seq (.assign 202 (.var 100))
-            (.assign 200 (.var 2))))
+            (.assign 200 (.var 2)), 0, 0))
     (evalWordFunctionWithHandlers functions 2 originalState original).map
         (fun result => match result with
           | .normal state => RiscV.readRegister state 4

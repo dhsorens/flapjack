@@ -93,12 +93,12 @@ def wordFunctionToRiscVWithCalls [NeZero width]
       let instructions ← wordExpToInstructions destination (.var source)
       pure (instructions, [])
   | .tick => pure ([.addi 0 0 0], [])
-  | .call (some ([], _)) (some label) arguments none => do
+  | .call (some ([], _, _, _, _)) (some label) arguments none => do
       let (entry, parameters, returns) ← lookupWordCallTarget label context.targets
       let code ← wordTailCallToRiscV entry parameters arguments
       let returns ← returns.mapM registerOfNat
       pure (code, returns)
-  | .call (some (destinations, _)) (some label) arguments none => do
+  | .call (some (destinations, _, _, _, _)) (some label) arguments none => do
       let (entry, parameters, returns) ← lookupWordCallTarget label context.targets
       let code ← wordCallToRiscVWithStack entry parameters returns arguments destinations
       pure (code, [])
@@ -234,7 +234,7 @@ theorem wordFunctionToRiscVWithCalls_shape [NeZero width] :
     wordFunctionToRiscVWithCalls
       { targets := [(7, BitVec.ofNat width 32, [2], [10])] }
       (.seq
-        (.call (some ([4], [])) (some 7) [6] none)
+        (.call (some ([4], ([], []), .skip, 0, 0)) (some 7) [6] none)
         (.return 0 [4])) =
       some ([.addi 2 6 0, .addi 30 30 (0 - BitVec.ofNat width (width / 8)),
         .storeWord 1 30, .addi 31 0 (BitVec.ofNat width 32),
@@ -255,7 +255,7 @@ theorem wordFunctionToRiscVWithCalls_tailCall [NeZero width] :
 theorem wordFunctionToRiscVWithCalls_emptyReturnDestinations [NeZero width] :
     wordFunctionToRiscVWithCalls
       { targets := [(7, BitVec.ofNat width 32, [2], [10])] }
-      (.call (some ([], [])) (some 7) [6] none) =
+      (.call (some ([], ([], []), .skip, 0, 0)) (some 7) [6] none) =
       some ([.addi 2 6 0, .addi 31 0 (BitVec.ofNat width 32),
         .jalr 0 31 0], [10]) := by
   simp [wordFunctionToRiscVWithCalls, wordTailCallToRiscV,

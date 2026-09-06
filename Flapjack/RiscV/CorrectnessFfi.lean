@@ -1016,7 +1016,8 @@ theorem loopToWord_call_loop_control_simulation_single_parameter_with_handler
       RiscV.evalWordLoopCallWithHandlersAndFfi wordFunctions wordHandler
         (fuel + 1) wordState none (some target)
         [wordFindVar context argument]
-        (some (wordFindVar context exception, loopToWordProg context handlerBody)) =
+        (some (wordFindVar context exception, loopToWordProg context handlerBody,
+          0, 0)) =
           some wordResult) :
     loopResultMappedToWordLoop context loopResult wordResult := by
   rcases hlocals argument argumentValue hargument with

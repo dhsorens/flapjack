@@ -20,7 +20,7 @@ example :
         wordLoopHandlerTestState
         (.loop []
           (.seq
-            (.ffi "bump" 2 3 4 5 [])
+            (.ffi "bump" 2 3 4 5 ([], []))
             (.break 0)) []) =
       some (RiscV.WordLoopControlResult.normal
         (RiscV.writeRegister wordLoopHandlerTestState 7 (BitVec.ofNat 64 9))) := by
@@ -37,7 +37,8 @@ def wordLoopCallBody : WordProg (RiscV.Word 64) := .return 0 []
 example :
     RiscV.evalWordLoopCallWithHandlersAndFfi
         [(1, [], wordLoopCallBody)] (fun _ _ _ _ _ state => some state) 3
-        wordLoopHandlerTestState (some ([], [])) (some 1) [] none =
+        wordLoopHandlerTestState
+          (some ([], ([], []), .skip, 0, 0)) (some 1) [] none =
       some (RiscV.WordLoopControlResult.normal wordLoopHandlerTestState) := by
   simp [RiscV.evalWordLoopProgWithHandlersAndFfi,
     RiscV.evalWordLoopCallWithHandlersAndFfi, RiscV.lookupWordFunction,
@@ -50,7 +51,7 @@ example :
         wordLoopHandlerTestState
         (.loop []
           (.seq
-            (.call (some ([], [])) (some 1) [] none)
+            (.call (some ([], ([], []), .skip, 0, 0)) (some 1) [] none)
             (.break 0)) []) =
       some (RiscV.WordLoopControlResult.normal wordLoopHandlerTestState) := by
   simp [RiscV.evalWordLoopProgWithHandlersAndFfi,

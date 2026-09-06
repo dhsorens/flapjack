@@ -6,7 +6,7 @@ namespace Flapjack
 
 example :
     wordClashTree
-        (.call (some ([5], [6])) (some 7) [8] none : WordProg Nat) [] =
+        (.call (some ([5], ([6], []), .skip, 0, 0)) (some 7) [8] none : WordProg Nat) [] =
       .seq (.set [5, 6]) (.set [8, 6]) := by
   simp [wordClashTree, wordClashTreeCallSet, wordClashTreeCallCutSet,
     List.eraseDups,
@@ -14,8 +14,8 @@ example :
 
 example :
     wordClashTree
-        (.call (some ([5], [6])) (some 7) [8]
-          (some (9, .return 0 [10])) : WordProg Nat) [] =
+        (.call (some ([5], ([6], []), .skip, 0, 0)) (some 7) [8]
+          (some (9, .return 0 [10], 0, 0)) : WordProg Nat) [] =
       .branch (some [6, 8])
         (.seq (.set [5, 6]) (.set [6, 8]))
         (.seq (.set [9, 6]) (.delta [] [10])) := by

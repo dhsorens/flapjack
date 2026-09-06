@@ -175,8 +175,8 @@ mutual
       (functions : List (Nat × List Nat × WordProg (Word width)))
       (handler : FunName → Word width → Word width → Word width → Word width →
         State width → Option (State width)) :
-      Nat → State width → Option (List Nat × List Nat) → Option Nat → List Nat →
-        Option (Nat × WordProg (Word width)) →
+      Nat → State width → WordCallReturns (Word width) → Option Nat → List Nat →
+        WordCallHandler (Word width) →
         Option (State width × List (Word width))
     | 0, _, _, _, _, _ => none
     | fuel + 1, state, returns, target, arguments, callHandler => do
@@ -193,7 +193,7 @@ mutual
             mode := result.1.mode }
           match returns with
           | none => some (returnedState, result.2)
-          | some (names, _) => do
+          | some (names, _, _, _, _) => do
               let state ← assignWordRegisters returnedState names result.2
               some (state, [])
     termination_by fuel _ _ _ _ _ => fuel
@@ -209,7 +209,7 @@ mutual
         evalWordCallWithCallsAndFfi functions handler fuel state returns target arguments callHandler
     | fuel + 1, state, .ffi function configuration configurationLength array arrayLength _ =>
         evalWordFfi handler (fuel + 1) state
-          (.ffi function configuration configurationLength array arrayLength [])
+          (.ffi function configuration configurationLength array arrayLength ([], []))
     | fuel + 1, state, .seq first second => do
         let result ← evalWordFunctionWithCallsAndFfi functions handler fuel state first
         if !result.2.isEmpty then some result
@@ -227,7 +227,7 @@ end
 theorem wordFunctionToRiscVWithCallsAndFfi_ffi [NeZero width] :
     wordFunctionToRiscVWithCallsAndFfi
       ({ targets := [], services := [("sum", 7)] } : WordCallFfiContext width)
-      (.ffi "sum" 2 3 4 5 []) =
+      (.ffi "sum" 2 3 4 5 ([], [])) =
       some ([.addi 10 2 0, .addi 11 3 0, .addi 12 4 0, .addi 13 5 0,
         .addi 14 0 (BitVec.ofNat width 7), .ecall], []) := by
   simp [wordFunctionToRiscVWithCallsAndFfi, wordFfiToRiscV,

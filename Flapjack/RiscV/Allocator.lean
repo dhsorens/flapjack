@@ -352,13 +352,13 @@ termination_by names => sizeOf names
 decreasing_by all_goals decreasing_trivial
 
 def wordSsaRenameReturns (state : WordSsaState) :
-    Option (List Nat × List Nat) →
-      WordSsaState × Option (List Nat × List Nat)
+    Option (List Nat × (List Nat × List Nat) × WordProg α × Nat × Nat) →
+      WordSsaState × Option (List Nat × (List Nat × List Nat) × WordProg α × Nat × Nat)
   | none => (state, none)
-  | some (destinations, live) =>
-      let live := live.map (wordSsaRead state)
+  | some (destinations, cutsets, returnCode, returnLabel, entryLabel) =>
+      let cutsets := wordSsaReadCutsets state cutsets
       let (state, destinations) := wordSsaFreshList state destinations
-      (state, some (destinations, live))
+      (state, some (destinations, cutsets, returnCode, returnLabel, entryLabel))
 
 def wordSsaForceRename : List (Nat × Nat) → WordSsaState → WordSsaState
   | [], state => state
@@ -597,7 +597,8 @@ mutual
     | .ffi function configuration configurationLength array arrayLength live =>
         (state, .ffi function (wordSsaRead state configuration)
           (wordSsaRead state configurationLength) (wordSsaRead state array)
-          (wordSsaRead state arrayLength) (live.map (wordSsaRead state)))
+          (wordSsaRead state arrayLength)
+          (live.1.map (wordSsaRead state), live.2.map (wordSsaRead state)))
     | .shareInst operator name address =>
         let address := wordSsaRenameExp state address
         match operator with
@@ -610,14 +611,14 @@ mutual
         let arguments := arguments.map (wordSsaRead state)
         let (state, returns) := wordSsaRenameReturns state returns
         (state, .call returns target arguments none)
-    | .call returns target arguments (some (exception, body)) =>
+    | .call returns target arguments (some (exception, body, handlerLabel, entryLabel)) =>
         let incoming := state
         let arguments := arguments.map (wordSsaRead state)
         let (normalState, returns) := wordSsaRenameReturns state returns
         let (handlerState, exception, body) :=
           wordSsaRenameCallHandler frames incoming normalState exception body
         ({ normalState with next := handlerState.next },
-          .call returns target arguments (some (exception, body)))
+          .call returns target arguments (some (exception, body, handlerLabel, entryLabel)))
     | .alloc destination cutsets =>
         let cutsets := wordSsaReadCutsets state cutsets
         let (state, destination) := wordSsaFresh state destination
@@ -730,10 +731,11 @@ def wordProgReadVars : WordProg α → List Nat
   | .call returns _ arguments handler =>
       arguments ++ (match returns with
         | none => []
-        | some (_, live) => live) ++
+        | some (_, cutsets, returnCode, _, _) =>
+            cutsets.1 ++ cutsets.2 ++ wordProgReadVars returnCode) ++
         (match handler with
         | none => []
-        | some (_, body) => wordProgReadVars body)
+        | some (_, body, _, _) => wordProgReadVars body)
   | .alloc destination (nonGc, gc) =>
       destination :: (nonGc ++ gc)
   | .storeConsts source bitmap codeLength dataLength _ =>
@@ -744,7 +746,8 @@ def wordProgReadVars : WordProg α → List Nat
   | .codeBufferWrite address value => [address, value]
   | .dataBufferWrite address value => [address, value]
   | .ffi _ configuration configurationLength array arrayLength live =>
-      [configuration, configurationLength, array, arrayLength] ++ live
+      [configuration, configurationLength, array, arrayLength] ++
+        live.1 ++ live.2
   | .shareInst operator name address =>
       (match operator with
       | .load | .load8 | .load16 | .load32 => []
@@ -766,10 +769,10 @@ def wordProgWriteVars : WordProg α → List Nat
   | .call returns _ _ handler =>
       (match returns with
       | none => []
-      | some (values, _) => values) ++
+      | some (values, _, returnCode, _, _) => values ++ wordProgWriteVars returnCode) ++
       (match handler with
       | none => []
-        | some (exception, body) => exception :: wordProgWriteVars body)
+        | some (exception, body, _, _) => exception :: wordProgWriteVars body)
   | .alloc destination _ => [destination]
   | .storeConsts source bitmap codeLength dataLength _ =>
       [source, bitmap, codeLength, dataLength]
@@ -800,7 +803,7 @@ def wordProgPreferenceEdges : WordProg α → List (Nat × Nat)
   | .loop _ body _ => wordProgPreferenceEdges body
   | .mustTerminate body => wordProgPreferenceEdges body
   | .call _ _ _ none => []
-  | .call _ _ _ (some (_, body)) => wordProgPreferenceEdges body
+  | .call _ _ _ (some (_, body, _, _)) => wordProgPreferenceEdges body
   | _ => []
 
 /-! CakeML's `full_ssa_cc_trans` starts a function by giving each formal
@@ -864,11 +867,11 @@ def wordProgClashAnalysis : WordProg α → List Nat →
       let (bodyLive, bodyEdges) :=
         wordProgClashAnalysis body (wordListUnion liveIn (liveOut ++ liveAfter))
       (wordListUnion liveIn bodyLive, bodyEdges)
-  | .call returns target arguments (some (exception, body)), liveAfter =>
+  | .call returns target arguments (some (exception, body, _, _)), liveAfter =>
       let (handlerLive, handlerEdges) :=
         wordProgClashAnalysis body liveAfter
       let callProgram : WordProg α :=
-        .call returns target arguments (some (exception, body))
+        .call returns target arguments (some (exception, body, 0, 0))
       let handlerEntryEdges :=
         wordClashPairs [exception] (handlerLive ++ liveAfter)
       (wordListUnion (exception :: handlerLive)
@@ -878,7 +881,8 @@ def wordProgClashAnalysis : WordProg α → List Nat →
   | program, liveOut =>
       (wordProgLiveBefore program liveOut, wordProgAtomicClashes program liveOut)
 termination_by program => sizeOf program
-decreasing_by all_goals decreasing_trivial
+decreasing_by
+  all_goals first | decreasing_trivial | simp_wf
 
 /-! A CakeML-shaped clash-tree boundary for the RISC-V Word fragment.
 
@@ -925,30 +929,32 @@ def wordClashTreeDeltaInst : WordInst → WordClashTree
   | .mem .store32 source address =>
       .delta [] [source, address]
 
-def wordClashTreeCallReads (returns : Option (List Nat × List Nat))
+def wordClashTreeCallReads (returns : Option
+    (List Nat × (List Nat × List Nat) × WordProg α × Nat × Nat))
     (arguments : List Nat) : List Nat :=
   arguments ++ match returns with
     | none => []
-    | some (values, live) => values ++ live
+    | some (values, cutsets, returnCode, _, _) =>
+        values ++ cutsets.1 ++ cutsets.2 ++ wordProgReadVars returnCode
 
-def wordClashTreeCallWrites (returns : Option (List Nat × List Nat)) : List Nat :=
+def wordClashTreeCallWrites (returns : Option
+    (List Nat × (List Nat × List Nat) × WordProg α × Nat × Nat)) : List Nat :=
   match returns with
   | none => []
-  | some (values, _) => values
+  | some (values, _, _, _, _) => values
 
-def wordClashTreeCallCutSet (returns : Option (List Nat × List Nat)) : List Nat :=
+def wordClashTreeCallCutSet (returns : Option
+    (List Nat × (List Nat × List Nat) × WordProg α × Nat × Nat)) : List Nat :=
   match returns with
   | none => []
-  | some (_, live) => live
+  | some (_, cutsets, _, _, _) => cutsets.1 ++ cutsets.2
 
 def wordClashTreeCallSet (left right : List Nat) : List Nat :=
   (left ++ right).eraseDups
 
-/-! The CakeML allocator models a call as a cut-set boundary.  In this reduced
-    Word IR the return continuation is represented by the returned values and
-    live set, rather than by a separate return-handler program, so the normal
-    continuation is the corresponding `Set` node.  An exceptional handler is
-    still a branch with its exception binding and cut set made live. -/
+/-! The allocator models a call as a cut-set boundary.  The exact return
+    continuation and exceptional handler are included in the recursive clash
+    structure, while the two cut sets establish the caller boundary. -/
 
 def wordClashTree : WordProg α → List (List Nat × List Nat) → WordClashTree
   | .skip, _ => .delta [] []
@@ -990,16 +996,18 @@ def wordClashTree : WordProg α → List (List Nat × List Nat) → WordClashTre
   | .call returns _ arguments none, _ =>
       match returns with
       | none => .set arguments.eraseDups
-      | some (values, live) =>
+      | some (values, cutsets, returnCode, _, _) =>
+          let live := cutsets.1 ++ cutsets.2
           .seq (.set (wordClashTreeCallSet values live))
             (.set (wordClashTreeCallSet arguments live))
-  | .call returns _ arguments (some (exception, body)), frames =>
+  | .call returns _ arguments (some (exception, body, _, _)), frames =>
       let cutSet := wordClashTreeCallCutSet returns
       let liveSet := wordClashTreeCallSet cutSet arguments
       .branch (some liveSet)
         (match returns with
         | none => .set liveSet
-        | some (values, live) =>
+        | some (values, cutsets, _, _, _) =>
+            let live := cutsets.1 ++ cutsets.2
             .seq (.set (wordClashTreeCallSet values live))
               (.set liveSet))
         (.seq (.set (wordClashTreeCallSet [exception] cutSet))
@@ -1446,13 +1454,20 @@ def wordApplyColour (colour : Nat → Nat) : WordProg α → WordProg α
   | .locValue destination source =>
       .locValue (colour destination) (colour source)
   | .call returns target arguments none =>
-      .call (returns.map (fun (values, live) =>
-        (values.map colour, live.map colour))) target (arguments.map colour)
+      .call (returns.map (fun (values, cutsets, returnCode, returnLabel, entryLabel) =>
+        (values.map colour,
+          (cutsets.1.map colour, cutsets.2.map colour),
+          returnCode, returnLabel, entryLabel)))
+        target (arguments.map colour)
         none
-  | .call returns target arguments (some (exception, body)) =>
-      .call (returns.map (fun (values, live) =>
-        (values.map colour, live.map colour))) target (arguments.map colour)
-        (some (colour exception, wordApplyColour colour body))
+  | .call returns target arguments (some (exception, body, handlerLabel, entryLabel)) =>
+      .call (returns.map (fun (values, cutsets, returnCode, returnLabel, entryLabel) =>
+        (values.map colour,
+          (cutsets.1.map colour, cutsets.2.map colour),
+          returnCode, returnLabel, entryLabel)))
+        target (arguments.map colour)
+        (some (colour exception, wordApplyColour colour body,
+          handlerLabel, entryLabel))
   | .alloc destination (nonGc, gc) =>
       .alloc (colour destination) (nonGc.map colour, gc.map colour)
   | .storeConsts source bitmap codeLength dataLength constants =>
@@ -1469,7 +1484,8 @@ def wordApplyColour (colour : Nat → Nat) : WordProg α → WordProg α
       .dataBufferWrite (colour address) (colour value)
   | .ffi function configuration configurationLength array arrayLength live =>
       .ffi function (colour configuration) (colour configurationLength)
-        (colour array) (colour arrayLength) (live.map colour)
+        (colour array) (colour arrayLength)
+        (live.1.map colour, live.2.map colour)
   | .shareInst operator name address =>
       .shareInst operator (colour name) (wordApplyColourExp colour address)
 termination_by program => sizeOf program
@@ -1682,7 +1698,8 @@ def wordProgSpecialLocationsSafe (locations : NatInfoMap WordLocation) :
   | .loop _ body _ => wordProgSpecialLocationsSafe locations body
   | .mustTerminate body => wordProgSpecialLocationsSafe locations body
   | .call _ _ _ none => true
-  | .call _ _ _ (some (_, body)) => wordProgSpecialLocationsSafe locations body
+  | .call _ _ _ (some (_, body, _, _)) =>
+      wordProgSpecialLocationsSafe locations body
   | .alloc _ _ | .storeConsts _ _ _ _ _ | .opCurrHeap _ _ _ |
       .install _ _ _ _ _ | .codeBufferWrite _ _ | .dataBufferWrite _ _ => true
   | .shareInst _ _ _ => true

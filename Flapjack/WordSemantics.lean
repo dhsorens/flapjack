@@ -12,6 +12,12 @@ and memory effects are carried back to the caller. Fuel bounds nested calls.
 
 namespace Flapjack.RiscV
 
+abbrev WordCallReturns (α : Type u) :=
+  Option (List Nat × (List Nat × List Nat) × WordProg α × Nat × Nat)
+
+abbrev WordCallHandler (α : Type u) :=
+  Option (Nat × WordProg α × Nat × Nat)
+
 def lookupWordFunction [NeZero width] :
     Nat → List (Nat × List Nat × WordProg (Word width)) →
       Option (List Nat × WordProg (Word width))
@@ -52,8 +58,8 @@ def assignWordRegisters [NeZero width] (state : State width)
 mutual
   def evalWordCall [NeZero width]
       (functions : List (Nat × List Nat × WordProg (Word width))) :
-      Nat → State width → Option (List Nat × List Nat) → Option Nat → List Nat →
-        Option (Nat × WordProg (Word width)) →
+      Nat → State width → WordCallReturns (Word width) → Option Nat → List Nat →
+        WordCallHandler (Word width) →
         Option (State width × List (Word width))
     | 0, _, _, _, _, _ => none
     | fuel + 1, state, returns, target, arguments, handler => do
@@ -70,7 +76,7 @@ mutual
             mode := result.1.mode }
           match returns with
           | none => some (returnedState, result.2)
-          | some (names, _) => do
+          | some (names, _, _, _, _) => do
               let state ← assignWordRegisters returnedState names result.2
               some (state, [])
     termination_by fuel _ _ _ _ _ => fuel
@@ -159,8 +165,8 @@ mutual
       (functions : List (Nat × List Nat × WordProg (Word width)))
       (ffiHandler : FunName → Word width → Word width → Word width → Word width →
         State width → Option (State width)) :
-      Nat → State width → Option (List Nat × List Nat) → Option Nat → List Nat →
-        Option (Nat × WordProg (Word width)) →
+      Nat → State width → WordCallReturns (Word width) → Option Nat → List Nat →
+        WordCallHandler (Word width) →
         Option (WordLoopControlResult width)
     | 0, _, _, _, _, _ => none
     | fuel + 1, state, returns, target, arguments, handler => do
@@ -196,13 +202,13 @@ mutual
         | .returned _ values =>
             match returns with
             | none => some (.returned returnedState values)
-            | some (names, _) => do
+            | some (names, _, _, _, _) => do
                 let state ← assignWordRegisters returnedState names values
                 some (.normal state)
         | .raised _ exception =>
             match handler with
             | none => some (.raised returnedState exception)
-            | some (name, handlerBody) => do
+            | some (name, handlerBody, _, _) => do
                 let name ← registerOfNat name
                 evalWordLoopProgWithHandlersAndFfi functions ffiHandler fuel
                   (writeRegister returnedState name exception) handlerBody
@@ -324,8 +330,8 @@ inductive WordControlResult (width : Nat) [NeZero width] where
 mutual
   def evalWordCallWithHandlers [NeZero width]
       (functions : List (Nat × List Nat × WordProg (Word width))) :
-      Nat → State width → Option (List Nat × List Nat) → Option Nat → List Nat →
-        Option (Nat × WordProg (Word width)) → Option (WordControlResult width)
+      Nat → State width → WordCallReturns (Word width) → Option Nat → List Nat →
+        WordCallHandler (Word width) → Option (WordControlResult width)
     | 0, _, _, _, _, _ => none
     | fuel + 1, state, returns, target, arguments, handler => do
         let target ← target
@@ -351,13 +357,13 @@ mutual
         | .returned _ values =>
             match returns with
             | none => some (.returned returnedState values)
-            | some (names, _) => do
+            | some (names, _, _, _, _) => do
                 let state ← assignWordRegisters returnedState names values
                 some (.normal state)
         | .raised _ exception =>
             match handler with
             | none => some (.raised returnedState exception)
-            | some (name, handlerBody) => do
+            | some (name, handlerBody, _, _) => do
                 let name ← registerOfNat name
                 evalWordFunctionWithHandlers functions fuel
                   (writeRegister returnedState name exception) handlerBody
@@ -439,7 +445,7 @@ theorem evalWordFfi_single [NeZero width]
       State width → Option (State width))
     (state : State width) (function : FunName)
     (configuration configurationLength array arrayLength : Nat)
-    (live : List Nat) :
+    (live : List Nat × List Nat) :
     evalWordFfi handler 1 state
         (.ffi function configuration configurationLength array arrayLength live) = (do
       let configuration ← registerOfNat configuration
@@ -464,8 +470,8 @@ mutual
       (functions : List (Nat × List Nat × WordProg (Word width)))
       (ffiHandler : FunName → Word width → Word width → Word width → Word width →
         State width → Option (State width)) :
-      Nat → State width → Option (List Nat × List Nat) → Option Nat → List Nat →
-        Option (Nat × WordProg (Word width)) → Option (WordControlResult width)
+      Nat → State width → WordCallReturns (Word width) → Option Nat → List Nat →
+        WordCallHandler (Word width) → Option (WordControlResult width)
     | 0, _, _, _, _, _ => none
     | fuel + 1, state, returns, target, arguments, handler => do
         let target ← target
@@ -492,13 +498,13 @@ mutual
         | .returned _ values =>
             match returns with
             | none => some (.returned returnedState values)
-            | some (names, _) => do
+            | some (names, _, _, _, _) => do
                 let state ← assignWordRegisters returnedState names values
                 some (.normal state)
         | .raised _ exception =>
             match handler with
             | none => some (.raised returnedState exception)
-            | some (name, handlerBody) => do
+            | some (name, handlerBody, _, _) => do
                 let name ← registerOfNat name
                 evalWordFunctionWithHandlersAndFfi functions ffiHandler fuel
                   (writeRegister returnedState name exception) handlerBody
@@ -559,7 +565,8 @@ theorem evalWordFunctionWithHandlersAndFfi_ffi [NeZero width]
     (ffiHandler : FunName → Word width → Word width → Word width → Word width →
       State width → Option (State width))
     (fuel : Nat) (state : State width) (function : FunName)
-    (configuration configurationLength array arrayLength : Nat) (live : List Nat) :
+    (configuration configurationLength array arrayLength : Nat)
+    (live : List Nat × List Nat) :
     evalWordFunctionWithHandlersAndFfi functions ffiHandler (fuel + 1) state
       (.ffi function configuration configurationLength array arrayLength live) = (do
       let configuration ← registerOfNat configuration

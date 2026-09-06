@@ -49,7 +49,7 @@ example :
         { locations := [(0, .register 10), (1, .register 2),
             (2, .register 3), (3, .register 4)],
           scratch := 31, stackBase := 10 }
-        ((.ffi "sum" 0 1 2 3 []) : WordProg Nat) = none := by
+        ((.ffi "sum" 0 1 2 3 ([], [])) : WordProg Nat) = none := by
   native_decide
 
 end Flapjack.RiscV

@@ -74,28 +74,28 @@ example :
 example :
     (2, 4) ∈ (wordProgClashAnalysis
       ((.call none none []
-        (some (9, (.assign 2 (.var 3) : WordProg Nat)))) : WordProg Nat)
+        (some (9, (.assign 2 (.var 3)), 0, 0)) : WordProg Nat))
       [4]).2 := by
   native_decide
 
 example :
     (9, 3) ∈ (wordProgClashAnalysis
       ((.call none none []
-        (some (9, (.assign 2 (.var 3) : WordProg Nat)))) : WordProg Nat)
+        (some (9, (.assign 2 (.var 3)), 0, 0)) : WordProg Nat))
       [4]).2 := by
   native_decide
 
 example :
     9 ∈ (wordProgClashAnalysis
       ((.call none none []
-        (some (9, (.assign 2 (.var 3) : WordProg Nat)))) : WordProg Nat)
+        (some (9, (.assign 2 (.var 3)), 0, 0)) : WordProg Nat))
       [4]).1 := by
   native_decide
 
 example :
     3 ∈ (wordProgClashAnalysis
       ((.call none none []
-        (some (9, (.assign 2 (.var 3) : WordProg Nat)))) : WordProg Nat)
+        (some (9, (.assign 2 (.var 3)), 0, 0)) : WordProg Nat))
       [4]).1 := by
   native_decide
 

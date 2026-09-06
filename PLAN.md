@@ -896,6 +896,10 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Port bitmap-aware `Alloc`/`StoreConsts` lowering and thread bitmap
   metadata through the allocator-aware declaration and RISC-V artifact
   pipeline, returning the generated bitmap table with the code.
+- [x] Align the Word call and FFI carriers with CakeML's exact return cut sets,
+  embedded return programs, handler labels, and paired FFI cut sets; preserve
+  that metadata through SSA, clash analysis, colouring, executable semantics,
+  and the RISC-V/Word-to-Stack consumers.
 - [ ] Port CakeML's downstream StackAlloc GC insertion pass and its runtime
   stub, so heap Alloc is lowered semantically instead of remaining an
   explicit unsupported target marker.

@@ -2101,7 +2101,9 @@ theorem loopToWord_call_return_simulation_single_parameter [NeZero width]
           some (.normal finalLoop))
     (hword :
       RiscV.evalWordCallWithHandlersAndFfi wordFunctions wordHandler (fuel + 1)
-        wordState (some ([wordFindVar context destination], wordMapVars context live))
+        wordState
+          (some ([wordFindVar context destination],
+            (wordMapVars context live, []), .skip, 0, 0))
           (some target) [wordFindVar context argument] none =
         some (.normal finalWord)) :
     loopLocalsMappedToRiscV context finalLoop.locals finalWord := by
@@ -2361,7 +2363,8 @@ theorem loopToWord_call_handler_simulation_single_parameter [NeZero width]
     (hword :
       RiscV.evalWordCallWithHandlersAndFfi wordFunctions wordHandler (fuel + 1)
         wordState none (some target) [wordFindVar context argument]
-        (some (wordFindVar context exception, loopToWordProg context handlerBody)) =
+        (some (wordFindVar context exception, loopToWordProg context handlerBody,
+          0, 0)) =
           some (.normal finalWord)) :
     loopLocalsMappedToRiscV context finalLoop.locals finalWord := by
   rcases hlocals argument argumentValue hargument with

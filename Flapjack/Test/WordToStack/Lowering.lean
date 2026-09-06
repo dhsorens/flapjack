@@ -215,7 +215,7 @@ example :
         { locations := [(2, .register 4), (3, .stack 2),
             (4, .register 6), (5, .register 7)],
           scratch := 31, stackBase := 10 }
-        ((.ffi "sum" 2 3 4 5 []) : WordProg Nat) =
+        ((.ffi "sum" 2 3 4 5 ([], [])) : WordProg Nat) =
       some (.seq (.arith .or 10 4 4)
         (.seq (.stackLoad 11 12)
           (.seq (.arith .or 12 6 6)
@@ -357,7 +357,7 @@ example :
     (wordToStackProg
         { locations := [(0, .register 5)], scratch := 31, stackBase := 6,
           returnLabel := 20, entryLabel := 21 }
-        ((.call (some ([0], [])) (some 7) [0] none) : WordProg Nat)).isSome =
+        ((.call (some ([0], ([], []), .skip, 0, 0)) (some 7) [0] none) : WordProg Nat)).isSome =
       true := by
   simp [wordToStackProg, wordStackReturnCode, wordStackMovesToPhysical,
     wordStackPhysicalMovesTo, wordStackMovesFromPhysical,
@@ -381,7 +381,7 @@ example :
     (wordToStackProg
         { locations := [(0, .register 5)], scratch := 31, stackBase := 6,
           returnLabel := 20, entryLabel := 21, handlerLabel := 30 }
-        ((.call none (some 7) [0] (some (1, .raise 0))) : WordProg Nat)).isSome =
+        ((.call none (some 7) [0] (some (1, .raise 0, 0, 0))) : WordProg Nat)).isSome =
       true := by
   simp [wordToStackProg, wordStackReturnCode, wordStackMovesToPhysical,
     wordStackPhysicalMovesTo, wordStackMoveToPhysical,

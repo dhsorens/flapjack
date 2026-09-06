@@ -86,8 +86,17 @@ inductive WordProg (α : Type u) where
   | return (label : Nat) (values : List Nat)
   | tick
   | locValue (destination source : Nat)
-  | call (returns : Option (List Nat × List Nat)) (target : Option Nat)
-      (arguments : List Nat) (handler : Option (Nat × WordProg α))
+  /- CakeML's WordLang call metadata consists of returned registers, the
+     normal/exception cut sets, a return-handler program, and the two labels
+     used by the handler.  Keeping all five fields here is important: the
+     allocator and StackLang lowering use the cut sets to establish the
+     caller boundary and the handler program/labels to preserve control flow.
+     The reduced Loop carrier is lifted to this shape by `loopToWordProg`
+     until the Loop syntax itself is migrated to the exact carrier. -/
+  | call (returns : Option
+      (List Nat × (List Nat × List Nat) × WordProg α × Nat × Nat))
+      (target : Option Nat) (arguments : List Nat)
+      (handler : Option (Nat × WordProg α × Nat × Nat))
   | alloc (destination : Nat) (cutsets : List Nat × List Nat)
   | storeConsts (source bitmap codeLength dataLength : Nat)
       (constants : List (Bool × α))
@@ -97,7 +106,7 @@ inductive WordProg (α : Type u) where
   | codeBufferWrite (address value : Nat)
   | dataBufferWrite (address value : Nat)
   | ffi (function : FunName) (configuration configurationLength array arrayLength : Nat)
-      (live : List Nat)
+      (live : List Nat × List Nat)
   | shareInst (operator : WordMemOp) (name : Nat) (address : WordExp α)
   deriving Repr
 
@@ -261,18 +270,20 @@ def loopToWordProg [OfNat α 1] (context : WordContext) :
       .locValue (wordFindVar context destination) (wordFindVar context source)
   | .call returns target arguments none =>
       .call (returns.map (fun (values, live) =>
-        (wordMapVars context values, wordMapVars context live))) target
+        (wordMapVars context values, (wordMapVars context live, []),
+          .skip, 0, 0))) target
         (wordMapVars context arguments)
         none
   | .call returns target arguments (some (exception, body, _, _)) =>
       .call (returns.map (fun (values, live) =>
-        (wordMapVars context values, wordMapVars context live))) target
+        (wordMapVars context values, (wordMapVars context live, []),
+          .skip, 0, 0))) target
         (wordMapVars context arguments)
-        (some (wordFindVar context exception, loopToWordProg context body))
+        (some (wordFindVar context exception, loopToWordProg context body, 0, 0))
   | .ffi function configuration configurationLength array arrayLength live =>
       .ffi function (wordFindVar context configuration)
         (wordFindVar context configurationLength) (wordFindVar context array)
-        (wordFindVar context arrayLength) (wordMapVars context live)
+        (wordFindVar context arrayLength) (wordMapVars context live, [])
   | .shMem operator name address =>
       match wordMemOp operator, wordCompileExp context address with
       | some operator, some address =>

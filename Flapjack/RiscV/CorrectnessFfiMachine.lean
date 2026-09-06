@@ -119,7 +119,7 @@ theorem wordFfiToRiscV_execute_agreement
         (executeInstructionsWithFfi host state code).map (fun result =>
           (result, ([] : List (Word width))))) =
       evalWordFfi wordHandler 1 state
-        (.ffi function configuration configurationLength array arrayLength []) := by
+        (.ffi function configuration configurationLength array arrayLength ([], [])) := by
   have h10 : registerOfNat 10 = some 10 := by decide
   have h11 : registerOfNat 11 = some 11 := by decide
   have h12 : registerOfNat 12 = some 12 := by decide
@@ -218,12 +218,12 @@ theorem wordFunctionToRiscVWithCallsAndFfi_ffi_simulation
         (readRegister state arrayLengthRegister) state) :
     (wordFunctionToRiscVWithCallsAndFfi
       ({ targets := [], services := context.services } : WordCallFfiContext width)
-      (.ffi function configuration configurationLength array arrayLength [])).bind
+      (.ffi function configuration configurationLength array arrayLength ([], []))).bind
         (fun result =>
           (executeInstructionsWithFfi host state result.1).map
             (fun final => (final, ([] : List (Word width))))) =
       evalWordFunctionWithCallsAndFfi [] wordHandler 1 state
-        (.ffi function configuration configurationLength array arrayLength []) := by
+        (.ffi function configuration configurationLength array arrayLength ([], [])) := by
   simpa [wordFunctionToRiscVWithCallsAndFfi, Option.bind_assoc,
     evalWordFunctionWithCallsAndFfi] using
     (wordFfiToRiscV_execute_agreement context host wordHandler state function

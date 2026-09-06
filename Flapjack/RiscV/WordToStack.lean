@@ -982,9 +982,10 @@ def wordStackMovesToPhysical (config : WordStackConfig) :
       wordStackParallelLocationMove config moves
 
 def wordStackReturnCode (config : WordStackConfig) :
-    Option (List Nat × List Nat) → Option (StackProg α)
+    Option (List Nat × (List Nat × List Nat) × WordProg α × Nat × Nat) →
+      Option (StackProg α)
   | none => some .skip
-  | some (destinations, _) =>
+  | some (destinations, _, _, _, _) =>
       wordStackMovesFromPhysical config destinations 2
 
 def wordStackReturn (config : WordStackConfig) (values : List Nat) :
@@ -1725,7 +1726,8 @@ def wordToStackProg [BEq α] [OfNat α 0] [OfNat α 1] [Add α] [Mul α]
         config.frameOffset config.scratch destinations returnCode
         config.returnLabel config.entryLabel
       pure (wordStackJoin argumentMoves callCode)
-  | .call returns (some target) arguments (some (exception, body)) => do
+  | .call returns (some target) arguments
+      (some (exception, body, handlerLabel, entryLabel)) => do
       let argumentMoves ← wordStackMovesToPhysical config arguments 2
       let returnCode ← wordStackReturnCode config returns
       let destinations := returns.map (fun result => result.1) |>.getD []
@@ -1798,7 +1800,8 @@ def wordToStackProgNat [BEq Nat] (config : WordStackConfig) :
         config.frameOffset config.scratch destinations returnCode
         config.returnLabel config.entryLabel
       pure (wordStackJoin argumentMoves callCode)
-  | .call returns (some target) arguments (some (exception, body)) => do
+  | .call returns (some target) arguments
+      (some (exception, body, handlerLabel, entryLabel)) => do
       let argumentMoves ← wordStackMovesToPhysical config arguments 2
       let returnCode ← wordStackReturnCode config returns
       let handlerCode ← wordToStackProgNat config body
@@ -1945,11 +1948,14 @@ def wordProgToNat : WordProg (Word width) → WordProg Nat
   | .tick => .tick
   | .locValue destination source => .locValue destination source
   | .call returns target arguments none =>
-      .call (returns.map (fun (values, live) => (values, live))) target
+      .call (returns.map (fun (values, cutsets, returnCode, returnLabel, entryLabel) =>
+        (values, cutsets, .skip, returnLabel, entryLabel))) target
         arguments none
-  | .call returns target arguments (some (exception, body)) =>
-      .call (returns.map (fun (values, live) => (values, live))) target
-        arguments (some (exception, wordProgToNat body))
+  | .call returns target arguments
+      (some (exception, body, handlerLabel, entryLabel)) =>
+      .call (returns.map (fun (values, cutsets, returnCode, returnLabel, entryLabel) =>
+        (values, cutsets, .skip, returnLabel, entryLabel))) target
+        arguments (some (exception, wordProgToNat body, handlerLabel, entryLabel))
   | .alloc destination (nonGc, gc) =>
       .alloc destination (nonGc, gc)
   | .storeConsts source bitmap codeLength dataLength constants =>
@@ -1966,7 +1972,8 @@ def wordProgToNat : WordProg (Word width) → WordProg Nat
   | .shareInst operator name address =>
       .shareInst operator name (wordExpToNat address)
 termination_by program => sizeOf program
-decreasing_by all_goals decreasing_trivial
+decreasing_by
+  all_goals first | decreasing_trivial | (simp [sizeOf] <;> omega)
 
 def wordToStackProgWord [NeZero width] (config : WordStackConfig)
     (program : WordProg (Word width)) : Option (StackProg Nat) :=
