@@ -31,8 +31,24 @@ example :
 example :
     (stackAllocWithNext stackAllocTestConfig
       (.seq (.alloc 1) (.alloc 2) : StackProg Nat)).2 = 22 := by
-  simp [stackAllocTestConfig, stackAllocWithNext, stackAllocCompFuel,
-    stackAllocProgDepth]
+  simp [stackAllocTestConfig, stackAllocWithNext, stackAllocComp,
+    stackAllocNextLab]
+
+example :
+    stackAllocComp stackAllocTestConfig 20
+        (.call none (.label 88)
+          (some ((.alloc 1 : StackProg Nat), 4, 5))) =
+      (.call none (.label 88) none, 20) := by
+  simp [stackAllocComp]
+
+example :
+    stackAllocCompile stackAllocTestConfig
+        [(1, (.alloc 3 : StackProg Nat))] =
+      [(77, (.return 0 : StackProg Nat)),
+       (1, (.call (some (.skip, 0, 12, 2)) (.label 77) none))] := by
+  simp [stackAllocCompile, stackAllocStubs, stackAllocProgram,
+    stackAllocComp, stackAllocRuntimeCall, stackAllocNextLab,
+    stackAllocTestConfig, stackAllocStub]
 
 example :
     stackAllocStubs stackAllocTestConfig = [(77, (.return 0 : StackProg Nat))] := by

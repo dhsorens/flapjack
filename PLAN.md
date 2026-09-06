@@ -900,9 +900,13 @@ definitions, pass ordering, examples, and proof obligations.
   embedded return programs, handler labels, and paired FFI cut sets; preserve
   that metadata through SSA, clash analysis, colouring, executable semantics,
   and the RISC-V/Word-to-Stack consumers.
-- [ ] Port CakeML's downstream StackAlloc GC insertion pass and its runtime
-  stub, so heap Alloc is lowered semantically instead of remaining an
-  explicit unsupported target marker.
+- [x] Port CakeML's downstream StackAlloc insertion traversal and section
+  compiler, including fresh-label reservation, continuation recursion, and
+  the generated GC-stub section. The collector body remains a separate
+  semantic port.
+- [ ] Port CakeML's copying-collector body and machine-level simulation, so
+  the StackAlloc runtime stub becomes semantically executable rather than a
+  placeholder return.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state
   accumulator for Word-to-Stack Alloc/StoreConsts, including sequential
   state-threading and fixed-width regression tests.
