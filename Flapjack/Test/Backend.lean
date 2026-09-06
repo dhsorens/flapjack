@@ -15,6 +15,7 @@ import Flapjack.Test.WordOperations
 import Flapjack.Test.WordBitmaps
 import Flapjack.Test.BitmapPipeline
 import Flapjack.Test.HeapAlloc
+import Flapjack.Test.StackAlloc
 import Flapjack.Test.WordToStack
 import Flapjack.Test.ParallelMove
 import Flapjack.Test.Stack

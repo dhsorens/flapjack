@@ -1,4 +1,5 @@
 import Flapjack.Lab
+import Flapjack.StackAlloc
 import Flapjack.RiscV.Ffi
 import Flapjack.RiscV.WordToStack
 
@@ -373,6 +374,21 @@ def compileStackProgramNatListToRiscV [NeZero width]
     ((programs.map (fun (sectionId, program) =>
       labProgramToEntrySection sectionId entryLabel initialLabel
         (stackRemoveComplete config program))).map labSectionNatToWord)
+
+/-! StackAlloc-aware composition.  CakeML's allocator pass installs a runtime
+    collector stub as a separate section and rewrites heap allocation into a
+    call to that section.  Keep this entry point separate until the collector
+    body and its machine-level simulation are ported. -/
+def compileStackProgramNatListWithStackAllocToRiscV [NeZero width]
+    (context : WordFfiContext) (removeConfig : StackRemoveConfig)
+    (allocConfig : StackAllocConfig)
+    (entryLabel initialLabel : Nat)
+    (programs : List (Nat × StackProg Nat)) :
+    Option (List (Instruction width)) :=
+  let stub := (allocConfig.gcStubLocation, stackAllocStub allocConfig)
+  let programs := stub :: programs.map (fun (sectionId, program) =>
+    (sectionId, stackAlloc allocConfig program))
+  compileStackProgramNatListToRiscV context removeConfig entryLabel initialLabel programs
 
 def compileStackProgramNatListLinkedToRiscV [NeZero width]
     (context : WordFfiContext) (config : StackRemoveConfig)
