@@ -1872,4 +1872,53 @@ theorem evalStackFrameFuel_stackGcMoveLoop_code_prefix [NeZero width]
     wordStackMachineBinOp, wordStackMachineShift, hscratch7, hscratch8,
     Ne.symm hscratch7, Ne.symm hscratch8]
 
+theorem evalStackFrameFuel_stackGcMoveLoop_iterate [NeZero width]
+    (config : StackGcConfig) (fuel stepFuel iterations : Nat)
+    (state : StackFrameMachineState width)
+    (step : StackFrameMachineState width → StackFrameMachineState width)
+    (hcondition : ∀ current, current < iterations →
+      stackMachineCondition
+        (stackFrameIterate step current state).machine .notEqual 3 (.reg 8) = true)
+    (hbody : ∀ current extra, current < iterations →
+      evalStackFrameFuel (extra + stepFuel)
+        (stackFrameIterate step current state)
+        (stackSeq [
+          .inst (.mem .load 7 8),
+          .ite .test 7 (.imm 4)
+            (stackSeq [
+              stackGcShiftImmediate config .lsr 7
+                (config.wordBits - config.lenSize),
+              stackGcAddBytes config 8,
+              stackGcMoveListCode config])
+            (stackSeq [
+              stackGcShiftImmediate config .lsr 7
+                (config.wordBits - config.lenSize),
+              stackGcAddOne config 7,
+              stackGcShiftImmediate config .lsl 7 config.wordShift,
+              stackGcAdd 8 7])]) =
+        some (.normal (stackFrameIterate step (current + 1) state)))
+    (hfinal :
+      stackMachineCondition
+        (stackFrameIterate step iterations state).machine .notEqual 3 (.reg 8) = false) :
+    evalStackFrameFuel (fuel + iterations + stepFuel + 3) state
+        (stackGcMoveLoopCode config) =
+      some (.normal (stackFrameIterate step iterations state)) := by
+  simpa [stackGcMoveLoopCode, stackGcWhile] using
+    (evalStackFrameFuel_loop_iterate fuel stepFuel iterations state
+      .notEqual 3 (.reg 8)
+      (stackSeq [
+        .inst (.mem .load 7 8),
+        .ite .test 7 (.imm 4)
+          (stackSeq [
+            stackGcShiftImmediate config .lsr 7
+              (config.wordBits - config.lenSize),
+            stackGcAddBytes config 8,
+            stackGcMoveListCode config])
+          (stackSeq [
+            stackGcShiftImmediate config .lsr 7
+              (config.wordBits - config.lenSize),
+            stackGcAddOne config 7,
+            stackGcShiftImmediate config .lsl 7 config.wordShift,
+            stackGcAdd 8 7])]) step hcondition hbody hfinal)
+
 end Flapjack.RiscV
