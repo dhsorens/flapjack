@@ -1010,6 +1010,8 @@ definitions, pass ordering, examples, and proof obligations.
   surplus fuel for outer-collector composition.
 - [x] Prove the one-item object-copy `MoveList` frame transition, including
   the copy `Move`, store, address advance, and loop termination.
+- [x] Port the CakeML `word_gc_move_list_append` decomposition to the Nat
+  collector model, composing sequential MoveList segments and conditions.
 - [ ] Prove the collector machine semantics and simulation theorem, and add
   generational support if it is needed by a selected target configuration.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state

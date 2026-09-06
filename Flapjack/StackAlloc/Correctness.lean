@@ -433,6 +433,27 @@ theorem stackGcNatMoveList_zero
         condition := true } := by
   rfl
 
+theorem stackGcNatMoveList_append
+    (config : StackGcConfig) (length length' address index destination oldBase : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool) :
+    stackGcNatMoveList config (length + length') address index destination
+        oldBase memory domain =
+      let first := stackGcNatMoveList config length address index destination
+        oldBase memory domain
+      let second := stackGcNatMoveList config length' first.nextScan
+        first.nextIndex first.nextAddress oldBase first.memory domain
+      { nextScan := second.nextScan
+        nextIndex := second.nextIndex
+        nextAddress := second.nextAddress
+        memory := second.memory
+        condition := first.condition && second.condition } := by
+  induction length generalizing address index destination memory with
+  | zero =>
+      simp [stackGcNatMoveList]
+  | succ length ih =>
+      rw [Nat.succ_add]
+      simp [stackGcNatMoveList, ih, Bool.and_assoc]
+
 theorem stackGcNatMoveLoop_zero
     (config : StackGcConfig) (scan index destination oldBase : Nat)
     (memory : Nat → Nat) (domain : Nat → Bool) :
