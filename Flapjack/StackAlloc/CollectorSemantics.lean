@@ -1773,6 +1773,10 @@ theorem stackGcMoveLoopCodeStepState_memory_matches_nat [NeZero width]
   rw [stackGcMoveLoopCodeStepState_memory]
   exact hmemory address haddress
 
+def stackGcMachineScanMatchesNat [NeZero width]
+    (state : StackFrameMachineState width) (scan : Nat) : Prop :=
+  (state.machine.registers 8).toNat = scan
+
 theorem evalStackFrameFuel_stackGcMoveLoop_code_step [NeZero width]
     (config : StackGcConfig) (fuel : Nat)
     (state : StackFrameMachineState width)
@@ -1979,6 +1983,44 @@ theorem evalStackFrameFuel_stackGcMoveLoop_code_step_scan_matches_nat
   rw [hcount]
   simp [haddress, hmemory', BitVec.toNat_ofNat,
     Nat.mod_eq_of_lt hscanBound, Nat.mod_eq_of_lt hadvance]
+
+theorem stackGcMoveLoopCodeStepState_scan_matches_nat
+    [NeZero width] (config : StackGcConfig) (fuel : Nat)
+    (state : StackFrameMachineState width)
+    (scan : Nat) (memory : Nat → Nat) (domain : Nat → Bool)
+    (hscratch7 : config.immediateScratch ≠ 7)
+    (hscratch8 : config.immediateScratch ≠ 8)
+    (hdomain : state.memoryDomain (state.machine.registers 8) = true)
+    (haddress : state.machine.registers 8 = BitVec.ofNat width scan)
+    (hmemory :
+      (state.machine.memory (state.machine.registers 8)).toNat =
+        memory scan)
+    (hcode : stackMachineCondition
+      (stackFrameWriteRegister state 7
+        (state.machine.memory (state.machine.registers 8))).machine
+      .test 7 (.imm 4) = false)
+    (hadvance :
+      scan + (stackGcNatDecodeLength config (memory scan) + 1) *
+        config.bytesInWord < 2 ^ width)
+    (hcount :
+      (((state.machine.memory (state.machine.registers 8) >>>
+          shiftAmount (BitVec.ofNat width
+            (config.wordBits - config.lenSize))) + BitVec.ofNat width 1) <<<
+          shiftAmount (BitVec.ofNat width config.wordShift)).toNat =
+        (stackGcNatDecodeLength config (memory scan) + 1) *
+          config.bytesInWord) :
+    stackGcMachineScanMatchesNat
+      (stackGcMoveLoopCodeStepState config state)
+      (scan + (stackGcNatDecodeLength config (memory scan) + 1) *
+        config.bytesInWord) := by
+  have hresult := evalStackFrameFuel_stackGcMoveLoop_code_step_scan_matches_nat
+    config fuel state scan memory domain hscratch7 hscratch8 hdomain
+    haddress hmemory hcode hadvance hcount
+  have heval := evalStackFrameFuel_stackGcMoveLoop_code_step config fuel
+    state hscratch7 hscratch8 hdomain hcode
+  rw [heval] at hresult
+  simpa [stackGcMachineScanMatchesNat, stackFrameNormalRegisterNat] using
+    hresult
 
 theorem evalStackFrameFuel_stackGcMoveLoop_code_step_matches_nat
     [NeZero width] (config : StackGcConfig) (fuel : Nat)
