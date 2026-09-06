@@ -200,6 +200,12 @@ def frameMemcpyThreeState : StackFrameMachineState 64 :=
         registers := fun register =>
           if register = 0 then 3 else frameCopyState.machine.registers register } }
 
+def frameCopyThreeState : StackFrameMachineState 64 :=
+  { frameCopyState with
+      machine := { frameCopyState.machine with
+        memory := fun address =>
+          if address = 0 then BitVec.ofNat 64 0x200000003 else 0 } }
+
 example :
     (evalStackFrameFuel 3000 frameCollectorState
       (stackGcSimpleCode frameCollectorConfig)).isSome := by
@@ -353,6 +359,27 @@ example :
   · native_decide
   · intro address
     rfl
+
+example :
+    evalStackFrameFuel 85 frameCopyThreeState
+      (stackGcMoveCode frameCollectorConfig) =
+      some (.normal (stackGcMoveCopyIterState frameCollectorConfig 2
+        frameCopyThreeState)) := by
+  apply evalStackFrameFuel_stackGcMoveCode_copy_iter
+  · native_decide
+  · native_decide
+  · native_decide
+  · native_decide
+  · native_decide
+  · native_decide
+  · native_decide
+  · native_decide
+  · intro address
+    rfl
+  · native_decide
+  · native_decide
+  · native_decide
+  · native_decide
 
 example :
     stackFrameNormalMemoryNat

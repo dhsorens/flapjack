@@ -128,6 +128,8 @@ multi-iteration memcpy instance.
 The collector address/header prefix, copy preparation, and copy finalization
 are named machine transitions; their composition now proves the complete
 one-word non-forwarded copy branch at the bounded machine-state boundary.
+That non-forwarded branch is also generalized to arbitrary positive bounded
+object lengths, with the header length field driving the verified copy count.
 The forwarding suffix is likewise factored and its full branch composition is
 proved, including the unchanged memory and threaded frame components.
 The zero-iteration equations for the move-list, heap-scan, and bitmap-root
