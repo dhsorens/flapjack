@@ -1170,6 +1170,8 @@ definitions, pass ordering, examples, and proof obligations.
   reducing the residual Nat loop to its terminal result.
 - [x] Package the code-object branch with its machine evaluator, Nat
   recursive-step equation, and extended relation preservation.
+- [x] Package the data-object branch with its nested MoveList evaluator, Nat
+  recursive-step equation, and extended relation preservation.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
