@@ -290,6 +290,48 @@ theorem stackGcNatMemcpy_nextAddress
       simp [stackGcNatMemcpy, ih, Nat.succ_mul, Nat.add_comm,
         Nat.add_left_comm, Nat.add_assoc]
 
+theorem stackGcNatMemcpy_condition_of_domain
+    (config : StackGcConfig) (words source destination : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool)
+    (hdomain : ∀ address, domain address = true) :
+    (stackGcNatMemcpy config words source destination memory domain).condition =
+      true := by
+  induction words generalizing source destination memory with
+  | zero => simp [stackGcNatMemcpy]
+  | succ words ih =>
+      simp [stackGcNatMemcpy, ih, hdomain]
+
+theorem stackGcNatMemcpy_memory_unchanged
+    (config : StackGcConfig) (words source destination : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool) (address : Nat)
+    (haddress :
+      ∀ index, index < words →
+        address ≠ destination + index * config.bytesInWord) :
+    (stackGcNatMemcpy config words source destination memory domain).memory
+        address =
+      memory address := by
+  induction words generalizing source destination memory with
+  | zero => rfl
+  | succ words ih =>
+      have hdestination : address ≠ destination := by
+        intro heq
+        apply haddress 0 (by omega)
+        simpa using heq
+      have hrest :
+          ∀ index, index < words →
+            address ≠ (destination + config.bytesInWord) +
+              index * config.bytesInWord := by
+        intro index hindex heq
+        apply haddress (index + 1) (by omega)
+        simpa [Nat.succ_mul, Nat.add_assoc, Nat.add_left_comm,
+          Nat.add_comm] using heq
+      have hmemory := ih (source + config.bytesInWord)
+        (destination + config.bytesInWord)
+        (fun current =>
+          if current = destination then memory source else memory current)
+        hrest
+      simp [stackGcNatMemcpy, hmemory, hdestination]
+
 theorem stackGcNatMove_copy_value
     (config : StackGcConfig) (value index destination oldBase : Nat)
     (memory : Nat → Nat) (domain : Nat → Bool)
