@@ -290,6 +290,16 @@ theorem stackGcNatMemcpy_nextAddress
       simp [stackGcNatMemcpy, ih, Nat.succ_mul, Nat.add_comm,
         Nat.add_left_comm, Nat.add_assoc]
 
+theorem stackGcNatMemcpy_memory_domain_irrel
+    (config : StackGcConfig) (words source destination : Nat)
+    (memory : Nat → Nat) (domain domain' : Nat → Bool) :
+    (stackGcNatMemcpy config words source destination memory domain).memory =
+      (stackGcNatMemcpy config words source destination memory domain').memory := by
+  induction words generalizing source destination memory with
+  | zero => rfl
+  | succ words ih =>
+      simp [stackGcNatMemcpy, ih]
+
 theorem stackGcNatMemcpy_condition_of_domain
     (config : StackGcConfig) (words source destination : Nat)
     (memory : Nat → Nat) (domain : Nat → Bool)
