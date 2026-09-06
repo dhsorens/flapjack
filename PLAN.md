@@ -1071,6 +1071,8 @@ definitions, pass ordering, examples, and proof obligations.
   condition from the bounded memory correspondence.
 - [x] Specialize code-object MoveLoop relation preservation to derive the
   machine branch predicate from the combined scan/memory relation.
+- [x] Add an induction principle propagating the combined machine/Nat
+  relation across iterated MoveLoop states.
 - [x] Prove the bounded machine transition for a code-object MoveLoop header,
   covering header load, length decoding, object-size scan advance, and the
   destination update without unfolding the nested MoveList loop.
