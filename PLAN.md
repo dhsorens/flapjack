@@ -1057,6 +1057,8 @@ definitions, pass ordering, examples, and proof obligations.
   `stackGcMoveListCode` body for arbitrary concrete state transitions.
 - [x] Expose named Nat `MoveLoop` code-object and data-object transition
   equations with fuel and condition threading.
+- [x] Package the bounded frame-machine/Nat `MoveLoop` invariants as a
+  reusable source-aligned simulation boundary, including condition soundness.
 - [ ] Prove the collector machine semantics and simulation theorem, and add
   generational support if it is needed by a selected target configuration.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state
