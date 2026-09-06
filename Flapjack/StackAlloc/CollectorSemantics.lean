@@ -1681,6 +1681,173 @@ theorem evalStackFrameFuel_stackGcMoveList_forwarding_body [NeZero width]
   simpa [stackGcMoveListForwardingState, afterFinal, afterScratch,
     afterStore, afterMove, afterCount, afterLoad] using hbody
 
+theorem evalStackFrameFuel_stackGcMoveList_forwarding_body_with_nat_relation
+    [NeZero width] (config : StackGcConfig) (fuel : Nat)
+    (state : StackFrameMachineState width)
+    (scan value oldBase : Nat) (memory : Nat → Nat) (domain : Nat → Bool)
+    (hscratch0 : config.immediateScratch ≠ 0)
+    (hscratch1 : config.immediateScratch ≠ 1)
+    (hscratch5 : config.immediateScratch ≠ 5)
+    (hscratch7 : config.immediateScratch ≠ 7)
+    (hscratch8 : config.immediateScratch ≠ 8)
+    (hdomain : state.memoryDomain (state.machine.registers 8) = true)
+    (haddress : state.machine.registers 8 = BitVec.ofNat width scan)
+    (hscanBound : scan < 2 ^ width)
+    (hnextBound : scan + config.bytesInWord < 2 ^ width)
+    (hmemory : ∀ current, current < 2 ^ width →
+      (state.machine.memory (BitVec.ofNat width current)).toNat =
+        memory current)
+    (hloadedNat : memory scan = value)
+    (hvalue : value % 2 ≠ 0)
+    (hodd :
+      (stackGcMoveListAfterCount config state).machine.registers 5 &&&
+        BitVec.ofNat width 1 ≠ 0)
+    (hheaderDomain : ∀ pointer,
+      (stackGcMoveListAfterCount config state).memoryDomain pointer = true)
+    (hforward :
+      (stackGcMoveListAfterCount config state).machine.memory
+          (stackGcMachineMoveAddress config
+            (stackGcMoveListAfterCount config state)) &&&
+        BitVec.ofNat width 3 = 0)
+    (hstoreDomain :
+      (stackGcMoveForwardingState config
+        (stackGcMoveListAfterCount config state)).memoryDomain
+          ((stackGcMoveForwardingState config
+            (stackGcMoveListAfterCount config state)).machine.registers 8) = true)
+    (hforwardNat :
+      stackGcNatIsForwardingPointer
+        (memory (stackGcNatPointerAddress config oldBase value)))
+    (hforwardValue :
+      (stackGcMachineForwardingValue config
+        (stackGcMoveListAfterCount config state)).toNat =
+        stackGcNatUpdateAddress config
+          (memory (stackGcNatPointerAddress config oldBase value) / 4) value)
+    (hrelation :
+      (state.machine.registers 8).toNat = scan ∧
+        ∀ current, current < 2 ^ width →
+          (state.machine.memory (BitVec.ofNat width current)).toNat =
+            memory current) :
+    evalStackFrameFuel (fuel + 38) state
+        (stackSeq [
+          .inst (.mem .load 5 8),
+          stackGcSubOne config 7,
+          stackGcMoveCode config,
+          .inst (.mem .store 5 8),
+        stackGcAddBytes config 8]) =
+        some (.normal (stackGcMoveListForwardingState config state)) ∧
+      ((stackGcMoveListForwardingState config state).machine.registers 8).toNat =
+        scan + config.bytesInWord ∧
+      ∀ current, current < 2 ^ width →
+        ((stackGcMoveListForwardingState config state).machine.memory
+          (BitVec.ofNat width current)).toNat =
+          (if current = scan then
+            stackGcNatUpdateAddress config
+              (memory (stackGcNatPointerAddress config oldBase value) / 4) value
+           else memory current) := by
+  have hmemoryAddress := hmemory scan hscanBound
+  have hmemoryReg8 :
+      (state.machine.memory (state.machine.registers 8)).toNat =
+        memory scan := by
+    simpa [haddress] using hmemoryAddress
+  have hloaded :
+      (state.machine.memory (state.machine.registers 8)).toNat = value := by
+    exact hmemoryReg8.trans hloadedNat
+  have heval := evalStackFrameFuel_stackGcMoveList_forwarding_body config fuel
+    state hscratch0 hscratch1 hscratch5 hscratch7 hscratch8 hdomain hodd
+    hheaderDomain hforward hstoreDomain
+  have hafterMove5 :
+      (stackGcMoveForwardingState config
+        (stackGcMoveListAfterCount config state)).machine.registers 5 =
+        stackGcMachineForwardingValue config
+          (stackGcMoveListAfterCount config state) := by
+    simp [stackGcMoveForwardingState, stackGcMoveForwardingSuffixState,
+      stackGcMoveAddressState, stackFrameWriteRegister,
+      wordStackMachineWriteRegister, wordStackMachineBinOp,
+      wordStackMachineShift, stackGcMachineForwardingValue,
+      stackGcMachineMoveAddress, hscratch0, hscratch1, hscratch5,
+      Ne.symm hscratch0, Ne.symm hscratch1, Ne.symm hscratch5]
+  have hfinal5 :
+      (stackGcMoveListForwardingState config state).machine.registers 5 =
+        (stackGcMoveForwardingState config
+          (stackGcMoveListAfterCount config state)).machine.registers 5 := by
+    simp [stackGcMoveListForwardingState, stackFrameWriteRegister,
+      wordStackMachineWriteRegister, wordStackMachineWriteMemory,
+      hscratch5, hscratch8, Ne.symm hscratch5, Ne.symm hscratch8]
+  have hafterMove8 :
+      (stackGcMoveForwardingState config
+        (stackGcMoveListAfterCount config state)).machine.registers 8 =
+        state.machine.registers 8 := by
+    simp [stackGcMoveForwardingState, stackGcMoveForwardingSuffixState,
+      stackGcMoveAddressState, stackGcMoveListAfterCount,
+      stackFrameWriteRegister, wordStackMachineWriteRegister,
+      wordStackMachineBinOp, wordStackMachineShift, hscratch0,
+      hscratch1, hscratch5, hscratch7, hscratch8,
+      Ne.symm hscratch0, Ne.symm hscratch1, Ne.symm hscratch5,
+      Ne.symm hscratch7, Ne.symm hscratch8]
+  have hfinalMemory :
+      (stackGcMoveListForwardingState config state).machine.memory
+          (BitVec.ofNat width scan) =
+        (stackGcMoveListForwardingState config state).machine.registers 5 := by
+    simp [stackGcMoveListForwardingState, stackFrameWriteRegister,
+      wordStackMachineWriteRegister, wordStackMachineWriteMemory,
+      haddress, hafterMove8, hscratch0, hscratch1, hscratch5,
+      hscratch7, hscratch8, Ne.symm hscratch0, Ne.symm hscratch1,
+      Ne.symm hscratch5, Ne.symm hscratch7, Ne.symm hscratch8]
+  have hfinalValue :
+      ((stackGcMoveListForwardingState config state).machine.memory
+        (BitVec.ofNat width scan)).toNat =
+      stackGcNatUpdateAddress config
+          (memory (stackGcNatPointerAddress config oldBase value) / 4) value := by
+    rw [hfinalMemory, hfinal5, hafterMove5, hforwardValue]
+  have hscanOut :
+      ((stackGcMoveListForwardingState config state).machine.registers 8).toNat =
+        scan + config.bytesInWord := by
+    have hbytes : config.bytesInWord < 2 ^ width := by omega
+    simp [stackGcMoveListForwardingState, stackFrameWriteRegister,
+      wordStackMachineWriteRegister, wordStackMachineWriteMemory,
+      wordStackMachineBinOp, haddress, hafterMove8, hbytes, hnextBound,
+      BitVec.toNat_add, BitVec.toNat_ofNat,
+      Nat.mod_eq_of_lt hnextBound, hscratch5, hscratch8,
+      Ne.symm hscratch5, Ne.symm hscratch8]
+  have hmemoryOut : ∀ target, target < 2 ^ width →
+      ((stackGcMoveListForwardingState config state).machine.memory
+        (BitVec.ofNat width target)).toNat =
+      (fun current =>
+        if current = scan then
+          stackGcNatUpdateAddress config
+            (memory (stackGcNatPointerAddress config oldBase value) / 4) value
+        else memory current) target := by
+    intro target htarget
+    by_cases htargetAddress : target = scan
+    · subst target
+      simp only [if_pos rfl]
+      exact hfinalValue
+    · have htargetWord : BitVec.ofNat width target ≠
+          state.machine.registers 8 := by
+        rw [haddress]
+        intro heq
+        have hto := congrArg BitVec.toNat heq
+        apply htargetAddress
+        simpa [BitVec.toNat_ofNat, Nat.mod_eq_of_lt htarget,
+          Nat.mod_eq_of_lt hscanBound] using hto
+      have htargetOfNat : BitVec.ofNat width target ≠
+          BitVec.ofNat width scan := by
+        intro heq
+        have hto := congrArg BitVec.toNat heq
+        apply htargetAddress
+        simpa [BitVec.toNat_ofNat, Nat.mod_eq_of_lt htarget,
+          Nat.mod_eq_of_lt hscanBound] using hto
+      simp [stackGcMoveListForwardingState, stackGcMoveForwardingState,
+        stackGcMoveForwardingSuffixState, stackGcMoveAddressState,
+        stackGcMoveListAfterCount, stackFrameWriteRegister,
+        wordStackMachineWriteRegister, wordStackMachineWriteMemory,
+        wordStackMachineBinOp, haddress, htargetWord, htargetOfNat,
+        htargetAddress, hmemory target htarget, hscratch0, hscratch1,
+        hscratch5, hscratch7, hscratch8, Ne.symm hscratch0,
+        Ne.symm hscratch1, Ne.symm hscratch5, Ne.symm hscratch7,
+        Ne.symm hscratch8]
+  exact ⟨heval, ⟨hscanOut, hmemoryOut⟩⟩
+
 theorem evalStackFrameFuel_stackGcMoveList_forwarding_one_memory_relation
     [NeZero width] (config : StackGcConfig) (fuel : Nat)
     (state : StackFrameMachineState width)
