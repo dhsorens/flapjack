@@ -1721,6 +1721,78 @@ theorem stackGcMoveLoop_machine_condition_matches_nat [NeZero width]
   simp [stackMachineCondition, hscan, hdestination, hwordEq]
   omega
 
+private theorem natLandFour_eq_zero_iff_testBit_two_false (value : Nat) :
+    value &&& 4 = 0 ↔ value.testBit 2 = false := by
+  constructor
+  · intro hzero
+    cases hbit : value.testBit 2 with
+    | false => simpa [hbit]
+    | true =>
+        have hmask : (4 : Nat).testBit 2 = true := by decide
+        have hand : (value &&& 4).testBit 2 = true := by
+          rw [Nat.testBit_and, hbit, hmask]
+          decide
+        simp [hzero] at hand
+  · intro hbit
+    have hall : ∀ index, (value &&& 4).testBit index = false := by
+      intro index
+      rw [Nat.testBit_and]
+      by_cases hindex : index = 2
+      · simp [hindex, hbit]
+      · have hmask : (4 : Nat).testBit index = false := by
+          have hpow : (4 : Nat) = 2 ^ 2 := by decide
+          simpa [hpow] using
+            (Nat.testBit_two_pow_of_ne (Ne.symm hindex))
+        simp [hmask]
+    by_cases hzero : value &&& 4 = 0
+    · exact hzero
+    · obtain ⟨index, hindex⟩ := Nat.exists_testBit_of_ne_zero hzero
+      have hfalse := hall index
+      simp [hindex] at hfalse
+
+theorem stackGcNatHeaderHasCode_iff_testBit_two (header : Nat) :
+    stackGcNatHeaderHasCode header = true ↔ header.testBit 2 = true := by
+  unfold stackGcNatHeaderHasCode
+  simp only [decide_eq_true_eq]
+  rw [Nat.mod_two_eq_one_iff_testBit_zero]
+  rw [show (4 : Nat) = 2 ^ 2 by decide]
+  rw [Nat.testBit_div_two_pow]
+
+theorem stackGcMachineHeaderCondition_matches_nat [NeZero width]
+    (header : Word width) (hwidth : 3 ≤ width) :
+    (header &&& BitVec.ofNat width 4 == 0) = true ↔
+      stackGcNatHeaderHasCode header.toNat ≠ true := by
+  have hmask : (BitVec.ofNat width 4).toNat = 4 := by
+    simp [BitVec.toNat_ofNat]
+    have hpow : 2 ^ 3 ≤ 2 ^ width :=
+      Nat.pow_le_pow_right (by decide) hwidth
+    exact Nat.mod_eq_of_lt
+      (Nat.lt_of_lt_of_le (by decide) hpow)
+  have htest :
+      (header &&& BitVec.ofNat width 4 == 0) = true ↔
+        header.toNat.testBit 2 = false := by
+    constructor
+    · intro h
+      have hzero : header &&& BitVec.ofNat width 4 = 0 := by
+        simpa using h
+      have hzero' := congrArg BitVec.toNat hzero
+      apply (natLandFour_eq_zero_iff_testBit_two_false header.toNat).mp
+      simpa [BitVec.toNat_and, hmask] using hzero'
+    · intro h
+      have hzero' :=
+        (natLandFour_eq_zero_iff_testBit_two_false header.toNat).mpr h
+      have hzero : header &&& BitVec.ofNat width 4 = 0 := by
+        apply BitVec.eq_of_toNat_eq
+        simpa [BitVec.toNat_and, hmask] using hzero'
+      simpa [hzero]
+  have hcode := stackGcNatHeaderHasCode_iff_testBit_two header.toNat
+  have hcodeData :
+      stackGcNatHeaderHasCode header.toNat ≠ true ↔
+        header.toNat.testBit 2 = false := by
+    have hneq := not_congr hcode
+    simpa only [Bool.eq_false_iff] using hneq
+  exact htest.trans hcodeData.symm
+
 /-! One machine transition for the header/code branch of `word_gc_move_loop`.
 The data branch delegates to the already established MoveList transition API;
 this branch only advances the scan pointer and is therefore a useful first
