@@ -4977,4 +4977,56 @@ theorem evalStackFrameFuel_stackGcMoveLoop_done_with_state_relation
   rcases hterminal with ⟨heval, hnat, hbaseOut⟩
   exact ⟨heval, hnat, hbaseOut, hdestination, hindex⟩
 
+theorem stackGcMoveLoopCodeStepState_preserves_nat_state_relation
+    [NeZero width] (config : StackGcConfig) (fuel : Nat)
+    (state : StackFrameMachineState width)
+    (scan index destination : Nat) (memory : Nat → Nat)
+    (domain : Nat → Bool)
+    (hwidth : 3 ≤ width)
+    (hscratch3 : config.immediateScratch ≠ 3)
+    (hscratch4 : config.immediateScratch ≠ 4)
+    (hscratch7 : config.immediateScratch ≠ 7)
+    (hscratch8 : config.immediateScratch ≠ 8)
+    (hdomain : state.memoryDomain (state.machine.registers 8) = true)
+    (haddress : state.machine.registers 8 = BitVec.ofNat width scan)
+    (hrelation : stackGcMachineNatMoveLoopRelation
+      state scan index destination memory)
+    (hcodeNat : stackGcNatHeaderHasCode (memory scan) = true)
+    (hadvance : scan + (stackGcNatDecodeLength config (memory scan) + 1) *
+      config.bytesInWord < 2 ^ width)
+    (hcount :
+      (((state.machine.memory (state.machine.registers 8) >>>
+          shiftAmount (BitVec.ofNat width
+            (config.wordBits - config.lenSize))) +
+        BitVec.ofNat width 1) <<<
+          shiftAmount (BitVec.ofNat width config.wordShift)).toNat =
+        (stackGcNatDecodeLength config (memory scan) + 1) *
+          config.bytesInWord) :
+    stackGcMachineNatMoveLoopRelation
+      (stackGcMoveLoopCodeStepState config state)
+      (scan + (stackGcNatDecodeLength config (memory scan) + 1) *
+        config.bytesInWord) index destination memory := by
+  rcases hrelation with ⟨hbase, hdestination, hindex⟩
+  have hbaseOut := stackGcMoveLoopCodeStepState_preserves_nat_relation_of_memory
+    config fuel state scan memory domain hwidth hscratch7 hscratch8 hdomain
+    haddress hbase hcodeNat hadvance hcount
+  have hdestinationOut :
+      (stackGcMoveLoopCodeStepState config state).machine.registers 3 =
+        state.machine.registers 3 := by
+    simp [stackGcMoveLoopCodeStepState, stackFrameWriteRegister,
+      wordStackMachineWriteRegister, wordStackMachineWriteMemory,
+      wordStackMachineBinOp, hscratch3, hscratch7, hscratch8,
+      hscratch4, Ne.symm hscratch3, Ne.symm hscratch4,
+      Ne.symm hscratch7, Ne.symm hscratch8]
+  have hindexOut :
+      (stackGcMoveLoopCodeStepState config state).machine.registers 4 =
+        state.machine.registers 4 := by
+    simp [stackGcMoveLoopCodeStepState, stackFrameWriteRegister,
+      wordStackMachineWriteRegister, wordStackMachineWriteMemory,
+      wordStackMachineBinOp, hscratch3, hscratch4, hscratch7, hscratch8,
+      Ne.symm hscratch3, Ne.symm hscratch4, Ne.symm hscratch7,
+      Ne.symm hscratch8]
+  exact ⟨hbaseOut, hdestinationOut.trans hdestination,
+    hindexOut.trans hindex⟩
+
 end Flapjack.RiscV

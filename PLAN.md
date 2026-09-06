@@ -1152,6 +1152,8 @@ definitions, pass ordering, examples, and proof obligations.
   and the destination-register correspondence.
 - [x] Package MoveLoop destination and index registers into the terminal
   machine/Nat state relation.
+- [x] Prove code-object MoveLoop steps preserve the extended destination and
+  index register relation under explicit scratch-register separation.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
