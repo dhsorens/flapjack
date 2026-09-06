@@ -1077,6 +1077,10 @@ definitions, pass ordering, examples, and proof obligations.
   counts, reusing the fuel-indexed machine/Nat `Memcpy` bridge.
 - [x] Add a named Nat post-`Memcpy` copy-suffix result with equations for its
   updated value, index, destination, forwarding-header memory, and condition.
+- [x] Relate the bounded post-`Memcpy` machine suffix evaluator to that Nat
+  result, including the forwarding-header memory projection.
+- [x] Lift the arbitrary-word suffix relation through the bounded machine
+  `Memcpy` loop, including the domain-independent Nat memory projection.
 - [x] Generalize the copying `MoveCode` evaluator to arbitrary copied-word
   counts, with an explicit prefix count correspondence and bounded count.
 - [x] Expose a forwarding MoveList machine/Nat value bridge, parameterized by
