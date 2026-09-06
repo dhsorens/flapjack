@@ -957,6 +957,8 @@ definitions, pass ordering, examples, and proof obligations.
   including scratch-register state and destination-memory update.
 - [x] Compose that transition with the bounded loop evaluator for the
   one-word memcpy case.
+- [x] Factor the collector copy path into named machine-state transitions and
+  prove its complete one-word non-forwarded branch composition.
 - [x] Complete the pure Nat collector copy-case equations for the copied
   value, next destination address, forwarding-header write, and success
   condition.

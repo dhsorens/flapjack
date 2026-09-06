@@ -223,6 +223,25 @@ example :
   native_decide
 
 example :
+    evalStackFrameFuel 29 frameCopyState
+      (stackGcMoveCode frameCollectorConfig) =
+      some (.normal (stackGcMoveCopyState frameCollectorConfig
+        frameCopyState)) := by
+  apply evalStackFrameFuel_stackGcMoveCode_copy_one
+  · native_decide
+  · native_decide
+  · native_decide
+  · native_decide
+  · native_decide
+  · native_decide
+  · native_decide
+  · native_decide
+  · intro address
+    rfl
+  · native_decide
+  · native_decide
+
+example :
     evalStackFrameFuel 4 frameCopyState
       (stackGcMemcpy frameCollectorConfig) =
       some (.normal frameCopyState) := by

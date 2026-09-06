@@ -85,38 +85,49 @@ def stackGcMemcpyBody (config : StackGcConfig) : StackProg Nat :=
 def stackGcMemcpy (config : StackGcConfig) : StackProg Nat :=
   stackGcWhile .notEqual 0 (.imm 0) (stackGcMemcpyBody config)
 
-def stackGcMoveCode (config : StackGcConfig) : StackProg Nat :=
-  .ite .test 5 (.imm 1) .skip (stackSeq [
+def stackGcMoveAddressPrefix (config : StackGcConfig) : StackProg Nat :=
+  stackSeq [
     stackGcMove 0 5,
     .get 1 .currHeap,
     stackGcShiftImmediate config .lsr 0 config.shiftLength,
     stackGcShiftImmediate config .lsl 0 config.wordShift,
     stackGcAdd 0 1,
-    .inst (.mem .load 1 0),
+    .inst (.mem .load 1 0)]
+
+def stackGcMoveCopyPrefix (config : StackGcConfig) : StackProg Nat :=
+  stackSeq [
+    stackGcShiftImmediate config .lsr 1 (config.wordBits - config.lenSize),
+    stackGcAddOne config 1,
+    stackGcMove 6 1,
+    stackGcMove 2 0,
+    stackGcMove 0 1]
+
+def stackGcMoveCopySuffix (config : StackGcConfig) : StackProg Nat :=
+  stackSeq [
+    stackGcMemcpy config,
+    stackGcMove 0 6,
+    stackGcShiftImmediate config .lsl 0 config.wordShift,
+    stackGcSub 2 0,
+    stackGcMove 0 4,
+    stackGcShiftImmediate config .lsl 0 2,
+    .inst (.mem .store 0 2),
+    stackGcMove 1 4,
+    stackGcClearTop config 5 (config.smallShiftLength - 1),
+    stackGcShiftImmediate config .lsl 1 config.shiftLength,
+    .arith .or 5 5 1,
+    stackGcAdd 4 6]
+
+def stackGcMoveCode (config : StackGcConfig) : StackProg Nat :=
+  .ite .test 5 (.imm 1) .skip (stackSeq [
+    stackGcMoveAddressPrefix config,
     .ite .test 1 (.imm 3)
       (stackSeq [
         stackGcShiftImmediate config .lsr 1 2,
         stackGcShiftImmediate config .lsl 1 config.shiftLength,
         stackGcClearTop config 5 (config.smallShiftLength - 1),
         .arith .or 5 5 1])
-      (stackSeq [
-        stackGcShiftImmediate config .lsr 1 (config.wordBits - config.lenSize),
-        stackGcAddOne config 1,
-        stackGcMove 6 1,
-        stackGcMove 2 0,
-        stackGcMove 0 1,
-        stackGcMemcpy config,
-        stackGcMove 0 6,
-        stackGcShiftImmediate config .lsl 0 config.wordShift,
-        stackGcSub 2 0,
-        stackGcMove 0 4,
-        stackGcShiftImmediate config .lsl 0 2,
-        .inst (.mem .store 0 2),
-        stackGcMove 1 4,
-        stackGcClearTop config 5 (config.smallShiftLength - 1),
-        stackGcShiftImmediate config .lsl 1 config.shiftLength,
-        .arith .or 5 5 1,
-        stackGcAdd 4 6])])
+      (stackSeq [stackGcMoveCopyPrefix config,
+        stackGcMoveCopySuffix config])])
 
 def stackGcMoveListCode (config : StackGcConfig) : StackProg Nat :=
   stackGcWhile .notEqual 7 (.imm 0) (stackSeq [

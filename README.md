@@ -109,8 +109,9 @@ it models CakeML's stack-space checks, dynamic aligned accesses, and bitmap
 loads, and executes the generated Simple collector on a bounded zero-heap
 state. The general collector machine simulation theorem remains open.
 Its immediate-pointer case is now related by theorem to the pure Nat
-`stackGcNatMove` specification; forwarding and copying cases still require
-the corresponding machine-state invariants.
+`stackGcNatMove` specification; the one-word non-forwarded copy case is also
+proved, while forwarding and arbitrary-length copying still require the
+corresponding machine-state invariants.
 The frame state also carries explicit main/shared memory domains, with
 out-of-domain access rejected at the evaluator boundary.
 Its RISC-V memory instructions expose little-endian byte, halfword, and
@@ -121,6 +122,9 @@ Reusable sequence and conditional equations expose the evaluator’s
 fuel-consuming composition rules for later collector simulation proofs.
 The named memcpy body now has an exact state-transition theorem, and its
 one-word loop case composes that theorem with the bounded loop evaluator.
+The collector address/header prefix, copy preparation, and copy finalization
+are named machine transitions; their composition now proves the complete
+one-word non-forwarded copy branch at the bounded machine-state boundary.
 The pure Nat collector specification also exposes copy-case equations for
 the copied value, next destination address, forwarding-header write, and
 success condition.
