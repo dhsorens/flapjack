@@ -322,6 +322,10 @@ def wordSsaRead (state : WordSsaState) (name : Nat) : Nat :=
   | some value => value
   | none => name
 
+def wordSsaReadCutsets (state : WordSsaState)
+    (cutsets : List Nat × List Nat) : List Nat × List Nat :=
+  (cutsets.1.map (wordSsaRead state), cutsets.2.map (wordSsaRead state))
+
 def wordSsaFresh (state : WordSsaState) (name : Nat) : WordSsaState × Nat :=
   ({ current := (name, state.next) ::
         state.current.filter (fun entry => entry.1 != name),
@@ -556,6 +560,9 @@ mutual
     | .inst instruction =>
         let (state, instruction) := wordSsaRenameInst state instruction
         (state, .inst instruction)
+    | .get destination store =>
+        let (state, destination) := wordSsaFresh state destination
+        (state, .get destination store)
     | .seq first second =>
         let (state, first) := wordSsaRenameProgramWithLoops frames state first
         let (state, second) := wordSsaRenameProgramWithLoops frames state second
@@ -611,6 +618,31 @@ mutual
           wordSsaRenameCallHandler frames incoming normalState exception body
         ({ normalState with next := handlerState.next },
           .call returns target arguments (some (exception, body)))
+    | .alloc destination cutsets =>
+        let cutsets := wordSsaReadCutsets state cutsets
+        let (state, destination) := wordSsaFresh state destination
+        (state, .alloc destination cutsets)
+    | .storeConsts source bitmap codeLength dataLength constants =>
+        (state, .storeConsts (wordSsaRead state source)
+          (wordSsaRead state bitmap) (wordSsaRead state codeLength)
+          (wordSsaRead state dataLength) constants)
+    | .opCurrHeap operator destination source =>
+        let source := wordSsaRead state source
+        let (state, destination) := wordSsaFresh state destination
+        (state, .opCurrHeap operator destination source)
+    | .install codeBuffer codeLength dataBuffer dataLength cutsets =>
+        let cutsets := wordSsaReadCutsets state cutsets
+        let codeBuffer := wordSsaRead state codeBuffer
+        let codeLength := wordSsaRead state codeLength
+        let dataBuffer := wordSsaRead state dataBuffer
+        let dataLength := wordSsaRead state dataLength
+        (state, .install codeBuffer codeLength dataBuffer dataLength cutsets)
+    | .codeBufferWrite address value =>
+        (state, .codeBufferWrite (wordSsaRead state address)
+          (wordSsaRead state value))
+    | .dataBufferWrite address value =>
+        (state, .dataBufferWrite (wordSsaRead state address)
+          (wordSsaRead state value))
     | .loop liveIn body liveOut =>
         let names := (liveIn ++ liveOut).eraseDups
         let (setupState, setup) := wordSsaRefreshList state names
@@ -680,6 +712,7 @@ def wordProgReadVars : WordProg α → List Nat
   | .move _ moves => moves.map (fun move => move.2)
   | .assign _ value => wordExpReadVars value
   | .inst instruction => wordInstReadVars instruction
+  | .get _ _ => []
   | .store address value => wordExpReadVars address ++ [value]
   | .set _ value => wordExpReadVars value
   | .seq first second => wordProgReadVars first ++ wordProgReadVars second
@@ -701,6 +734,15 @@ def wordProgReadVars : WordProg α → List Nat
         (match handler with
         | none => []
         | some (_, body) => wordProgReadVars body)
+  | .alloc destination (nonGc, gc) =>
+      destination :: (nonGc ++ gc)
+  | .storeConsts source bitmap codeLength dataLength _ =>
+      [source, bitmap, codeLength, dataLength]
+  | .opCurrHeap _ _ source => [source]
+  | .install codeBuffer codeLength dataBuffer dataLength (nonGc, gc) =>
+      [codeBuffer, codeLength, dataBuffer, dataLength] ++ nonGc ++ gc
+  | .codeBufferWrite address value => [address, value]
+  | .dataBufferWrite address value => [address, value]
   | .ffi _ configuration configurationLength array arrayLength live =>
       [configuration, configurationLength, array, arrayLength] ++ live
   | .shareInst operator name address =>
@@ -710,7 +752,7 @@ def wordProgReadVars : WordProg α → List Nat
         wordExpReadVars address
 
 def wordProgWriteVars : WordProg α → List Nat
-  | .skip | .store _ _ | .set _ _ | .break _ | .continue _ | .raise _
+  | .skip | .get _ _ | .store _ _ | .set _ _ | .break _ | .continue _ | .raise _
   | .return _ _ | .tick => []
   | .move _ moves => moves.map (fun move => move.1)
   | .assign name _ => [name]
@@ -727,7 +769,13 @@ def wordProgWriteVars : WordProg α → List Nat
       | some (values, _) => values) ++
       (match handler with
       | none => []
-      | some (exception, body) => exception :: wordProgWriteVars body)
+        | some (exception, body) => exception :: wordProgWriteVars body)
+  | .alloc destination _ => [destination]
+  | .storeConsts source bitmap codeLength dataLength _ =>
+      [source, bitmap, codeLength, dataLength]
+  | .opCurrHeap _ destination _ => [destination]
+  | .install codeBuffer _ _ _ _ => [codeBuffer]
+  | .codeBufferWrite _ _ | .dataBufferWrite _ _ => []
   | .ffi _ _ _ _ _ _ => []
   | .shareInst operator name _ =>
       match operator with
@@ -909,6 +957,7 @@ def wordClashTree : WordProg α → List (List Nat × List Nat) → WordClashTre
         (moves.map (fun move => move.2))
   | .assign name value, _ => .delta [name] (wordExpReadVars value)
   | .inst instruction, _ => wordClashTreeDeltaInst instruction
+  | .get destination _, _ => .delta [destination] []
   | .store address value, _ => .delta [] (value :: wordExpReadVars address)
   | .set _ value, _ => .delta [] (wordExpReadVars value)
   | .seq first second, frames =>
@@ -955,6 +1004,18 @@ def wordClashTree : WordProg α → List (List Nat × List Nat) → WordClashTre
               (.set liveSet))
         (.seq (.set (wordClashTreeCallSet [exception] cutSet))
           (wordClashTree body frames))
+  | .alloc destination (nonGc, gc), _ =>
+      .seq (.set (wordClashTreeCallSet nonGc gc))
+        (.delta [destination] (nonGc ++ gc))
+  | .storeConsts source bitmap codeLength dataLength _, _ =>
+      .delta [source, bitmap, codeLength, dataLength]
+        [source, bitmap, codeLength, dataLength]
+  | .opCurrHeap _ destination source, _ => .delta [destination] [source]
+  | .install codeBuffer codeLength dataBuffer dataLength (nonGc, gc), _ =>
+      .seq (.set (wordClashTreeCallSet nonGc gc))
+        (.delta [codeBuffer] [codeLength, dataBuffer, dataLength])
+  | .codeBufferWrite address value, _ => .delta [] [address, value]
+  | .dataBufferWrite address value, _ => .delta [] [address, value]
   | .ffi _ configuration configurationLength array arrayLength _, _ =>
       .delta [] [configuration, configurationLength, array, arrayLength]
   | .shareInst operator name address, _ =>
@@ -1365,6 +1426,7 @@ def wordApplyColour (colour : Nat → Nat) : WordProg α → WordProg α
   | .assign name value =>
       .assign (colour name) (wordApplyColourExp colour value)
   | .inst instruction => .inst (wordApplyColourInst colour instruction)
+  | .get destination store => .get (colour destination) store
   | .store address value =>
       .store (wordApplyColourExp colour address) (colour value)
   | .set store value => .set store (wordApplyColourExp colour value)
@@ -1391,6 +1453,20 @@ def wordApplyColour (colour : Nat → Nat) : WordProg α → WordProg α
       .call (returns.map (fun (values, live) =>
         (values.map colour, live.map colour))) target (arguments.map colour)
         (some (colour exception, wordApplyColour colour body))
+  | .alloc destination (nonGc, gc) =>
+      .alloc (colour destination) (nonGc.map colour, gc.map colour)
+  | .storeConsts source bitmap codeLength dataLength constants =>
+      .storeConsts (colour source) (colour bitmap) (colour codeLength)
+        (colour dataLength) constants
+  | .opCurrHeap operator destination source =>
+      .opCurrHeap operator (colour destination) (colour source)
+  | .install codeBuffer codeLength dataBuffer dataLength (nonGc, gc) =>
+      .install (colour codeBuffer) (colour codeLength) (colour dataBuffer)
+        (colour dataLength) (nonGc.map colour, gc.map colour)
+  | .codeBufferWrite address value =>
+      .codeBufferWrite (colour address) (colour value)
+  | .dataBufferWrite address value =>
+      .dataBufferWrite (colour address) (colour value)
   | .ffi function configuration configurationLength array arrayLength live =>
       .ffi function (colour configuration) (colour configurationLength)
         (colour array) (colour arrayLength) (live.map colour)
@@ -1593,7 +1669,7 @@ def wordSpecialArithLocationsSafe (operation : WordArith)
 def wordProgSpecialLocationsSafe (locations : NatInfoMap WordLocation) :
     WordProg α → Bool
   | .skip => true
-  | .move _ _ | .assign _ _ | .store _ _ | .set _ _ | .break _ | .continue _ |
+  | .move _ _ | .assign _ _ | .get _ _ | .store _ _ | .set _ _ | .break _ | .continue _ |
       .raise _ | .return _ _ | .tick | .locValue _ _ | .ffi _ _ _ _ _ _ => true
   | .inst (.arith operation) => wordSpecialArithLocationsSafe operation locations
   | .inst (.mem _ _ _) => true
@@ -1607,6 +1683,8 @@ def wordProgSpecialLocationsSafe (locations : NatInfoMap WordLocation) :
   | .mustTerminate body => wordProgSpecialLocationsSafe locations body
   | .call _ _ _ none => true
   | .call _ _ _ (some (_, body)) => wordProgSpecialLocationsSafe locations body
+  | .alloc _ _ | .storeConsts _ _ _ _ _ | .opCurrHeap _ _ _ |
+      .install _ _ _ _ _ | .codeBufferWrite _ _ | .dataBufferWrite _ _ => true
   | .shareInst _ _ _ => true
 termination_by program => sizeOf program
 decreasing_by all_goals decreasing_trivial

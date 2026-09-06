@@ -252,6 +252,8 @@ def stackRemoveFuel [OfNat α 0] [OfNat α 1] : Nat → StackRemoveConfig → St
   | fuel + 1, _, .alloc words => .alloc words
   | fuel + 1, config, .storeConsts source bitmap stub =>
       stackRemoveStoreConsts config source bitmap stub
+  | fuel + 1, _, .codeBufferWrite address value =>
+      .codeBufferWrite address value
   | fuel + 1, _, .dataBufferWrite address value =>
       .inst (.mem .store value address)
   | fuel + 1, _, .raise exception => .raise exception

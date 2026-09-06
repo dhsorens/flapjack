@@ -527,8 +527,23 @@ def wordStackFfi (config : WordStackConfig) (function : FunName)
 
 def wordStackStoreName : WordStore α → Option StackStore
   | .temp _ => none
+  | .nextFree => some .nextFree
+  | .endOfHeap => some .endOfHeap
+  | .triggerGC => some .triggerGC
   | .currHeap => some .currHeap
   | .heapLength => some .heapLength
+  | .progStart => some .progStart
+  | .bitmapBase => some .bitmapBase
+  | .otherHeap => some .otherHeap
+  | .allocSize => some .allocSize
+  | .globals => some .globals
+  | .globReal => some .globReal
+  | .handler => some .handler
+  | .genStart => some .genStart
+  | .codeBuffer => some .codeBuffer
+  | .codeBufferEnd => some .codeBufferEnd
+  | .bitmapBuffer => some .bitmapBuffer
+  | .bitmapBufferEnd => some .bitmapBufferEnd
 
 /-! Concrete StackLang words use natural-number constants in this port.  The
     polymorphic Word syntax above is retained for pass composition, while
@@ -539,8 +554,70 @@ def wordStackStoreName : WordStore α → Option StackStore
 
 def wordStackStoreNameNat : WordStore Nat → Option StackStore
   | .temp address => some (.temp address)
+  | .nextFree => some .nextFree
+  | .endOfHeap => some .endOfHeap
+  | .triggerGC => some .triggerGC
   | .currHeap => some .currHeap
   | .heapLength => some .heapLength
+  | .progStart => some .progStart
+  | .bitmapBase => some .bitmapBase
+  | .otherHeap => some .otherHeap
+  | .allocSize => some .allocSize
+  | .globals => some .globals
+  | .globReal => some .globReal
+  | .handler => some .handler
+  | .genStart => some .genStart
+  | .codeBuffer => some .codeBuffer
+  | .codeBufferEnd => some .codeBufferEnd
+  | .bitmapBuffer => some .bitmapBuffer
+  | .bitmapBufferEnd => some .bitmapBufferEnd
+
+def wordStackGet (config : WordStackConfig) (destination : Nat)
+    (store : WordStore α) : Option (StackProg α) := do
+  let store ← wordStackStoreName store
+  let location ← wordStackLocation config destination
+  match location with
+  | .register register => pure (.get register store)
+  | .stack slot =>
+      pure (wordStackJoin (.get config.scratch store)
+        (.stackStore config.scratch (wordStackOffset config slot)))
+
+def wordStackOpCurrHeap (config : WordStackConfig) (operator : BinOp)
+    (destination source : Nat) : Option (StackProg α) := do
+  let (prelude, sourceRegister) ←
+    wordStackReadRegister config source config.addressScratch
+  let destination ← wordStackLocation config destination
+  match destination with
+  | .register destination =>
+      pure (wordStackJoin prelude
+        (.opCurrHeap operator destination sourceRegister))
+  | .stack slot =>
+      pure (wordStackJoin prelude
+        (wordStackJoin
+          (.opCurrHeap operator config.scratch sourceRegister)
+          (.stackStore config.scratch (wordStackOffset config slot))))
+
+def wordStackInstall (config : WordStackConfig)
+    (codeBuffer codeLength dataBuffer dataLength : Nat) : Option (StackProg α) := do
+  let codeBuffer ← wordStackLocation config codeBuffer
+  let codeLength ← wordStackLocation config codeLength
+  let dataBuffer ← wordStackLocation config dataBuffer
+  let dataLength ← wordStackLocation config dataLength
+  match codeBuffer, codeLength, dataBuffer, dataLength with
+  | .register codeBuffer, .register codeLength,
+      .register dataBuffer, .register dataLength =>
+      pure (.install codeBuffer codeLength dataBuffer dataLength 0)
+  | _, _, _, _ => none
+
+def wordStackBufferWrite (config : WordStackConfig) (isCode : Bool)
+    (address value : Nat) : Option (StackProg α) := do
+  let address ← wordStackLocation config address
+  let value ← wordStackLocation config value
+  match address, value with
+  | .register address, .register value =>
+      pure (if isCode then .codeBufferWrite address value
+        else .dataBufferWrite address value)
+  | _, _ => none
 
 def wordStackAtomNat (config : WordStackConfig) (temporary : Nat) :
     WordExp Nat → Option (StackProg Nat × Nat)
@@ -1483,6 +1560,8 @@ def wordToStackProg [BEq α] [OfNat α 0] [OfNat α 1] [Add α] [Mul α]
       wordStackMove config destination source
   | .inst instruction =>
       wordToStackInst config instruction
+  | .get destination store =>
+      wordStackGet config destination store
   | .store (.var address) value =>
       wordStackMemoryInst config .store value address
   | .set store (.var source) => do
@@ -1531,6 +1610,15 @@ def wordToStackProg [BEq α] [OfNat α 0] [OfNat α 1] [Add α] [Mul α]
         config.frameOffset config.scratch returnCode handlerCode
         config.returnLabel config.entryLabel config.handlerLabel exception
       pure (wordStackJoin argumentMoves callCode)
+  | .opCurrHeap operator destination source =>
+      wordStackOpCurrHeap config operator destination source
+  | .install codeBuffer codeLength dataBuffer dataLength _ =>
+      wordStackInstall config codeBuffer codeLength dataBuffer dataLength
+  | .codeBufferWrite address value =>
+      wordStackBufferWrite config true address value
+  | .dataBufferWrite address value =>
+      wordStackBufferWrite config false address value
+  | .alloc _ _ | .storeConsts _ _ _ _ _ => none
   | .ffi function configuration configurationLength array arrayLength _ =>
       wordStackFfi config function configuration configurationLength array arrayLength
   | .shareInst operator name (.var address) =>
@@ -1550,6 +1638,7 @@ def wordToStackProgNat [BEq Nat] (config : WordStackConfig) :
   | .assign destination value => wordStackCompileExpNat config destination value
   | .locValue destination source => wordStackMove config destination source
   | .inst instruction => wordToStackInst config instruction
+  | .get destination store => wordStackGet config destination store
   | .store address value =>
       wordStackCompileStoreNat config address (.var value)
   | .set store value => wordStackSetNat config store value
@@ -1594,6 +1683,15 @@ def wordToStackProgNat [BEq Nat] (config : WordStackConfig) :
         config.returnLabel config.entryLabel config.handlerLabel exception
       pure (wordStackJoin argumentMoves callCode)
   | .call _ none _ _ => none
+  | .opCurrHeap operator destination source =>
+      wordStackOpCurrHeap config operator destination source
+  | .install codeBuffer codeLength dataBuffer dataLength _ =>
+      wordStackInstall config codeBuffer codeLength dataBuffer dataLength
+  | .codeBufferWrite address value =>
+      wordStackBufferWrite config true address value
+  | .dataBufferWrite address value =>
+      wordStackBufferWrite config false address value
+  | .alloc _ _ | .storeConsts _ _ _ _ _ => none
   | .ffi function configuration configurationLength array arrayLength _ =>
       wordStackFfi config function configuration configurationLength array arrayLength
   | .shareInst operator name address =>
@@ -1610,8 +1708,23 @@ decreasing_by all_goals decreasing_trivial
 
 def wordStoreToNat : WordStore (Word width) → WordStore Nat
   | .temp address => .temp address.toNat
+  | .nextFree => .nextFree
+  | .endOfHeap => .endOfHeap
+  | .triggerGC => .triggerGC
   | .currHeap => .currHeap
   | .heapLength => .heapLength
+  | .progStart => .progStart
+  | .bitmapBase => .bitmapBase
+  | .otherHeap => .otherHeap
+  | .allocSize => .allocSize
+  | .globals => .globals
+  | .globReal => .globReal
+  | .handler => .handler
+  | .genStart => .genStart
+  | .codeBuffer => .codeBuffer
+  | .codeBufferEnd => .codeBufferEnd
+  | .bitmapBuffer => .bitmapBuffer
+  | .bitmapBufferEnd => .bitmapBufferEnd
 
 def wordExpToNat : WordExp (Word width) → WordExp Nat
   | .const value => .const value.toNat
@@ -1633,6 +1746,7 @@ def wordProgToNat : WordProg (Word width) → WordProg Nat
   | .move priority moves => .move priority moves
   | .assign name value => .assign name (wordExpToNat value)
   | .inst instruction => .inst instruction
+  | .get destination store => .get destination (wordStoreToNat store)
   | .store address value => .store (wordExpToNat address) value
   | .set store value => .set (wordStoreToNat store) (wordExpToNat value)
   | .seq first second => .seq (wordProgToNat first) (wordProgToNat second)
@@ -1654,6 +1768,17 @@ def wordProgToNat : WordProg (Word width) → WordProg Nat
   | .call returns target arguments (some (exception, body)) =>
       .call (returns.map (fun (values, live) => (values, live))) target
         arguments (some (exception, wordProgToNat body))
+  | .alloc destination (nonGc, gc) =>
+      .alloc destination (nonGc, gc)
+  | .storeConsts source bitmap codeLength dataLength constants =>
+      .storeConsts source bitmap codeLength dataLength
+        (constants.map (fun (isByte, value) => (isByte, value.toNat)))
+  | .opCurrHeap operator destination source =>
+      .opCurrHeap operator destination source
+  | .install codeBuffer codeLength dataBuffer dataLength (nonGc, gc) =>
+      .install codeBuffer codeLength dataBuffer dataLength (nonGc, gc)
+  | .codeBufferWrite address value => .codeBufferWrite address value
+  | .dataBufferWrite address value => .dataBufferWrite address value
   | .ffi function configuration configurationLength array arrayLength live =>
       .ffi function configuration configurationLength array arrayLength live
   | .shareInst operator name address =>

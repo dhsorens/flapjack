@@ -134,6 +134,8 @@ def labFlatten (tail : Bool) (sectionId counter : Nat)
   | .install _ _ _ _ returnAddress =>
       ⟨[.labAsm (.locValue returnAddress ⟨sectionId, counter⟩) [] 0,
         .labAsm .install [] 0, labLabel sectionId counter], false, counter + 1⟩
+  | .codeBufferWrite address value =>
+      ⟨[.asm (.codeBufferWrite address value) [] 0], false, counter⟩
   | .ffi function _ _ _ _ returnAddress =>
       ⟨[.labAsm (.locValue returnAddress ⟨sectionId, counter⟩) [] 0,
         .labAsm (.callFfi function) [] 0, labLabel sectionId counter],

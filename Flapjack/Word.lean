@@ -11,8 +11,23 @@ namespace Flapjack
 
 inductive WordStore (α : Type u) where
   | temp (address : α)
+  | nextFree
+  | endOfHeap
+  | triggerGC
   | currHeap
   | heapLength
+  | progStart
+  | bitmapBase
+  | otherHeap
+  | allocSize
+  | globals
+  | globReal
+  | handler
+  | genStart
+  | codeBuffer
+  | codeBufferEnd
+  | bitmapBuffer
+  | bitmapBufferEnd
   deriving Repr
 
 inductive WordExp (α : Type u) where
@@ -57,6 +72,7 @@ inductive WordProg (α : Type u) where
   | move (priority : Nat) (moves : List (Nat × Nat))
   | assign (name : Nat) (value : WordExp α)
   | inst (instruction : WordInst)
+  | get (destination : Nat) (store : WordStore α)
   | store (address : WordExp α) (value : Nat)
   | set (store : WordStore α) (value : WordExp α)
   | seq (first second : WordProg α)
@@ -72,6 +88,14 @@ inductive WordProg (α : Type u) where
   | locValue (destination source : Nat)
   | call (returns : Option (List Nat × List Nat)) (target : Option Nat)
       (arguments : List Nat) (handler : Option (Nat × WordProg α))
+  | alloc (destination : Nat) (cutsets : List Nat × List Nat)
+  | storeConsts (source bitmap codeLength dataLength : Nat)
+      (constants : List (Bool × α))
+  | opCurrHeap (operator : BinOp) (destination source : Nat)
+  | install (codeBuffer codeLength dataBuffer dataLength : Nat)
+      (cutsets : List Nat × List Nat)
+  | codeBufferWrite (address value : Nat)
+  | dataBufferWrite (address value : Nat)
   | ffi (function : FunName) (configuration configurationLength array arrayLength : Nat)
       (live : List Nat)
   | shareInst (operator : WordMemOp) (name : Nat) (address : WordExp α)

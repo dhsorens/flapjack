@@ -916,9 +916,11 @@ theorem wordAllocateGraph_sound (tree : WordClashTree)
   exact ⟨hfixed, hedges, htree⟩
 
 def wordProgForcedClashes : WordProg α → List (Nat × Nat)
-  | .skip | .move _ _ | .store _ _ | .set _ _ | .break _ | .continue _ |
+  | .skip | .move _ _ | .get _ _ | .store _ _ | .set _ _ | .break _ | .continue _ |
       .raise _ | .return _ _ | .tick | .locValue _ _ | .ffi _ _ _ _ _ _ |
-      .mustTerminate _ => []
+      .mustTerminate _ | .alloc _ _ | .storeConsts _ _ _ _ _ |
+      .opCurrHeap _ _ _ | .install _ _ _ _ _ | .codeBufferWrite _ _ |
+      .dataBufferWrite _ _ => []
   | .assign _ _ => []
   | .inst instruction => wordInstForcedClashes instruction
   | .seq first second =>
@@ -1033,9 +1035,11 @@ def wordStackOnlyProgramAux (program : WordProg α)
     | .move _ moves =>
         moves.foldl (fun state move =>
           wordStackOnlyMergeMove move.1 move.2 state) state
-    | .assign _ _ | .inst _ | .store _ _ | .set _ _ | .raise _ |
+    | .assign _ _ | .inst _ | .get _ _ | .store _ _ | .set _ _ | .raise _ |
         .return _ _ | .tick | .locValue _ _ | .ffi _ _ _ _ _ _ |
-        .shareInst _ _ _ =>
+        .shareInst _ _ _ | .alloc _ _ | .storeConsts _ _ _ _ _ |
+        .opCurrHeap _ _ _ | .install _ _ _ _ _ | .codeBufferWrite _ _ |
+        .dataBufferWrite _ _ =>
         wordStackOnlyRemoveTemps (wordStackOnlyTerminalVars program) state
     | .skip => wordStackOnlyRemoveTemps [] state
     | .seq first second =>

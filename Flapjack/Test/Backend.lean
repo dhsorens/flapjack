@@ -11,6 +11,7 @@ import Flapjack.Test.AllocatorCorrectness
 import Flapjack.Test.AllocatorRegAlloc
 import Flapjack.Test.MustTerminate
 import Flapjack.Test.TailCalls
+import Flapjack.Test.WordOperations
 import Flapjack.Test.WordToStack
 import Flapjack.Test.ParallelMove
 import Flapjack.Test.Stack

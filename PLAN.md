@@ -888,6 +888,13 @@ definitions, pass ordering, examples, and proof obligations.
   adapter, with an explicit zero-register invariant and an RV64 regression.
 - [x] Prove the exact RISC-V ECALL adapter's CakeML length-mismatch failure
   equation and add a concrete terminal-failure regression.
+- [x] Extend the Word/Stack/Lab carriers with CakeML runtime-store, heap,
+  installation, and code/data-buffer operations; thread them through SSA,
+  clash analysis, colouring, Word-to-Nat conversion, Word-to-Stack,
+  StackRemove, and Lab flattening, with register/spill regressions. Bitmap-
+  dependent `Alloc`/`StoreConsts` remain an explicit follow-up.
+- [ ] Port bitmap-aware `Alloc`/`StoreConsts` lowering and thread bitmap
+  metadata through the RISC-V stack pipeline.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 

@@ -61,6 +61,7 @@ inductive StackProg (α : Type u) where
   | jumpLower (register target : Nat) (label : Nat)
   | alloc (words : Nat)
   | storeConsts (source bitmap : Nat) (stub : Option Nat)
+  | codeBufferWrite (address value : Nat)
   | dataBufferWrite (address value : Nat)
   | raise (exception : Nat)
   | return (value : Nat)
