@@ -448,6 +448,8 @@ definitions, pass ordering, examples, and proof obligations.
   temporaries; full allocator integration remains a separate item.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware
   RISC-V contracts before claiming general call-aware allocation correctness.
+- [x] Add a combined graph-allocation soundness contract exposing fixed tags,
+  edge safety, and the clash-tree witness at the function boundary.
 - [x] Route the spill-aware RISC-V pipeline through the implemented
   clash-tree/preference allocator and retain its allocation witness at the
   Word-to-Stack boundary.

@@ -84,6 +84,29 @@ theorem wordAllocateGraphFunctionWithStackOnlyRenamed_maps_parameters
   simpa [wordInitRegAlloc, wordMkBijection,
     wordAllocateGraphFunctionWithStackOnlyRenamed, wordClashTreeBijection] using hnode
 
+theorem wordAllocateGraphFunctionWithStackOnlyRenamed_sound
+    (parameters : List Nat) (program : WordProg α)
+    (fixedSources : List Nat) (colours stackStart : Nat)
+    (state : WordSsaState) (renamedParameters : List Nat)
+    (allocation : WordGraphAllocation) (renamedProgram : WordProg α)
+    (halloc : wordAllocateGraphFunctionWithStackOnlyRenamed parameters program
+      fixedSources colours stackStart =
+      some (state, renamedParameters, allocation, renamedProgram)) :
+    wordGraphTagsAreFixed allocation.graph = true ∧
+      wordGraphColouringRespectsEdges allocation.graph = true ∧
+      (wordClashTreeCheck (wordGraphColouringAt allocation.colouring)
+        (WordClashTree.seq
+          (.set (wordSsaRenameFunction parameters program).2.fst)
+          (wordClashTree (wordSsaRenameFunction parameters program).2.snd []))
+        [] []).isSome = true := by
+  simp [wordAllocateGraphFunctionWithStackOnlyRenamed] at halloc
+  rcases halloc with ⟨allocation', hgraph, rfl, rfl, rfl, rfl⟩
+  simp [wordAllocateGraph] at hgraph
+  rcases hgraph with ⟨hchecks, heq⟩
+  cases heq
+  rcases hchecks with ⟨⟨hfixed, hedges⟩, htree⟩
+  exact ⟨hfixed, hedges, htree⟩
+
 def wordControlResultValues [NeZero width] :
     WordControlResult width → List (Word width)
   | .returned _ values => values
