@@ -134,6 +134,9 @@ The forwarding suffix is likewise factored and its full branch composition is
 proved, including the unchanged memory and threaded frame components.
 The zero-iteration equations for the move-list, heap-scan, and bitmap-root
 loops are also proved at the same bounded evaluator boundary.
+The one-element move-list transition is now proved compositionally around an
+arbitrary verified `word_gc_move` result, including load, counter update,
+store-back, address advance, and loop termination.
 The pure Nat collector specification also exposes copy-case equations for
 the copied value, next destination address, forwarding-header write, and
 success condition.

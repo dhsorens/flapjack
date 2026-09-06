@@ -969,6 +969,8 @@ definitions, pass ordering, examples, and proof obligations.
   transitions and prove its full branch composition.
 - [x] Prove the zero-iteration machine equations for collector move-list,
   heap-scan, and bitmap-root loops.
+- [x] Prove the bounded one-element collector move-list transition around a
+  verified `word_gc_move` result, including loop termination.
 - [x] Complete the pure Nat collector copy-case equations for the copied
   value, next destination address, forwarding-header write, and success
   condition.

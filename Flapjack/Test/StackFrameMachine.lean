@@ -152,6 +152,11 @@ def frameCollectorConfig : StackGcConfig :=
     bytesInWord := 8
     immediateScratch := 31 }
 
+def frameMoveListOneState : StackFrameMachineState 64 :=
+  { frameCollectorState with
+      machine := { frameCollectorState.machine with
+        registers := fun register => if register = 7 then 1 else 0 } }
+
 def frameForwardingState : StackFrameMachineState 64 :=
   { machine :=
       { registers := fun register => if register = 5 then 3 else 0
@@ -231,6 +236,23 @@ example :
       some (.normal frameCollectorState) := by
   apply evalStackFrameFuel_stackGcMoveRootsBitmaps_zero
   native_decide
+
+example :
+    evalStackFrameFuel 9 frameMoveListOneState
+      (stackGcMoveListCode frameCollectorConfig) =
+      some (.normal (stackGcMoveListOneState frameCollectorConfig
+        (stackGcMoveListOnePreState frameCollectorConfig frameMoveListOneState))) := by
+  apply evalStackFrameFuel_stackGcMoveList_one
+  · native_decide
+  · native_decide
+  · native_decide
+  · native_decide
+  · native_decide
+  · apply evalStackFrameGcMoveCode_immediate
+    native_decide
+  · native_decide
+  · native_decide
+  · native_decide
 
 example :
     stackFrameNormalRegisterNat
