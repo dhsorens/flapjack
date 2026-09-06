@@ -974,6 +974,8 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Prove the bounded frame-machine memcpy evaluator for every bounded
   word count, using the iterated transition API and linear recursion-depth
   fuel.
+- [x] Add Nat-level memcpy framing lemmas for domain success and
+  non-destination memory preservation.
 - [ ] Prove the collector machine semantics and simulation theorem, and add
   generational support if it is needed by a selected target configuration.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state
