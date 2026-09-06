@@ -1057,6 +1057,8 @@ definitions, pass ordering, examples, and proof obligations.
   memory projection.
 - [x] Extend the immediate one-item MoveList bridge to the full bounded
   machine/Nat memory relation.
+- [x] Extend the forwarding one-item MoveList bridge to the full bounded
+  machine/Nat memory relation.
 - [x] Expose a forwarding MoveList machine/Nat value bridge, parameterized by
   the explicit fixed-width forwarding-address correspondence.
 - [x] Expose a copying MoveList machine/Nat value bridge, parameterized by the
