@@ -1,5 +1,6 @@
 import Flapjack.StackAlloc.Machine
 import Flapjack.StackAlloc.Correctness
+import Flapjack.RiscV.PanMemory
 
 /-!
 # Bounded StackLang frame semantics
@@ -23,6 +24,7 @@ structure StackFrameMachineState (width : Nat) where
   stackSpace : Nat
   stackLimit : Nat
   bitmaps : List (Word width)
+  bytesInWord : Word width
   memoryDomain : Word width → Bool
   sharedMemoryDomain : Word width → Bool
 
@@ -47,6 +49,19 @@ def stackFrameWriteSlot [NeZero width]
 def stackFrameAnyOffset [NeZero width] (value : Word width) : Option Nat :=
   let offset := BitVec.ushiftRight value 3
   if BitVec.shiftLeft offset 3 == value then some offset.toNat else none
+
+def stackFrameFlatMemory (state : StackFrameMachineState width) :
+    PanFlatMemory (Word width) :=
+  fun address => some (state.machine.memory address)
+
+def stackFrameApplyFlatMemory (state : StackFrameMachineState width)
+    (memory : PanFlatMemory (Word width)) : StackFrameMachineState width :=
+  let newMemory : Word width → Word width := fun address =>
+      match memory address with
+      | some value => value
+      | none => state.machine.memory address
+  let machine := { state.machine with memory := newMemory }
+  { state with machine := machine }
 
 def stackFrameBasic [NeZero width]
     (state : StackFrameMachineState width) :
@@ -76,6 +91,39 @@ def stackFrameBasic [NeZero width]
           (wordStackMachineWriteMemory state.machine address
             (state.machine.registers source)) })
       else none
+  | .inst (.mem .load8 destination address) =>
+      let address := state.machine.registers address
+      (panRiscVReadByte state.memoryDomain (stackFrameFlatMemory state)
+        state.bytesInWord address).map (fun value =>
+          .normal (stackFrameWriteRegister state destination value))
+  | .inst (.mem .load16 destination address) =>
+      let address := state.machine.registers address
+      (panRiscVRead16 state.memoryDomain (stackFrameFlatMemory state)
+        state.bytesInWord address).map (fun value =>
+          .normal (stackFrameWriteRegister state destination value))
+  | .inst (.mem .load32 destination address) =>
+      let address := state.machine.registers address
+      (panRiscVRead32 state.memoryDomain (stackFrameFlatMemory state)
+        state.bytesInWord address).map (fun value =>
+          .normal (stackFrameWriteRegister state destination value))
+  | .inst (.mem .store8 source address) =>
+      let address := state.machine.registers address
+      (panRiscVStoreByte state.memoryDomain (stackFrameFlatMemory state)
+        state.bytesInWord address (state.machine.registers source)).map
+        (stackFrameApplyFlatMemory state)
+        |>.map (fun state => .normal state)
+  | .inst (.mem .store16 source address) =>
+      let address := state.machine.registers address
+      (panRiscVStore16 state.memoryDomain (stackFrameFlatMemory state)
+        state.bytesInWord address (state.machine.registers source)).map
+        (stackFrameApplyFlatMemory state)
+        |>.map (fun state => .normal state)
+  | .inst (.mem .store32 source address) =>
+      let address := state.machine.registers address
+      (panRiscVStore32 state.memoryDomain (stackFrameFlatMemory state)
+        state.bytesInWord address (state.machine.registers source)).map
+        (stackFrameApplyFlatMemory state)
+        |>.map (fun state => .normal state)
   | .inst instruction =>
       (evalWordStackMachine state.machine (.inst instruction)).map
         (fun machine => .normal { state with machine := machine })
@@ -294,6 +342,27 @@ theorem evalStackFrameFuel_memStore [NeZero width]
           (state.machine.registers address) (state.machine.registers source)) }) := by
   simp [evalStackFrameFuel, evalStackFrameFuelWithCode, stackFrameBasic,
     hdomain]
+
+theorem evalStackFrameFuel_memLoad32 [NeZero width]
+    (fuel : Nat) (state : StackFrameMachineState width)
+    (destination address : Nat) :
+    evalStackFrameFuel (fuel + 1) state
+        (.inst (.mem .load32 destination address)) =
+      (panRiscVRead32 state.memoryDomain (stackFrameFlatMemory state)
+        state.bytesInWord (state.machine.registers address)).map
+        (fun value => .normal (stackFrameWriteRegister state destination value)) := by
+  rfl
+
+theorem evalStackFrameFuel_memStore32 [NeZero width]
+    (fuel : Nat) (state : StackFrameMachineState width)
+    (source address : Nat) :
+    evalStackFrameFuel (fuel + 1) state
+        (.inst (.mem .store32 source address)) =
+      ((panRiscVStore32 state.memoryDomain (stackFrameFlatMemory state)
+        state.bytesInWord (state.machine.registers address)
+        (state.machine.registers source)).map (stackFrameApplyFlatMemory state)).map
+        (fun state => .normal state) := by
+  rfl
 
 theorem evalStackFrameGcMoveCode_immediate [NeZero width]
     (config : StackGcConfig) (fuel : Nat)

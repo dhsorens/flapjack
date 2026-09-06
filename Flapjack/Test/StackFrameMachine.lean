@@ -13,6 +13,7 @@ def frameMachineState : StackFrameMachineState 64 :=
     stackSpace := 8
     stackLimit := 16
     bitmaps := [13, 29]
+    bytesInWord := 8
     memoryDomain := fun _ => true
     sharedMemoryDomain := fun _ => true }
 
@@ -65,6 +66,54 @@ example :
       (.shMem .load 4 0)).isSome = false := by
   native_decide
 
+def frameByteState : StackFrameMachineState 64 :=
+  let newMemory : Word 64 → Word 64 := fun address =>
+    if address = 0 then BitVec.ofNat 64 0x04030201 else 0
+  let machine := { frameMachineState.machine with memory := newMemory }
+  { frameMachineState with machine := machine }
+
+def frameUnalignedState : StackFrameMachineState 64 :=
+  let registers : Nat → Word 64 := fun register =>
+    if register = 1 then BitVec.ofNat 64 2
+    else frameByteState.machine.registers register
+  let machine := { frameByteState.machine with registers := registers }
+  { frameByteState with machine := machine }
+
+example :
+    stackFrameNormalRegisterNat
+      (evalStackFrameFuel 2 frameByteState
+        (.inst (.mem .load8 4 0))) 4 = some 1 := by
+  native_decide
+
+example :
+    stackFrameNormalRegisterNat
+      (evalStackFrameFuel 2 frameByteState
+        (.inst (.mem .load16 4 0))) 4 = some 513 := by
+  native_decide
+
+example :
+    stackFrameNormalRegisterNat
+      (evalStackFrameFuel 2 frameByteState
+        (.inst (.mem .load32 4 0))) 4 = some 0x04030201 := by
+  native_decide
+
+def frameByteStoreState : StackFrameMachineState 64 :=
+  let registers : Nat → Word 64 := fun register =>
+    if register = 3 then BitVec.ofNat 64 0xaa else 0
+  let machine := { frameByteState.machine with registers := registers }
+  { frameByteState with machine := machine }
+
+example :
+    stackFrameNormalMemoryNat
+      (evalStackFrameFuel 2 frameByteStoreState
+        (.inst (.mem .store8 3 0))) 0 = some 0x040302aa := by
+  native_decide
+
+example :
+    (evalStackFrameFuel 2 frameUnalignedState
+      (.inst (.mem .load32 4 1))).isSome = false := by
+  native_decide
+
 example :
     (evalStackFrameFuel 2 frameMachineState (.stackLoadAny 4 3)).isSome := by
   native_decide
@@ -90,6 +139,7 @@ def frameCollectorState : StackFrameMachineState 64 :=
     stackSpace := 8
     stackLimit := 16
     bitmaps := [0]
+    bytesInWord := 8
     memoryDomain := fun _ => true
     sharedMemoryDomain := fun _ => true }
 
@@ -112,6 +162,7 @@ def frameForwardingState : StackFrameMachineState 64 :=
     stackSpace := 8
     stackLimit := 16
     bitmaps := [0]
+    bytesInWord := 8
     memoryDomain := fun _ => true
     sharedMemoryDomain := fun _ => true }
 
@@ -127,6 +178,7 @@ def frameCopyState : StackFrameMachineState 64 :=
     stackSpace := 8
     stackLimit := 16
     bitmaps := [0]
+    bytesInWord := 8
     memoryDomain := fun _ => true
     sharedMemoryDomain := fun _ => true }
 

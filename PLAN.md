@@ -946,6 +946,9 @@ definitions, pass ordering, examples, and proof obligations.
   Nat observations.
 - [x] Carry explicit main/shared memory domains through the bounded frame
   evaluator and reject out-of-domain loads in both memory spaces.
+- [x] Expose the RISC-V little-endian byte, halfword, and 32-bit memory
+  equations at the bounded StackLang frame-machine boundary, including
+  alignment failures.
 - [ ] Prove the collector machine semantics and simulation theorem, and add
   generational support if it is needed by a selected target configuration.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state
