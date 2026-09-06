@@ -1064,6 +1064,8 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Prove the bounded machine transition for a non-code MoveLoop header,
   covering header load, length decoding, object-size scan advance, and the
   destination update without unfolding the nested MoveList loop.
+- [x] Isolate the true-test MoveLoop code-header prefix as a bounded machine
+  transition, leaving the nested MoveList execution as an explicit handoff.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
