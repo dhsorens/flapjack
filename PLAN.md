@@ -1070,6 +1070,8 @@ definitions, pass ordering, examples, and proof obligations.
   exposing per-iteration body transitions and final scan termination.
 - [x] Compose the true-test MoveLoop data branch through its length-decoding
   prefix into an explicit MoveList evaluator handoff.
+- [x] Compose the MoveLoop data-object header load with the true-test branch,
+  yielding the complete bounded machine data-step transition.
 - [x] Bridge the code-object MoveLoop machine step’s scan register to the Nat
   scan advance under explicit fixed-width memory and arithmetic hypotheses.
 - [x] Package the code-object machine scan bridge with the corresponding Nat
