@@ -934,6 +934,9 @@ definitions, pass ordering, examples, and proof obligations.
   heap/bitmap simulation remains.
 - [x] Port the collector scan-condition invariants corresponding to CakeML's
   `word_gc_move_loop_F` and `word_gc_move_loop_ok` theorems.
+- [x] Add a bounded StackLang frame-state evaluator matching CakeML's
+  `stack_space` checks, fixed/dynamic stack accesses, stack-size conversion,
+  and bitmap loads, with explicit structured control outcomes.
 - [ ] Prove the collector machine semantics and simulation theorem, and add
   generational support if it is needed by a selected target configuration.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state
