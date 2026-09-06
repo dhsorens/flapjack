@@ -1212,6 +1212,26 @@ theorem evalStackFrameFuel_stackGcMoveRootsBitmaps_zero [NeZero width]
   simp [stackGcMoveRootsBitmapsCode, stackGcWhile, evalStackFrameFuel,
     evalStackFrameFuelWithCode, stackMachineCondition, hzero]
 
+theorem evalStackFrameFuel_stackGcMoveBitmap_done [NeZero width]
+    (config : StackGcConfig) (fuel : Nat)
+    (state : StackFrameMachineState width)
+    (hsmall : state.machine.registers 7 < BitVec.ofNat width 2) :
+    evalStackFrameFuel (fuel + 3) state
+        (stackGcMoveBitmapCode config) =
+      some (.normal state) := by
+  simp [stackGcMoveBitmapCode, stackGcWhile, evalStackFrameFuel,
+    evalStackFrameFuelWithCode, stackMachineCondition, hsmall]
+
+theorem evalStackFrameFuel_stackGcMoveBitmaps_zero [NeZero width]
+    (config : StackGcConfig) (fuel : Nat)
+    (state : StackFrameMachineState width)
+    (hzero : state.machine.registers 0 = BitVec.ofNat width 0) :
+    evalStackFrameFuel (fuel + 3) state
+        (stackGcMoveBitmapsCode config) =
+      some (.normal state) := by
+  simp [stackGcMoveBitmapsCode, stackGcWhile, evalStackFrameFuel,
+    evalStackFrameFuelWithCode, stackMachineCondition, hzero]
+
 theorem evalStackFrameGcMoveCode_immediate [NeZero width]
     (config : StackGcConfig) (fuel : Nat)
     (state : StackFrameMachineState width)
