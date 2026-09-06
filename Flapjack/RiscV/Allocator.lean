@@ -2496,6 +2496,42 @@ theorem wordAllocateSsaFunctionWithClashTreeWithSpillsAndPreferences_maps_parame
   apply hslots name
   simp [hname]
 
+theorem wordAllocateSsaFunctionWithClashTreeWithSpillsAndPreferences_safe
+    (parameters : List Nat) (program : WordProg α)
+    (state : WordSsaState) (renamedParameters : List Nat)
+    (renamedProgram : WordProg α) (allocation : WordSpillState)
+    (halloc :
+      wordAllocateSsaFunctionWithClashTreeWithSpillsAndPreferences parameters
+        program =
+        some (state, renamedParameters, renamedProgram, allocation)) :
+    wordProgSpecialLocationsSafe allocation.locations renamedProgram = true ∧
+    wordSpillClashTreeChecked (wordClashTree renamedProgram [])
+        allocation.locations := by
+  simp [wordAllocateSsaFunctionWithClashTreeWithSpillsAndPreferences] at halloc
+  split at halloc <;> simp_all
+  rcases halloc with ⟨⟨hsafe, htree⟩, hstate, hparameters,
+    hprogram, hallocation⟩
+  subst renamedProgram
+  subst allocation
+  exact ⟨hsafe, htree⟩
+
+theorem wordAllocateSsaProgramWithClashTreeWithSpillsAndPreferences_safe
+    (state : WordSsaState) (program : WordProg α)
+    (renamedState : WordSsaState) (renamedProgram : WordProg α)
+    (allocation : WordSpillState)
+    (halloc :
+      wordAllocateSsaProgramWithClashTreeWithSpillsAndPreferences state
+        program = some (renamedState, renamedProgram, allocation)) :
+    wordProgSpecialLocationsSafe allocation.locations renamedProgram = true ∧
+      wordSpillClashTreeChecked (wordClashTree renamedProgram [])
+        allocation.locations := by
+  simp [wordAllocateSsaProgramWithClashTreeWithSpillsAndPreferences] at halloc
+  split at halloc <;> simp_all
+  rcases halloc with ⟨⟨hsafe, htree⟩, hstate, hprogram, hallocation⟩
+  subst renamedProgram
+  subst allocation
+  exact ⟨hsafe, htree⟩
+
 theorem wordAllocateVarsWithSpills_sound (slots : List Nat)
     (edges : List (Nat × Nat)) (state : WordSpillState)
     (hstate : wordAllocateVarsWithSpills slots edges = some state) :
