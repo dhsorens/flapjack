@@ -1,4 +1,5 @@
 import Flapjack.StackAlloc.Machine
+import Flapjack.StackAlloc.Correctness
 
 /-!
 # Bounded StackLang frame semantics
@@ -217,6 +218,31 @@ theorem evalStackFrameFuel_stackGetSize [NeZero width]
       some (.normal (stackFrameWriteRegister state register
         (BitVec.ofNat width state.stackSpace))) := by
   rfl
+
+theorem evalStackFrameGcMoveCode_immediate [NeZero width]
+    (config : StackGcConfig) (fuel : Nat)
+    (state : StackFrameMachineState width)
+    (hvalue : state.machine.registers 5 &&& BitVec.ofNat width 1 = 0) :
+    evalStackFrameFuel (fuel + 2) state (stackGcMoveCode config) =
+      some (.normal state) := by
+  simp [stackGcMoveCode, evalStackFrameFuel, evalStackFrameFuelWithCode,
+    stackFrameBasic, stackMachineCondition, hvalue]
+
+theorem evalStackFrameGcMoveCode_immediate_matches_nat [NeZero width]
+    (config : StackGcConfig) (fuel : Nat)
+    (state : StackFrameMachineState width)
+    (index destination oldBase : Nat) (memory : Nat → Nat)
+    (domain : Nat → Bool)
+    (hbit : state.machine.registers 5 &&& BitVec.ofNat width 1 = 0)
+    (hnat : (state.machine.registers 5).toNat % 2 = 0) :
+    stackFrameNormalRegisterNat
+      (evalStackFrameFuel (fuel + 2) state (stackGcMoveCode config)) 5 =
+      some (stackGcNatMove config (state.machine.registers 5).toNat
+        index destination oldBase memory domain).value := by
+  have hmachine := evalStackFrameGcMoveCode_immediate config fuel state hbit
+  have hspec := stackGcNatMove_immediate config
+    (state.machine.registers 5).toNat index destination oldBase memory domain hnat
+  simp [stackFrameNormalRegisterNat, hmachine, hspec]
 
 theorem stackFrameAnyOffset_eq_toNat [NeZero width]
     (value : Word width) (offset : Nat)

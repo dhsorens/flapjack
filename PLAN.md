@@ -939,6 +939,8 @@ definitions, pass ordering, examples, and proof obligations.
   and bitmap loads, with explicit structured control outcomes.
 - [x] Execute the generated non-generational collector through the bounded
   frame evaluator on a zero-heap state.
+- [x] Prove the immediate-pointer StackLang collector case against the pure
+  Nat `stackGcNatMove` specification at the machine-result boundary.
 - [ ] Prove the collector machine semantics and simulation theorem, and add
   generational support if it is needed by a selected target configuration.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state

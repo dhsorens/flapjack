@@ -108,6 +108,9 @@ The bounded StackLang frame boundary is in
 it models CakeML's stack-space checks, dynamic aligned accesses, and bitmap
 loads, and executes the generated Simple collector on a bounded zero-heap
 state. The general collector machine simulation theorem remains open.
+Its immediate-pointer case is now related by theorem to the pure Nat
+`stackGcNatMove` specification; forwarding and copying cases still require
+the corresponding machine-state invariants.
 That module now also contains the first compositional Loop-to-Word agreements:
 constant and register-register ADD assignments are related at the destination
 local/register observation, under the explicit architectural x0 invariant.

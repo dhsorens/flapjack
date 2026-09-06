@@ -74,4 +74,15 @@ example :
       (stackGcSimpleCode frameCollectorConfig)).isSome := by
   native_decide
 
+example :
+    stackFrameNormalRegisterNat
+      (evalStackFrameFuel 2 frameMachineState
+        (stackGcMoveCode frameCollectorConfig)) 5 =
+      some (stackGcNatMove frameCollectorConfig
+        (frameMachineState.machine.registers 5).toNat
+        0 100 0 (fun _ => 0) (fun _ => true)).value := by
+  apply evalStackFrameGcMoveCode_immediate_matches_nat
+  · native_decide
+  · native_decide
+
 end Flapjack.RiscV
