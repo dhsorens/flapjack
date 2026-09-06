@@ -1156,6 +1156,8 @@ definitions, pass ordering, examples, and proof obligations.
   index register relation under explicit scratch-register separation.
 - [x] Package code-object MoveLoop evaluation with preservation of the
   extended machine/Nat state relation.
+- [x] Package data-object MoveLoop evaluation with the extended relation at
+  the nested MoveList handoff and output.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
