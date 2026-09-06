@@ -4895,4 +4895,51 @@ theorem evalStackFrameFuel_stackGcMoveLoop_done_with_nat_relation
   · simp [stackGcNatMoveLoop, hscan]
   · simpa [hscan] using hrelation
 
+theorem stackGcMoveLoop_done_scan_eq_destination [NeZero width]
+    (state : StackFrameMachineState width)
+    (scan destination : Nat)
+    (memory : Nat → Nat)
+    (hscan : state.machine.registers 8 = BitVec.ofNat width scan)
+    (hdestination : state.machine.registers 3 =
+      BitVec.ofNat width destination)
+    (hrelation : stackGcMachineNatRelation state scan memory)
+    (hdone : state.machine.registers 3 = state.machine.registers 8)
+    (hdestinationBound : destination < 2 ^ width) :
+    scan = destination := by
+  have hscanBound : scan < 2 ^ width := by
+    rw [← hrelation.1]
+    exact (state.machine.registers 8).isLt
+  have hword : BitVec.ofNat width destination =
+      BitVec.ofNat width scan := by
+    rw [← hdestination, ← hscan, hdone]
+  have hto := congrArg BitVec.toNat hword
+  simpa [BitVec.toNat_ofNat, Nat.mod_eq_of_lt hscanBound,
+    Nat.mod_eq_of_lt hdestinationBound] using hto.symm
+
+theorem evalStackFrameFuel_stackGcMoveLoop_done_with_nat_relation_of_destination
+    [NeZero width] (config : StackGcConfig) (fuel : Nat)
+    (state : StackFrameMachineState width)
+    (scan index destination oldBase : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool) (condition : Bool)
+    (hscan : state.machine.registers 8 = BitVec.ofNat width scan)
+    (hdestination : state.machine.registers 3 =
+      BitVec.ofNat width destination)
+    (hrelation : stackGcMachineNatRelation state scan memory)
+    (hdone : state.machine.registers 3 = state.machine.registers 8)
+    (hdestinationBound : destination < 2 ^ width) :
+    evalStackFrameFuel (fuel + 3) state (stackGcMoveLoopCode config) =
+        some (.normal state) ∧
+      stackGcNatMoveLoop config (fuel + 1) scan index destination oldBase
+        memory domain condition =
+        { nextIndex := index
+          nextAddress := destination
+          memory := memory
+          condition := condition } ∧
+      stackGcMachineNatRelation state destination memory := by
+  have hscanEq := stackGcMoveLoop_done_scan_eq_destination state scan
+    destination memory hscan hdestination hrelation hdone hdestinationBound
+  exact evalStackFrameFuel_stackGcMoveLoop_done_with_nat_relation config fuel
+    state scan index destination oldBase memory domain condition hscanEq hdone
+    hrelation
+
 end Flapjack.RiscV
