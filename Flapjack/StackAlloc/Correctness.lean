@@ -412,6 +412,22 @@ theorem stackGcNatMove_copy_condition
   simp [stackGcNatMove, hvalue, hnonforward',
     stackGcNatIsForwardingPointer]
 
+theorem stackGcNatMove_condition_of_domain
+    (config : StackGcConfig) (value index destination oldBase : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool)
+    (hdomain : ∀ address, domain address = true) :
+    (stackGcNatMove config value index destination oldBase memory domain).condition =
+      true := by
+  by_cases hvalue : value % 2 = 0
+  · simp [stackGcNatMove, hvalue]
+  · let headerAddress := stackGcNatPointerAddress config oldBase value
+    by_cases hforward : stackGcNatIsForwardingPointer (memory headerAddress)
+    · simp [stackGcNatMove, hvalue, hforward, headerAddress, hdomain]
+    · have hmem := stackGcNatMemcpy_condition_of_domain config
+        (stackGcNatDecodeLength config (memory headerAddress) + 1)
+        headerAddress destination memory domain hdomain
+      simp [stackGcNatMove, hvalue, hforward, headerAddress, hdomain, hmem]
+
 theorem stackGcNatMoveRoots_length
     (config : StackGcConfig) (values : List Nat) (index destination oldBase : Nat)
     (memory : Nat → Nat) (domain : Nat → Bool) :
@@ -465,6 +481,25 @@ theorem stackGcNatMoveList_nextScan
   | succ length ih =>
       simp [stackGcNatMoveList, ih, Nat.succ_mul, Nat.add_assoc,
         Nat.add_comm, Nat.add_left_comm]
+
+theorem stackGcNatMoveList_condition_of_domain
+    (config : StackGcConfig) (length address index destination oldBase : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool)
+    (hdomain : ∀ address, domain address = true) :
+    (stackGcNatMoveList config length address index destination oldBase memory domain).condition =
+      true := by
+  induction length generalizing address index destination memory with
+  | zero => simp [stackGcNatMoveList]
+  | succ length ih =>
+      let moved := stackGcNatMove config (memory address) index destination oldBase
+        memory domain
+      let memory1 := fun current =>
+        if current = address then moved.value else moved.memory current
+      have hmove := stackGcNatMove_condition_of_domain config (memory address)
+        index destination oldBase memory domain hdomain
+      have hrest := ih (address + config.bytesInWord) moved.nextIndex
+        moved.nextAddress memory1
+      simp [stackGcNatMoveList, moved, memory1, hdomain, hmove, hrest]
 
 theorem stackGcNatMoveLoop_code_step
     (config : StackGcConfig) (fuel scan index destination oldBase : Nat)
