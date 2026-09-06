@@ -504,6 +504,41 @@ theorem stackGcNatMoveList_forwarding_one
   simp [stackGcNatMoveList, stackGcNatMove, stackGcNatIsForwardingPointer,
     hvalue, hforward', hloaded]
 
+theorem stackGcNatMoveList_copy_one
+    (config : StackGcConfig) (address value index destination oldBase : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool)
+    (hvalue : value % 2 ≠ 0)
+    (hnonforward :
+      ¬ stackGcNatIsForwardingPointer
+        (memory (stackGcNatPointerAddress config oldBase value)))
+    (hloaded : memory address = value) :
+    let headerAddress := stackGcNatPointerAddress config oldBase value
+    let length := stackGcNatDecodeLength config (memory headerAddress)
+    let copied := stackGcNatMemcpy config (length + 1) headerAddress
+      destination memory domain
+    stackGcNatMoveList config 1 address index destination oldBase memory domain =
+      { nextScan := address + config.bytesInWord
+        nextIndex := index + length + 1
+        nextAddress := copied.nextAddress
+        memory := fun current =>
+          if current = address then
+            stackGcNatUpdateAddress config index value
+          else if current = headerAddress then index * 4
+          else copied.memory current
+        condition := domain address &&
+          (domain headerAddress && copied.condition) } := by
+  let headerAddress := stackGcNatPointerAddress config oldBase value
+  let length := stackGcNatDecodeLength config (memory headerAddress)
+  let copied := stackGcNatMemcpy config (length + 1) headerAddress
+    destination memory domain
+  have hnonforward' :
+      memory headerAddress % 4 ≠ 0 := by
+    intro h
+    apply hnonforward
+    simp [stackGcNatIsForwardingPointer, headerAddress, h]
+  simp [stackGcNatMoveList, stackGcNatMove, stackGcNatIsForwardingPointer,
+    hvalue, hnonforward', hloaded, headerAddress, length, copied]
+
 theorem stackGcNatMoveList_append
     (config : StackGcConfig) (length length' address index destination oldBase : Nat)
     (memory : Nat → Nat) (domain : Nat → Bool) :

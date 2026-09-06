@@ -1011,6 +1011,9 @@ definitions, pass ordering, examples, and proof obligations.
   and domain condition.
 - [x] Add the exact Nat one-item forwarding-pointer `MoveList` transition,
   including forwarding-address remapping and the two domain checks.
+- [x] Add the exact Nat one-item copy `MoveList` transition, threading the
+  recursive memcpy result, header forwarding write, destination advancement,
+  and composed condition.
 - [x] Prove the total-domain condition contract for the recursive Nat root
   traversal, completing condition propagation through root `Move` calls.
 - [x] Prove the one-item immediate-pointer `MoveList` frame transition,
