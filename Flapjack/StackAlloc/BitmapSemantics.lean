@@ -176,6 +176,23 @@ def stackGcNatMoveRootsBitmaps (config : StackGcConfig)
               memory := moved.memory
               condition := moved.condition }
 
+def stackGcNatFullBitmaps (config : StackGcConfig)
+    (bitmaps : List Nat) (stack : List StackGcNatValue)
+    (newBase oldBase : Nat) (memory : Nat → Nat) (domain : Nat → Bool)
+    (fuel : Nat) : Option StackGcValueRootsResult :=
+  match stackGcNatMoveRootsBitmaps config bitmaps stack 0 newBase oldBase
+      memory domain with
+  | none => none
+  | some moved =>
+      let scanned := stackGcNatMoveLoop config fuel newBase moved.nextIndex
+        moved.nextAddress oldBase moved.memory domain moved.condition
+      some
+        { values := moved.values
+          nextIndex := scanned.nextIndex
+          nextAddress := scanned.nextAddress
+          memory := scanned.memory
+          condition := scanned.condition }
+
 theorem stackGcNatMoveValueRoots_length (config : StackGcConfig)
     (values : List StackGcNatValue) (index destination oldBase : Nat)
     (memory : Nat → Nat) (domain : Nat → Bool) :
@@ -245,6 +262,13 @@ example :
 example :
     stackGcNatMoveRootsBitmaps { wordBits := 8 } [3]
       [.word 1, .word 2] 0 100 0 (fun _ => 0) (fun _ => true) = none := by
+  native_decide
+
+example :
+    (stackGcNatFullBitmaps { wordBits := 8 } [3]
+      [.word 1, .word 2, .word 0] 100 0 (fun _ => 0) (fun _ => true) 0).map
+        (fun result => result.values) =
+      some [.word 1, .word 2, .word 0] := by
   native_decide
 
 
