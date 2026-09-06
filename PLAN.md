@@ -1009,6 +1009,8 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Add the exact Nat one-item immediate-pointer `MoveList` transition,
   including scan advancement, unchanged move index/address, memory update,
   and domain condition.
+- [x] Prove the total-domain condition contract for the recursive Nat root
+  traversal, completing condition propagation through root `Move` calls.
 - [x] Prove the one-item immediate-pointer `MoveList` frame transition,
   including load, count update, store, address advance, and loop termination.
 - [x] Generalize the forwarding-path `Move` evaluator to arbitrary surplus
