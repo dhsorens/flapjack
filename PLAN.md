@@ -984,6 +984,8 @@ definitions, pass ordering, examples, and proof obligations.
   iterated frame machine realizes it under scratch-register separation.
 - [x] Record the pointwise and function-level memory equations for one
   collector memcpy transition for reuse in later simulation proofs.
+- [x] Prove word-level non-destination memory preservation for the recursive
+  collector memcpy transformer.
 - [ ] Prove the collector machine semantics and simulation theorem, and add
   generational support if it is needed by a selected target configuration.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state
