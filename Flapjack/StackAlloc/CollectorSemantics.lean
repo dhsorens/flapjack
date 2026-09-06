@@ -517,4 +517,24 @@ theorem evalStackFrameFuel_stackGcMemcpy_correspondence [NeZero width]
   · exact stackFrameMemcpyIter_correspondence config words state source destination memory
       hstate hbound hscratch0 hscratch1 hscratch2 hscratch3
 
+theorem stackFrameMemcpyIter_register_source_toNat [NeZero width]
+    (config : StackGcConfig) (words : Nat)
+    (state : StackFrameMachineState width)
+    (hscratch2 : config.immediateScratch ≠ 2) :
+    ((stackFrameMemcpyIter config words state).machine.registers 2).toNat =
+      ((state.machine.registers 2).toNat + words * config.bytesInWord) % 2 ^ width := by
+  rw [stackFrameMemcpyIter_register_source config words state hscratch2]
+  simp [wordStackMachineBinOp, BitVec.toNat_add, BitVec.toNat_ofNat,
+    Nat.add_mod, Nat.mod_mod]
+
+theorem stackFrameMemcpyIter_register_destination_toNat [NeZero width]
+    (config : StackGcConfig) (words : Nat)
+    (state : StackFrameMachineState width)
+    (hscratch3 : config.immediateScratch ≠ 3) :
+    ((stackFrameMemcpyIter config words state).machine.registers 3).toNat =
+      ((state.machine.registers 3).toNat + words * config.bytesInWord) % 2 ^ width := by
+  rw [stackFrameMemcpyIter_register_destination config words state hscratch3]
+  simp [wordStackMachineBinOp, BitVec.toNat_add, BitVec.toNat_ofNat,
+    Nat.add_mod, Nat.mod_mod]
+
 end Flapjack.RiscV
