@@ -1074,6 +1074,8 @@ definitions, pass ordering, examples, and proof obligations.
   scan advance under explicit fixed-width memory and arithmetic hypotheses.
 - [x] Package the code-object machine scan bridge with the corresponding Nat
   MoveLoop recursive-step equation for direct induction use.
+- [x] Prove that the code-object MoveLoop machine transition preserves the
+  underlying machine memory, making it composable with the collector invariant.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
