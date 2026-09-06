@@ -1507,6 +1507,73 @@ theorem wordApplyColour_preserves_control_labels (colour : Nat → Nat) (label :
     wordApplyColour colour (.break label : WordProg α) = .break label := by
   simp [wordApplyColour]
 
+def wordProgBranchLabels : WordProg α → List Nat
+  | .break label => [label]
+  | .continue label => [label]
+  | .seq first second =>
+      wordProgBranchLabels first ++ wordProgBranchLabels second
+  | .ite _ _ _ thenBranch elseBranch =>
+      wordProgBranchLabels thenBranch ++ wordProgBranchLabels elseBranch
+  | .loop _ body _ => wordProgBranchLabels body
+  | .mustTerminate body => wordProgBranchLabels body
+  | _ => []
+
+theorem wordApplyColourPreservesBranchLabelsAux
+    (colour : Nat → Nat) : (program : WordProg α) →
+    wordProgBranchLabels (wordApplyColour colour program) =
+      wordProgBranchLabels program
+  | .skip => by simp [wordApplyColour, wordProgBranchLabels]
+  | .move _ _ => by simp [wordApplyColour, wordProgBranchLabels]
+  | .assign _ _ => by simp [wordApplyColour, wordProgBranchLabels]
+  | .inst _ => by simp [wordApplyColour, wordProgBranchLabels]
+  | .get _ _ => by simp [wordApplyColour, wordProgBranchLabels]
+  | .store _ _ => by simp [wordApplyColour, wordProgBranchLabels]
+  | .set _ _ => by simp [wordApplyColour, wordProgBranchLabels]
+  | .seq first second => by
+      simp [wordApplyColour, wordProgBranchLabels,
+        wordApplyColourPreservesBranchLabelsAux colour first,
+        wordApplyColourPreservesBranchLabelsAux colour second]
+  | .ite _ _ _ thenBranch elseBranch => by
+      simp [wordApplyColour, wordProgBranchLabels,
+        wordApplyColourPreservesBranchLabelsAux colour thenBranch,
+        wordApplyColourPreservesBranchLabelsAux colour elseBranch]
+  | .loop _ body _ => by
+      simp [wordApplyColour, wordProgBranchLabels,
+        wordApplyColourPreservesBranchLabelsAux colour body]
+  | .mustTerminate body => by
+      simp [wordApplyColour, wordProgBranchLabels,
+        wordApplyColourPreservesBranchLabelsAux colour body]
+  | .break _ => by simp [wordApplyColour, wordProgBranchLabels]
+  | .continue _ => by simp [wordApplyColour, wordProgBranchLabels]
+  | .raise _ => by simp [wordApplyColour, wordProgBranchLabels]
+  | .return _ _ => by simp [wordApplyColour, wordProgBranchLabels]
+  | .tick => by simp [wordApplyColour, wordProgBranchLabels]
+  | .locValue _ _ => by simp [wordApplyColour, wordProgBranchLabels]
+  | .call _ _ _ handler => by
+      cases handler with
+      | none => simp [wordApplyColour, wordProgBranchLabels]
+      | some value =>
+          rcases value with ⟨exception, body, handlerLabel, entryLabel⟩
+          simp [wordApplyColour, wordProgBranchLabels]
+  | .alloc _ cutsets => by
+      cases cutsets <;> simp [wordApplyColour, wordProgBranchLabels]
+  | .storeConsts _ _ _ _ _ => by simp [wordApplyColour, wordProgBranchLabels]
+  | .opCurrHeap _ _ _ => by simp [wordApplyColour, wordProgBranchLabels]
+  | .install _ _ _ _ cutsets => by
+      cases cutsets <;> simp [wordApplyColour, wordProgBranchLabels]
+  | .codeBufferWrite _ _ => by simp [wordApplyColour, wordProgBranchLabels]
+  | .dataBufferWrite _ _ => by simp [wordApplyColour, wordProgBranchLabels]
+  | .ffi _ _ _ _ _ _ => by simp [wordApplyColour, wordProgBranchLabels]
+  | .shareInst _ _ _ => by simp [wordApplyColour, wordProgBranchLabels]
+termination_by program => sizeOf program
+decreasing_by all_goals decreasing_trivial
+
+theorem wordApplyColour_preserves_branch_labels
+    (colour : Nat → Nat) (program : WordProg α) :
+    wordProgBranchLabels (wordApplyColour colour program) =
+      wordProgBranchLabels program :=
+  wordApplyColourPreservesBranchLabelsAux colour program
+
 theorem wordProgClashAnalysis_skip :
     wordProgClashAnalysis (.skip : WordProg α) [] = ([], []) := by
   simp [wordProgClashAnalysis, wordProgReadVars,
