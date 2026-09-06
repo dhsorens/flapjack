@@ -133,6 +133,28 @@ def stackMachineNormalRegisterEquals [NeZero width]
   | some (.normal state) => state.registers register == BitVec.ofNat width value
   | _ => false
 
+/-! A small call resolver for the runtime path.  The collector stub returns
+    through the call's explicit return continuation; unresolved labels and
+    non-returning callees remain failures instead of being treated as normal
+    control flow. -/
+def evalStackLabelCallFuel [NeZero width]
+    (fuel : Nat) (code : Nat → Option (StackProg Nat))
+    (state : WordStackMachineState width) (target : Nat)
+    (returnCode : StackProg Nat) : Option (StackMachineControl width) := do
+  let callee ← code target
+  let result ← evalStackProgFuel fuel state callee
+  match result with
+  | .returned state _ => evalStackProgFuel fuel state returnCode
+  | _ => none
+
+theorem evalStackLabelCallFuel_unknown [NeZero width]
+    (fuel : Nat) (code : Nat → Option (StackProg Nat))
+    (state : WordStackMachineState width) (target : Nat)
+    (returnCode : StackProg Nat)
+    (hunknown : code target = none) :
+    evalStackLabelCallFuel fuel code state target returnCode = none := by
+  simp [evalStackLabelCallFuel, hunknown]
+
 theorem evalStackProgFuel_skip [NeZero width]
     (fuel : Nat) (state : WordStackMachineState width) :
     evalStackProgFuel (fuel + 1) state (.skip : StackProg Nat) =

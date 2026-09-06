@@ -119,4 +119,11 @@ example :
         (stackGcMoveCode stackGcTestConfig)) 5 2 = true := by
   native_decide
 
+example :
+    (evalStackLabelCallFuel 3000
+      (fun target => if target = 77 then
+        some (stackGcSimpleStub stackGcTestConfig) else none)
+      zeroStackMachineState 77 (.skip : StackProg Nat)).isSome := by
+  native_decide
+
 end Flapjack
