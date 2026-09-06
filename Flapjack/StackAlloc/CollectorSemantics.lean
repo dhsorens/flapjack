@@ -2250,4 +2250,80 @@ theorem evalStackFrameFuel_stackGcMoveLoop_data_branch [NeZero width]
       stackGcAdd 8 7]) hcondition]
   simpa [stackSeq] using hwhole
 
+theorem evalStackFrameFuel_stackGcMoveLoop_data_step [NeZero width]
+    (config : StackGcConfig) (fuel : Nat)
+    (state final : StackFrameMachineState width)
+    (hscratch7 : config.immediateScratch ≠ 7)
+    (hscratch8 : config.immediateScratch ≠ 8)
+    (hdomain : state.memoryDomain (state.machine.registers 8) = true)
+    (hcondition : stackMachineCondition
+      (stackFrameWriteRegister state 7
+        (state.machine.memory (state.machine.registers 8))).machine
+      .test 7 (.imm 4) = true)
+    (hmove :
+      evalStackFrameFuel (fuel + 12)
+        (stackGcMoveLoopCodePrefixState config
+          (stackFrameWriteRegister state 7
+            (state.machine.memory (state.machine.registers 8))))
+        (stackGcMoveListCode config) =
+      some (.normal final)) :
+    evalStackFrameFuel (fuel + 16) state
+        (stackSeq [
+          .inst (.mem .load 7 8),
+          .ite .test 7 (.imm 4)
+            (stackSeq [
+              stackGcShiftImmediate config .lsr 7
+                (config.wordBits - config.lenSize),
+              stackGcAddBytes config 8,
+              stackGcMoveListCode config])
+            (stackSeq [
+              stackGcShiftImmediate config .lsr 7
+                (config.wordBits - config.lenSize),
+              stackGcAddOne config 7,
+              stackGcShiftImmediate config .lsl 7 config.wordShift,
+              stackGcAdd 8 7])]) =
+      some (.normal final) := by
+  let loaded := stackFrameWriteRegister state 7
+    (state.machine.memory (state.machine.registers 8))
+  have hbranch := evalStackFrameFuel_stackGcMoveLoop_data_branch
+    config fuel loaded final hscratch7 hscratch8 hcondition
+    (by simpa [loaded] using hmove)
+  have hbranch' :
+      evalStackFrameFuel (fuel + 15)
+        (stackFrameWriteRegister state 7
+          (state.machine.memory (state.machine.registers 8)))
+        (.ite .test 7 (.imm 4)
+          (stackSeq [
+            stackGcShiftImmediate config .lsr 7
+              (config.wordBits - config.lenSize),
+            stackGcAddBytes config 8,
+            stackGcMoveListCode config])
+          (stackSeq [
+            stackGcShiftImmediate config .lsr 7
+              (config.wordBits - config.lenSize),
+            stackGcAddOne config 7,
+            stackGcShiftImmediate config .lsl 7 config.wordShift,
+            stackGcAdd 8 7])) =
+      some (.normal final) := by
+    simpa [loaded] using hbranch
+  have hload := evalStackFrameFuel_memLoad (fuel + 14) state 7 8 hdomain
+  have hseq := evalStackFrameFuel_seq_normal (fuel + 15) state
+    (stackFrameWriteRegister state 7
+      (state.machine.memory (state.machine.registers 8)))
+    (.inst (.mem .load 7 8))
+    (.ite .test 7 (.imm 4)
+      (stackSeq [
+        stackGcShiftImmediate config .lsr 7
+          (config.wordBits - config.lenSize),
+        stackGcAddBytes config 8,
+        stackGcMoveListCode config])
+      (stackSeq [
+        stackGcShiftImmediate config .lsr 7
+          (config.wordBits - config.lenSize),
+        stackGcAddOne config 7,
+        stackGcShiftImmediate config .lsl 7 config.wordShift,
+        stackGcAdd 8 7])) hload
+  rw [hbranch'] at hseq
+  simpa [stackSeq] using hseq
+
 end Flapjack.RiscV
