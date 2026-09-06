@@ -950,6 +950,74 @@ theorem evalStackFrameFuel_stackGcMoveCode_forwarding [NeZero width]
     evalStackFrameFuelWithCode, houter, hinner, hprefix, hprefix',
     hsuffix, hsuffix', stackGcMoveForwardingState]
 
+theorem evalStackFrameFuel_stackGcMoveCode_forwarding_fuel [NeZero width]
+    (config : StackGcConfig) (fuel : Nat)
+    (state : StackFrameMachineState width)
+    (hscratch0 : config.immediateScratch ≠ 0)
+    (hscratch1 : config.immediateScratch ≠ 1)
+    (hscratch5 : config.immediateScratch ≠ 5)
+    (hodd : state.machine.registers 5 &&& BitVec.ofNat width 1 ≠ 0)
+    (hheaderDomain : ∀ address, state.memoryDomain address = true)
+    (hforward :
+      state.machine.memory (stackGcMachineMoveAddress config state) &&&
+        BitVec.ofNat width 3 = 0) :
+    evalStackFrameFuel (fuel + 23) state (stackGcMoveCode config) =
+      some (.normal (stackGcMoveForwardingState config state)) := by
+  have houter :
+      stackMachineCondition state.machine .test 5 (.imm 1) = false := by
+    change (state.machine.registers 5 &&& BitVec.ofNat width 1 == 0) = false
+    cases hbool : (state.machine.registers 5 &&& BitVec.ofNat width 1 == 0) with
+    | false => simp [hbool]
+    | true =>
+        have hzero : state.machine.registers 5 &&& BitVec.ofNat width 1 =
+            BitVec.ofNat width 0 := by
+          simpa using hbool
+        exact False.elim (hodd hzero)
+  have haddress :
+      state.memoryDomain (stackGcMachineMoveAddress config state) = true :=
+    hheaderDomain _
+  have hprefix :=
+    evalStackFrameFuel_stackGcMoveAddressPrefix config (fuel + 1) state
+      hscratch0 hscratch1 haddress
+  have hprefix' :
+      evalStackFrameFuelWithCode (fuel + 21) (fun _ => none) state
+        (stackGcMoveAddressPrefix config) =
+      some (.normal (stackGcMoveAddressState config state)) := by
+    simpa [evalStackFrameFuel, Nat.add_assoc] using hprefix
+  have hforward' :
+      state.machine.memory
+          (state.machine.registers 5 >>>
+            shiftAmount (BitVec.ofNat width config.shiftLength) <<<
+            shiftAmount (BitVec.ofNat width config.wordShift) +
+            state.machine.stores .currHeap) &&& BitVec.ofNat width 3 =
+          BitVec.ofNat width 0 := by
+    simpa [stackGcMachineMoveAddress, wordStackMachineShift,
+      wordStackMachineBinOp] using hforward
+  have hinner :
+      stackMachineCondition
+          (stackGcMoveAddressState config state).machine
+          .test 1 (.imm 3) = true := by
+    change ((stackGcMoveAddressState config state).machine.registers 1 &&&
+      BitVec.ofNat width 3 == 0) = true
+    simp [stackGcMoveAddressState, stackFrameWriteRegister,
+      wordStackMachineWriteRegister, wordStackMachineBinOp,
+      wordStackMachineShift, stackGcMachineMoveAddress,
+      hscratch0, hscratch1, Ne.symm hscratch0, Ne.symm hscratch1,
+      hforward']
+  have hsuffix :=
+    evalStackFrameFuel_stackGcMoveForwardingSuffix config fuel
+      (stackGcMoveAddressState config state) hscratch1 hscratch5
+  have hsuffix' :
+      evalStackFrameFuelWithCode (fuel + 20) (fun _ => none)
+        (stackGcMoveAddressState config state)
+        (stackGcMoveForwardingSuffix config) =
+      some (.normal (stackGcMoveForwardingSuffixState config
+        (stackGcMoveAddressState config state))) := by
+    simpa [evalStackFrameFuel] using hsuffix
+  simp [stackGcMoveCode, stackSeq, evalStackFrameFuel,
+    evalStackFrameFuelWithCode, houter, hinner, hprefix, hprefix',
+    hsuffix, hsuffix', stackGcMoveForwardingState, Nat.add_assoc]
+
 theorem evalStackFrameFuel_stackGcMoveList_zero [NeZero width]
     (config : StackGcConfig) (fuel : Nat)
     (state : StackFrameMachineState width)
