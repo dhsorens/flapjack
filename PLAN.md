@@ -957,6 +957,9 @@ definitions, pass ordering, examples, and proof obligations.
   including scratch-register state and destination-memory update.
 - [x] Compose that transition with the bounded loop evaluator for the
   one-word memcpy case.
+- [x] Complete the pure Nat collector copy-case equations for the copied
+  value, next destination address, forwarding-header write, and success
+  condition.
 - [ ] Prove the collector machine semantics and simulation theorem, and add
   generational support if it is needed by a selected target configuration.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state
