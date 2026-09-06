@@ -1006,6 +1006,9 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Prove total-domain condition contracts for Nat collector `Move` and
   `MoveList`, establishing the condition-preservation premise for machine
   simulation over valid memory ranges.
+- [x] Add the exact Nat one-item immediate-pointer `MoveList` transition,
+  including scan advancement, unchanged move index/address, memory update,
+  and domain condition.
 - [x] Prove the one-item immediate-pointer `MoveList` frame transition,
   including load, count update, store, address advance, and loop termination.
 - [x] Generalize the forwarding-path `Move` evaluator to arbitrary surplus
