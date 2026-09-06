@@ -438,6 +438,23 @@ theorem stackGcNatMoveRoots_length
   | cons value values ih =>
       simp [stackGcNatMoveRoots, ih]
 
+theorem stackGcNatMoveRoots_condition_of_domain
+    (config : StackGcConfig) (values : List Nat)
+    (index destination oldBase : Nat) (memory : Nat → Nat)
+    (domain : Nat → Bool)
+    (hdomain : ∀ address, domain address = true) :
+    (stackGcNatMoveRoots config values index destination oldBase memory domain).condition =
+      true := by
+  induction values generalizing index destination memory with
+  | nil => simp [stackGcNatMoveRoots]
+  | cons value values ih =>
+      let moved := stackGcNatMove config value index destination oldBase
+        memory domain
+      have hmove := stackGcNatMove_condition_of_domain config value
+        index destination oldBase memory domain hdomain
+      have hrest := ih moved.nextIndex moved.nextAddress moved.memory
+      simp [stackGcNatMoveRoots, moved, hmove, hrest]
+
 theorem stackGcNatMoveList_zero
     (config : StackGcConfig) (address index destination oldBase : Nat)
     (memory : Nat → Nat) (domain : Nat → Bool) :
