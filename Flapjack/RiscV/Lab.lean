@@ -377,17 +377,14 @@ def compileStackProgramNatListToRiscV [NeZero width]
 
 /-! StackAlloc-aware composition.  CakeML's allocator pass installs a runtime
     collector stub as a separate section and rewrites heap allocation into a
-    call to that section.  Keep this entry point separate until the collector
-    body and its machine-level simulation are ported. -/
+    call to that section. -/
 def compileStackProgramNatListWithStackAllocToRiscV [NeZero width]
     (context : WordFfiContext) (removeConfig : StackRemoveConfig)
     (allocConfig : StackAllocConfig)
     (entryLabel initialLabel : Nat)
     (programs : List (Nat × StackProg Nat)) :
     Option (List (Instruction width)) :=
-  let stub := (allocConfig.gcStubLocation, stackAllocStub allocConfig)
-  let programs := stub :: programs.map (fun (sectionId, program) =>
-    (sectionId, stackAlloc allocConfig program))
+  let programs := stackAllocCompile allocConfig programs
   compileStackProgramNatListToRiscV context removeConfig entryLabel initialLabel programs
 
 def compileStackProgramNatListLinkedToRiscV [NeZero width]

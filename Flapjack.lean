@@ -42,6 +42,7 @@ import Flapjack.LoopAnalysis
 import Flapjack.LoopSemantics
 import Flapjack.Word
 import Flapjack.Stack
+import Flapjack.StackAlloc
 import Flapjack.StackRemove
 import Flapjack.Lab
 import Flapjack.RiscV.Lab
