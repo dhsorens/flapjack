@@ -1051,6 +1051,8 @@ definitions, pass ordering, examples, and proof obligations.
   memory projection.
 - [x] Expose a forwarding MoveList machine/Nat value bridge, parameterized by
   the explicit fixed-width forwarding-address correspondence.
+- [x] Expose a copying MoveList machine/Nat value bridge, parameterized by the
+  explicit fixed-width copied-value correspondence.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 

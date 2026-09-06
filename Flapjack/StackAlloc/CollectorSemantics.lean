@@ -1626,4 +1626,78 @@ theorem evalStackFrameFuel_stackGcMoveList_copy_one [NeZero width]
       simpa [stackGcMoveListCopyState, afterFinal, afterScratch,
         afterStore, afterMove, afterCount] using hdone
 
+theorem evalStackFrameFuel_stackGcMoveList_copy_one_matches_nat
+    [NeZero width] (config : StackGcConfig) (fuel : Nat)
+    (state : StackFrameMachineState width)
+    (address value index destination oldBase : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool)
+    (hscratch0 : config.immediateScratch ≠ 0)
+    (hscratch1 : config.immediateScratch ≠ 1)
+    (hscratch2 : config.immediateScratch ≠ 2)
+    (hscratch3 : config.immediateScratch ≠ 3)
+    (hscratch4 : config.immediateScratch ≠ 4)
+    (hscratch5 : config.immediateScratch ≠ 5)
+    (hscratch6 : config.immediateScratch ≠ 6)
+    (hscratch7 : config.immediateScratch ≠ 7)
+    (hscratch8 : config.immediateScratch ≠ 8)
+    (hone : state.machine.registers 7 = BitVec.ofNat width 1)
+    (hdomain : state.memoryDomain (state.machine.registers 8) = true)
+    (hmemory : (state.machine.memory (state.machine.registers 8)).toNat =
+      memory address)
+    (hloaded : (state.machine.memory (state.machine.registers 8)).toNat = value)
+    (hvalue : value % 2 ≠ 0)
+    (hodd :
+      (stackGcMoveListAfterCount config state).machine.registers 5 &&&
+        BitVec.ofNat width 1 ≠ 0)
+    (hheaderDomain : ∀ pointer,
+      (stackGcMoveListAfterCount config state).memoryDomain pointer = true)
+    (hheaderLength :
+      (stackGcMoveListAfterCount config state).machine.memory
+          (stackGcMachineMoveAddress config
+            (stackGcMoveListAfterCount config state)) >>>
+        shiftAmount (BitVec.ofNat width
+          (config.wordBits - config.lenSize)) = 0)
+    (hnotforwarding :
+      (stackGcMoveListAfterCount config state).machine.memory
+          (stackGcMachineMoveAddress config
+            (stackGcMoveListAfterCount config state)) &&&
+        BitVec.ofNat width 3 ≠ 0)
+    (hstoreDomain :
+      (stackGcMoveCopyState config
+        (stackGcMoveListAfterCount config state)).memoryDomain
+          ((stackGcMoveCopyState config
+            (stackGcMoveListAfterCount config state)).machine.registers 8) = true)
+    (hnonforward :
+      ¬ stackGcNatIsForwardingPointer
+        (memory (stackGcNatPointerAddress config oldBase value)))
+    (hcopyValue :
+      ((stackGcMoveCopyState config
+        (stackGcMoveListAfterCount config state)).machine.registers 5).toNat =
+        stackGcNatUpdateAddress config index value) :
+    stackFrameNormalRegisterNat
+      (evalStackFrameFuel (fuel + 46) state
+        (stackGcMoveListCode config)) 5 =
+      some ((stackGcNatMoveList config 1 address index destination oldBase
+        memory domain).memory address) := by
+  have hloadedNat : memory address = value := hmemory.symm.trans hloaded
+  have hnat := stackGcNatMoveList_copy_one config address value index
+    destination oldBase memory domain hvalue hnonforward hloadedNat
+  have heval := evalStackFrameFuel_stackGcMoveList_copy_one config fuel state
+    hscratch0 hscratch1 hscratch2 hscratch3 hscratch4 hscratch5 hscratch6
+    hscratch7 hscratch8 hone hdomain hodd hheaderDomain hheaderLength
+    hnotforwarding hstoreDomain
+  have hfinal5 :
+      (stackGcMoveListCopyState config state).machine.registers 5 =
+        (stackGcMoveCopyState config
+          (stackGcMoveListAfterCount config state)).machine.registers 5 := by
+    simp [stackGcMoveListCopyState, stackFrameWriteRegister,
+      wordStackMachineWriteRegister, wordStackMachineWriteMemory,
+      hscratch5, hscratch8, Ne.symm hscratch5, Ne.symm hscratch8]
+  rw [hnat]
+  rw [heval]
+  simp only [stackFrameNormalRegisterNat, if_pos rfl]
+  congr 1
+  rw [hfinal5, hcopyValue]
+  simp
+
 end Flapjack.RiscV
