@@ -97,8 +97,8 @@ def pipelineAllocatedWordFunctionsToStack [NeZero width] :
       Option (List (Nat × List Nat × StackProg Nat)) :=
   pipelineWordFunctionsToStack
 
-/-! Spill-aware allocator pipeline.  Unlike the historical coloured boundary,
-    this path retains the SSA-renamed Word program and passes the allocator's
+/-! Spill-aware allocator pipeline.  This path retains the SSA-renamed Word
+    program and passes the CakeML-shaped clash-tree/preference allocator's
     concrete register/stack locations directly to `word_to_stack`.  The
     reserved x31 scratch register is outside the allocator's register pool,
     and x29 is reserved independently for spilled addresses. -/
@@ -114,7 +114,8 @@ def pipelineWordFunctionsAllocatedWithSpills [NeZero width] :
       let unallocatedBody :=
         loopToWordProg context body
       let (_, renamedParameters, renamedBody, allocation) ←
-        wordAllocateSsaFunctionWithSpills wordParameters unallocatedBody
+        wordAllocateSsaFunctionWithClashTreeWithSpillsAndPreferences
+          wordParameters unallocatedBody
       let config : RiscV.WordStackConfig :=
         { locations := allocation.locations
           scratch := 31

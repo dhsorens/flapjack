@@ -448,6 +448,9 @@ definitions, pass ordering, examples, and proof obligations.
   temporaries; full allocator integration remains a separate item.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware
   RISC-V contracts before claiming general call-aware allocation correctness.
+- [x] Route the spill-aware RISC-V pipeline through the implemented
+  clash-tree/preference allocator and retain its allocation witness at the
+  Word-to-Stack boundary.
 - [x] Expose witness-level allocator contracts showing every successfully
   coloured SSA slot maps to an allocatable RISC-V register.
 - [x] Port CakeML-style move preference edges for Word copy nodes and feed
