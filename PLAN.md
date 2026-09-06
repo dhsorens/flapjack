@@ -992,6 +992,8 @@ definitions, pass ordering, examples, and proof obligations.
   including the final registers and recursive word-level memory transformer.
 - [x] Compose the bounded collector memcpy evaluator with the iterated
   correspondence, exposing an executable simulation boundary.
+- [x] Expose Nat projections for iterated source and destination registers,
+  preserving the machine word-width modulo behavior.
 - [ ] Prove the collector machine semantics and simulation theorem, and add
   generational support if it is needed by a selected target configuration.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state
