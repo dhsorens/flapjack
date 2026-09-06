@@ -1191,6 +1191,10 @@ definitions, pass ordering, examples, and proof obligations.
   stack suffix, using root-list length preservation.
 - [x] Prove exact bitmap reconstruction partition lengths for emitted values
   and the untouched source remainder.
+- [x] Prove the exact filter partition equation, accounting for values
+  consumed by false bitmap bits.
+- [x] Prove successful per-frame bitmap movement emits one reconstructed value
+  per bitmap bit.
 - [x] Prove that successful fuel-bounded bitmap decoding preserves stack
   length, including the public decoder wrapper.
 - [x] Prove that successful bitmap root collection preserves the input stack
