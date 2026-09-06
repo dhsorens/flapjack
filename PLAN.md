@@ -1065,6 +1065,8 @@ definitions, pass ordering, examples, and proof obligations.
   `header / 4 % 2` code tag under an explicit fixed-width bound.
 - [x] Derive the machine MoveLoop branch condition directly from the Nat
   header tag and the bounded machine/Nat memory correspondence.
+- [x] Specialize the data-step machine/Nat contract to derive its branch
+  condition from the bounded memory correspondence.
 - [x] Prove the bounded machine transition for a code-object MoveLoop header,
   covering header load, length decoding, object-size scan advance, and the
   destination update without unfolding the nested MoveList loop.

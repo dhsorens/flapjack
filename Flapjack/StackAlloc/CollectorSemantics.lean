@@ -2478,4 +2478,56 @@ theorem evalStackFrameFuel_stackGcMoveLoop_data_step_matches_nat
   · exact stackGcNatMoveLoop_data_step config fuel scan index destination oldBase
       memory domain condition hscan hcodeNat
 
+theorem evalStackFrameFuel_stackGcMoveLoop_data_step_matches_nat_of_memory
+    [NeZero width] (config : StackGcConfig) (fuel scan index destination oldBase : Nat)
+    (state final : StackFrameMachineState width)
+    (memory : Nat → Nat) (domain : Nat → Bool) (condition : Bool)
+    (hwidth : 3 ≤ width)
+    (hscratch7 : config.immediateScratch ≠ 7)
+    (hscratch8 : config.immediateScratch ≠ 8)
+    (hdomain : state.memoryDomain (state.machine.registers 8) = true)
+    (hscan : scan ≠ destination)
+    (haddress : state.machine.registers 8 = BitVec.ofNat width scan)
+    (hmemory :
+      (state.machine.memory (state.machine.registers 8)).toNat =
+        memory scan)
+    (hcodeNat : stackGcNatHeaderHasCode (memory scan) ≠ true)
+    (hmove :
+      evalStackFrameFuel (fuel + 12)
+        (stackGcMoveLoopCodePrefixState config
+          (stackFrameWriteRegister state 7
+            (state.machine.memory (state.machine.registers 8))))
+        (stackGcMoveListCode config) =
+      some (.normal final)) :
+    let moved := stackGcNatMoveList config
+      (stackGcNatDecodeLength config (memory scan))
+      (scan + config.bytesInWord) index destination oldBase memory domain
+    evalStackFrameFuel (fuel + 16) state
+        (stackSeq [
+          .inst (.mem .load 7 8),
+          .ite .test 7 (.imm 4)
+            (stackSeq [
+              stackGcShiftImmediate config .lsr 7
+                (config.wordBits - config.lenSize),
+              stackGcAddBytes config 8,
+              stackGcMoveListCode config])
+            (stackSeq [
+              stackGcShiftImmediate config .lsr 7
+                (config.wordBits - config.lenSize),
+              stackGcAddOne config 7,
+              stackGcShiftImmediate config .lsl 7 config.wordShift,
+              stackGcAdd 8 7])]) =
+        some (.normal final) ∧
+      stackGcNatMoveLoop config (fuel + 1) scan index destination oldBase
+          memory domain condition =
+        stackGcNatMoveLoop config fuel moved.nextScan moved.nextIndex
+          moved.nextAddress oldBase moved.memory domain
+          (condition && domain scan && moved.condition) := by
+  have hconditionIff := stackGcMoveLoop_header_condition_matches_nat
+    state scan memory hwidth haddress hmemory
+  have hcondition := hconditionIff.mpr hcodeNat
+  exact evalStackFrameFuel_stackGcMoveLoop_data_step_matches_nat config fuel scan
+    index destination oldBase state final memory domain condition hscratch7
+    hscratch8 hdomain hscan hcodeNat hcondition hmove
+
 end Flapjack.RiscV
