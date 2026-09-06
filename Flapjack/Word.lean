@@ -63,6 +63,7 @@ inductive WordProg (α : Type u) where
   | ite (operator : Cmp) (condition : Nat) (right : WordRegImm α)
       (thenBranch elseBranch : WordProg α)
   | loop (liveIn : List Nat) (body : WordProg α) (liveOut : List Nat)
+  | mustTerminate (body : WordProg α)
   | break (label : Nat)
   | continue (label : Nat)
   | raise (exception : Nat)

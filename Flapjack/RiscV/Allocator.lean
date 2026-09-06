@@ -625,6 +625,9 @@ mutual
         let program := .loop (liveIn.map (wordSsaRead setupState)) body
           (liveOut.map (wordSsaRead setupState))
         (exitState, wordSsaSeq setup program)
+    | .mustTerminate body =>
+        let (state, body) := wordSsaRenameProgramWithLoops frames state body
+        (state, .mustTerminate body)
     | .ite operator condition right thenBranch elseBranch =>
         let right := wordSsaRenameRegImm state right
         let (thenState, thenBranch) :=
@@ -685,6 +688,7 @@ def wordProgReadVars : WordProg α → List Nat
         wordProgReadVars thenBranch ++ wordProgReadVars elseBranch
   | .loop liveIn body liveOut =>
       liveIn ++ wordProgReadVars body ++ liveOut
+  | .mustTerminate body => wordProgReadVars body
   | .break _ | .continue _ => []
   | .raise exception => [exception]
   | .return _ values => values
@@ -715,6 +719,7 @@ def wordProgWriteVars : WordProg α → List Nat
   | .ite _ _ _ thenBranch elseBranch =>
       wordProgWriteVars thenBranch ++ wordProgWriteVars elseBranch
   | .loop _ body _ => wordProgWriteVars body
+  | .mustTerminate body => wordProgWriteVars body
   | .locValue destination _ => [destination]
   | .call returns _ _ handler =>
       (match returns with
@@ -745,6 +750,7 @@ def wordProgPreferenceEdges : WordProg α → List (Nat × Nat)
   | .ite _ _ _ thenBranch elseBranch =>
       wordProgPreferenceEdges thenBranch ++ wordProgPreferenceEdges elseBranch
   | .loop _ body _ => wordProgPreferenceEdges body
+  | .mustTerminate body => wordProgPreferenceEdges body
   | .call _ _ _ none => []
   | .call _ _ _ (some (_, body)) => wordProgPreferenceEdges body
   | _ => []
@@ -919,6 +925,7 @@ def wordClashTree : WordProg α → List (List Nat × List Nat) → WordClashTre
         (.seq (.set liveOut)
           (.seq (wordClashTree body ((liveIn, liveOut) :: frames))
             (.set liveIn)))
+  | .mustTerminate body, frames => wordClashTree body frames
   | .break label, frames =>
       match wordClashTreeFindLoopFrame label frames with
       | some (_, exitNames) => .set exitNames
@@ -1368,6 +1375,7 @@ def wordApplyColour (colour : Nat → Nat) : WordProg α → WordProg α
         (wordApplyColour colour thenBranch) (wordApplyColour colour elseBranch)
   | .loop liveIn body liveOut =>
       .loop (liveIn.map colour) (wordApplyColour colour body) (liveOut.map colour)
+  | .mustTerminate body => .mustTerminate (wordApplyColour colour body)
   | .break label => .break label
   | .continue label => .continue label
   | .raise exception => .raise (colour exception)
@@ -1596,6 +1604,7 @@ def wordProgSpecialLocationsSafe (locations : NatInfoMap WordLocation) :
       wordProgSpecialLocationsSafe locations thenBranch &&
         wordProgSpecialLocationsSafe locations elseBranch
   | .loop _ body _ => wordProgSpecialLocationsSafe locations body
+  | .mustTerminate body => wordProgSpecialLocationsSafe locations body
   | .call _ _ _ none => true
   | .call _ _ _ (some (_, body)) => wordProgSpecialLocationsSafe locations body
   | .shareInst _ _ _ => true

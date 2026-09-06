@@ -451,6 +451,9 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Route the spill-aware RISC-V pipeline through the implemented
   clash-tree/preference allocator and retain its allocation witness at the
   Word-to-Stack boundary.
+- [x] Preserve CakeML WordLang's `MustTerminate` wrapper through Word
+  semantics, SSA/clash analysis, colouring, Word-to-Stack, and RISC-V lowering,
+  with focused regressions.
 - [x] Expose witness-level allocator contracts showing every successfully
   coloured SSA slot maps to an allocatable RISC-V register.
 - [x] Port CakeML-style move preference edges for Word copy nodes and feed

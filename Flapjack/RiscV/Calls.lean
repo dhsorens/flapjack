@@ -127,6 +127,7 @@ def wordFunctionToRiscVWithCalls [NeZero width]
           | .notTest => pure (.branchEq branchLeft right falseOffset)
         pure (prelude ++ [branchFalse] ++ thenCode ++
           [.branchEq 0 0 endOffset] ++ elseCode, thenReturns)
+  | .mustTerminate body => wordFunctionToRiscVWithCalls context body
   | .seq first second => do
       let (firstCode, firstReturns) ← wordFunctionToRiscVWithCalls context first
       if !firstReturns.isEmpty then
@@ -181,6 +182,8 @@ mutual
           pure (prelude.map .instruction ++
             [.instruction branchFalse] ++ thenCode ++
             [.instruction (.branchEq 0 0 endOffset)] ++ elseCode, thenReturns)
+    | .mustTerminate body =>
+        wordFunctionToRiscVWithCallsAndLoopsAux context body
     | .seq first second => do
         let (firstCode, firstReturns) ←
           wordFunctionToRiscVWithCallsAndLoopsAux context first

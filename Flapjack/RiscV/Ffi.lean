@@ -161,6 +161,8 @@ def wordFunctionToRiscVWithCallsAndFfi [NeZero width]
           | .notTest => pure (.branchEq branchLeft right falseOffset)
         pure (prelude ++ [branchFalse] ++ thenCode ++
           [.branchEq 0 0 endOffset] ++ elseCode, thenReturns)
+  | .mustTerminate body =>
+      wordFunctionToRiscVWithCallsAndFfi context body
   | program => do
       let (code, returns) ← wordFunctionToRiscVWithCalls
         { targets := context.targets } program
@@ -216,6 +218,8 @@ mutual
         let choose ← evalWordCondition state operator condition rightValue
         if choose then evalWordFunctionWithCallsAndFfi functions handler fuel state thenBranch
         else evalWordFunctionWithCallsAndFfi functions handler fuel state elseBranch
+    | fuel + 1, state, .mustTerminate body =>
+        evalWordFunctionWithCallsAndFfi functions handler fuel state body
     | fuel + 1, state, program => evalWordFunction state program
     termination_by fuel _ _ => fuel
 end
@@ -276,6 +280,8 @@ mutual
           pure (prelude.map .instruction ++
             [.instruction branchFalse] ++ thenCode ++
             [.instruction (.branchEq 0 0 endOffset)] ++ elseCode, thenReturns)
+    | .mustTerminate body =>
+        wordFunctionToRiscVWithCallsAndFfiAndLoopsAux context body
     | .seq first second => do
         let (firstCode, firstReturns) ←
           wordFunctionToRiscVWithCallsAndFfiAndLoopsAux context first

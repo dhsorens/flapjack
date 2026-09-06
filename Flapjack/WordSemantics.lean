@@ -90,6 +90,8 @@ mutual
         let choose ← evalWordCondition state operator condition rightValue
         if choose then evalWordFunctionWithCalls functions fuel state thenBranch
         else evalWordFunctionWithCalls functions fuel state elseBranch
+    | fuel + 1, state, .mustTerminate body =>
+        evalWordFunctionWithCalls functions fuel state body
     | fuel + 1, state, program => evalWordFunction state program
     termination_by fuel _ _ => fuel
 end
@@ -120,6 +122,8 @@ mutual
         else evalWordLoopProg fuel state elseBranch
     | fuel + 1, state, .loop _ body _ =>
         evalWordLoopRepeat fuel state body
+    | fuel + 1, state, .mustTerminate body =>
+        evalWordLoopProg fuel state body
     | fuel + 1, state, .break label => some (.broke state label)
     | fuel + 1, state, .continue label => some (.continued state label)
     | fuel + 1, state, program =>
@@ -241,6 +245,8 @@ mutual
           evalWordLoopProgWithHandlersAndFfi functions ffiHandler fuel state elseBranch
     | fuel + 1, state, .loop _ body _ =>
         evalWordLoopRepeatWithHandlersAndFfi functions ffiHandler fuel state body
+    | fuel + 1, state, .mustTerminate body =>
+        evalWordLoopProgWithHandlersAndFfi functions ffiHandler fuel state body
     | fuel + 1, state, .break label => some (.broke state label)
     | fuel + 1, state, .continue label => some (.continued state label)
     | fuel + 1, state, .raise exception => do
@@ -372,6 +378,8 @@ mutual
         let choose ← evalWordCondition state operator condition rightValue
         if choose then evalWordFunctionWithHandlers functions fuel state thenBranch
         else evalWordFunctionWithHandlers functions fuel state elseBranch
+    | fuel + 1, state, .mustTerminate body =>
+        evalWordFunctionWithHandlers functions fuel state body
     | fuel + 1, state, .raise exception => do
         let exception ← registerOfNat exception
         pure (.raised state (readRegister state exception))
@@ -420,6 +428,8 @@ mutual
         let choose ← evalWordCondition state operator condition rightValue
         if choose then evalWordFfi handler fuel state thenBranch
         else evalWordFfi handler fuel state elseBranch
+    | fuel + 1, state, .mustTerminate body =>
+        evalWordFfi handler fuel state body
     | fuel + 1, state, program => evalWordFunction state program
     termination_by fuel _ _ => fuel
 end
@@ -527,6 +537,8 @@ mutual
           evalWordFunctionWithHandlersAndFfi functions ffiHandler fuel state thenBranch
         else
           evalWordFunctionWithHandlersAndFfi functions ffiHandler fuel state elseBranch
+    | fuel + 1, state, .mustTerminate body =>
+        evalWordFunctionWithHandlersAndFfi functions ffiHandler fuel state body
     | fuel + 1, state, .raise exception => do
         let exception ← registerOfNat exception
         pure (.raised state (readRegister state exception))

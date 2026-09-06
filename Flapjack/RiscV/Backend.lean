@@ -614,6 +614,7 @@ def wordFunctionToRiscV [NeZero width] :
           | .notTest => pure (.branchEq branchLeft right falseOffset)
         pure (prelude ++ [branchFalse] ++ thenCode ++
           [.branchEq 0 0 endOffset] ++ elseCode, thenReturns)
+  | .mustTerminate body => wordFunctionToRiscV body
   | .seq first second => do
       let (firstCode, firstReturns) ← wordFunctionToRiscV first
       if !firstReturns.isEmpty then
@@ -704,6 +705,7 @@ def evalWordFunction [NeZero width] (state : State width) :
       let choose ← evalWordCondition state operator condition rightValue
       if choose then evalWordFunction state thenBranch
       else evalWordFunction state elseBranch
+  | .mustTerminate body => evalWordFunction state body
   | .seq first second => do
       let (state, firstReturns) ← evalWordFunction state first
       if !firstReturns.isEmpty then
@@ -776,6 +778,7 @@ def evalWordProg [NeZero width] (state : State width) :
       let choose ← evalWordCondition state operator condition rightValue
       if choose then evalWordProg state thenBranch
       else evalWordProg state elseBranch
+  | .mustTerminate body => evalWordProg state body
   | .seq first second => do
       let state ← evalWordProg state first
       evalWordProg state second

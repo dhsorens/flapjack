@@ -917,7 +917,8 @@ theorem wordAllocateGraph_sound (tree : WordClashTree)
 
 def wordProgForcedClashes : WordProg α → List (Nat × Nat)
   | .skip | .move _ _ | .store _ _ | .set _ _ | .break _ | .continue _ |
-      .raise _ | .return _ _ | .tick | .locValue _ _ | .ffi _ _ _ _ _ _ => []
+      .raise _ | .return _ _ | .tick | .locValue _ _ | .ffi _ _ _ _ _ _ |
+      .mustTerminate _ => []
   | .assign _ _ => []
   | .inst instruction => wordInstForcedClashes instruction
   | .seq first second =>
@@ -1040,6 +1041,7 @@ def wordStackOnlyProgramAux (program : WordProg α)
     | .seq first second =>
         wordStackOnlyProgramAux first
           (wordStackOnlyProgramAux second state)
+    | .mustTerminate body => wordStackOnlyProgramAux body state
     | .ite _ condition right thenBranch elseBranch =>
         let thenState := wordStackOnlyProgramAux thenBranch state
         let elseState := wordStackOnlyProgramAux elseBranch state

@@ -1504,6 +1504,7 @@ def wordToStackProg [BEq α] [OfNat α 0] [OfNat α 1] [Add α] [Mul α]
   | .loop _ body _ => do
       let body ← wordToStackProg config body
       pure (.loop body)
+  | .mustTerminate body => wordToStackProg config body
   | .break label => pure (.break label)
   | .continue label => pure (.continue label)
   | .raise exception => pure (wordToStackRaise exception)
@@ -1562,6 +1563,7 @@ def wordToStackProgNat [BEq Nat] (config : WordStackConfig) :
   | .loop _ body _ => do
       let body ← wordToStackProgNat config body
       pure (.loop body)
+  | .mustTerminate body => wordToStackProgNat config body
   | .break label => pure (.break label)
   | .continue label => pure (.continue label)
   | .raise exception => pure (wordToStackRaise exception)
@@ -1631,6 +1633,7 @@ def wordProgToNat : WordProg (Word width) → WordProg Nat
         (wordProgToNat thenBranch) (wordProgToNat elseBranch)
   | .loop liveIn body liveOut =>
       .loop liveIn (wordProgToNat body) liveOut
+  | .mustTerminate body => .mustTerminate (wordProgToNat body)
   | .break label => .break label
   | .continue label => .continue label
   | .raise exception => .raise exception

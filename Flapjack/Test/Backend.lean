@@ -9,6 +9,7 @@ import Flapjack.Test.AllocatorFunction
 import Flapjack.Test.AllocatorCalls
 import Flapjack.Test.AllocatorCorrectness
 import Flapjack.Test.AllocatorRegAlloc
+import Flapjack.Test.MustTerminate
 import Flapjack.Test.WordToStack
 import Flapjack.Test.ParallelMove
 import Flapjack.Test.Stack
