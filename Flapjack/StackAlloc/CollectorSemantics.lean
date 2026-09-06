@@ -1047,6 +1047,38 @@ theorem evalStackFrameFuel_stackGcMoveList_immediate_one_matches_nat
     wordStackMachineBinOp, haddress, hmemory', hnat, hscratch5,
     Ne.symm hscratch5]
 
+theorem evalStackFrameFuel_stackGcMoveList_immediate_one_scan_matches_nat
+    [NeZero width] (config : StackGcConfig) (fuel : Nat)
+    (state : StackFrameMachineState width)
+    (address index destination oldBase : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool)
+    (hscratch5 : config.immediateScratch ≠ 5)
+    (hscratch7 : config.immediateScratch ≠ 7)
+    (hscratch8 : config.immediateScratch ≠ 8)
+    (hone : state.machine.registers 7 = BitVec.ofNat width 1)
+    (hdomain : state.memoryDomain (state.machine.registers 8) = true)
+    (haddress : state.machine.registers 8 = BitVec.ofNat width address)
+    (hbit : state.machine.memory (state.machine.registers 8) &&&
+      BitVec.ofNat width 1 = 0)
+    (hbound : address + config.bytesInWord < 2 ^ width) :
+    stackFrameNormalRegisterNat
+      (evalStackFrameFuel (fuel + 19) state
+        (stackGcMoveListCode config)) 8 =
+      some ((stackGcNatMoveList config 1 address index destination oldBase
+        memory domain).nextScan) := by
+  have heval := evalStackFrameFuel_stackGcMoveList_immediate_one config fuel
+    state hscratch5 hscratch7 hscratch8 hone hdomain hbit
+  have hscan := stackGcNatMoveList_nextScan config 1 address index
+    destination oldBase memory domain
+  have hbytes : config.bytesInWord < 2 ^ width := by omega
+  rw [hscan]
+  simp [stackFrameNormalRegisterNat, heval,
+    stackGcMoveListImmediateState, stackFrameWriteRegister,
+    wordStackMachineWriteRegister, wordStackMachineWriteMemory,
+    wordStackMachineBinOp, haddress, hbytes, hbound,
+    BitVec.toNat_add, BitVec.toNat_ofNat, Nat.mod_eq_of_lt hbound,
+    hscratch8, Ne.symm hscratch8]
+
 theorem evalStackFrameFuel_stackGcMoveList_forwarding_one [NeZero width]
     (config : StackGcConfig) (fuel : Nat)
     (state : StackFrameMachineState width)
