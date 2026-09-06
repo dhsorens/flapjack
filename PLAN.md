@@ -1176,6 +1176,7 @@ definitions, pass ordering, examples, and proof obligations.
   root/bitmap collector wrappers.
 - [x] Port Nat-executable bitmap bit-length, word decoding, and full bitmap
   lookup semantics.
+- [x] Prove bitmap filtering and reconstruction remainder-length invariants.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
