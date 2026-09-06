@@ -1061,7 +1061,7 @@ definitions, pass ordering, examples, and proof obligations.
   explicit fixed-width copied-value correspondence.
 - [x] Align the machine MoveLoop termination condition with the Nat
   `scan != destination` condition under explicit word-width bounds.
-- [x] Prove the bounded machine transition for a non-code MoveLoop header,
+- [x] Prove the bounded machine transition for a code-object MoveLoop header,
   covering header load, length decoding, object-size scan advance, and the
   destination update without unfolding the nested MoveList loop.
 - [x] Isolate the true-test MoveLoop code-header prefix as a bounded machine

@@ -1726,7 +1726,7 @@ The data branch delegates to the already established MoveList transition API;
 this branch only advances the scan pointer and is therefore a useful first
 composable step for the full loop simulation. -/
 
-def stackGcMoveLoopDataStepState [NeZero width]
+def stackGcMoveLoopCodeStepState [NeZero width]
     (config : StackGcConfig) (state : StackFrameMachineState width) :
     StackFrameMachineState width :=
   let afterLoad := stackFrameWriteRegister state 7
@@ -1750,7 +1750,7 @@ def stackGcMoveLoopDataStepState [NeZero width]
     (wordStackMachineBinOp .add (afterWord.machine.registers 8)
       (afterWord.machine.registers 7))
 
-theorem evalStackFrameFuel_stackGcMoveLoop_data_step [NeZero width]
+theorem evalStackFrameFuel_stackGcMoveLoop_code_step [NeZero width]
     (config : StackGcConfig) (fuel : Nat)
     (state : StackFrameMachineState width)
     (hscratch7 : config.immediateScratch ≠ 7)
@@ -1775,7 +1775,7 @@ theorem evalStackFrameFuel_stackGcMoveLoop_data_step [NeZero width]
               stackGcAddOne config 7,
               stackGcShiftImmediate config .lsl 7 config.wordShift,
               stackGcAdd 8 7])]) =
-      some (.normal (stackGcMoveLoopDataStepState config state)) := by
+      some (.normal (stackGcMoveLoopCodeStepState config state)) := by
   let afterLoad := stackFrameWriteRegister state 7
     (state.machine.memory (state.machine.registers 8))
   have hload := evalStackFrameFuel_memLoad (fuel + 11) state 7 8 hdomain
@@ -1787,8 +1787,8 @@ theorem evalStackFrameFuel_stackGcMoveLoop_data_step [NeZero width]
           stackGcAddOne config 7,
           stackGcShiftImmediate config .lsl 7 config.wordShift,
           stackGcAdd 8 7]) =
-        some (.normal (stackGcMoveLoopDataStepState config state)) := by
-    simp [stackGcMoveLoopDataStepState, afterLoad, stackSeq,
+        some (.normal (stackGcMoveLoopCodeStepState config state)) := by
+    simp [stackGcMoveLoopCodeStepState, afterLoad, stackSeq,
       evalStackFrameFuel, evalStackFrameFuelWithCode, stackFrameBasic,
       stackFrameWriteRegister, stackGcShiftImmediate, stackGcAddImmediate,
       stackGcAddOne, stackGcConst, stackGcAdd, wordStackMachineWriteRegister,
@@ -1808,7 +1808,7 @@ theorem evalStackFrameFuel_stackGcMoveLoop_data_step [NeZero width]
             stackGcAddOne config 7,
             stackGcShiftImmediate config .lsl 7 config.wordShift,
             stackGcAdd 8 7])) =
-        some (.normal (stackGcMoveLoopDataStepState config state)) := by
+        some (.normal (stackGcMoveLoopCodeStepState config state)) := by
     rw [evalStackFrameFuel_ite_false (fuel + 10) afterLoad
       .test 7 (.imm 4)
       (stackSeq [
