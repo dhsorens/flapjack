@@ -876,6 +876,8 @@ definitions, pass ordering, examples, and proof obligations.
   boundaries and exceptional handler branches, with reduced-IR regressions.
 - [x] Prove general normal-return and terminal-outcome equations for the exact
   RISC-V ECALL adapter directly from CakeML's `callFfi` equations.
+- [x] Prove that the generated RISC-V FFI ABI prefix reaches the exact ECALL
+  adapter, with an explicit zero-register invariant and an RV64 regression.
 - [x] Prove the exact RISC-V ECALL adapter's CakeML length-mismatch failure
   equation and add a concrete terminal-failure regression.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem

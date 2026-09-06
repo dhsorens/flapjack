@@ -18,6 +18,22 @@ def exactFfiMismatchState : ExactRiscVFfiState 64 Unit :=
         oracle := fun _ state _ _ => .returned state [9] } }
 
 example :
+    executeInstructionsWithExactFfi
+        { services := [("echo", 7)] } exactFfiState
+        [.addi 10 1 0, .addi 11 2 0, .addi 12 3 0, .addi 13 4 0,
+         .addi 14 0 (BitVec.ofNat 64 7), .ecall] =
+      exactRiscVFfiCall { services := [("echo", 7)] }
+        { machine := executeInstructions exactFfiState.machine
+            [.addi 10 1 0, .addi 11 2 0, .addi 12 3 0, .addi 13 4 0,
+             .addi 14 0 (BitVec.ofNat 64 7)],
+          ffi := exactFfiState.ffi } 7 := by
+  apply executeInstructionsWithExactFfi_abi
+  · decide
+  · simp [exactFfiState, exactFfiMachineWithBytes, exactFfiMachine,
+      zeroState, readRegister, writeRegister]
+  · rfl
+
+example :
     exactRiscVFfiCall
         { services := [("echo", 7)] } exactFfiAbiState 7 =
       .normal
