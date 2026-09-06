@@ -1078,6 +1078,8 @@ definitions, pass ordering, examples, and proof obligations.
   underlying machine memory, making it composable with the collector invariant.
 - [x] Introduce a bounded Nat memory-projection relation and prove that the
   code-object MoveLoop state transition preserves it.
+- [x] Introduce the corresponding Nat scan-register relation and prove its
+  preservation across the code-object MoveLoop transition.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
