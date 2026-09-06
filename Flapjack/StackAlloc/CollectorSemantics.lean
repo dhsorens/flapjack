@@ -1757,6 +1757,22 @@ theorem stackGcMoveLoopCodeStepState_memory [NeZero width]
   simp [stackGcMoveLoopCodeStepState, stackFrameWriteRegister,
     wordStackMachineWriteRegister]
 
+def stackGcMachineMemoryMatchesNat [NeZero width]
+    (state : StackFrameMachineState width) (memory : Nat → Nat) : Prop :=
+  ∀ address, address < 2 ^ width →
+    (state.machine.memory (BitVec.ofNat width address)).toNat =
+      memory address
+
+theorem stackGcMoveLoopCodeStepState_memory_matches_nat [NeZero width]
+    (config : StackGcConfig) (state : StackFrameMachineState width)
+    (memory : Nat → Nat)
+    (hmemory : stackGcMachineMemoryMatchesNat state memory) :
+    stackGcMachineMemoryMatchesNat
+      (stackGcMoveLoopCodeStepState config state) memory := by
+  intro address haddress
+  rw [stackGcMoveLoopCodeStepState_memory]
+  exact hmemory address haddress
+
 theorem evalStackFrameFuel_stackGcMoveLoop_code_step [NeZero width]
     (config : StackGcConfig) (fuel : Nat)
     (state : StackFrameMachineState width)
