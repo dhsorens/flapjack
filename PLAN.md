@@ -1055,6 +1055,8 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Bridge the immediate one-word machine MoveList evaluator to the Nat
   semantics for its moved value, scan pointer, count register, and stored
   memory projection.
+- [x] Extend the immediate one-item MoveList bridge to the full bounded
+  machine/Nat memory relation.
 - [x] Expose a forwarding MoveList machine/Nat value bridge, parameterized by
   the explicit fixed-width forwarding-address correspondence.
 - [x] Expose a copying MoveList machine/Nat value bridge, parameterized by the
