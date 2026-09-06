@@ -1075,6 +1075,8 @@ definitions, pass ordering, examples, and proof obligations.
   recursive-copy and copy-address correspondences.
 - [x] Generalize the copying MoveList suffix evaluator to arbitrary copied-word
   counts, reusing the fuel-indexed machine/Nat `Memcpy` bridge.
+- [x] Generalize the copying `MoveCode` evaluator to arbitrary copied-word
+  counts, with an explicit prefix count correspondence and bounded count.
 - [x] Expose a forwarding MoveList machine/Nat value bridge, parameterized by
   the explicit fixed-width forwarding-address correspondence.
 - [x] Expose a copying MoveList machine/Nat value bridge, parameterized by the
