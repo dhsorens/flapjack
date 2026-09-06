@@ -2168,6 +2168,54 @@ theorem stackGcMoveLoopCodeStepState_preserves_nat_relation
   · exact stackGcMoveLoopCodeStepState_memory_matches_nat
       config state memory hmemoryAll
 
+theorem stackGcMoveLoopCodeStepState_preserves_nat_relation_of_memory
+    [NeZero width] (config : StackGcConfig) (fuel : Nat)
+    (state : StackFrameMachineState width)
+    (scan : Nat) (memory : Nat → Nat) (domain : Nat → Bool)
+    (hwidth : 3 ≤ width)
+    (hscratch7 : config.immediateScratch ≠ 7)
+    (hscratch8 : config.immediateScratch ≠ 8)
+    (hdomain : state.memoryDomain (state.machine.registers 8) = true)
+    (haddress : state.machine.registers 8 = BitVec.ofNat width scan)
+    (hmemory : stackGcMachineNatRelation state scan memory)
+    (hcodeNat : stackGcNatHeaderHasCode (memory scan) = true)
+    (hadvance :
+      scan + (stackGcNatDecodeLength config (memory scan) + 1) *
+        config.bytesInWord < 2 ^ width)
+    (hcount :
+      (((state.machine.memory (state.machine.registers 8) >>>
+          shiftAmount (BitVec.ofNat width
+            (config.wordBits - config.lenSize))) +
+        BitVec.ofNat width 1) <<<
+          shiftAmount (BitVec.ofNat width config.wordShift)).toNat =
+        (stackGcNatDecodeLength config (memory scan) + 1) *
+          config.bytesInWord) :
+    stackGcMachineNatRelation
+      (stackGcMoveLoopCodeStepState config state)
+      (scan + (stackGcNatDecodeLength config (memory scan) + 1) *
+        config.bytesInWord) memory := by
+  rcases hmemory with ⟨hscanMatches, hmemoryAll⟩
+  have hscanBound : scan < 2 ^ width := by
+    rw [← hscanMatches]
+    exact (state.machine.registers 8).isLt
+  have hmemoryAt :
+      (state.machine.memory (state.machine.registers 8)).toNat =
+        memory scan := by
+    have h := hmemoryAll scan hscanBound
+    simpa [haddress] using h
+  have hcodeIff := stackGcMoveLoop_header_condition_matches_nat
+    state scan memory hwidth haddress hmemoryAt
+  have hcode : stackMachineCondition
+      (stackFrameWriteRegister state 7
+        (state.machine.memory (state.machine.registers 8))).machine
+      .test 7 (.imm 4) = false := by
+    apply (Bool.eq_false_iff).mpr
+    intro htrue
+    exact (hcodeIff.mp htrue) hcodeNat
+  exact stackGcMoveLoopCodeStepState_preserves_nat_relation config fuel state
+    scan memory domain hscratch7 hscratch8 hdomain haddress
+    ⟨hscanMatches, hmemoryAll⟩ hmemoryAt hcode hadvance hcount
+
 theorem evalStackFrameFuel_stackGcMoveLoop_code_step_matches_nat
     [NeZero width] (config : StackGcConfig) (fuel : Nat)
     (state : StackFrameMachineState width)
