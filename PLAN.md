@@ -1053,6 +1053,8 @@ definitions, pass ordering, examples, and proof obligations.
   the explicit fixed-width forwarding-address correspondence.
 - [x] Expose a copying MoveList machine/Nat value bridge, parameterized by the
   explicit fixed-width copied-value correspondence.
+- [x] Align the machine MoveLoop termination condition with the Nat
+  `scan != destination` condition under explicit word-width bounds.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 

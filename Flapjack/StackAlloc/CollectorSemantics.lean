@@ -1700,4 +1700,25 @@ theorem evalStackFrameFuel_stackGcMoveList_copy_one_matches_nat
   rw [hfinal5, hcopyValue]
   simp
 
+theorem stackGcMoveLoop_machine_condition_matches_nat [NeZero width]
+    (state : StackFrameMachineState width) (scan destination : Nat)
+    (hscanBound : scan < 2 ^ width)
+    (hdestinationBound : destination < 2 ^ width)
+    (hscan : state.machine.registers 8 = BitVec.ofNat width scan)
+    (hdestination : state.machine.registers 3 = BitVec.ofNat width destination) :
+    stackMachineCondition state.machine .notEqual 3 (.reg 8) = true ↔
+      scan ≠ destination := by
+  have hwordEq :
+      BitVec.ofNat width destination = BitVec.ofNat width scan ↔
+        destination = scan := by
+    constructor
+    · intro h
+      have hto := congrArg BitVec.toNat h
+      simpa [BitVec.toNat_ofNat, Nat.mod_eq_of_lt hscanBound,
+        Nat.mod_eq_of_lt hdestinationBound] using hto
+    · intro h
+      simpa [h]
+  simp [stackMachineCondition, hscan, hdestination, hwordEq]
+  omega
+
 end Flapjack.RiscV
