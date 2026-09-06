@@ -764,4 +764,36 @@ theorem stackGcNatMoveCopySuffix_condition_of_domain
     stackGcNatMemcpy_condition_of_domain config words source destination
       memory domain hdomain]
 
+def stackGcNatMoveListCopyBody (config : StackGcConfig)
+    (words scan source destination index value : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool) : StackGcNatMoveListResult :=
+  let moved := stackGcNatMoveCopySuffix config words source destination index
+    value memory domain
+  { nextScan := scan + config.bytesInWord
+    nextIndex := moved.nextIndex
+    nextAddress := moved.nextAddress
+    memory := fun current =>
+      if current = scan then moved.value else moved.memory current
+    condition := domain scan && moved.condition }
+
+theorem stackGcNatMoveListCopyBody_eq_moveList_copy
+    (config : StackGcConfig) (scan value index destination oldBase : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool)
+    (hloaded : memory scan = value)
+    (hvalue : value % 2 ≠ 0)
+    (hnonforward :
+      ¬ stackGcNatIsForwardingPointer
+        (memory (stackGcNatPointerAddress config oldBase value)))
+    (hheaderDomain :
+      domain (stackGcNatPointerAddress config oldBase value) = true) :
+    stackGcNatMoveListCopyBody config
+        (stackGcNatDecodeLength config
+          (memory (stackGcNatPointerAddress config oldBase value)) + 1)
+        scan (stackGcNatPointerAddress config oldBase value)
+        destination index value memory domain =
+      stackGcNatMoveList config 1 scan index destination oldBase memory domain := by
+  have hsuffix := stackGcNatMoveCopySuffix_eq_move_copy config value index
+    destination oldBase memory domain hvalue hnonforward hheaderDomain
+  simp [stackGcNatMoveListCopyBody, stackGcNatMoveList, hloaded, hsuffix]
+
 end Flapjack
