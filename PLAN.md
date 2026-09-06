@@ -966,6 +966,9 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Complete the pure Nat collector copy-case equations for the copied
   value, next destination address, forwarding-header write, and success
   condition.
+- [x] Add an iterated frame-machine transition API for collector memcpy,
+  including equations and invariants for the frame metadata preserved by
+  every copy step.
 - [ ] Prove the collector machine semantics and simulation theorem, and add
   generational support if it is needed by a selected target configuration.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state
