@@ -186,7 +186,11 @@ def evalPanFlatExp [BEq α] [OfNat α 0] [OfNat α 1] [Add α] [Mul α]
         baseAddress topAddress bytesInWord address
       let .word address := address | none
       panFlatLoad structs domain memory bytesInWord address shape
-  | .load32 _ | .loadByte _ => none
+  | .load32 address | .loadByte address => do
+      let address ← evalPanFlatExp structs locals globals domain memory
+        baseAddress topAddress bytesInWord address
+      let .word address := address | none
+      panFlatReadWord domain memory address
   | .op operator arguments => do
       let values ← evalPanFlatExps structs locals globals domain memory
         baseAddress topAddress bytesInWord arguments

@@ -135,4 +135,21 @@ example :
   simp [evalPanValueProg, evalPanValueProgWithPrimitive,
     evalPanValueExp, updatePanValueMap]
 
+def flatWordDomain : PanMemoryDomain Nat := fun address => address == 20
+
+def flatWordMemory : PanFlatMemory Nat :=
+  fun address => if address == 20 then some 99 else none
+
+example :
+    evalPanFlatExp (α := Nat) []
+      (fun _ => none) (fun _ => none) flatWordDomain flatWordMemory 0 100 1
+      (.load32 (.const 20)) = some (.word 99) := by
+  simp [evalPanFlatExp, flatWordDomain, flatWordMemory, panFlatReadWord]
+
+example :
+    evalPanFlatExp (α := Nat) []
+      (fun _ => none) (fun _ => none) flatWordDomain flatWordMemory 0 100 1
+      (.loadByte (.const 20)) = some (.word 99) := by
+  simp [evalPanFlatExp, flatWordDomain, flatWordMemory, panFlatReadWord]
+
 end Flapjack

@@ -786,6 +786,8 @@ definitions, pass ordering, examples, and proof obligations.
   failed-domain behavior.
 - [x] Extend the flat source evaluator with fuel-bounded calls, scoped
   declaration calls, caught exceptions, loops, primitive dispatch, and FFI.
+- [x] Complete generic flat source `load32` and `loadByte` expression
+  evaluation with domain-checked word reads, alongside focused regressions.
 - [x] Add a handler-parameterized Loop evaluator for primitive dispatch and
   connect its RISC-V AddCarry handler to an executable Loop-to-Word agreement.
 - [x] Prove a structured AddCarry source program through the composed
