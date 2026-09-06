@@ -4738,10 +4738,7 @@ theorem evalStackFrameFuel_stackGcMoveList_copy_body_iter_with_nat_relation
           (stackGcMoveCopyPrefixState config
             (stackGcMoveAddressState config
               (stackGcMoveListAfterCount config state)))).machine.registers 8) =
-          true)
-    (hnonforward :
-      ¬ stackGcNatIsForwardingPointer
-        (memory (stackGcNatPointerAddress config 0 value))) :
+          true) :
     evalStackFrameFuel (fuel + words + 44) state
         (stackSeq [
           .inst (.mem .load 5 8),
@@ -4851,7 +4848,7 @@ theorem evalStackFrameFuel_stackGcMoveList_copy_body_iter_with_nat_relation
         stackGcNatMoveListCopyBody,
         stackFrameWriteRegister, wordStackMachineWriteRegister,
         wordStackMachineWriteMemory, wordStackMachineBinOp, haddress,
-        hcopyAddress, hmoveAddress, hvalue', hloadedNat, hscratch0,
+        hcopyAddress, hmoveAddress, hvalue', hscratch0,
         hscratch1, hscratch2, hscratch3, hscratch4, hscratch5,
         hscratch6, hscratch7, hscratch8, Ne.symm hscratch0,
         Ne.symm hscratch1, Ne.symm hscratch2, Ne.symm hscratch3,

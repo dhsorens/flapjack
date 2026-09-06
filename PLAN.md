@@ -1144,6 +1144,8 @@ definitions, pass ordering, examples, and proof obligations.
   advancement.
 - [x] Relate the arbitrary-word copying-body evaluator to the Nat body
   specification, including final registers and bounded memory projection.
+- [x] Keep the arbitrary-word body relation independent of branch-specific
+  Nat copy conditions, so it can be reused by later MoveList induction.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
