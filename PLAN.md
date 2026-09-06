@@ -1139,6 +1139,9 @@ definitions, pass ordering, examples, and proof obligations.
   preservation across the code-object MoveLoop transition.
 - [x] Package the scan and bounded memory projections into a combined
   machine/Nat MoveLoop relation and prove code-object-step preservation.
+- [x] Prove the bounded arbitrary-word MoveList copying-body evaluator,
+  including the load/count prefix, copied-word MoveCode, store, and scan
+  advancement.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
