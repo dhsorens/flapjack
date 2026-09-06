@@ -122,8 +122,9 @@ Reusable sequence and conditional equations expose the evaluator’s
 fuel-consuming composition rules for later collector simulation proofs.
 The named memcpy body now has an exact state-transition theorem, and its
 one-word loop case composes that theorem with the bounded loop evaluator.
-The same loop composition is now proved for a two-word copy, establishing the
-first reusable multi-iteration memcpy instance.
+The same loop composition is now proved for bounded positive word counts,
+with a concrete three-word regression establishing the first reusable
+multi-iteration memcpy instance.
 The collector address/header prefix, copy preparation, and copy finalization
 are named machine transitions; their composition now proves the complete
 one-word non-forwarded copy branch at the bounded machine-state boundary.

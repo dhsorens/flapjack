@@ -959,6 +959,8 @@ definitions, pass ordering, examples, and proof obligations.
   one-word memcpy case.
 - [x] Compose the bounded loop evaluator for a two-word memcpy instance,
   including the generic bitvector counter decrement and full-state result.
+- [x] Generalize bounded memcpy loop composition to arbitrary positive bounded
+  word counts and add a concrete three-word regression.
 - [x] Factor the collector copy path into named machine-state transitions and
   prove its complete one-word non-forwarded branch composition.
 - [x] Factor the collector forwarding path into named machine-state
