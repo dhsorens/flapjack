@@ -969,6 +969,8 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Add an iterated frame-machine transition API for collector memcpy,
   including equations and invariants for the frame metadata preserved by
   every copy step.
+- [x] Isolate the finite-word successor-minus-one equation and the resulting
+  collector memcpy count-register transition.
 - [ ] Prove the collector machine semantics and simulation theorem, and add
   generational support if it is needed by a selected target configuration.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state
