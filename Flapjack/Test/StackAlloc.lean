@@ -120,6 +120,15 @@ def movedForwardingPointerState : RiscV.WordStackMachineState 64 :=
     memory := fun address => if address = 0 then 4 else 0
     sharedMemory := fun _ => 0 }
 
+def oneWordObjectState : RiscV.WordStackMachineState 64 :=
+  { registers := fun register =>
+      if register = 3 then 100 else
+        if register = 4 then 1 else if register = 5 then 3 else 0
+    stack := fun _ => 0
+    stores := fun store => if store = .currHeap then 0 else 0
+    memory := fun address => if address = 0 then 3 else 0
+    sharedMemory := fun _ => 0 }
+
 example :
     stackMachineNormalRegisterEquals
       (evalStackProgFuel 500 forwardedPointerState
@@ -130,6 +139,18 @@ example :
     stackMachineNormalRegisterEquals
       (evalStackProgFuel 500 movedForwardingPointerState
         (stackGcMoveCode stackGcTestConfig)) 5 2051 = true := by
+  native_decide
+
+example :
+    stackMachineNormalRegisterEquals
+      (evalStackProgFuel 1000 oneWordObjectState
+        (stackGcMoveCode stackGcTestConfig)) 5 2051 = true := by
+  native_decide
+
+example :
+    stackMachineNormalMemoryEquals
+      (evalStackProgFuel 1000 oneWordObjectState
+        (stackGcMoveCode stackGcTestConfig)) 100 3 = true := by
   native_decide
 
 example :
