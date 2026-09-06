@@ -107,16 +107,29 @@ example :
   native_decide
 
 def forwardedPointerState : RiscV.WordStackMachineState 64 :=
-  { registers := fun register => if register = 5 then 2 else 0
+  { registers := fun register => if register = 5 then 3 else 0
     stack := fun _ => 0
     stores := fun store => if store = .currHeap then 0 else 0
-    memory := fun address => if address = 0 then 3 else 0
+    memory := fun address => if address = 0 then 0 else 0
+    sharedMemory := fun _ => 0 }
+
+def movedForwardingPointerState : RiscV.WordStackMachineState 64 :=
+  { registers := fun register => if register = 5 then 3 else 0
+    stack := fun _ => 0
+    stores := fun store => if store = .currHeap then 0 else 0
+    memory := fun address => if address = 0 then 4 else 0
     sharedMemory := fun _ => 0 }
 
 example :
     stackMachineNormalRegisterEquals
       (evalStackProgFuel 500 forwardedPointerState
-        (stackGcMoveCode stackGcTestConfig)) 5 2 = true := by
+        (stackGcMoveCode stackGcTestConfig)) 5 3 = true := by
+  native_decide
+
+example :
+    stackMachineNormalRegisterEquals
+      (evalStackProgFuel 500 movedForwardingPointerState
+        (stackGcMoveCode stackGcTestConfig)) 5 2051 = true := by
   native_decide
 
 example :
