@@ -730,4 +730,38 @@ theorem stackGcNatMoveCopySuffix_memory_of_ne
       (stackGcNatMemcpy config words source destination memory domain).memory target := by
   simp [stackGcNatMoveCopySuffix, htarget]
 
+theorem stackGcNatMoveCopySuffix_eq_move_copy
+    (config : StackGcConfig) (value index destination oldBase : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool)
+    (hvalue : value % 2 ≠ 0)
+    (hnonforward :
+      ¬ stackGcNatIsForwardingPointer
+        (memory (stackGcNatPointerAddress config oldBase value)))
+    (hheaderDomain :
+      domain (stackGcNatPointerAddress config oldBase value) = true) :
+    stackGcNatMoveCopySuffix config
+        (stackGcNatDecodeLength config
+          (memory (stackGcNatPointerAddress config oldBase value)) + 1)
+        (stackGcNatPointerAddress config oldBase value)
+        destination index value memory domain =
+      stackGcNatMove config value index destination oldBase memory domain := by
+  have hnonforward' :
+      memory (stackGcNatPointerAddress config oldBase value) % 4 ≠ 0 := by
+    intro h
+    apply hnonforward
+    simp [stackGcNatIsForwardingPointer, h]
+  simp [stackGcNatMoveCopySuffix, stackGcNatMove,
+    stackGcNatIsForwardingPointer, hvalue, hnonforward',
+    hheaderDomain, Nat.add_assoc]
+
+theorem stackGcNatMoveCopySuffix_condition_of_domain
+    (config : StackGcConfig) (words source destination index value : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool)
+    (hdomain : ∀ address, domain address = true) :
+    (stackGcNatMoveCopySuffix config words source destination index value
+      memory domain).condition = true := by
+  simp [stackGcNatMoveCopySuffix,
+    stackGcNatMemcpy_condition_of_domain config words source destination
+      memory domain hdomain]
+
 end Flapjack

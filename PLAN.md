@@ -1077,6 +1077,9 @@ definitions, pass ordering, examples, and proof obligations.
   counts, reusing the fuel-indexed machine/Nat `Memcpy` bridge.
 - [x] Add a named Nat post-`Memcpy` copy-suffix result with equations for its
   updated value, index, destination, forwarding-header memory, and condition.
+- [x] Identify the Nat post-`Memcpy` copy suffix with the pure Nat `Move`
+  copy branch for `decodeLength(header)+1` words.
+- [x] Prove the Nat copy-suffix success contract under a total memory domain.
 - [x] Relate the bounded post-`Memcpy` machine suffix evaluator to that Nat
   result, including the forwarding-header memory projection.
 - [x] Lift the arbitrary-word suffix relation through the bounded machine
