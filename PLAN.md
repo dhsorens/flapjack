@@ -988,6 +988,8 @@ definitions, pass ordering, examples, and proof obligations.
   collector memcpy transformer.
 - [x] Package the collector memcpy register and memory equations into a
   compositional frame-state correspondence predicate.
+- [x] Lift the collector memcpy correspondence across a bounded iteration,
+  including the final registers and recursive word-level memory transformer.
 - [ ] Prove the collector machine semantics and simulation theorem, and add
   generational support if it is needed by a selected target configuration.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state
