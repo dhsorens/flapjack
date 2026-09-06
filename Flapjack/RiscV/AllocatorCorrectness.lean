@@ -107,6 +107,36 @@ theorem wordAllocateGraphFunctionWithStackOnlyRenamed_sound
   rcases hchecks with ⟨⟨hfixed, hedges⟩, htree⟩
   exact ⟨hfixed, hedges, htree⟩
 
+theorem wordAllocateSsaFunctionWithClashTreeWithSpillsAndPreferences_sound
+    (parameters : List Nat) (program : WordProg α)
+    (state : WordSsaState) (renamedParameters : List Nat)
+    (renamedProgram : WordProg α) (allocation : WordSpillState)
+    (halloc :
+      wordAllocateSsaFunctionWithClashTreeWithSpillsAndPreferences parameters
+        program =
+        some (state, renamedParameters, renamedProgram, allocation)) :
+    wordSpillAllocationRespectsClashes
+        (wordClashTreeAnalyze
+          (wordClashTree (wordSsaRenameFunction parameters program).2.snd [])
+          []).snd allocation.locations = true ∧
+      wordProgSpecialLocationsSafe allocation.locations
+        (wordSsaRenameFunction parameters program).2.snd = true ∧
+      wordSpillClashTreeChecked
+        (wordClashTree (wordSsaRenameFunction parameters program).2.snd [])
+        allocation.locations = true := by
+  simp [wordAllocateSsaFunctionWithClashTreeWithSpillsAndPreferences] at halloc
+  split at halloc <;> simp_all
+  rename_i x inner hinner
+  rcases halloc with ⟨⟨hspecial, htreeChecked⟩, hstate, hparameters,
+    hprogram, hallocation⟩
+  subst state
+  subst renamedParameters
+  subst renamedProgram
+  subst allocation
+  have hclash := wordAllocateVarsWithSpillsAndPreferences_sound _ _ _
+    inner hinner
+  exact ⟨hclash, hspecial, htreeChecked⟩
+
 def wordControlResultValues [NeZero width] :
     WordControlResult width → List (Word width)
   | .returned _ values => values
