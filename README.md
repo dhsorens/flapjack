@@ -103,6 +103,11 @@ The RISC-V flat source adapter in
 a fuel-bounded structured evaluator for loops, calls, exceptions, primitive
 dispatch, FFI, and byte-addressed memory; its source-to-target simulation
 theorem remains a later milestone.
+The bounded StackLang frame boundary is in
+[`Flapjack/StackAlloc/FrameMachine.lean`](Flapjack/StackAlloc/FrameMachine.lean):
+it models CakeML's stack-space checks, dynamic aligned accesses, and bitmap
+loads, and executes the generated Simple collector on a bounded zero-heap
+state. The general collector machine simulation theorem remains open.
 That module now also contains the first compositional Loop-to-Word agreements:
 constant and register-register ADD assignments are related at the destination
 local/register observation, under the explicit architectural x0 invariant.

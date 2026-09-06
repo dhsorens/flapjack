@@ -1,4 +1,5 @@
 import Flapjack.StackAlloc.FrameMachine
+import Flapjack.StackAlloc.Runtime
 
 namespace Flapjack.RiscV
 
@@ -47,5 +48,30 @@ example :
       some (.normal (stackFrameWriteRegister frameMachineState 4
         (BitVec.ofNat 64 8))) := by
   exact evalStackFrameFuel_stackGetSize 1 frameMachineState 4
+
+def frameCollectorState : StackFrameMachineState 64 :=
+  { machine :=
+      { registers := fun _ => 0
+        stack := fun _ => 0
+        stores := fun _ => 0
+        memory := fun _ => 0
+        sharedMemory := fun _ => 0 }
+    stackSpace := 8
+    stackLimit := 16
+    bitmaps := [0] }
+
+def frameCollectorConfig : StackGcConfig :=
+  { shiftLength := 11
+    smallShiftLength := 9
+    lenSize := 32
+    wordShift := 3
+    wordBits := 64
+    bytesInWord := 8
+    immediateScratch := 31 }
+
+example :
+    (evalStackFrameFuel 3000 frameCollectorState
+      (stackGcSimpleCode frameCollectorConfig)).isSome := by
+  native_decide
 
 end Flapjack.RiscV
