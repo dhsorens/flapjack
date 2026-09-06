@@ -572,6 +572,104 @@ def wordStackStoreNameNat : WordStore Nat → Option StackStore
   | .bitmapBuffer => some .bitmapBuffer
   | .bitmapBufferEnd => some .bitmapBufferEnd
 
+/-! Bitmap accumulation used by CakeML's `word_to_stack` pass.
+
+    CakeML stores bitmaps as a flat append-only word list.  The first word of
+    each bitmap chunk records which following constant words are pointers;
+    liveness bitmaps have one additional terminating pointer bit.  Keeping
+    the accumulator explicit makes the state change caused by `Alloc` and
+    `StoreConsts` observable, rather than silently rejecting those Word
+    constructors as the stateless compiler above must do. -/
+
+structure WordStackBitmapState where
+  data : List Nat
+  length : Nat
+  deriving Repr
+
+def wordStackInitialBitmaps (perf : Bool) : WordStackBitmapState :=
+  if perf then
+    { data := [16], length := 1 }
+  else
+    { data := [4], length := 1 }
+
+def wordStackBitsToNat : List Bool → Nat
+  | [] => 1
+  | bit :: bits =>
+      wordStackBitsToNat bits * 2 + if bit then 1 else 0
+
+def wordStackBitmapChunk (constants : List (Bool × Nat)) : List Nat :=
+  wordStackBitsToNat (constants.map Prod.fst) :: constants.map Prod.snd
+
+def wordStackBitmapWordsAux (chunkSize : Nat) :
+    Nat → List Bool → List Nat
+  | 0, _ => []
+  | fuel + 1, bits =>
+      if chunkSize = 0 || bits.length ≤ chunkSize then
+        [wordStackBitsToNat bits]
+      else
+        wordStackBitsToNat (bits.take chunkSize ++ [true]) ::
+          wordStackBitmapWordsAux chunkSize fuel (bits.drop chunkSize)
+
+def wordStackBitmapWords (chunkSize : Nat) (bits : List Bool) : List Nat :=
+  wordStackBitmapWordsAux chunkSize (bits.length + 1) bits
+
+def wordStackConstBitmapWordsAux (wordBits : Nat) :
+    Nat → List (Bool × Nat) → List Nat
+  | 0, _ => []
+  | fuel + 1, constants =>
+      let chunkSize := wordBits - 1
+      if chunkSize = 0 || constants.length < chunkSize then
+        wordStackBitmapChunk constants
+      else
+        wordStackBitmapChunk (constants.take chunkSize) ++
+          wordStackConstBitmapWordsAux wordBits fuel (constants.drop chunkSize)
+
+def wordStackConstBitmapWords (wordBits : Nat)
+    (constants : List (Bool × Nat)) : List Nat :=
+  wordStackConstBitmapWordsAux wordBits (constants.length + 1) constants
+
+def wordStackLiveBitmap (registerCount frameSlots wordBits : Nat)
+    (live : List Nat) : List Nat :=
+  let names := live.map (fun register =>
+    frameSlots - 1 - (register / 2 - registerCount))
+  let bits := (List.range frameSlots).map (fun slot => names.contains slot)
+  wordStackBitmapWords (wordBits - 1) (bits ++ [true])
+
+def wordStackInsertBitmap (state : WordStackBitmapState)
+    (bitmap : List Nat) : WordStackBitmapState × Nat :=
+  ({ data := state.data ++ bitmap,
+      length := state.length + bitmap.length }, state.length)
+
+def wordStackBitmapWrite (config : WordStackConfig)
+    (bitmapRegister frameSlots : Nat) (state : WordStackBitmapState)
+    (live : List Nat) (registerCount wordBits : Nat) :
+    StackProg Nat × WordStackBitmapState :=
+  if frameSlots = 0 then
+    (.skip, state)
+  else
+    let bitmap := wordStackLiveBitmap registerCount frameSlots wordBits live
+    let (newState, index) := wordStackInsertBitmap state bitmap
+    (.seq (.const bitmapRegister (index + 1))
+        (.stackStore bitmapRegister (wordStackOffset config 0)), newState)
+
+def wordStackAllocWithBitmaps (config : WordStackConfig)
+    (bitmapRegister frameSlots : Nat) (state : WordStackBitmapState)
+    (live : List Nat) (registerCount wordBits : Nat) :
+    StackProg Nat × WordStackBitmapState :=
+  let (write, state) := wordStackBitmapWrite config bitmapRegister frameSlots
+    state live registerCount wordBits
+  (wordStackJoin write (.alloc 1), state)
+
+def wordStackStoreConstsWithBitmaps (config : WordStackConfig)
+    (registerCount specialScratch wordBits : Nat)
+    (storeConstsStub : Option Nat) (state : WordStackBitmapState)
+    (constants : List (Bool × Nat)) :
+    StackProg Nat × WordStackBitmapState :=
+  let bitmap := wordStackConstBitmapWords wordBits constants
+  let (newState, index) := wordStackInsertBitmap state bitmap
+  (.seq (.const specialScratch index)
+      (.storeConsts registerCount (registerCount + 1) storeConstsStub), newState)
+
 def wordStackGet (config : WordStackConfig) (destination : Nat)
     (store : WordStore α) : Option (StackProg α) := do
   let store ← wordStackStoreName store
@@ -1699,6 +1797,44 @@ def wordToStackProgNat [BEq Nat] (config : WordStackConfig) :
 termination_by program => sizeOf program
 decreasing_by all_goals decreasing_trivial
 
+/-! Stateful variant of the Word-to-Stack compiler.
+
+    The ordinary compiler above intentionally has no bitmap accumulator and
+    therefore leaves Alloc and StoreConsts unavailable.  This variant
+    follows CakeML's comp state threading for those constructors and for
+    structured sequencing.  Other leaves use the existing lowering above;
+    call-handler lowering will be migrated to this same state thread with
+    the remaining handler/FFI pass. -/
+def wordToStackProgNatWithBitmaps [BEq Nat]
+    (config : WordStackConfig) (registerCount bitmapRegister frameSlots wordBits : Nat)
+    (storeConstsStub : Option Nat) (state : WordStackBitmapState) :
+    WordProg Nat → Option (StackProg Nat × WordStackBitmapState)
+  | .seq first second => do
+      let (first, state) ← wordToStackProgNatWithBitmaps config registerCount
+        bitmapRegister frameSlots wordBits storeConstsStub state first
+      let (second, state) ← wordToStackProgNatWithBitmaps config registerCount
+        bitmapRegister frameSlots wordBits storeConstsStub state second
+      pure (.seq first second, state)
+  | .loop liveIn body liveOut => do
+      let (body, state) ← wordToStackProgNatWithBitmaps config registerCount
+        bitmapRegister frameSlots wordBits storeConstsStub state body
+      pure (.loop body, state)
+  | .mustTerminate body =>
+      wordToStackProgNatWithBitmaps config registerCount bitmapRegister frameSlots
+        wordBits storeConstsStub state body
+  | .alloc _ (_, live) =>
+      let (program, state) := wordStackAllocWithBitmaps config bitmapRegister
+        frameSlots state live registerCount wordBits
+      pure (program, state)
+  | .storeConsts _ _ _ _ constants =>
+      let (program, state) := wordStackStoreConstsWithBitmaps config registerCount
+        config.specialScratch wordBits storeConstsStub state constants
+      pure (program, state)
+  | program =>
+      (wordToStackProgNat config program).map (fun program => (program, state))
+termination_by program => sizeOf program
+decreasing_by all_goals decreasing_trivial
+
 /-! The real Word pipeline is indexed by a fixed-width bit-vector type, while
     StackProg keeps constants as natural numbers so that StackRemove can
     materialize them at the target width.  This adapter makes that boundary
@@ -1790,6 +1926,14 @@ def wordToStackProgWord [NeZero width] (config : WordStackConfig)
     (program : WordProg (Word width)) : Option (StackProg Nat) :=
   wordToStackProgNat config (wordProgToNat program)
 
+def wordToStackProgWordWithBitmaps [NeZero width]
+    (config : WordStackConfig) (registerCount bitmapRegister frameSlots : Nat)
+    (storeConstsStub : Option Nat) (state : WordStackBitmapState)
+    (program : WordProg (Word width)) :
+    Option (StackProg Nat × WordStackBitmapState) :=
+  wordToStackProgNatWithBitmaps config registerCount bitmapRegister frameSlots width
+    storeConstsStub state (wordProgToNat program)
+
 /-! Function-entry lowering for allocated Word programs.  Word calls place
     arguments in the even ABI registers beginning at x2; the allocator may
     place a formal parameter in a different register or in a spill slot.  The
@@ -1801,6 +1945,16 @@ def wordToStackFunctionWithParameters [NeZero width]
   let body ← wordToStackProgWord config program
   let parameterMoves ← wordStackMovesFromPhysical config parameters 2
   pure (wordStackJoin parameterMoves body)
+
+def wordToStackFunctionWithParametersAndBitmaps [NeZero width]
+    (config : WordStackConfig) (parameters : List Nat)
+    (registerCount bitmapRegister frameSlots : Nat) (storeConstsStub : Option Nat)
+    (state : WordStackBitmapState) (program : WordProg (Word width)) :
+    Option (StackProg Nat × WordStackBitmapState) := do
+  let (body, state) ← wordToStackProgWordWithBitmaps config registerCount
+    bitmapRegister frameSlots storeConstsStub state program
+  let parameterMoves ← wordStackMovesFromPhysical config parameters 2
+  pure (wordStackJoin parameterMoves body, state)
 
 /-! Location map used by the currently register-coloured pipeline fragment.
     It is intentionally identity-based; the spill-aware allocator will
