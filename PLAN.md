@@ -906,8 +906,10 @@ definitions, pass ordering, examples, and proof obligations.
   semantic port.
 - [x] Port CakeML's non-generational (`Simple`) copying-collector StackLang
   body and expose a runtime-backed Nat section compiler. The generated code
-  still needs the machine-level heap/bitmap simulation proof.
-- [ ] Port the collector machine semantics and simulation theorem, and add
+  now has a fuel-bounded executable StackLang machine boundary and concrete
+  zero-heap and forwarding-pointer execution regressions; the full
+  heap/bitmap simulation theorem remains.
+- [ ] Prove the collector machine semantics and simulation theorem, and add
   generational support if it is needed by a selected target configuration.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state
   accumulator for Word-to-Stack Alloc/StoreConsts, including sequential

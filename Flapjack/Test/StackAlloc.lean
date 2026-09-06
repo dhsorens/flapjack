@@ -1,5 +1,6 @@
 import Flapjack.RiscV.Lab
 import Flapjack.StackAlloc.Runtime
+import Flapjack.StackAlloc.Machine
 
 namespace Flapjack
 
@@ -81,5 +82,41 @@ example :
         some (77, stackGcSimpleStub stackGcTestConfig) := by
   simp [stackAllocCompileWithSimpleGc, stackAllocSimpleStubs,
     stackAllocTestConfig]
+
+def zeroStackMachineState : RiscV.WordStackMachineState 64 :=
+  { registers := fun _ => 0
+    stack := fun _ => 0
+    stores := fun _ => 0
+    memory := fun _ => 0
+    sharedMemory := fun _ => 0 }
+
+example :
+    (evalStackProgFuel 4 zeroStackMachineState
+      (.seq (.const 1 7) (.set .allocSize 1) : StackProg Nat)).isSome := by
+  native_decide
+
+example :
+    (evalStackProgFuel 3000 zeroStackMachineState
+      (stackGcSimpleCode stackGcTestConfig)).isSome := by
+  native_decide
+
+example :
+    stackGcSimpleZeroObservation
+      (evalStackProgFuel 3000 zeroStackMachineState
+        (stackGcSimpleCode stackGcTestConfig)) = true := by
+  native_decide
+
+def forwardedPointerState : RiscV.WordStackMachineState 64 :=
+  { registers := fun register => if register = 5 then 2 else 0
+    stack := fun _ => 0
+    stores := fun store => if store = .currHeap then 0 else 0
+    memory := fun address => if address = 0 then 3 else 0
+    sharedMemory := fun _ => 0 }
+
+example :
+    stackMachineNormalRegisterEquals
+      (evalStackProgFuel 500 forwardedPointerState
+        (stackGcMoveCode stackGcTestConfig)) 5 2 = true := by
+  native_decide
 
 end Flapjack
