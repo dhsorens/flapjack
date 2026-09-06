@@ -1061,11 +1061,13 @@ definitions, pass ordering, examples, and proof obligations.
   explicit fixed-width copied-value correspondence.
 - [x] Align the machine MoveLoop termination condition with the Nat
   `scan != destination` condition under explicit word-width bounds.
-- [x] Prove the bounded machine transition for a non-code MoveLoop header,
+- [x] Prove the bounded machine transition for a code-object MoveLoop header,
   covering header load, length decoding, object-size scan advance, and the
   destination update without unfolding the nested MoveList loop.
 - [x] Isolate the true-test MoveLoop code-header prefix as a bounded machine
   transition, leaving the nested MoveList execution as an explicit handoff.
+- [x] Specialize the bounded frame-loop induction to `stackGcMoveLoopCode`,
+  exposing per-iteration body transitions and final scan termination.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
