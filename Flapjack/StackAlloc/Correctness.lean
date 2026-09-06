@@ -466,6 +466,34 @@ theorem stackGcNatMoveList_nextScan
       simp [stackGcNatMoveList, ih, Nat.succ_mul, Nat.add_assoc,
         Nat.add_comm, Nat.add_left_comm]
 
+theorem stackGcNatMoveLoop_code_step
+    (config : StackGcConfig) (fuel scan index destination oldBase : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool) (condition : Bool)
+    (hscan : scan ≠ destination)
+    (hcode : stackGcNatHeaderHasCode (memory scan) = true) :
+    stackGcNatMoveLoop config (fuel + 1) scan index destination oldBase
+        memory domain condition =
+      stackGcNatMoveLoop config fuel
+        (scan + (stackGcNatDecodeLength config (memory scan) + 1) *
+          config.bytesInWord)
+        index destination oldBase memory domain (condition && domain scan) := by
+  simp [stackGcNatMoveLoop, hscan, hcode]
+
+theorem stackGcNatMoveLoop_data_step
+    (config : StackGcConfig) (fuel scan index destination oldBase : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool) (condition : Bool)
+    (hscan : scan ≠ destination)
+    (hcode : stackGcNatHeaderHasCode (memory scan) ≠ true) :
+    let moved := stackGcNatMoveList config
+      (stackGcNatDecodeLength config (memory scan))
+      (scan + config.bytesInWord) index destination oldBase memory domain
+    stackGcNatMoveLoop config (fuel + 1) scan index destination oldBase
+        memory domain condition =
+      stackGcNatMoveLoop config fuel moved.nextScan moved.nextIndex
+        moved.nextAddress oldBase moved.memory domain
+        (condition && domain scan && moved.condition) := by
+  simp [stackGcNatMoveLoop, hscan, hcode, Bool.and_assoc]
+
 theorem stackGcNatMoveLoop_zero
     (config : StackGcConfig) (scan index destination oldBase : Nat)
     (memory : Nat → Nat) (domain : Nat → Bool) :
