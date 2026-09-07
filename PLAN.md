@@ -575,6 +575,9 @@ definitions, pass ordering, examples, and proof obligations.
   slot, while retaining the architectural locations of ABI source names.
 - [x] Expose fixed-source function-level contracts for ABI parameter
   preservation and renamed formal-parameter location coverage.
+- [x] Align the executable Word clash tree with CakeML’s source equations for
+  calls, return continuations, allocation, constant storage, install, and FFI
+  live sets, with structural regressions for each corrected case.
 - [x] Expose a graph-backed Word-to-Stack pipeline that consumes the complete
   full-SSA entry-inclusive function program.
 - [x] Expose the corresponding ABI-correct spill-backed Word-to-Stack pipeline
