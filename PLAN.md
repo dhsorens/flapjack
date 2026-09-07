@@ -565,6 +565,8 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Prove that a successful Word-to-Stack move preserves every unrelated
   spilled or register-backed value under explicit scratch and destination
   non-alias conditions.
+- [x] Package unrelated-value preservation as a reusable location-indexed
+  Word-to-Stack state relation for subsequent spill-aware instruction proofs.
 - [x] Expose soundness of the entry-aware SSA spill allocator, including its
   clash, special-location, and clash-tree checks.
 - [x] Expose location coverage for every variable in the entry-aware SSA spill

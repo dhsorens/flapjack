@@ -12,6 +12,26 @@ not the scratch register used by stack moves.
 
 namespace Flapjack.RiscV
 
+/-! A location-indexed observation of the values represented by a Word-to-Stack
+    state.  The relation is intentionally one-way: later compiler passes may
+    carry additional machine data that is not part of the source value map. -/
+def wordStackMappedValues [NeZero width] (config : WordStackConfig)
+    (values : Nat → Option (Word width))
+    (state : WordStackMachineState width) : Prop :=
+  ∀ name value location,
+    values name = some value →
+    wordStackLocation config name = some location →
+    wordStackMachineValue config state name = some value
+
+def wordStackMappedValuesExcept [NeZero width] (config : WordStackConfig)
+    (destination : Nat) (values : Nat → Option (Word width))
+    (state : WordStackMachineState width) : Prop :=
+  ∀ name value location,
+    name ≠ destination →
+    values name = some value →
+    wordStackLocation config name = some location →
+    wordStackMachineValue config state name = some value
+
 theorem evalWordStackMachine_move_preserves_other_value [NeZero width]
     (config : WordStackConfig) (state final : WordStackMachineState width)
     (destination source other : Nat)
@@ -42,5 +62,40 @@ theorem evalWordStackMachine_move_preserves_other_value [NeZero width]
   all_goals
     cases heval
     simp_all
+
+theorem evalWordStackMachine_move_preserves_unrelated_values [NeZero width]
+    (config : WordStackConfig) (state final : WordStackMachineState width)
+    (destination source : Nat) (destinationLocation sourceLocation : WordLocation)
+    (values : Nat → Option (Word width))
+    (hdestination : wordStackLocation config destination =
+      some destinationLocation)
+    (hsource : wordStackLocation config source = some sourceLocation)
+    (hdestination_scratch :
+      destinationLocation ≠ .register config.scratch)
+    (hsource_scratch : sourceLocation ≠ .register config.scratch)
+    (hvalues : wordStackMappedValues config values state)
+    (hnoalias : ∀ name value location,
+      name ≠ destination →
+      values name = some value →
+      wordStackLocation config name = some location →
+      location ≠ destinationLocation)
+    (hno_scratch : ∀ name value location,
+      name ≠ destination →
+      values name = some value →
+      wordStackLocation config name = some location →
+      location ≠ .register config.scratch)
+    (heval : (wordStackMove (α := Nat) config destination source).bind
+      (evalWordStackMachine state) = some final) :
+    wordStackMappedValuesExcept config destination values final := by
+  intro name value location hname hvalue hlocation
+  have hstateValue := hvalues name value location hvalue hlocation
+  have hpreserved := evalWordStackMachine_move_preserves_other_value
+    config state final destination source name destinationLocation
+    sourceLocation location hdestination hsource hlocation
+    hdestination_scratch hsource_scratch
+    (hnoalias name value location hname hvalue hlocation)
+    (hno_scratch name value location hname hvalue hlocation) heval
+  rw [hpreserved]
+  exact hstateValue
 
 end Flapjack.RiscV
