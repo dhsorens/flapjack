@@ -515,4 +515,41 @@ theorem wordToStackProgNatWithBitmapBuilder_call_handler
         finalState) := by
   simp [wordToStackProgNatWithBitmapBuilder, hargs, hreturn, hhandler]
 
+/-! The state-threaded compiler has no special bitmap effect for an FFI
+    instruction.  Its lowering equation therefore returns the original
+    accumulator while exposing the same four-move ABI prefix as the
+    stateless compiler. -/
+
+theorem wordToStackProgNatWithBitmapBuilder_ffi
+    [BEq Nat] (config : WordStackConfig)
+    (bitmapBuilder : List Nat → List Nat)
+    (registerCount bitmapRegister frameSlots wordBits : Nat)
+    (storeConstsStub : Option Nat) (state : WordStackBitmapState)
+    (function : FunName)
+    (configuration configurationLength array arrayLength : Nat)
+    (live : List Nat × List Nat)
+    (configurationMove configurationLengthMove arrayMove arrayLengthMove :
+      StackProg Nat)
+    (hsafe : wordStackFfiSourcesSafe config
+      [configuration, configurationLength, array, arrayLength] = true)
+    (hconfigurationMove : wordStackFfiMove config configuration 10 =
+      some configurationMove)
+    (hconfigurationLengthMove :
+      wordStackFfiMove config configurationLength 11 =
+        some configurationLengthMove)
+    (harrayMove : wordStackFfiMove config array 12 = some arrayMove)
+    (harrayLengthMove : wordStackFfiMove config arrayLength 13 =
+      some arrayLengthMove) :
+    wordToStackProgNatWithBitmapBuilder config bitmapBuilder registerCount
+      bitmapRegister frameSlots wordBits storeConstsStub state
+      (.ffi function configuration configurationLength array arrayLength live) =
+      some (wordStackJoin configurationMove
+        (wordStackJoin configurationLengthMove
+          (wordStackJoin arrayMove
+            (wordStackJoin arrayLengthMove
+              (.ffi function 10 11 12 13 0)))), state) := by
+  simp [wordToStackProgNatWithBitmapBuilder, wordToStackProgNat, wordStackFfi, hsafe,
+    hconfigurationMove, hconfigurationLengthMove, harrayMove,
+    harrayLengthMove]
+
 end Flapjack.RiscV
