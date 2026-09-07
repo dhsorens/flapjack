@@ -256,4 +256,23 @@ theorem compileProg_return [BEq α] [OfNat α 0] [Add α]
     compileProg context (.return value) = .return (compileExp context value).1 := by
   simp [compileProg]
 
+theorem compileProg_extCall_of_compiled [BEq α] [OfNat α 0] [Add α]
+    (context : CompileContext α) (function : FunName)
+    (configuration configurationLength array arrayLength : Exp α)
+    (configuration' configurationLength' array' arrayLength' : CrepExp α)
+    (hconfiguration : firstCompiledExp context configuration = some configuration')
+    (hconfigurationLength :
+      firstCompiledExp context configurationLength = some configurationLength')
+    (harray : firstCompiledExp context array = some array')
+    (harrayLength : firstCompiledExp context arrayLength = some arrayLength') :
+    compileProg context
+        (.extCall function configuration configurationLength array arrayLength) =
+      nestedDecs [context.maxVar + 1, context.maxVar + 2,
+        context.maxVar + 3, context.maxVar + 4]
+        [configuration', configurationLength', array', arrayLength']
+        (.extCall function (context.maxVar + 1) (context.maxVar + 2)
+          (context.maxVar + 3) (context.maxVar + 4)) := by
+  simp [compileProg, hconfiguration, hconfigurationLength, harray, harrayLength,
+    nestedDecs]
+
 end Flapjack

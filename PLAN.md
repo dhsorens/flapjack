@@ -1078,6 +1078,8 @@ definitions, pass ordering, examples, and proof obligations.
   state-threading and fixed-width regression tests.
 - [x] Add the recursive word/Nat bitmap-table relation and prove lookup
   preservation for bounded frame-machine bitmap loads.
+- [x] Connect the bounded frame-machine bitmap-load result directly to the
+  corresponding Nat bitmap-table lookup under that machine/Nat relation.
 - [x] Bridge the immediate one-word machine MoveList evaluator to the Nat
   semantics for its moved value, scan pointer, count register, and stored
   memory projection.
@@ -1231,6 +1233,10 @@ definitions, pass ordering, examples, and proof obligations.
   through the subsequent heap scan loop.
 - [x] Prove the one-iteration pointer-free `MoveBitmap` transition, including
   descriptor shifting, scan-pointer advancement, and loop termination.
+- [x] Expose exact `extCall` lowering with four fresh temporaries under
+  successful expression compilation witnesses.
+- [x] Prove the fuel-bounded full-Crepe `extCall` execution rule, threading
+  decoded local arguments through the abstract FFI handler.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
