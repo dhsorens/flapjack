@@ -44,6 +44,8 @@ import Flapjack.RiscV.CorrectnessBinarySpill
 import Flapjack.Test.BinarySpillRelation
 import Flapjack.RiscV.CorrectnessShiftSpill
 import Flapjack.Test.ShiftSpillRelation
+import Flapjack.RiscV.CorrectnessLoadSpill
+import Flapjack.Test.LoadSpillRelation
 
 /-!
 # Flapjack regression tests
