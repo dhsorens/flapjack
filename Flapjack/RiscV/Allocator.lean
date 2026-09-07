@@ -546,23 +546,8 @@ def wordSsaFindLoopFrame : Nat → List WordSsaLoopFrame →
   | 0, frame :: _ => some frame
   | label, _ :: frames => wordSsaFindLoopFrame (label - 1) frames
 
-mutual
-  def wordSsaRenameCallHandler (frames : List WordSsaLoopFrame)
-      (incoming normalState : WordSsaState) (exception : Nat)
-      : WordProg α → WordSsaState × Nat × WordProg α
-    | body =>
-        let handlerSeed := { incoming with next := normalState.next }
-        let (handlerSeed, exceptionName) := wordSsaFresh handlerSeed exception
-        let (handlerState, body) :=
-          wordSsaRenameProgramWithLoops frames handlerSeed body
-        let moves := wordSsaReconcileTo handlerState normalState
-          (wordSsaKeys normalState)
-        (handlerState, exceptionName, wordSsaSeq body moves)
-  termination_by body => sizeOf body + 1
-  decreasing_by all_goals decreasing_trivial
-
-  def wordSsaRenameProgramWithLoops (frames : List WordSsaLoopFrame)
-      (state : WordSsaState) : WordProg α → WordSsaState × WordProg α
+def wordSsaRenameProgramWithLoops (frames : List WordSsaLoopFrame)
+    (state : WordSsaState) : WordProg α → WordSsaState × WordProg α
     | .skip => (state, .skip)
     | .move priority moves =>
         wordSsaRenameMove state priority moves
@@ -638,6 +623,14 @@ mutual
         let moveArguments := .move 0 (abiArguments.zip arguments)
         (state, wordSsaSeq moveArguments
           (.call none target abiArguments none))
+    | .call none target arguments
+        (some (exception, body, handlerLabel, handlerEntryLabel)) =>
+        let arguments := arguments.map (wordSsaRead state)
+        let abiArguments := wordSsaCallAbiRegisters 0 arguments.length
+        let moveArguments := .move 0 (abiArguments.zip arguments)
+        (state, wordSsaSeq moveArguments
+          (.call none target abiArguments
+            (some (exception, body, handlerLabel, handlerEntryLabel))))
     | .call (some (destinations, cutsets, returnCode, returnLabel, entryLabel))
         target arguments none =>
         let names := (cutsets.1 ++ cutsets.2).eraseDups
@@ -661,14 +654,43 @@ mutual
           (wordSsaSeq moveArguments
             (.call (some (abiReturns, stackCutsets, returnHandler,
               returnLabel, entryLabel)) target abiArguments none)))
-    | .call returns target arguments (some (exception, body, handlerLabel, entryLabel)) =>
-        let incoming := state
+    | .call (some (destinations, cutsets, returnCode, returnLabel, entryLabel))
+        target arguments (some (exception, body, handlerLabel, handlerEntryLabel)) =>
+        let names := (cutsets.1 ++ cutsets.2).eraseDups
+        let (stackState, stackNext, stackMove) :=
+          wordSsaListNextVarRenameMove state (state.next + 2) names
+        let stackCutsets := wordSsaReadCutsets stackState cutsets
+        let cutState := wordSsaRestrict stackState names
         let arguments := arguments.map (wordSsaRead state)
-        let (normalState, returns) := wordSsaRenameReturns state returns
-        let (handlerState, exception, body) :=
-          wordSsaRenameCallHandler frames incoming normalState exception body
-        ({ normalState with next := handlerState.next },
-          .call returns target arguments (some (exception, body, handlerLabel, entryLabel)))
+        let abiArguments := wordSsaCallAbiRegisters 1 arguments.length
+        let moveArguments := .move 0 (abiArguments.zip arguments)
+        let (restoreState, _, restoreMove) :=
+          wordSsaListNextVarRenameMove cutState (stackNext + 2) names
+        let (returnState, destinations) :=
+          wordSsaFreshList restoreState destinations
+        let (returnState, returnCode) :=
+          wordSsaRenameProgramWithLoops frames returnState returnCode
+        let abiReturns := wordSsaCallAbiRegisters 1 destinations.length
+        let returnMove := .move 0 (destinations.zip abiReturns)
+        let returnHandler := wordSsaSeq restoreMove
+          (wordSsaSeq returnMove returnCode)
+        let exceptionSeed := { restoreState with next := returnState.next }
+        let (exceptionState, exceptionName) :=
+          wordSsaFresh exceptionSeed exception
+        let (exceptionState, body) :=
+          wordSsaRenameProgramWithLoops frames exceptionState body
+        let exceptionHandler := wordSsaSeq restoreMove
+          (wordSsaSeq (.move 0 [(exceptionName, 2)]) body)
+        let names := wordSsaBranchNames restoreState returnState exceptionState
+        let (state, returnMoves, exceptionMoves) :=
+          wordSsaReconcile names returnState exceptionState exceptionState.next
+        let returnHandler := wordSsaSeq returnHandler returnMoves
+        let exceptionHandler := wordSsaSeq exceptionHandler exceptionMoves
+        (state, wordSsaSeq stackMove
+          (wordSsaSeq moveArguments
+            (.call (some (abiReturns, stackCutsets, returnHandler,
+              returnLabel, entryLabel)) target abiArguments
+              (some (2, exceptionHandler, handlerLabel, handlerEntryLabel)))))
     | .alloc destination cutsets =>
         let cutsets := wordSsaReadCutsets state cutsets
         let (state, destination) := wordSsaFresh state destination
@@ -727,7 +749,7 @@ mutual
             (wordSsaSeq elseBranch elseMoves))
   termination_by program => sizeOf program
   decreasing_by all_goals decreasing_trivial
-end
+
 def wordSsaRenameProgram (state : WordSsaState) (program : WordProg α) :
     WordSsaState × WordProg α :=
   wordSsaRenameProgramWithLoops [] state program

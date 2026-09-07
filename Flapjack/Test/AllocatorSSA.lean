@@ -87,16 +87,30 @@ example :
         ({ current := [(1, 100)], next := 200 } : WordSsaState)
         ((.call (some ([2], ([1], []), .skip, 0, 0)) (some 7) [1]
           (some (3, .assign 4 (.var 1), 0, 0)) : WordProg Nat)) =
-        ({ current := [(2, 200), (1, 100)], next := 212 },
-        .call (some ([200], ([100], []), .skip, 0, 0)) (some 7) [100]
-          (some (204,
-            .seq (.assign 208 (.var 100))
-              (.assign 200 (.var 2)), 0, 0))) := by
+        ({ current := [(1, 208), (2, 224), (4, 228), (3, 232)], next := 236 },
+        .seq (.move 0 [(202, 100)])
+          (.seq (.move 0 [(2, 100)])
+            (.call (some ([2], ([202], []),
+              .seq
+                (.seq (.move 0 [(208, 202)]) (.move 0 [(212, 2)]))
+                (.seq (.assign 224 (.var 212))
+                  (.seq (.assign 228 (.var 4))
+                    (.assign 232 (.var 3)))), 0, 0))
+              (some 7) [2]
+              (some (2,
+                .seq
+                  (.seq (.move 0 [(208, 202)])
+                    (.seq (.move 0 [(216, 2)])
+                      (.assign 220 (.var 208))))
+                  (.seq (.assign 224 (.var 2))
+                    (.seq (.assign 228 (.var 220))
+                      (.assign 232 (.var 216)))), 0, 0))))) := by
   simp [wordSsaRenameProgram, wordSsaRenameProgramWithLoops,
-    wordSsaRenameCallHandler, wordSsaRenameReturns, wordSsaReadCutsets,
-    wordSsaFreshList,
+    wordSsaListNextVarRenameMove, wordSsaCallAbiRegisters,
+    wordSsaReadCutsets, wordSsaRestrict, wordSsaFreshList,
     wordSsaFresh, wordSsaRenameExp, wordSsaRead, wordSsaKeys,
-    wordSsaReconcileTo, wordSsaSeq, lookupNatInfo]
+    wordSsaBranchNames, wordSsaReconcile, wordSsaSeq, lookupNatInfo,
+    List.eraseDups, List.eraseDupsBy, List.eraseDupsBy.loop]
 
 example :
     let originalState :=
