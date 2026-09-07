@@ -540,6 +540,24 @@ def wordSsaRefreshList (state : WordSsaState) : List Nat →
 termination_by names => sizeOf names
 decreasing_by all_goals decreasing_trivial
 
+def wordSsaFakeMoves : List Nat → WordProg α
+  | [] => .skip
+  | name :: names =>
+      wordSsaSeq (.move 0 [(name, 0)]) (wordSsaFakeMoves names)
+
+def wordSsaLoopSetup (state : WordSsaState)
+    (liveIn liveOut : List Nat) : WordSsaState × WordProg α :=
+  let names := (liveIn ++ liveOut).eraseDups
+  let extend := names.filter (fun name =>
+    (lookupNatInfo name state.current).isNone)
+  let refresh := names.filter (fun name =>
+    (lookupNatInfo name state.current).isSome)
+  let (state, freshNames) := wordSsaFreshList state extend
+  let fakeMoves := wordSsaFakeMoves freshNames
+  let (state, _, refreshMove) :=
+    wordSsaListNextVarRenameMove state state.next refresh
+  (state, wordSsaSeq fakeMoves refreshMove)
+
 def wordSsaFindLoopFrame : Nat → List WordSsaLoopFrame →
     Option WordSsaLoopFrame
   | _, [] => none
@@ -569,10 +587,14 @@ def wordSsaRenameProgramWithLoops (frames : List WordSsaLoopFrame)
         (state, .store (wordSsaRenameExp state address) (wordSsaRead state value))
     | .set store value =>
         (state, .set store (wordSsaRenameExp state value))
-    | .raise exception =>
-        (state, .raise (wordSsaRead state exception))
     | .return label values =>
-        (state, .return label (values.map (wordSsaRead state)))
+        let values := values.map (wordSsaRead state)
+        let abiValues := wordSsaCallAbiRegisters 1 values.length
+        (state, wordSsaSeq (.move 0 (abiValues.zip values))
+          (.return (wordSsaRead state label) abiValues))
+    | .raise exception =>
+        let exception := wordSsaRead state exception
+        (state, wordSsaSeq (.move 0 [(2, exception)]) (.raise 2))
     | .tick => (state, .tick)
     | .break label =>
         match wordSsaFindLoopFrame label frames with
@@ -692,24 +714,48 @@ def wordSsaRenameProgramWithLoops (frames : List WordSsaLoopFrame)
               returnLabel, entryLabel)) target abiArguments
               (some (2, exceptionHandler, handlerLabel, handlerEntryLabel)))))
     | .alloc destination cutsets =>
-        let cutsets := wordSsaReadCutsets state cutsets
-        let (state, destination) := wordSsaFresh state destination
-        (state, .alloc destination cutsets)
-    | .storeConsts source bitmap codeLength dataLength constants =>
-        (state, .storeConsts (wordSsaRead state source)
-          (wordSsaRead state bitmap) (wordSsaRead state codeLength)
-          (wordSsaRead state dataLength) constants)
+        let names := (cutsets.1 ++ cutsets.2).eraseDups
+        let (stackState, stackNext, stackMove) :=
+          wordSsaListNextVarRenameMove state (state.next + 2) names
+        let stackCutsets := wordSsaReadCutsets stackState cutsets
+        let destination := wordSsaRead stackState destination
+        let cutState := wordSsaRestrict stackState names
+        let (state, _, restoreMove) :=
+          wordSsaListNextVarRenameMove cutState (stackNext + 2) names
+        (state, wordSsaSeq stackMove
+          (wordSsaSeq (.move 0 [(2, destination)])
+            (wordSsaSeq (.alloc 2 stackCutsets) restoreMove)))
+    | .storeConsts _source _bitmap codeLength dataLength constants =>
+        let codeLengthValue := wordSsaRead state codeLength
+        let dataLengthValue := wordSsaRead state dataLength
+        let (state, dataLength) := wordSsaFresh state dataLength
+        let (state, codeLength) := wordSsaFresh state codeLength
+        (state, wordSsaSeq (.move 0
+            [(4, codeLengthValue), (6, dataLengthValue)])
+          (wordSsaSeq (.storeConsts 0 2 4 6 constants)
+            (.move 0 [(codeLength, 4), (dataLength, 6)])))
     | .opCurrHeap operator destination source =>
         let source := wordSsaRead state source
         let (state, destination) := wordSsaFresh state destination
         (state, .opCurrHeap operator destination source)
     | .install codeBuffer codeLength dataBuffer dataLength cutsets =>
-        let cutsets := wordSsaReadCutsets state cutsets
-        let codeBuffer := wordSsaRead state codeBuffer
-        let codeLength := wordSsaRead state codeLength
-        let dataBuffer := wordSsaRead state dataBuffer
-        let dataLength := wordSsaRead state dataLength
-        (state, .install codeBuffer codeLength dataBuffer dataLength cutsets)
+        let names := (cutsets.1 ++ cutsets.2).eraseDups
+        let (stackState, stackNext, stackMove) :=
+          wordSsaListNextVarRenameMove state (state.next + 2) names
+        let stackCutsets := wordSsaReadCutsets stackState cutsets
+        let codeBuffer := wordSsaRead stackState codeBuffer
+        let codeLength := wordSsaRead stackState codeLength
+        let dataBuffer := wordSsaRead stackState dataBuffer
+        let dataLength := wordSsaRead stackState dataLength
+        let cutState := wordSsaRestrict stackState names
+        let (pointerState, pointer) :=
+          wordSsaFresh { cutState with next := stackNext + 2 } codeBuffer
+        let (state, _, restoreMove) :=
+          wordSsaListNextVarRenameMove pointerState pointerState.next names
+        (state, wordSsaSeq stackMove
+          (wordSsaSeq (.move 0 [(2, codeBuffer), (4, codeLength)])
+            (wordSsaSeq (.install 2 4 dataBuffer dataLength stackCutsets)
+              (wordSsaSeq (.move 0 [(pointer, 2)]) restoreMove))))
     | .codeBufferWrite address value =>
         (state, .codeBufferWrite (wordSsaRead state address)
           (wordSsaRead state value))
@@ -717,8 +763,7 @@ def wordSsaRenameProgramWithLoops (frames : List WordSsaLoopFrame)
         (state, .dataBufferWrite (wordSsaRead state address)
           (wordSsaRead state value))
     | .loop liveIn body liveOut =>
-        let names := (liveIn ++ liveOut).eraseDups
-        let (setupState, setup) := wordSsaRefreshList state names
+        let (setupState, setup) := wordSsaLoopSetup state liveIn liveOut
         let entryState := wordSsaRestrict setupState liveIn
         let exitState := wordSsaRestrict setupState liveOut
         let frame := WordSsaLoopFrame.mk entryState exitState

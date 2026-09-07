@@ -1045,6 +1045,16 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Port the returned-call exception-handler SSA boundary, including
   ABI return copies and explicit reconciliation of normal and exceptional
   handler states.
+- [x] Match CakeML's loop SSA setup by separating fresh live names from
+  refreshed names and zero-initializing newly introduced names.
+- [x] Port CakeML's cut-set-aware SSA allocation boundary, including ABI
+  size marshalling and post-allocation cut-set restoration.
+- [x] Port CakeML's SSA Raise and Return ABI equations, moving exceptions and
+  result values through the fixed return register sequence.
+- [x] Port CakeML's SSA Install boundary, including code-pointer/length ABI
+  marshalling and post-install pointer/cut-set restoration.
+- [x] Port CakeML's SSA StoreConsts boundary, including code/data length ABI
+  marshalling and fresh result restoration.
 - [x] Marshal allocated Word call arguments into the even-numbered ABI
   registers before StackLang call-frame construction, for both handler-free
   and handler-aware calls.

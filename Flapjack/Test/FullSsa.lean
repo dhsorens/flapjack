@@ -7,14 +7,16 @@ namespace Flapjack
 example :
     wordSsaRenameFunctionWithEntry [2, 3]
         (.return 0 [2, 3] : WordProg Nat) =
-      ({ current := [(3, 9), (2, 5)], next := 13 },
+        ({ current := [(3, 9), (2, 5)], next := 13 },
         [5, 9],
-        .seq (.move 1 [(5, 2), (9, 3)]) (.return 0 [5, 9])) := by
+        .seq (.move 1 [(5, 2), (9, 3)])
+          (.seq (.move 0 [(2, 5), (4, 9)]) (.return 0 [2, 4]))) := by
+  have hAbi : wordSsaCallAbiRegisters 1 2 = [2, 4] := by rfl
   simp [wordSsaRenameFunctionWithEntry, wordSsaEntryMove,
     wordSsaRenameFunction, wordSsaSetupParameters, wordSsaLimitVar,
     wordListMaximum, wordProgVariables, wordProgReadVars, wordProgWriteVars,
     wordSsaRenameProgram, wordSsaRenameProgramWithLoops, wordSsaRead,
-    wordSsaFreshList, wordSsaFresh, lookupNatInfo]
+    wordSsaFreshList, wordSsaFresh, wordSsaSeq, hAbi, lookupNatInfo]
 
 example :
     (wordSsaEntryMove [2, 3] [5, 9] : WordProg Nat) =

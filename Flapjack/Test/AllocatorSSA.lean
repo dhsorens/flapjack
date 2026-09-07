@@ -66,9 +66,11 @@ example :
         ({ current := [(2, 100)], next := 200 } : WordSsaState)
         ((.seq (.locValue 3 2) (.return 0 [3])) : WordProg Nat) =
         ({ current := [(3, 200), (2, 100)], next := 204 },
-        .seq (.locValue 200 100) (.return 0 [200])) := by
+        .seq (.locValue 200 100)
+          (.seq (.move 0 [(2, 200)]) (.return 0 [2]))) := by
   simp [wordSsaRenameProgram, wordSsaRenameProgramWithLoops,
-    wordSsaFresh, wordSsaRead, lookupNatInfo]
+    wordSsaCallAbiRegisters, wordSsaFresh, wordSsaRead, wordSsaSeq,
+    lookupNatInfo]
 
 example :
     wordProgReadVars
@@ -144,10 +146,76 @@ example :
           WordProg Nat)).1 =
       { current := [(1, 200)], next := 204 } := by
   simp [wordSsaRenameProgram, wordSsaRenameProgramWithLoops,
-    wordSsaRefreshList, wordSsaRestrict, wordSsaFresh,
+    wordSsaLoopSetup, wordSsaFakeMoves, wordSsaListNextVarRenameMove,
+    wordSsaFreshList, wordSsaRestrict, wordSsaFresh,
     wordSsaFindLoopFrame, wordSsaReconcileTo, wordSsaRead,
     wordSsaSeq, lookupNatInfo, List.eraseDups, List.eraseDupsBy,
     List.eraseDupsBy.loop]
+
+example :
+    wordSsaRenameProgram
+        ({ current := [(3, 100)], next := 200 } : WordSsaState)
+      ((.raise 3 : WordProg Nat)) =
+      ({ current := [(3, 100)], next := 200 },
+        .seq (.move 0 [(2, 100)]) (.raise 2)) := by
+  simp [wordSsaRenameProgram, wordSsaRenameProgramWithLoops,
+    wordSsaRead, wordSsaSeq, lookupNatInfo]
+
+example :
+    wordSsaRenameProgram
+        ({ current := [(1, 100), (2, 104), (3, 108), (4, 112)], next := 200 } :
+          WordSsaState)
+      ((.install 1 2 3 4 ([1], [2]) : WordProg Nat)) =
+      ({ current := [(2, 220), (1, 216), (202, 212)], next := 224 },
+        .seq (.move 0 [(202, 100), (206, 104)])
+          (.seq (.move 0 [(2, 202), (4, 206)])
+            (.seq (.install 2 4 108 112 ([202], [206]))
+              (.seq (.move 0 [(212, 2)])
+                (.move 0 [(216, 202), (220, 206)]))))) := by
+  simp [wordSsaRenameProgram, wordSsaRenameProgramWithLoops,
+    wordSsaListNextVarRenameMove, wordSsaReadCutsets, wordSsaRestrict,
+    wordSsaFreshList, wordSsaFresh, wordSsaRead, wordSsaSeq,
+    List.eraseDups, List.eraseDupsBy, List.eraseDupsBy.loop, lookupNatInfo]
+
+example :
+    wordSsaRenameProgram
+        ({ current := [(1, 100), (2, 104), (3, 108), (4, 112)], next := 200 } :
+          WordSsaState)
+      ((.storeConsts 1 2 3 4 [] : WordProg Nat)) =
+      ({ current := [(3, 204), (4, 200), (1, 100), (2, 104)], next := 208 },
+        .seq (.move 0 [(4, 108), (6, 112)])
+          (.seq (.storeConsts 0 2 4 6 [])
+            (.move 0 [(204, 4), (200, 6)]))) := by
+  simp [wordSsaRenameProgram, wordSsaRenameProgramWithLoops,
+    wordSsaFresh, wordSsaRead, wordSsaSeq, lookupNatInfo]
+
+example :
+    wordSsaRenameProgram
+        ({ current := [], next := 10 } : WordSsaState)
+      ((.loop [1] (.break 0) []) : WordProg Nat) =
+      ({ current := [], next := 14 },
+        .seq (.seq (.move 0 [(10, 0)]) (.move 0 []))
+          (.loop [10] (.break 0) [])) := by
+  simp [wordSsaRenameProgram, wordSsaRenameProgramWithLoops,
+    wordSsaLoopSetup, wordSsaFakeMoves, wordSsaListNextVarRenameMove,
+    wordSsaFreshList, wordSsaRestrict, wordSsaFresh,
+    wordSsaFindLoopFrame, wordSsaReconcileTo, wordSsaRead,
+    wordSsaSeq, lookupNatInfo, List.eraseDups, List.eraseDupsBy,
+    List.eraseDupsBy.loop]
+
+example :
+    wordSsaRenameProgram
+        ({ current := [(1, 100)], next := 200 } : WordSsaState)
+      ((.alloc 3 ([1], []) : WordProg Nat)) =
+      ({ current := [(1, 208)], next := 212 },
+        .seq (.move 0 [(202, 100)])
+          (.seq (.move 0 [(2, 3)])
+            (.seq (.alloc 2 ([202], []))
+              (.move 0 [(208, 202)])))) := by
+  simp [wordSsaRenameProgram, wordSsaRenameProgramWithLoops,
+    wordSsaListNextVarRenameMove, wordSsaReadCutsets, wordSsaRestrict,
+    wordSsaFreshList, wordSsaFresh, wordSsaRead, wordSsaSeq,
+    List.eraseDups, List.eraseDupsBy, List.eraseDupsBy.loop, lookupNatInfo]
 
 example :
     wordSsaRenameProgram
