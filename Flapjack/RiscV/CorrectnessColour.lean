@@ -1313,6 +1313,18 @@ inductive WordVarStraightLine (width : Nat) : WordProg (Word width) → Prop whe
       (hname31 : name ≠ 31) (hsource31 : source ≠ 31)
       (hne : name ≠ source) :
       WordVarStraightLine width (.move 1 [(name, source)])
+  | moveTwo (destinationOne sourceOne destinationTwo sourceTwo : Nat)
+      (hdestinationOne : destinationOne < 32) (hsourceOne : sourceOne < 32)
+      (hdestinationTwo : destinationTwo < 32) (hsourceTwo : sourceTwo < 32)
+      (hdestinationOne31 : destinationOne ≠ 31) (hsourceOne31 : sourceOne ≠ 31)
+      (hdestinationTwo31 : destinationTwo ≠ 31) (hsourceTwo31 : sourceTwo ≠ 31)
+      (hdestinations : destinationOne ≠ destinationTwo)
+      (hsourceOneDestinationOne : sourceOne ≠ destinationOne)
+      (hsourceOneDestinationTwo : sourceOne ≠ destinationTwo)
+      (hsourceTwoDestinationOne : sourceTwo ≠ destinationOne)
+      (hsourceTwoDestinationTwo : sourceTwo ≠ destinationTwo) :
+      WordVarStraightLine width
+        (.move 1 [(destinationOne, sourceOne), (destinationTwo, sourceTwo)])
   | assign (name source : Nat) (hname : name < 32) (hsource : source < 32) :
       WordVarStraightLine width (.assign name (.var source))
   | assignConst (name : Nat) (value : Word width) (hname : name < 32) :
@@ -1354,6 +1366,25 @@ theorem evalWordProg_wordVarStraightLine_applyColour
       exact evalWordProg_moveOne_applyColour colour valid injective colourZero
         source target hrelation name sourceName hname hsource hname31 hsource31
         (colourNoScratch name hnameLT31) (colourNoScratch sourceName hsourceLT31) hne
+  | moveTwo destinationOne sourceOne destinationTwo sourceTwo
+      hdestinationOne hsourceOne hdestinationTwo hsourceTwo
+      hdestinationOne31 hsourceOne31 hdestinationTwo31 hsourceTwo31
+      hdestinations hsourceOneDestinationOne hsourceOneDestinationTwo
+      hsourceTwoDestinationOne hsourceTwoDestinationTwo =>
+      have hdestinationOneLT31 : destinationOne < 31 := by omega
+      have hsourceOneLT31 : sourceOne < 31 := by omega
+      have hdestinationTwoLT31 : destinationTwo < 31 := by omega
+      have hsourceTwoLT31 : sourceTwo < 31 := by omega
+      exact evalWordProg_moveTwo_applyColour colour valid injective colourZero
+        source target hrelation destinationOne sourceOne destinationTwo sourceTwo
+        hdestinationOne hsourceOne hdestinationTwo hsourceTwo
+        hdestinationOne31 hsourceOne31 hdestinationTwo31 hsourceTwo31
+        (colourNoScratch destinationOne hdestinationOneLT31)
+        (colourNoScratch sourceOne hsourceOneLT31)
+        (colourNoScratch destinationTwo hdestinationTwoLT31)
+        (colourNoScratch sourceTwo hsourceTwoLT31)
+        hdestinations hsourceOneDestinationOne hsourceOneDestinationTwo
+        hsourceTwoDestinationOne hsourceTwoDestinationTwo
   | assign name sourceName hname hsource =>
       exact evalWordProg_assignVar_applyColour colour valid injective colourZero
         source target hrelation name sourceName hname hsource

@@ -531,6 +531,8 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Prove two-entry non-cyclic parallel-move coloring simulation by composing
   singleton move correspondence with the executable instruction-sequence
   evaluator.
+- [x] Integrate the two-entry move case into the reusable straight-line
+  coloring simulation induction, with an entry-shaped regression.
 - [x] Prove the reserved-x31 five-instruction rotate-right colouring boundary
   under explicit scratch non-aliasing hypotheses.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware
