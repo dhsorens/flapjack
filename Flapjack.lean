@@ -27,6 +27,7 @@ import Flapjack.RiscV.AllocatorCorrectness
 import Flapjack.RiscV.WordToStack
 import Flapjack.RiscV.Backend
 import Flapjack.RiscV.CorrectnessBackend
+import Flapjack.RiscV.CorrectnessCondition
 import Flapjack.RiscV.Calls
 import Flapjack.RiscV.CorrectnessFfi
 import Flapjack.RiscV.CorrectnessLoop

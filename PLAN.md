@@ -473,6 +473,8 @@ definitions, pass ordering, examples, and proof obligations.
   locations to the location-aware StackLang function entry point.
 - [x] Prove compositional Word-to-RISC-V correctness for the straight-line
   instruction-list fragment, including sequential code composition.
+- [x] Prove that register-based branch condition preludes preserve Word
+  comparisons and bit tests under the RISC-V zero-register invariant.
 - [x] Preserve CakeML WordLang's `MustTerminate` wrapper through Word
   semantics, SSA/clash analysis, colouring, Word-to-Stack, and RISC-V lowering,
   with focused regressions.
