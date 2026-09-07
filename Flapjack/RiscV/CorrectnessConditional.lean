@@ -108,4 +108,50 @@ theorem executeCode_conditional_single
     rw [hend]
     simp [hcondition, branch]
 
+theorem wordFunctionToRiscV_ite_assign :
+    wordFunctionToRiscV
+        ((.ite .equal 1 (.reg 2)
+          (.assign 3 (.const (1 : Word 64)))
+          (.assign 3 (.const (2 : Word 64)))) : WordProg (Word 64)) =
+      some ([.branchNe 1 2 (BitVec.ofNat 64 12), .addi 3 0 1,
+        .branchEq 0 0 (BitVec.ofNat 64 8), .addi 3 0 2], []) := by
+  simp [wordFunctionToRiscV, wordConditionOperands, wordExpToInstructions,
+    wordExpToInstruction, registerOfNat]
+
+theorem executeCode_ite_assign (state : State 64) (hpc : state.pc = 0)
+    (hzero : ZeroRegister state) :
+    (executeCode 5 0
+      [.branchNe 1 2 (BitVec.ofNat 64 12), .addi 3 0 1,
+        .branchEq 0 0 (BitVec.ofNat 64 8), .addi 3 0 2] state).map
+      (fun state => readRegister state 3) =
+      if readRegister state 1 == readRegister state 2 then
+        some (1 : Word 64)
+      else
+        some (2 : Word 64) := by
+  have hzero' : state.registers 0 = 0 := by
+    simpa [ZeroRegister, readRegister] using hzero
+  have hthen : advancesPc (.addi 3 0 (1 : Word 64)) := by
+    intro state
+    simp [execute, writeRegister, nextPc]
+  have helse : advancesPc (.addi 3 0 (2 : Word 64)) := by
+    intro state
+    simp [execute, writeRegister, nextPc]
+  have hrun := executeCode_conditional_single state .equal 1 2
+    (.addi 3 0 (1 : Word 64)) (.addi 3 0 (2 : Word 64)) hpc hthen helse
+  by_cases hcondition : readRegister state 1 = readRegister state 2
+  · have hrisc : riscVCondition state .equal 1 2 = true := by
+      simp [riscVCondition, hcondition]
+    rw [if_pos hrisc] at hrun
+    simp only [riscVBranchFalseInstruction] at hrun
+    rw [hrun]
+    simp [execute, writeRegister, readRegister, nextPc, hzero']
+    simpa [readRegister] using hcondition
+  · have hrisc : ¬riscVCondition state .equal 1 2 = true := by
+      simp [riscVCondition, hcondition]
+    rw [if_neg hrisc] at hrun
+    simp only [riscVBranchFalseInstruction] at hrun
+    rw [hrun]
+    simp [execute, writeRegister, readRegister, nextPc, hzero']
+    simpa [readRegister] using hcondition
+
 end Flapjack.RiscV
