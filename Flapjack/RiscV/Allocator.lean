@@ -1671,6 +1671,46 @@ theorem wordApplyColour_preserves_labels
     wordProgLabels (wordApplyColour colour program) = wordProgLabels program :=
   wordApplyColourPreservesLabelsAux colour program
 
+/- A clash-tree-backed allocation boundary matching CakeML's allocator shape:
+   analyze the program, allocate the resulting variables, and apply the
+   successful context colouring to the complete Word program. -/
+def wordAllocateProgramWithClashTreeAndColour (slots : List Nat)
+    (program : WordProg α) : Option (WordContext × WordProg α) :=
+  let (liveIn, edges) :=
+    wordClashTreeAnalyze (wordClashTree program []) []
+  (wordAllocateContextWithClashes
+      (slots ++ liveIn ++ wordProgVariables program) edges).map
+    (fun context => (context, wordApplyColour (wordFindVar context) program))
+
+theorem wordAllocateContextWithClashes_sound (slots : List Nat)
+    (edges : List (Nat × Nat)) (context : WordContext)
+    (halloc : wordAllocateContextWithClashes slots edges = some context) :
+    wordColouringUsesAllocatable slots.eraseDups context.vars = true ∧
+      wordColouringRespectsClashes edges context.vars = true := by
+  simp [wordAllocateContextWithClashes] at halloc
+  rcases halloc with ⟨hcheck, hcontext⟩
+  rcases hcontext with ⟨hvars, rfl⟩
+  simp [wordAllocateVarsWithClashes] at hvars
+  split at hvars <;> simp_all
+  rcases hvars with ⟨hgood, rfl⟩
+  exact hgood
+
+theorem wordAllocateProgramWithClashTreeAndColour_success
+    (slots : List Nat) (program : WordProg α)
+    (context : WordContext) (coloured : WordProg α)
+    (halloc : wordAllocateProgramWithClashTreeAndColour slots program =
+      some (context, coloured)) :
+    wordProgLabels coloured = wordProgLabels program ∧
+      wordProgBranchLabels coloured = wordProgBranchLabels program := by
+  simp [wordAllocateProgramWithClashTreeAndColour] at halloc
+  rcases halloc with ⟨hcontext, hcontextEq, hcoloured⟩
+  rcases hcoloured with ⟨hcontextEq', hcoloured⟩
+  subst context
+  subst coloured
+  constructor
+  · exact wordApplyColour_preserves_labels _ _
+  · exact wordApplyColour_preserves_branch_labels _ _
+
 theorem wordProgClashAnalysis_skip :
     wordProgClashAnalysis (.skip : WordProg α) [] = ([], []) := by
   simp [wordProgClashAnalysis, wordProgReadVars,
