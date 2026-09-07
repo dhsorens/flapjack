@@ -1379,6 +1379,8 @@ definitions, pass ordering, examples, and proof obligations.
   mapped variable, extending the per-destination FFI move contract.
 - [x] Compose the four Word-to-Stack FFI argument moves into an ABI-register
   simulation theorem, preserving the original mapped source values.
+- [x] Connect the generated Word-to-Stack FFI prefix to the FFI-aware
+  StackLang evaluator, including fuel accounting and optional host results.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 

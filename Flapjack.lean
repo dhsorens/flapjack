@@ -61,6 +61,7 @@ import Flapjack.Stack
 import Flapjack.StackAlloc
 import Flapjack.StackAlloc.Runtime
 import Flapjack.StackAlloc.Machine
+import Flapjack.RiscV.CorrectnessWordToStack
 import Flapjack.StackAlloc.FrameMachine
 import Flapjack.StackAlloc.CollectorSemantics
 import Flapjack.StackAlloc.Correctness
