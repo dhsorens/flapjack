@@ -28,6 +28,16 @@ def pipelineHandlerDeclarations : List (Decl (RiscV.Word 64)) :=
           .return (.var .local "exception")))) "raise" []),
       returnShape := .one }]
 
+def pipelineFfiDeclarations : List (Decl (RiscV.Word 64)) :=
+  [.function
+    { name := "main", inline := false, exported := true, params := [],
+      body := .extCall "sum"
+        (.const (BitVec.ofNat 64 2))
+        (.const (BitVec.ofNat 64 3))
+        (.const (BitVec.ofNat 64 4))
+        (.const (BitVec.ofNat 64 5)),
+      returnShape := .one }]
+
 def pipelineAllocatedCallDeclarations : List (Decl (RiscV.Word 64)) :=
   [.function
     { name := "id", inline := false, exported := false,
@@ -44,6 +54,12 @@ example :
     (compileFlapjackRiscVViaStack (width := 64) .rv64i
       (BitVec.ofNat 64 8) (fun value => BitVec.ofNat 64 value) []
       pipelineStackRemoveConfig pipelineStackAddDeclarations).isSome := by
+  native_decide
+
+example :
+    (compileFlapjackRiscVViaStack (width := 64) .rv64i
+      (BitVec.ofNat 64 8) (fun value => BitVec.ofNat 64 value) [("sum", 7)]
+      pipelineStackRemoveConfig pipelineFfiDeclarations).isSome := by
   native_decide
 
 example :

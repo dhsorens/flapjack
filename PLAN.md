@@ -1247,6 +1247,8 @@ definitions, pass ordering, examples, and proof obligations.
   full bitmap collector result under explicit root and loop witnesses.
 - [x] Connect handler-aware Word-to-Stack lowering to the RISC-V image,
   including function-local handler labels and the reserved raise stub.
+- [x] Exercise source `extCall` lowering through the StackLang/LabLang RISC-V
+  image with a concrete service-table regression.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
