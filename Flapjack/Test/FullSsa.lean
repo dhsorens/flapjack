@@ -43,4 +43,10 @@ example :
       some { locations := [(5, .register 7), (2, .register 2)], nextSpill := 0 } := by
   rfl
 
+example (state : WordSpillState)
+    (hstate : wordAllocateVarsWithFixedSources [2, 5] [] [] [2] = some state) :
+    lookupNatInfo 2 state.locations = some (.register 2) := by
+  exact wordAllocateVarsWithFixedSources_preserves_fixed_source
+    [2, 5] [] [] [2] state hstate 2 (by simp)
+
 end Flapjack

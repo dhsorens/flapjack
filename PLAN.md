@@ -558,6 +558,8 @@ definitions, pass ordering, examples, and proof obligations.
   retaining entry moves in its locations, preferences, and returned program.
 - [x] Pin full-SSA ABI source names to their architectural registers in the
   spill allocator before lowering entry moves.
+- [x] Prove that seeded full-SSA ABI source locations are preserved by the
+  spill allocation worklist.
 - [x] Expose a graph-backed Word-to-Stack pipeline that consumes the complete
   full-SSA entry-inclusive function program.
 - [x] Expose the corresponding ABI-correct spill-backed Word-to-Stack pipeline
