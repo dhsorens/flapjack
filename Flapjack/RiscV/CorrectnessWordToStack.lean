@@ -1276,6 +1276,39 @@ theorem wordToStackProgNatWithBitmapBuilder_mustTerminate
       some (bodyCode, finalState) := by
   simpa [wordToStackProgNatWithBitmapBuilder] using hbody
 
+theorem evalStackProgFuelWithCodeAndFfi_wordToStackProgNatWithBitmapBuilder_mustTerminate
+    [BEq Nat] [NeZero width] (host : StackMachineFfiHandler width)
+    (fuel : Nat) (code : Nat → Option (StackProg Nat))
+    (config : WordStackConfig)
+    (bitmapBuilder : List Nat → List Nat)
+    (registerCount bitmapRegister frameSlots wordBits : Nat)
+    (storeConstsStub : Option Nat)
+    (state finalState : WordStackBitmapState)
+    (machineState : WordStackMachineState width)
+    (body : WordProg Nat) (bodyCode : StackProg Nat)
+    (result : StackMachineControl width)
+    (hbody : wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+      registerCount bitmapRegister frameSlots wordBits storeConstsStub state body =
+      some (bodyCode, finalState))
+    (heval : evalStackProgFuelWithCodeAndFfi host (fuel + 1) code machineState
+      bodyCode = some result) :
+    (wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+      registerCount bitmapRegister frameSlots wordBits storeConstsStub state
+      (.mustTerminate body)).bind
+        (fun compiled =>
+          (evalStackProgFuelWithCodeAndFfi host (fuel + 1) code machineState
+            compiled.1).map (fun control => (control, compiled.2))) =
+      some (result, finalState) := by
+  have hcompile := wordToStackProgNatWithBitmapBuilder_mustTerminate
+    (config := config) (bitmapBuilder := bitmapBuilder)
+    (registerCount := registerCount) (bitmapRegister := bitmapRegister)
+    (frameSlots := frameSlots) (wordBits := wordBits)
+    (storeConstsStub := storeConstsStub) (state := state)
+    (finalState := finalState) (body := body) (bodyCode := bodyCode)
+    (hbody := hbody)
+  rw [hcompile]
+  simp [heval]
+
 /-! The state-threaded compiler has no special bitmap effect for an FFI
     instruction.  Its lowering equation therefore returns the original
     accumulator while exposing the same four-move ABI prefix as the

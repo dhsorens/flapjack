@@ -1526,6 +1526,8 @@ definitions, pass ordering, examples, and proof obligations.
   a body that exits through `break`.
 - [x] Expose normal and `continue` loop-iteration equations, retaining the
   recursive remainder evaluation as an explicit premise.
+- [x] Compose state-threaded `MustTerminate` lowering with bounded StackLang
+  execution.
 - [x] Expose source-order bitmap threading through the allocated Word-to-Stack
   function pipeline, including a compositional append equation.
 - [x] Add abstract and bounded FFI loop-break simulation equations, with
