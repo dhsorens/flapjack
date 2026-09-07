@@ -43,7 +43,7 @@ theorem loopToWord_repeat_loop_control_simulation [NeZero width]
   induction fuel generalizing loopState wordState loopResult wordResult with
   | zero =>
       simp [evalLoopRepeatWithPrimitiveCallsAndFfi,
-        RiscV.evalWordLoopRepeatWithHandlersAndFfi] at hloop
+        ] at hloop
   | succ fuel ih =>
       cases hbodyLoop :
           evalLoopProgWithPrimitiveCallsAndFfi primitive functions loopHandler fuel

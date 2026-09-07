@@ -329,7 +329,7 @@ theorem evalWordProg_assignBinaryVarVar_applyColour
                 ⟨colour left, valid left hleft⟩ ⟨colour right, valid right hright⟩)) := by
         simp [evalWordProg, wordApplyColour, wordApplyColourExp,
           wordExpToInstructions, wordExpToInstruction, registerOfNat,
-          hname, hleft, hright, valid name hname, valid left hleft,
+          valid name hname, valid left hleft,
           valid right hright, executeInstructions]
       exact ⟨_, _, hsourceEval, htargetEval,
         wordColourStateRelation_executeBinary colour valid injective colourZero
@@ -349,7 +349,7 @@ theorem evalWordProg_assignBinaryVarVar_applyColour
                 ⟨colour left, valid left hleft⟩ ⟨colour right, valid right hright⟩)) := by
         simp [evalWordProg, wordApplyColour, wordApplyColourExp,
           wordExpToInstructions, wordExpToInstruction, registerOfNat,
-          hname, hleft, hright, valid name hname, valid left hleft,
+          valid name hname, valid left hleft,
           valid right hright, executeInstructions]
       exact ⟨_, _, hsourceEval, htargetEval,
         wordColourStateRelation_executeBinary colour valid injective colourZero
@@ -369,7 +369,7 @@ theorem evalWordProg_assignBinaryVarVar_applyColour
                 ⟨colour left, valid left hleft⟩ ⟨colour right, valid right hright⟩)) := by
         simp [evalWordProg, wordApplyColour, wordApplyColourExp,
           wordExpToInstructions, wordExpToInstruction, registerOfNat,
-          hname, hleft, hright, valid name hname, valid left hleft,
+          valid name hname, valid left hleft,
           valid right hright, executeInstructions]
       exact ⟨_, _, hsourceEval, htargetEval,
         wordColourStateRelation_executeBinary colour valid injective colourZero
@@ -389,7 +389,7 @@ theorem evalWordProg_assignBinaryVarVar_applyColour
                 ⟨colour left, valid left hleft⟩ ⟨colour right, valid right hright⟩)) := by
         simp [evalWordProg, wordApplyColour, wordApplyColourExp,
           wordExpToInstructions, wordExpToInstruction, registerOfNat,
-          hname, hleft, hright, valid name hname, valid left hleft,
+          valid name hname, valid left hleft,
           valid right hright, executeInstructions]
       exact ⟨_, _, hsourceEval, htargetEval,
         wordColourStateRelation_executeBinary colour valid injective colourZero
@@ -409,7 +409,7 @@ theorem evalWordProg_assignBinaryVarVar_applyColour
                 ⟨colour left, valid left hleft⟩ ⟨colour right, valid right hright⟩)) := by
         simp [evalWordProg, wordApplyColour, wordApplyColourExp,
           wordExpToInstructions, wordExpToInstruction, registerOfNat,
-          hname, hleft, hright, valid name hname, valid left hleft,
+          valid name hname, valid left hleft,
           valid right hright, executeInstructions]
       exact ⟨_, _, hsourceEval, htargetEval,
         wordColourStateRelation_executeBinary colour valid injective colourZero
@@ -534,7 +534,7 @@ theorem evalWordProg_assignBinaryVarConst_applyColour
                 ⟨colour sourceName, valid sourceName hsource⟩ value)) := by
         simp [evalWordProg, wordApplyColour, wordApplyColourExp,
           wordExpToInstructions, wordExpToInstruction, registerOfNat,
-          hname, hsource, valid name hname, valid sourceName hsource,
+          valid name hname, valid sourceName hsource,
           executeInstructions]
       exact ⟨_, _, hsourceEval, htargetEval,
         wordColourStateRelation_executeImmediateBinary colour valid injective colourZero
@@ -554,7 +554,7 @@ theorem evalWordProg_assignBinaryVarConst_applyColour
                 ⟨colour sourceName, valid sourceName hsource⟩ (0 - value))) := by
         simp [evalWordProg, wordApplyColour, wordApplyColourExp,
           wordExpToInstructions, wordExpToInstruction, registerOfNat,
-          hname, hsource, valid name hname, valid sourceName hsource,
+          valid name hname, valid sourceName hsource,
           executeInstructions]
       exact ⟨_, _, hsourceEval, htargetEval,
         wordColourStateRelation_executeImmediateBinary colour valid injective colourZero
@@ -574,7 +574,7 @@ theorem evalWordProg_assignBinaryVarConst_applyColour
                 ⟨colour sourceName, valid sourceName hsource⟩ value)) := by
         simp [evalWordProg, wordApplyColour, wordApplyColourExp,
           wordExpToInstructions, wordExpToInstruction, registerOfNat,
-          hname, hsource, valid name hname, valid sourceName hsource,
+          valid name hname, valid sourceName hsource,
           executeInstructions]
       exact ⟨_, _, hsourceEval, htargetEval,
         wordColourStateRelation_executeImmediateBinary colour valid injective colourZero
@@ -594,7 +594,7 @@ theorem evalWordProg_assignBinaryVarConst_applyColour
                 ⟨colour sourceName, valid sourceName hsource⟩ value)) := by
         simp [evalWordProg, wordApplyColour, wordApplyColourExp,
           wordExpToInstructions, wordExpToInstruction, registerOfNat,
-          hname, hsource, valid name hname, valid sourceName hsource,
+          valid name hname, valid sourceName hsource,
           executeInstructions]
       exact ⟨_, _, hsourceEval, htargetEval,
         wordColourStateRelation_executeImmediateBinary colour valid injective colourZero
@@ -614,7 +614,7 @@ theorem evalWordProg_assignBinaryVarConst_applyColour
                 ⟨colour sourceName, valid sourceName hsource⟩ value)) := by
         simp [evalWordProg, wordApplyColour, wordApplyColourExp,
           wordExpToInstructions, wordExpToInstruction, registerOfNat,
-          hname, hsource, valid name hname, valid sourceName hsource,
+          valid name hname, valid sourceName hsource,
           executeInstructions]
       exact ⟨_, _, hsourceEval, htargetEval,
         wordColourStateRelation_executeImmediateBinary colour valid injective colourZero
@@ -817,7 +817,7 @@ theorem evalWordProg_assignRotateRight_applyColour
           [.ori 31 0 (BitVec.ofNat width width), .sub 31 31 ⟨right, hright⟩,
             .sll 31 ⟨left, hleft⟩ 31, .srl ⟨name, hname⟩ ⟨left, hleft⟩ ⟨right, hright⟩,
             .or ⟨name, hname⟩ ⟨name, hname⟩ 31]) := by
-    simp [evalWordProg, wordExpToInstructions, wordExpToInstruction,
+    simp [evalWordProg, wordExpToInstructions, 
       registerOfNat, hname, hleft, hright, hnameScratch, hleftScratch,
       hrightScratch, executeInstructions]
   have hnameColourScratch : colour name ≠ 31 := by
@@ -847,11 +847,11 @@ theorem evalWordProg_assignRotateRight_applyColour
               ⟨colour right, valid right hright⟩,
             .or ⟨colour name, valid name hname⟩ ⟨colour name, valid name hname⟩ 31]) := by
     simp [evalWordProg, wordApplyColour, wordApplyColourExp,
-      wordExpToInstructions, wordExpToInstruction, registerOfNat,
-      hname, hleft, hright, hnameScratch, hleftScratch, hrightScratch,
+      wordExpToInstructions, registerOfNat,
+      
       valid name hname, valid left hleft, valid right hright,
       hnameColourScratch, hleftColourScratch, hrightColourScratch,
-      colourScratch, colourZero, executeInstructions]
+      executeInstructions]
   refine ⟨_, _, hsourceEval, htargetEval, ?_⟩
   simpa [colourScratch, colourZero] using
     (wordColourStateRelation_executeRotateRight colour valid injective colourZero
@@ -955,7 +955,7 @@ theorem evalWordProg_assignShiftVarConst_applyColour
                 ⟨colour left, valid left hleft⟩ amount)) := by
         simp [evalWordProg, wordApplyColour, wordApplyColourExp,
           wordExpToInstructions, wordExpToInstruction, registerOfNat,
-          hname, hleft, valid name hname, valid left hleft, executeInstructions]
+          valid name hname, valid left hleft, executeInstructions]
       exact ⟨_, _, hsourceEval, htargetEval,
         wordColourStateRelation_executeShiftImmediate colour valid injective colourZero
           source target hrelation .lsl name left amount hoperator hname hleft⟩
@@ -974,7 +974,7 @@ theorem evalWordProg_assignShiftVarConst_applyColour
                 ⟨colour left, valid left hleft⟩ amount)) := by
         simp [evalWordProg, wordApplyColour, wordApplyColourExp,
           wordExpToInstructions, wordExpToInstruction, registerOfNat,
-          hname, hleft, valid name hname, valid left hleft, executeInstructions]
+          valid name hname, valid left hleft, executeInstructions]
       exact ⟨_, _, hsourceEval, htargetEval,
         wordColourStateRelation_executeShiftImmediate colour valid injective colourZero
           source target hrelation .lsr name left amount hoperator hname hleft⟩
@@ -993,7 +993,7 @@ theorem evalWordProg_assignShiftVarConst_applyColour
                 ⟨colour left, valid left hleft⟩ amount)) := by
         simp [evalWordProg, wordApplyColour, wordApplyColourExp,
           wordExpToInstructions, wordExpToInstruction, registerOfNat,
-          hname, hleft, valid name hname, valid left hleft, executeInstructions]
+          valid name hname, valid left hleft, executeInstructions]
       exact ⟨_, _, hsourceEval, htargetEval,
         wordColourStateRelation_executeShiftImmediate colour valid injective colourZero
           source target hrelation .asr name left amount hoperator hname hleft⟩
@@ -1105,7 +1105,7 @@ theorem evalWordProg_assignShiftVarVar_applyColour
                 ⟨colour left, valid left hleft⟩ ⟨colour right, valid right hright⟩)) := by
         simp [evalWordProg, wordApplyColour, wordApplyColourExp,
           wordExpToInstructions, wordExpToInstruction, registerOfNat,
-          hname, hleft, hright, valid name hname, valid left hleft,
+          valid name hname, valid left hleft,
           valid right hright, executeInstructions]
       exact ⟨_, _, hsourceEval, htargetEval,
         wordColourStateRelation_executeShift colour valid injective colourZero
@@ -1125,7 +1125,7 @@ theorem evalWordProg_assignShiftVarVar_applyColour
                 ⟨colour left, valid left hleft⟩ ⟨colour right, valid right hright⟩)) := by
         simp [evalWordProg, wordApplyColour, wordApplyColourExp,
           wordExpToInstructions, wordExpToInstruction, registerOfNat,
-          hname, hleft, hright, valid name hname, valid left hleft,
+          valid name hname, valid left hleft,
           valid right hright, executeInstructions]
       exact ⟨_, _, hsourceEval, htargetEval,
         wordColourStateRelation_executeShift colour valid injective colourZero
@@ -1145,7 +1145,7 @@ theorem evalWordProg_assignShiftVarVar_applyColour
                 ⟨colour left, valid left hleft⟩ ⟨colour right, valid right hright⟩)) := by
         simp [evalWordProg, wordApplyColour, wordApplyColourExp,
           wordExpToInstructions, wordExpToInstruction, registerOfNat,
-          hname, hleft, hright, valid name hname, valid left hleft,
+          valid name hname, valid left hleft,
           valid right hright, executeInstructions]
       exact ⟨_, _, hsourceEval, htargetEval,
         wordColourStateRelation_executeShift colour valid injective colourZero

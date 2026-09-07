@@ -275,6 +275,6 @@ theorem wordFunctionToRiscVWithCalls_shareInst [NeZero width] :
       ((.shareInst .load32 5 (.var 6)) : WordProg (Word width)) =
       some ([.load32 5 6], []) := by
   simp [wordFunctionToRiscVWithCalls, wordShareInstToInstructions,
-    wordExpToInstructions, wordInstToInstruction, registerOfNat]
+    wordInstToInstruction, registerOfNat]
 
 end Flapjack.RiscV

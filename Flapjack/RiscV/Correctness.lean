@@ -106,20 +106,20 @@ theorem executeInstructions_addCarry_general [NeZero width]
     · simp [executeInstructions, execute, writeRegister, nextPc, readRegister,
         zero', firstCarry, secondCarry, destination_nonzero,
         resultCarry_nonzero, destination_resultCarry,
-        destination_sourceRight, destination_scratch, resultCarry_scratch,
-        sourceLeft_scratch, sourceRight_scratch, carryIn_scratch,
+        destination_scratch, resultCarry_scratch,
+        sourceLeft_scratch, sourceRight_scratch, 
         resultCarry_destination, sourceRight_destination, scratch_destination,
-        scratch_resultCarry, scratch_sourceLeft, scratch_sourceRight,
-        scratch_carryIn,
+        scratch_resultCarry, 
+        
         addCarryWords_riscv_formula]
     · simp [executeInstructions, execute, writeRegister, nextPc, readRegister,
         zero', firstCarry, secondCarry, destination_nonzero,
         resultCarry_nonzero, destination_resultCarry,
-        destination_sourceRight, destination_scratch, resultCarry_scratch,
-        sourceLeft_scratch, sourceRight_scratch, carryIn_scratch,
+        destination_scratch, resultCarry_scratch,
+        sourceLeft_scratch, sourceRight_scratch, 
         resultCarry_destination, sourceRight_destination, scratch_destination,
-        scratch_resultCarry, scratch_sourceLeft, scratch_sourceRight,
-        scratch_carryIn,
+        scratch_resultCarry, 
+        
         addCarryWords_riscv_formula]
   · by_cases secondCarry :
         state.registers sourceLeft + state.registers sourceRight +
@@ -128,20 +128,20 @@ theorem executeInstructions_addCarry_general [NeZero width]
     · simp [executeInstructions, execute, writeRegister, nextPc, readRegister,
         zero', firstCarry, secondCarry, destination_nonzero,
         resultCarry_nonzero, destination_resultCarry,
-        destination_sourceRight, destination_scratch, resultCarry_scratch,
-        sourceLeft_scratch, sourceRight_scratch, carryIn_scratch,
+        destination_scratch, resultCarry_scratch,
+        sourceLeft_scratch, sourceRight_scratch, 
         resultCarry_destination, sourceRight_destination, scratch_destination,
-        scratch_resultCarry, scratch_sourceLeft, scratch_sourceRight,
-        scratch_carryIn,
+        scratch_resultCarry, 
+        
         addCarryWords_riscv_formula]
     · simp [executeInstructions, execute, writeRegister, nextPc, readRegister,
         zero', firstCarry, secondCarry, destination_nonzero,
         resultCarry_nonzero, destination_resultCarry,
-        destination_sourceRight, destination_scratch, resultCarry_scratch,
-        sourceLeft_scratch, sourceRight_scratch, carryIn_scratch,
+        destination_scratch, resultCarry_scratch,
+        sourceLeft_scratch, sourceRight_scratch, 
         resultCarry_destination, sourceRight_destination, scratch_destination,
-        scratch_resultCarry, scratch_sourceLeft, scratch_sourceRight,
-        scratch_carryIn,
+        scratch_resultCarry, 
+        
         addCarryWords_riscv_formula]
 
 end Flapjack.RiscV
