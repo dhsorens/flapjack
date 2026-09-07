@@ -162,4 +162,42 @@ example [NeZero 64] (state : State 64)
     (by intro name; rfl) function configuration configurationLength array arrayLength live
     (by rfl)
 
+/-! The full-SSA graph boundary must retain an allocation node for an unused
+    formal: the entry move is part of the allocated function even when the
+    body is `skip`. -/
+
+example :
+    (wordAllocateGraphFunctionWithEntry
+      [2] (.skip : WordProg (RiscV.Word 64)) [2] 13 0).isSome := by
+  decide +kernel
+
+example
+    (parameters : List Nat) (program : WordProg α)
+    (fixedSources : List Nat) (colours stackStart : Nat)
+    (state : WordSsaState) (renamedParameters : List Nat)
+    (allocation : WordGraphAllocation) (renamedProgram : WordProg α)
+    (halloc : wordAllocateGraphFunctionWithEntryRenamed parameters program
+      fixedSources colours stackStart =
+      some (state, renamedParameters, allocation, renamedProgram)) :
+    wordGraphTagsAreFixed allocation.graph = true ∧
+      wordGraphColouringRespectsEdges allocation.graph = true := by
+  have hsound := wordAllocateGraphFunctionWithEntryRenamed_sound
+    parameters program fixedSources colours stackStart state renamedParameters
+    allocation renamedProgram halloc
+  exact ⟨hsound.1, hsound.2.1⟩
+
+example
+    (parameters : List Nat) (program : WordProg α)
+    (fixedSources : List Nat) (colours stackStart : Nat)
+    (state : WordSsaState) (renamedParameters : List Nat)
+    (allocation : WordGraphAllocation) (renamedProgram : WordProg α)
+    (halloc : wordAllocateGraphFunctionWithEntryRenamed parameters program
+      fixedSources colours stackStart =
+      some (state, renamedParameters, allocation, renamedProgram)) :
+    ∀ name, name ∈ renamedParameters →
+      ∃ node, lookupNatInfo name allocation.bijection.toNode = some node := by
+  exact wordAllocateGraphFunctionWithEntryRenamed_maps_parameters
+    parameters program fixedSources colours stackStart state renamedParameters
+    allocation renamedProgram halloc
+
 end Flapjack
