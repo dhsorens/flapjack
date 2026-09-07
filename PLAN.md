@@ -213,6 +213,8 @@ definitions, pass ordering, examples, and proof obligations.
   the generated RISC-V artifact under the fixed-width x0 invariant.
 - [x] Prove compositional `executeCode` control-flow correctness for the
   generated conditional layout, including the post-conditional termination PC.
+- [x] Connect that control-flow proof to a generated Word conditional with
+  branch-selected assignment results and the RV64 x0 invariant.
 - [x] Connect immediate-zero Word conditions to RISC-V x0 and test the
   resulting conditional function artifact.
 - [x] Port unsigned `Lower`/`NotLower` Word conditions to RISC-V `BLTU`/`BGEU`
