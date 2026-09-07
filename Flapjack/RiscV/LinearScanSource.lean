@@ -17,6 +17,119 @@ def wordFixDomination (tree : WordLiveTree) : WordLiveTree :=
   let live := wordGetLiveBackward tree []
   if live.isEmpty then tree else .seq (.writes live) tree
 
+/-! The source allocator renumbers variables before putting them in its
+linear-scan arrays.  Physical variables keep their names, stack variables
+start at 3 and advance by four, and allocatable variables start at 1 and also
+advance by four. -/
+structure WordLinearScanBijectionState where
+  toNode : NatInfoMap Nat
+  fromNode : NatInfoMap Nat
+  maxName : Nat
+  nextStack : Nat
+  nextAlloc : Nat
+  deriving DecidableEq, Repr
+
+def wordLinearScanBijectionInitial : WordLinearScanBijectionState :=
+  { toNode := []
+    fromNode := []
+    maxName := 0
+    nextStack := 3
+    nextAlloc := 1 }
+
+def wordLinearScanBijectionStep (state : WordLinearScanBijectionState)
+    (register : Nat) : WordLinearScanBijectionState :=
+  if (lookupNatInfo register state.toNode).isSome then
+    state
+  else if register % 2 == 0 then
+    { state with
+      toNode := (register, register) :: state.toNode
+      fromNode := (register, register) :: state.fromNode
+      maxName := max register state.maxName }
+  else if register % 4 == 3 then
+    { state with
+      toNode := (register, state.nextStack) :: state.toNode
+      fromNode := (state.nextStack, register) :: state.fromNode
+      maxName := max state.nextStack state.maxName
+      nextStack := state.nextStack + 4 }
+  else
+    { state with
+      toNode := (register, state.nextAlloc) :: state.toNode
+      fromNode := (state.nextAlloc, register) :: state.fromNode
+      maxName := max state.nextAlloc state.maxName
+      nextAlloc := state.nextAlloc + 4 }
+
+def wordLinearScanBijectionList (state : WordLinearScanBijectionState)
+    (registers : List Nat) : WordLinearScanBijectionState :=
+  registers.foldl wordLinearScanBijectionStep state
+
+def wordLinearScanBijectionTree : WordClashTree →
+    WordLinearScanBijectionState → WordLinearScanBijectionState
+  | .delta writes reads, state =>
+      wordLinearScanBijectionList
+        (wordLinearScanBijectionList state reads) writes
+  | .set names, state => wordLinearScanBijectionList state names
+  | .branch branchLive thenBranch elseBranch, state =>
+      let state := wordLinearScanBijectionTree thenBranch state
+      let state := wordLinearScanBijectionTree elseBranch state
+      match branchLive with
+      | none => state
+      | some names => wordLinearScanBijectionList state names
+  | .seq first second, state =>
+      wordLinearScanBijectionTree second
+        (wordLinearScanBijectionTree first state)
+termination_by tree => sizeOf tree
+decreasing_by all_goals decreasing_trivial
+
+def wordLinearScanBijection (tree : WordClashTree) :
+    WordLinearScanBijectionState :=
+  wordLinearScanBijectionTree tree wordLinearScanBijectionInitial
+
+def wordLinearScanBijectionLookup
+    (bijection : WordLinearScanBijectionState) (register : Nat) : Nat :=
+  match lookupNatInfo register bijection.toNode with
+  | some node => node
+  | none => 0
+
+def wordLinearScanApplyBijectionTree : WordClashTree →
+    WordLinearScanBijectionState → WordClashTree
+  | .delta writes reads, bijection =>
+      .delta (writes.map (wordLinearScanBijectionLookup bijection))
+        (reads.map (wordLinearScanBijectionLookup bijection))
+  | .set names, bijection =>
+      .set (names.map (wordLinearScanBijectionLookup bijection))
+  | .branch branchLive thenBranch elseBranch, bijection =>
+      .branch (branchLive.map
+        (List.map (wordLinearScanBijectionLookup bijection)))
+        (wordLinearScanApplyBijectionTree thenBranch bijection)
+        (wordLinearScanApplyBijectionTree elseBranch bijection)
+  | .seq first second, bijection =>
+      .seq (wordLinearScanApplyBijectionTree first bijection)
+        (wordLinearScanApplyBijectionTree second bijection)
+termination_by tree => sizeOf tree
+decreasing_by all_goals decreasing_trivial
+
+def wordLinearScanApplyBijectionForced
+    (bijection : WordLinearScanBijectionState) :
+    List (Nat × Nat) → List (Nat × Nat)
+  | [] => []
+  | (left, right) :: edges =>
+      (wordLinearScanBijectionLookup bijection left,
+        wordLinearScanBijectionLookup bijection right) ::
+        wordLinearScanApplyBijectionForced bijection edges
+
+def wordLinearScanApplyBijectionMoves
+    (bijection : WordLinearScanBijectionState) : List WordMove → List WordMove
+  | [] => []
+  | move :: moves =>
+      { move with
+        left := wordLinearScanBijectionLookup bijection move.left
+        right := wordLinearScanBijectionLookup bijection move.right } ::
+        wordLinearScanApplyBijectionMoves bijection moves
+
+def wordLinearScanBijectionSources
+    (bijection : WordLinearScanBijectionState) : List Nat :=
+  bijection.toNode.map Prod.fst
+
 /-! A direct executable port of `check_number_property`.  The property is
 passed as a Boolean predicate so this remains suitable for native evaluation
 in the same way as the source allocator's checks. -/
