@@ -5,22 +5,22 @@ import Flapjack.RiscV.AllocationModePipeline
 namespace Flapjack
 
 example : wordAllocationAlgorithmOfNat 0 = .simple := by
-  native_decide
+  decide
 
 example : wordAllocationAlgorithmOfNat 3 = .ircHeuristic := by
-  native_decide
+  decide
 
 example : wordAllocationAlgorithmOfNat 19 = .linearScan := by
-  native_decide
+  decide
 
 example :
     wordAllocationAlgorithmUsesHeuristics
       (wordAllocationAlgorithmOfNat 3) = true := by
-  native_decide
+  decide
 
 example :
     wordAllocationAlgorithmIsLinearScanNat 4 = true := by
-  native_decide
+  decide
 
 example :
     pipelineWordFunctionsAllocatedWithSourceAlgorithm 4
@@ -31,6 +31,6 @@ example :
 example :
     (pipelineWordFunctionsAllocatedWithSourceAlgorithm 2
       [(0, [], (.skip : LoopProg (RiscV.Word 64))) ]).isSome = true := by
-  native_decide
+  decide +kernel
 
 end Flapjack

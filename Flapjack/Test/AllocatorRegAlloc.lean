@@ -20,63 +20,63 @@ example : wordTagForSource [] 4 = .fixed 2 := by
 example :
     (wordMkBijection
       (.seq (.delta [4] [2]) (.delta [5] [3]))).next = 4 := by
-  native_decide
+  decide +kernel
 
 example :
     lookupNatInfo 4
         (wordMkBijection
           (.seq (.delta [4] [2]) (.delta [5] [3]))).toNode = some 2 := by
-  native_decide
+  decide +kernel
 
 example :
     lookupNatInfo 0
         (wordInitRegAlloc (.delta [0, 1] [2]) [] []).graph.adjacency =
       some [1] := by
-  native_decide
+  decide +kernel
 
 example :
     lookupNatInfo 1
         (wordInitRegAlloc (.delta [0, 1] [2]) [] []).graph.adjacency =
       some [0] := by
-  native_decide
+  decide +kernel
 
 example :
     wordGraphTagColour
         (wordColourGraph 2 2 2
           (wordInitRegAlloc (.delta [0, 1] []) [] []).graph) 1 =
       some 1 := by
-  native_decide
+  decide +kernel
 
 example :
     wordGraphColouringRespectsEdges
         (wordColourGraph 2 1 1
           (wordInitRegAlloc (.delta [1, 5] []) [] []).graph) = true := by
-  native_decide
+  decide +kernel
 
 example :
     wordGraphTagColour
         (wordColourGraph 2 1 1
           (wordInitRegAlloc (.delta [1, 5] []) [] []).graph) 1 =
       some 2 := by
-  native_decide
+  decide +kernel
 
 example :
     wordGraphTagsAreFixed
         (wordColourGraph 2 1 1
           (wordInitRegAlloc (.delta [1, 5] []) [] []).graph) = true := by
-  native_decide
+  decide +kernel
 
 example :
     wordGraphColouringRespectsEdges
         (wordColourGraphWithWorklist 1 1
           (wordInitRegAlloc (.delta [1, 5] []) [] []).graph) = true := by
-  native_decide
+  decide +kernel
 
 example :
     wordGraphTagsAreFixed
       (wordColourGraphWithWorklist 1 1
         (wordInitRegAlloc (.delta [1, 5] []) [] []).graph) = true := by
-  native_decide
+  decide +kernel
 
 def moveWorklistGraph : WordRegGraph :=
   { adjacency := []
@@ -104,22 +104,22 @@ example :
       [{ priority := 3, left := 2, right := 3 },
        { priority := 2, left := 4, right := 5 },
        { priority := 1, left := 0, right := 1 }] := by
-  native_decide
+  decide
 
 example :
     wordPrepareMoveWorklists moveWorklistGraph [move01] =
       { available := [move01], unavailable := [] } := by
-  native_decide
+  decide
 
 example :
     wordPrepareMoveWorklistsWithColours 1 fixedMoveWorklistGraph [move01] =
       { available := [], unavailable := [move01] } := by
-  native_decide
+  decide
 
 example :
     wordPrepareMoveWorklistsWithColours 4 fixedMoveWorklistGraph [move01] =
       { available := [move01], unavailable := [] } := by
-  native_decide
+  decide
 
 def briggsMoveGraph : WordRegGraph :=
   { adjacency := [(1, [2]), (2, [1, 3]), (3, [2])]
@@ -127,31 +127,31 @@ def briggsMoveGraph : WordRegGraph :=
     dimension := 4 }
 
 example : wordBgOk 2 briggsMoveGraph 0 1 = some ([], [2]) := by
-  native_decide
+  decide
 
 example : wordBgOk 1 briggsMoveGraph 0 1 = none := by
-  native_decide
+  decide
 
 example : wordCoalesceSafe 1 briggsMoveGraph [0, 1] move01 = false := by
-  native_decide
+  decide
 
 example :
     wordMoveFreezeCandidates 2 moveWorklistGraph
       [(0, 0), (1, 1)] [0, 1] = [0, 1] := by
-  native_decide
+  decide
 
 example :
     let state := wordInitMoveStateWithColours 2 moveWorklistGraph [move01]
     let state := wordFreezeAllAvailable 2 state
     state.available = [] ∧ state.unavailable = [] ∧ state.stack = [0] := by
-  native_decide
+  decide
 
 example :
     wordPrepareMoveWorklists moveWorklistGraph
       [{ priority := 0, left := 0, right := 0 }] =
       { available := [],
         unavailable := [{ priority := 0, left := 0, right := 0 }] } := by
-  native_decide
+  decide
 
 example :
     wordPrepareMoveWorklists
@@ -160,35 +160,35 @@ example :
         dimension := 2 }
       [move01] =
       { available := [], unavailable := [move01] } := by
-  native_decide
+  decide
 
 example :
     wordCanonicalizeMove fixedMoveWorklistGraph move01 =
       { priority := 7, left := 0, right := 1 } := by
-  native_decide
+  decide
 
 example :
     wordCanonicalizeMove fixedRightMoveWorklistGraph move01 =
       { priority := 7, left := 1, right := 0 } := by
-  native_decide
+  decide
 
 example :
     (wordCoalesceParentFuel 4 moveWorklistGraph
       [(0, 0), (1, 0), (2, 1)] 2) =
       (0, [(2, 0), (1, 0), (0, 0)]) := by
-  native_decide
+  decide
 
 example :
     (wordCoalesceMove 1
       (wordInitMoveState fixedMoveWorklistGraph [move01]) move01).map
         (fun state => lookupNatInfo 1 state.parents) = some (some 0) := by
-  native_decide
+  decide
 
 example :
     (wordCoalesceMove 1
       (wordInitMoveState fixedMoveWorklistGraph [move01]) move01).map
         (fun state => state.stack) = some [1] := by
-  native_decide
+  decide
 
 example :
     let state := wordInitMoveState
@@ -199,17 +199,17 @@ example :
     let state := wordCoalesceAllAvailable 1 state
     lookupNatInfo 2 state.parents = some 0 ∧ state.stack = [2, 1] ∧
       state.available = [] := by
-  native_decide
+  decide
 
 example : wordGraphColouringAt [(4, 8)] 4 = 8 := by
-  native_decide
+  decide
 
 example : wordGraphColouringAt [(4, 8)] 6 = 6 := by
-  native_decide
+  decide
 
 example :
     (wordAllocateGraph (.delta [0, 1] []) [] [] [] 1 1).isSome = true := by
-  native_decide
+  decide +kernel
 
 example :
     (wordAllocateGraph (.delta [0, 1] []) [] [] [] 1 1).map
@@ -217,7 +217,7 @@ example :
           (lookupNatInfo 0 allocation.colouring,
             lookupNatInfo 1 allocation.colouring)) =
       some (some 0, some 2) := by
-  native_decide
+  decide +kernel
 
 example :
     (wordAllocateGraphFunction [2]
@@ -226,13 +226,13 @@ example :
           (result.2.1,
             lookupNatInfo 5 result.2.2.1.colouring)) =
       some ([5], some 2) := by
-  native_decide
+  decide +kernel
 
 example :
     wordStackOnly
       ((.seq (.assign 5 (.var 7)) (.assign 3 (.var 5))) : WordProg Nat) =
       { temporary := [5], forced := [5] } := by
-  native_decide
+  decide
 
 example :
     (wordAllocateGraphFunctionWithStackOnly [2]
@@ -243,12 +243,12 @@ example :
 example :
     (wordAllocateGraph
       (.seq (.set [5]) (.delta [9] [5])) [] [5] [(9, 5)] 13 13).isSome = true := by
-  native_decide
+  decide +kernel
 
 example :
     wordStackOnly (.assign 9 (.var 5) : WordProg Nat) =
       { temporary := [], forced := [] } := by
-  native_decide
+  decide
 
 example :
     (wordAllocateGraphFunctionWithStackOnly [2]
@@ -287,7 +287,7 @@ example :
     wordProgForcedClashes
       (.inst (.arith (.longMul 4 5 6 7)) : WordProg Nat) =
       [(4, 5), (4, 6), (4, 7)] := by
-  native_decide
+  decide +kernel
 
 example :
     (wordAllocateGraphProgram

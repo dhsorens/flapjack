@@ -106,11 +106,11 @@ example :
 example :
     wordCheckColour id [1, 2] =
       some ([1, 2], [1, 2]) := by
-  native_decide
+  decide
 
 example :
     wordCheckColour (fun _ => 0) [1, 2] = none := by
-  native_decide
+  decide
 
 example :
     wordClashTreeCheck id
@@ -224,20 +224,20 @@ example :
     wordProgSpecialLocationsSafe
         [(0, .stack 0), (1, .register 5), (2, .register 6), (3, .register 7)]
         ((.inst (.arith (.longMul 0 1 2 3))) : WordProg Nat) = true := by
-  native_decide
+  decide +kernel
 
 example :
     wordProgSpecialLocationsSafe
         [(0, .register 4), (1, .register 5), (2, .register 6),
           (3, .register 7), (4, .register 8)]
         ((.seq (.inst (.arith (.addCarry 0 1 2 3 4))) .skip) : WordProg Nat) = true := by
-  native_decide
+  decide +kernel
 
 example :
     wordProgSpecialLocationsSafe
         [(0, .stack 0), (1, .register 5), (2, .stack 1),
           (3, .register 6), (4, .stack 2)]
         ((.inst (.arith (.addCarry 0 1 2 3 4))) : WordProg Nat) = true := by
-  native_decide
+  decide +kernel
 
 end Flapjack

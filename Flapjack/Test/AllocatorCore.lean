@@ -125,21 +125,21 @@ example (slots : List Nat) (edges : List (Nat × Nat))
     name hname
 
 example : 29 ∉ wordAllocatableRegisters := by
-  native_decide
+  decide
 
 example : 28 ∉ wordAllocatableRegisters := by
-  native_decide
+  decide
 
 example : 27 ∉ wordAllocatableRegisters := by
-  native_decide
+  decide
 
 example : wordRegisterIsReserved 28 = true := by
-  native_decide
+  decide
 
 example : wordRegisterIsReserved 27 = true := by
-  native_decide
+  decide
 
 example : wordRegisterIsReserved 29 = true := by
-  native_decide
+  decide
 
 end Flapjack

@@ -7,7 +7,7 @@ namespace Flapjack
 example :
     (wordAllocateLinearScanFunction [] (.skip : WordProg Nat) 2 0).isSome =
       true := by
-  native_decide
+  decide +kernel
 
 example :
     pipelineWordFunctionsAllocatedWithLinearScan
@@ -18,6 +18,6 @@ example :
 example :
     (pipelineWordFunctionsAllocatedWithLinearScan
       [(0, [], (.skip : LoopProg (RiscV.Word 64))) ]).isSome = true := by
-  native_decide
+  decide +kernel
 
 end Flapjack
