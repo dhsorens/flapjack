@@ -1185,6 +1185,8 @@ definitions, pass ordering, examples, and proof obligations.
   and stack reconstruction for one frame.
 - [x] Compose complete bitmap-managed stack root collection through encoding,
   value movement, and shape-preserving decoding.
+- [x] Compose bitmap-managed root collection with the existing heap scan loop
+  into a full collector result contract.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
