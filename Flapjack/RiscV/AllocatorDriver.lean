@@ -199,4 +199,114 @@ theorem wordAllocateFunctionWithOracleOrGraphOrSpill_spill_sound
                         parameters program spillState spillParameters spillProgram
                         spillAllocation hspill
 
+/-! A single witness theorem for the allocator decision boundary.  Downstream
+    lowering does not need to duplicate the oracle/graph/spill case split: a
+    successful result carries exactly the contract belonging to its chosen
+    allocation strategy. -/
+
+theorem wordAllocateFunctionWithOracleOrGraphOrSpill_sound
+    (parameters : List Nat) (program : WordProg α)
+    (fixedSources : List Nat) (colours stackStart : Nat)
+    (oracle : NatInfoMap Nat) (result : WordFunctionAllocationResult α)
+    (halloc : wordAllocateFunctionWithOracleOrGraphOrSpill parameters program
+      fixedSources colours stackStart oracle = some result) :
+    match result with
+    | .oracle _ _ _ =>
+        wordOracleColouringOk colours stackStart
+          (WordClashTree.seq
+            (.set (wordSsaRenameFunction parameters program).2.fst)
+            (wordClashTree (wordSsaRenameFunction parameters program).2.snd []))
+          (wordProgForcedClashes
+            (wordSsaRenameFunction parameters program).2.snd) oracle = true
+    | .graph _ _ allocation _ =>
+        wordGraphTagsAreFixed allocation.graph = true ∧
+          wordGraphColouringRespectsEdges allocation.graph = true ∧
+          (wordClashTreeCheck
+            (wordGraphColouringAt allocation.colouring)
+            (WordClashTree.seq
+              (.set (wordSsaRenameFunction parameters program).2.fst)
+              (wordClashTree (wordSsaRenameFunction parameters program).2.snd []))
+            [] []).isSome = true
+    | .spill _ _ allocation _ =>
+        wordSpillAllocationRespectsClashes
+            (wordClashTreeAnalyze
+              (wordClashTree (wordSsaRenameFunction parameters program).2.snd [])
+              []).snd allocation.locations = true ∧
+          wordProgSpecialLocationsSafe allocation.locations
+            (wordSsaRenameFunction parameters program).2.snd = true ∧
+          wordSpillClashTreeChecked
+            (wordClashTree (wordSsaRenameFunction parameters program).2.snd [])
+            allocation.locations = true := by
+  cases result with
+  | oracle state parameters' program' =>
+      have hbase : wordAllocateFunctionWithOracleOrGraph parameters program
+          fixedSources colours stackStart oracle =
+          some (.oracle state parameters' program') := by
+        cases hbase' : wordAllocateFunctionWithOracleOrGraph parameters program
+            fixedSources colours stackStart oracle with
+        | none =>
+            cases hspill : wordAllocateSsaFunctionWithClashTreeWithSpillsAndPreferences
+                parameters program with
+            | none =>
+                simp [wordAllocateFunctionWithOracleOrGraphOrSpill, hbase', hspill]
+                  at halloc
+            | some value =>
+                cases value with
+                | mk spillState rest =>
+                    cases rest with
+                    | mk spillParameters rest =>
+                        cases rest with
+                        | mk spillProgram spillAllocation =>
+                            simp [wordAllocateFunctionWithOracleOrGraphOrSpill,
+                              hbase', hspill] at halloc
+        | some value =>
+            cases value with
+            | oracle baseState baseParameters baseProgram =>
+                simpa [wordAllocateFunctionWithOracleOrGraphOrSpill, hbase']
+                  using halloc
+            | graph baseState baseParameters baseAllocation baseProgram =>
+                simp [wordAllocateFunctionWithOracleOrGraphOrSpill, hbase'] at halloc
+            | spill baseState baseParameters baseAllocation baseProgram =>
+                simp [wordAllocateFunctionWithOracleOrGraphOrSpill, hbase'] at halloc
+      exact wordAllocateFunctionWithOracleOrGraph_oracle_sound
+        parameters program fixedSources colours stackStart oracle state
+        parameters' program' hbase
+  | graph state parameters' allocation program' =>
+      have hbase : wordAllocateFunctionWithOracleOrGraph parameters program
+          fixedSources colours stackStart oracle =
+          some (.graph state parameters' allocation program') := by
+        cases hbase' : wordAllocateFunctionWithOracleOrGraph parameters program
+            fixedSources colours stackStart oracle with
+        | none =>
+            cases hspill : wordAllocateSsaFunctionWithClashTreeWithSpillsAndPreferences
+                parameters program with
+            | none =>
+                simp [wordAllocateFunctionWithOracleOrGraphOrSpill, hbase', hspill]
+                  at halloc
+            | some value =>
+                cases value with
+                | mk spillState rest =>
+                    cases rest with
+                    | mk spillParameters rest =>
+                        cases rest with
+                        | mk spillProgram spillAllocation =>
+                            simp [wordAllocateFunctionWithOracleOrGraphOrSpill,
+                              hbase', hspill] at halloc
+        | some value =>
+            cases value with
+            | oracle baseState baseParameters baseProgram =>
+                simp [wordAllocateFunctionWithOracleOrGraphOrSpill, hbase'] at halloc
+            | graph baseState baseParameters baseAllocation baseProgram =>
+                simpa [wordAllocateFunctionWithOracleOrGraphOrSpill, hbase']
+                  using halloc
+            | spill baseState baseParameters baseAllocation baseProgram =>
+                simp [wordAllocateFunctionWithOracleOrGraphOrSpill, hbase'] at halloc
+      exact wordAllocateFunctionWithOracleOrGraph_graph_sound
+        parameters program fixedSources colours stackStart oracle state
+        parameters' allocation program' hbase
+  | spill state parameters' allocation program' =>
+      exact wordAllocateFunctionWithOracleOrGraphOrSpill_spill_sound
+        parameters program fixedSources colours stackStart oracle state
+        parameters' allocation program' halloc
+
 end Flapjack

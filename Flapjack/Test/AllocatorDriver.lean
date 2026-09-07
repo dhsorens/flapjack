@@ -44,4 +44,29 @@ example (parameters : List Nat) (program : WordProg Nat)
   | spill spillState spillParameters allocation spillProgram =>
       trivial
 
+example (parameters : List Nat) (program : WordProg Nat)
+    (fixedSources : List Nat) (colours stackStart : Nat)
+    (oracle : NatInfoMap Nat) (result : WordFunctionAllocationResult Nat)
+    (halloc : wordAllocateFunctionWithOracleOrGraphOrSpill parameters program
+      fixedSources colours stackStart oracle = some result) :
+    match result with
+    | .oracle _ _ _ => True
+    | .graph _ _ allocation _ =>
+        wordGraphTagsAreFixed allocation.graph = true ∧
+          wordGraphColouringRespectsEdges allocation.graph = true
+    | .spill _ _ allocation _ =>
+        wordSpillAllocationRespectsClashes
+          (wordClashTreeAnalyze
+            (wordClashTree (wordSsaRenameFunction parameters program).2.snd [])
+            []).snd allocation.locations = true := by
+  have hsound := wordAllocateFunctionWithOracleOrGraphOrSpill_sound
+    parameters program fixedSources colours stackStart oracle result halloc
+  cases result with
+  | oracle state parameters' program' =>
+      trivial
+  | graph state parameters' allocation program' =>
+      exact ⟨hsound.1, hsound.2.1⟩
+  | spill state parameters' allocation program' =>
+      exact hsound.1
+
 end Flapjack
