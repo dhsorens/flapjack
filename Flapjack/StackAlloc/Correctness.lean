@@ -61,6 +61,74 @@ structure StackGcValueMoveResult where
   memory : Nat → Nat
   condition : Bool
 
+/-! Bitmap filtering and reconstruction are the list-level primitives used by
+    the StackLang root collector.  They are partial because a bitmap must
+    consume exactly the number of values it describes.  This mirrors the
+    filter_bitmap and map_bitmap definitions in the CakeML stack semantics. -/
+
+def stackGcNatFilterBitmap :
+    List Bool → List StackGcNatValue →
+      Option (List StackGcNatValue × List StackGcNatValue)
+  | [], values => some ([], values)
+  | false :: bits, _ :: values => stackGcNatFilterBitmap bits values
+  | true :: bits, value :: values => do
+      let (selected, rest) ← stackGcNatFilterBitmap bits values
+      pure (value :: selected, rest)
+  | _, _ => none
+
+def stackGcNatMapBitmap :
+    List Bool → List StackGcNatValue → List StackGcNatValue →
+      Option (List StackGcNatValue × List StackGcNatValue × List StackGcNatValue)
+  | [], moved, values => some ([], moved, values)
+  | false :: bits, moved, value :: values => do
+      let (mapped, restMoved, restValues) ←
+        stackGcNatMapBitmap bits moved values
+      pure (value :: mapped, restMoved, restValues)
+  | true :: bits, movedValue :: moved, _ :: values => do
+      let (mapped, restMoved, restValues) ←
+        stackGcNatMapBitmap bits moved values
+      pure (movedValue :: mapped, restMoved, restValues)
+  | _, _, _ => none
+
+theorem stackGcNatFilterBitmap_nil (values : List StackGcNatValue) :
+    stackGcNatFilterBitmap [] values = some ([], values) := by
+  rfl
+
+@[simp] theorem stackGcNatFilterBitmap_false_cons
+    (bits : List Bool) (value : StackGcNatValue)
+    (values : List StackGcNatValue) :
+    stackGcNatFilterBitmap (false :: bits) (value :: values) =
+      stackGcNatFilterBitmap bits values := by
+  rfl
+
+@[simp] theorem stackGcNatFilterBitmap_true_cons
+    (bits : List Bool) (value : StackGcNatValue)
+    (values : List StackGcNatValue) :
+    stackGcNatFilterBitmap (true :: bits) (value :: values) = (do
+      let (selected, rest) ← stackGcNatFilterBitmap bits values
+      pure (value :: selected, rest)) := by
+  rfl
+
+@[simp] theorem stackGcNatMapBitmap_false_cons
+    (bits : List Bool) (moved : List StackGcNatValue)
+    (value : StackGcNatValue) (values : List StackGcNatValue) :
+    stackGcNatMapBitmap (false :: bits) moved (value :: values) = (do
+      let (mapped, restMoved, restValues) ←
+        stackGcNatMapBitmap bits moved values
+      pure (value :: mapped, restMoved, restValues)) := by
+  rfl
+
+@[simp] theorem stackGcNatMapBitmap_true_cons
+    (bits : List Bool) (movedValue : StackGcNatValue)
+    (moved : List StackGcNatValue) (value : StackGcNatValue)
+    (values : List StackGcNatValue) :
+    stackGcNatMapBitmap (true :: bits) (movedValue :: moved)
+        (value :: values) = (do
+      let (mapped, restMoved, restValues) ←
+        stackGcNatMapBitmap bits moved values
+      pure (movedValue :: mapped, restMoved, restValues)) := by
+  rfl
+
 def stackGcNatPointerAddress (config : StackGcConfig)
     (base value : Nat) : Nat :=
   base + (value / 2 ^ config.shiftLength) * config.bytesInWord
