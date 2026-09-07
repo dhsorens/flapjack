@@ -1,4 +1,5 @@
 import Flapjack.RiscV.CorrectnessFfiMachine
+import Flapjack.RiscV.CorrectnessPipelineFfi
 
 /-!
 Concrete regression for the generated FFI ABI sequence.  The host is an
@@ -57,6 +58,22 @@ example :
     2 3 4 5 7 2 3 4 5
   all_goals try decide
   simp [ffiMachineHost, ffiMachineWordHandler]
+
+example :
+    (compileWordProgramNatToRiscV (width := 64)
+      { services := [("echo", 7)] } pipelineFfiWordConfig
+      pipelineFfiStackRemoveConfig 2 3
+      (.ffi "echo" 0 1 2 3 ([], []) : WordProg Nat)).bind
+        (executeInstructionsWithFfi ffiMachineHost ffiMachineState) =
+      ffiMachineHost 7 (readRegister ffiMachineState 4)
+        (readRegister ffiMachineState 5) (readRegister ffiMachineState 6)
+        (readRegister ffiMachineState 7)
+        (executeInstructions ffiMachineState
+          [.or 10 4 4, .or 11 5 5, .or 12 6 6, .or 13 7 7,
+            .addi 0 0 (BitVec.ofNat 64 28),
+            .addi 14 0 (BitVec.ofNat 64 7)]) := by
+  apply executeCompiledPipelineFfi
+  simp [ffiMachineState, zeroState, readRegister, writeRegister]
 
 example [NeZero width] (context : WordCallFfiContext width)
     (host : WordFfiHost width) (state firstState finalState : State width)
