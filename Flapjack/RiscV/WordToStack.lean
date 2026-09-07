@@ -1897,6 +1897,39 @@ def wordToStackProgNatWithBitmaps [BEq Nat]
     (wordStackLiveBitmap registerCount frameSlots wordBits)
     registerCount bitmapRegister frameSlots wordBits storeConstsStub state
 
+theorem wordStackBitmapState_insert_length
+    (state : WordStackBitmapState) (bitmap : List Nat)
+    (hstate : state.length = state.data.length) :
+    (wordStackInsertBitmap state bitmap).1.length =
+      (wordStackInsertBitmap state bitmap).1.data.length := by
+  simp [wordStackInsertBitmap, hstate]
+
+theorem wordStackBitmapState_alloc_length
+    (config : WordStackConfig) (bitmapRegister frameSlots : Nat)
+    (state : WordStackBitmapState) (live : List Nat)
+    (bitmapBuilder : List Nat → List Nat)
+    (hstate : state.length = state.data.length) :
+    (wordStackAllocWithBitmapBuilder config bitmapRegister frameSlots state
+      live bitmapBuilder).2.length =
+      (wordStackAllocWithBitmapBuilder config bitmapRegister frameSlots state
+        live bitmapBuilder).2.data.length := by
+  by_cases hframes : frameSlots = 0
+  · simp [wordStackAllocWithBitmapBuilder, wordStackBitmapWriteWithBuilder,
+      wordStackInsertBitmap, hframes, hstate]
+  · simp [wordStackAllocWithBitmapBuilder, wordStackBitmapWriteWithBuilder,
+      wordStackInsertBitmap, hframes, hstate]
+
+theorem wordStackBitmapState_storeConsts_length
+    (config : WordStackConfig) (registerCount specialScratch wordBits : Nat)
+    (storeConstsStub : Option Nat) (state : WordStackBitmapState)
+    (constants : List (Bool × Nat))
+    (hstate : state.length = state.data.length) :
+    (wordStackStoreConstsWithBitmaps config registerCount specialScratch wordBits
+      storeConstsStub state constants).2.length =
+      (wordStackStoreConstsWithBitmaps config registerCount specialScratch wordBits
+        storeConstsStub state constants).2.data.length := by
+  simp [wordStackStoreConstsWithBitmaps, wordStackInsertBitmap, hstate]
+
 def wordToStackProgNatWithLocationBitmaps [BEq Nat]
     (config : WordStackConfig) (registerCount bitmapRegister frameSlots wordBits : Nat)
     (storeConstsStub : Option Nat) (state : WordStackBitmapState) :
