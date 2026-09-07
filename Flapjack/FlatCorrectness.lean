@@ -51,23 +51,23 @@ theorem compile_flat_store_load_pair_correct (left right : Nat) :
     simp [flatCorrectnessProgram, flatCorrectnessContext, compileProg,
       compileExp, compileExp.compileExpList, Shape.shapeSize, freshNames,
       nestedDecs, stores, crepNestedSeq, loadShape, List.range, List.range.loop,
-      Function.comp_def]
+      ]
   rw [compiled_shape]
-  simp [flatCorrectnessProgram, flatCorrectnessContext, flatCorrectnessStructs,
-    flatCorrectnessDomain, flatCorrectnessMemory, compileProg, compileExp,
-    compileExp.compileExpList, Shape.shapeSize,
-    freshNames, nestedDecs, stores, crepNestedSeq, loadShape,
+  simp [flatCorrectnessProgram, flatCorrectnessStructs,
+    flatCorrectnessDomain, 
+    
+    
     evalCrepMemResult, evalCrepMemProg, evalCrepMemProg.evalCrepMemExps,
     evalCrepMemExp, updateMemory, updateCrepLocal,
     evalPanFlatProg, evalPanFlatProgWithPrimitive, evalPanFlatExp,
-    evalPanFlatExp.evalPanFlatExps, evalPanFlatExps, panFlatStore,
+    evalPanFlatExp.evalPanFlatExps, panFlatStore,
     panFlatStoreWords, panFlatStoreWord, panValueWords, panValueWordsFuel,
     panValueFuel, panValueFuel.panValueListFuel,
     panValueWordsFuel.panValueWordsListFuel, panOffset, panFlatLoad,
     panFlatLoadFuel, panFlatLoadFuel.panFlatLoadListFuel,
-    panFlatLoadFuel.panFlatLoadFieldsFuel, panFlatReadWord,
+    panFlatReadWord,
     panStructContextFuel, panShapeFieldsFuel, panShapeFuel,
     panShapeFuel.panShapeListFuel, shapeSizeWithContext, isWfShape,
-    isWfShape.isWfShapeList, lookupInfo, updatePanValueMap]
+    isWfShape.isWfShapeList, updatePanValueMap]
 
 end Flapjack

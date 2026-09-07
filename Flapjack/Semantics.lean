@@ -1050,7 +1050,7 @@ theorem compile_store32_load32_const_preserves_semantics
           (.return (.load32 (.const address)))) := by
   simp [compileProg, compileExp, evalCrepMemResult, evalPanMemResult,
     evalCrepMemProg, evalPanMemProg, evalCrepMemProg.evalCrepMemExps,
-    evalCrepMemExp, evalPanMemExp, updateMemory, updateCrepLocal]
+    evalCrepMemExp, evalPanMemExp, updateMemory]
 
 theorem compile_storeByte_loadByte_const_preserves_semantics
     [BEq α] [LawfulBEq α] [OfNat α 0] [Add α] [Mul α]
@@ -1066,7 +1066,7 @@ theorem compile_storeByte_loadByte_const_preserves_semantics
           (.return (.loadByte (.const address)))) := by
   simp [compileProg, compileExp, evalCrepMemResult, evalPanMemResult,
     evalCrepMemProg, evalPanMemProg, evalCrepMemProg.evalCrepMemExps,
-    evalCrepMemExp, evalPanMemExp, updateMemory, updateCrepLocal]
+    evalCrepMemExp, evalPanMemExp, updateMemory]
 
 theorem compile_ite_const_preserves_semantics
     [BEq α] [OfNat α 0] [Add α] [Mul α]
@@ -1086,7 +1086,7 @@ theorem compile_ite_const_preserves_semantics
   cases fuel with
   | zero =>
       simp [compileProg, compileExp, evalCrepMemProgFuel, evalPanMemProgFuel,
-        evalPanMemCondition]
+        ]
   | succ fuel =>
       simp [compileProg, compileExp, evalCrepMemProgFuel, evalPanMemProgFuel,
         evalCrepMemExp, evalPanMemCondition, evalPanMemExp]
@@ -1094,8 +1094,8 @@ theorem compile_ite_const_preserves_semantics
         cases fuel <;>
           simp_all [evalCrepMemProgFuel, evalPanMemProgFuel,
             evalPanMemProgFuelBase,
-            evalCrepMemProg.evalCrepMemExps, evalCrepMemExp, evalCrepExp,
-            evalPanMemCondition, evalPanMemExp]
+            evalCrepMemProg.evalCrepMemExps, evalCrepMemExp, 
+            evalPanMemExp]
 
 theorem compile_pan_mul_const_preserves_semantics
     [BEq α] [OfNat α 0] [OfNat α 1] [Add α] [Mul α]

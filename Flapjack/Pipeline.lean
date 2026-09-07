@@ -548,7 +548,7 @@ theorem compileFlapjack_skip [BEq α] [OfNat α 0] [OfNat α 1] [Add α] [Mul α
     (compileFlapjack architecture bytesInWord fromNat []).simplified = [] := by
   simp [compileFlapjack, panSimpDecls, structCompileTop, structGetNames,
     structCompileDecls, globalCompileTop, globalCollect, globalCompileDecls,
-    globalCompileInitializers, pipelineCrepeContext, pipelineFunctionInfos,
+    globalCompileInitializers, pipelineCrepeContext, 
     pipelineLoopFunctions, pipelineWordFunctions, pipelinePrependInitializers]
 
 end Flapjack

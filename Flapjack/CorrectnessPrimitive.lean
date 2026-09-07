@@ -121,7 +121,7 @@ theorem loopToWord_primitive_addCarry_agreement [NeZero width]
     simp [RiscV.registerOfNat, hresultCarry_lt] at h
     exact h
   simp [evalLoopProgWithPrimitive, RiscV.loopPrimitiveHandler,
-    loopReadLocals, loopAssignValues, updateLoopLocal,
+    loopReadLocals, loopAssignValues, 
     hleft, hright, hcarry, loopToWordProg, RiscV.evalWordProg,
     RiscV.wordArithToInstructions,
     RiscV.registerOfNat, hleft_lt, hright_lt, hcarry_lt,
@@ -179,7 +179,7 @@ theorem crepToLoop_primitive_agreement
               loopReadLocals (loopStateOfCrepLocals locals).locals arguments =
                 some values := by
             simpa [loopStateOfCrepLocals] using hargs
-          simp [hargs, hargs', hprimitive, loopCompileProg,
+          simp [hargs', hprimitive, loopCompileProg,
             evalLoopProgWithPrimitive]
       | some result =>
           have hargs' :
@@ -201,14 +201,14 @@ theorem crepToLoop_primitive_agreement
                       updateLoopLocal base name value by rfl]
                     exact ih _
           by_cases hlength : destinations.length = result.length
-          · simp [hargs, hargs', hprimitive, hlength, loopCompileProg,
+          · simp [hargs, hprimitive, hlength, loopCompileProg,
               evalLoopProgWithPrimitive, assignCrepValues, loopAssignValues,
               loopStateOfCrepLocals, loopResultState, loopResultValues, hfold,
-              updateCrepLocal, updateLoopLocal]
-          · simp [hargs, hargs', hprimitive, hlength, loopCompileProg,
+              ]
+          · simp [hargs, hprimitive, hlength, loopCompileProg,
               evalLoopProgWithPrimitive, assignCrepValues, loopAssignValues,
               loopStateOfCrepLocals, loopResultState, loopResultValues, hfold,
-              updateCrepLocal, updateLoopLocal]
+              ]
 
 theorem addCarry_preserves_mapped_locals [NeZero width]
     (context : WordContext) (locals : Nat → Option (RiscV.Word width))
@@ -316,33 +316,33 @@ theorem addCarry_preserves_mapped_locals [NeZero width]
           simp [RiscV.executeInstructions, RiscV.execute,
             RiscV.writeRegister, RiscV.readRegister,
             hdestination_nonzero, hresultCarry_nonzero,
-            hdestination_resultCarry, hdestination_sourceRight,
-            hdestination_scratch, hresultCarry_scratch,
-            hleft_scratch, hright_scratch, hcarry_scratch,
+            hdestination_resultCarry, 
+            hresultCarry_scratch,
+            hleft_scratch, hright_scratch, 
             Ne.symm hdestination_resultCarry,
             Ne.symm hdestination_sourceRight,
             Ne.symm hdestination_scratch,
             Ne.symm hresultCarry_scratch,
-            Ne.symm hleft_scratch, Ne.symm hright_scratch,
-            Ne.symm hcarry_scratch,
+            
+            
             hzero_value, hnonalias.1, hnonalias.2.1, hnonalias.2.2,
-            Ne.symm hnonalias.1, Ne.symm hnonalias.2.1,
+            
             Ne.symm hnonalias.2.2]
         · simp [RiscV.executeInstructions, RiscV.execute,
-            RiscV.writeRegister, RiscV.readRegister, hzero_register,
+            RiscV.writeRegister, RiscV.readRegister, 
             hdestination_nonzero, hresultCarry_nonzero,
-            hdestination_resultCarry, hdestination_sourceRight,
-            hdestination_scratch, hresultCarry_scratch,
-            hleft_scratch, hright_scratch, hcarry_scratch,
+            hdestination_resultCarry, 
+            hresultCarry_scratch,
+            hleft_scratch, hright_scratch, 
             Ne.symm hdestination_resultCarry,
             Ne.symm hdestination_sourceRight,
             Ne.symm hdestination_scratch,
             Ne.symm hresultCarry_scratch,
-            Ne.symm hleft_scratch, Ne.symm hright_scratch,
-            Ne.symm hcarry_scratch,
+            
+            
             hzero_value, hnonalias.1, hnonalias.2.1, hnonalias.2.2,
-            Ne.symm hnonalias.1, Ne.symm hnonalias.2.1,
-            Ne.symm hnonalias.2.2]
+            
+            ]
       exact hpreserved.trans hregister_value
 
 /-!
