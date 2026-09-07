@@ -1,4 +1,4 @@
-import Flapjack.RiscV.Allocator
+import Flapjack.RiscV.RegAlloc
 
 /-!
 # Linear-scan live trees
@@ -336,6 +336,60 @@ def wordLinearScanAllocateRegisters
 termination_by registers => sizeOf registers
 decreasing_by all_goals decreasing_trivial
 
+def wordLinearScanEdgeNames (register : Nat) :
+    List (Nat × Nat) → List Nat
+  | [] => []
+  | (left, right) :: edges =>
+      if left == register then
+        right :: wordLinearScanEdgeNames register edges
+      else if right == register then
+        left :: wordLinearScanEdgeNames register edges
+      else
+        wordLinearScanEdgeNames register edges
+
+def wordLinearScanColoursOf (state : WordLinearScanState) :
+    List Nat → List Nat
+  | [] => []
+  | register :: registers =>
+      match lookupNatInfo register state.colours with
+      | some colour => colour :: wordLinearScanColoursOf state registers
+      | none => wordLinearScanColoursOf state registers
+
+def wordLinearScanForcedColours (forced : List (Nat × Nat))
+    (register : Nat) (state : WordLinearScanState) : List Nat :=
+  wordLinearScanColoursOf state
+    (wordLinearScanEdgeNames register forced)
+
+def wordLinearScanPreferredColours (moves : List WordMove)
+    (register : Nat) (state : WordLinearScanState) : List Nat :=
+  wordLinearScanColoursOf state
+    ((moves.flatMap (fun move =>
+      if move.left == register then
+        [move.right]
+      else if move.right == register then
+        [move.left]
+      else
+        [])))
+
+def wordLinearScanAllocateClashTreeRegisters
+    (forced : List (Nat × Nat)) (moves : List WordMove)
+    : List Nat → (NatInfoMap Int) → (NatInfoMap Int) →
+      WordLinearScanState → Option WordLinearScanState
+  | [], _, _, state => some state
+  | register :: registers, beginnings, endings, state =>
+      match lookupNatInfo register beginnings,
+        lookupNatInfo register endings with
+      | some beginning, some ending =>
+          let state := wordLinearScanStep
+            (wordLinearScanForcedColours forced register state)
+            (wordLinearScanPreferredColours moves register state)
+            register beginning ending (register % 2 == 0) state
+          wordLinearScanAllocateClashTreeRegisters forced moves registers
+            beginnings endings state
+      | _, _ => none
+termination_by registers => sizeOf registers
+decreasing_by all_goals decreasing_trivial
+
 def wordLinearScanInitialState (colours : Nat) (stackStart : Nat) :
     WordLinearScanState :=
   { active := []
@@ -346,6 +400,16 @@ def wordLinearScanInitialState (colours : Nat) (stackStart : Nat) :
     nextSpill := stackStart
     colours := []
     locations := [] }
+
+def wordLinearScanAllocateClashTree (colours stackStart : Nat)
+    (tree : WordClashTree) (forced : List (Nat × Nat))
+    (moves : List WordMove) : Option WordLinearScanState :=
+  let liveTree := wordGetLiveTree tree
+  let (_, beginnings, endings) := wordGetIntervals liveTree 0 [] []
+  let registers := wordLinearScanSortRegisters beginnings
+    (wordLiveTreeRegisters liveTree)
+  wordLinearScanAllocateClashTreeRegisters forced moves registers
+    beginnings endings (wordLinearScanInitialState colours stackStart)
 
 def wordLinearScanLocations (state : WordLinearScanState) :
     NatInfoMap WordLocation :=

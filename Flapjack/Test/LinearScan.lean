@@ -66,6 +66,25 @@ example :
   native_decide
 
 example :
+    let state := wordLinearScanInitialState 2 0
+    let state := { state with colours := [(2, 0), (4, 1)] }
+    wordLinearScanForcedColours [(1, 2), (1, 4)] 1 state = [0, 1] := by
+  native_decide
+
+example :
+    let state := wordLinearScanInitialState 2 0
+    let state := { state with colours := [(2, 0)] }
+    wordLinearScanPreferredColours
+      [{ priority := 7, left := 1, right := 2 }] 1 state = [0] := by
+  native_decide
+
+example :
+    (wordLinearScanAllocateClashTree 2 0
+      (.seq (.delta [1] []) (.delta [5] []))
+      [] []).isSome = true := by
+  native_decide
+
+example :
     (wordCheckLiveTree id (.seq (.reads [1, 2]) (.writes [1])) [] []).isSome =
       true := by
   native_decide
