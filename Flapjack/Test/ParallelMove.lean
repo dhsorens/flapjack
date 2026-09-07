@@ -17,7 +17,7 @@ example :
 example :
     wordMoveToInstructions (width := 8) [(1, 2), (2, 1)] =
       some [.addi 31 2 0, .addi 2 1 0, .addi 1 31 0] := by
-  native_decide
+  decide +kernel
 
 example :
     wordStackMoveList
@@ -39,7 +39,7 @@ example :
       [.addi 31 2 0, .addi 2 1 0, .addi 1 31 0]
     (readRegister final 1, readRegister final 2) =
       (BitVec.ofNat 8 20, BitVec.ofNat 8 10) := by
-  native_decide
+  decide
 
 example :
     let config : WordStackConfig :=
@@ -58,7 +58,7 @@ example :
     (wordStackMachineValue config final 0,
       wordStackMachineValue config final 1) =
       (some (BitVec.ofNat 8 10), some (BitVec.ofNat 8 20)) := by
-  native_decide
+  decide +kernel
 
 example :
     let config : WordStackConfig :=
@@ -77,6 +77,6 @@ example :
     (wordStackMachineValue config final 0,
       wordStackMachineValue config final 1) =
       (some (BitVec.ofNat 8 20), some (BitVec.ofNat 8 10)) := by
-  native_decide
+  decide +kernel
 
 end Flapjack.RiscV

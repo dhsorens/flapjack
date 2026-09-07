@@ -132,42 +132,42 @@ theorem crepe_full_call_semantics :
       crepeSemanticsPrimitive crepeSemanticsFfi crepeSemanticsSharedMem
       0 100 30 crepeSemanticsState crepeSemanticsCall =
       some [42] := by
-  native_decide
+  decide +kernel
 
 theorem crepe_full_loop_semantics :
     evalCrepFullResult [] crepeSemanticsPrimitive
       crepeSemanticsFfi crepeSemanticsSharedMem
       0 100 50 crepeSemanticsState crepeSemanticsLoop =
       some [0] := by
-  native_decide
+  decide +kernel
 
 theorem crepe_full_handler_semantics :
     evalCrepFullResult crepeSemanticsHandlerFunctions
       crepeSemanticsPrimitive crepeSemanticsFfi crepeSemanticsSharedMem
       0 100 30 crepeSemanticsState crepeSemanticsHandlerCall =
       some [9] := by
-  native_decide
+  decide +kernel
 
 theorem crepe_full_memory_semantics :
     evalCrepFullResult [] crepeSemanticsPrimitive
       crepeSemanticsFfi crepeSemanticsSharedMem
       0 100 30 crepeSemanticsState crepeSemanticsMemory =
       some [7] := by
-  native_decide
+  decide +kernel
 
 theorem crepe_full_primitive_semantics :
     evalCrepFullResult [] crepeSemanticsPrimitive
       crepeSemanticsFfi crepeSemanticsSharedMem
       0 100 30 crepeSemanticsState crepeSemanticsPrimitiveProgram =
       some [3] := by
-  native_decide
+  decide +kernel
 
 theorem crepe_full_ffi_semantics :
     evalCrepFullResult [] crepeSemanticsPrimitive
       crepeSemanticsFfiHandler crepeSemanticsSharedMem
       0 100 30 crepeSemanticsState crepeSemanticsFfiProgram =
       some [33] := by
-  native_decide
+  decide +kernel
 
 theorem crepe_full_ffi_lowering_noop :
     evalCrepFullProg [] crepeSemanticsPrimitive
@@ -184,20 +184,20 @@ theorem crepe_full_ffi_lowering_noop :
 theorem crepe_runtime_extCall_final :
     (crepRuntimeExtCall crepeRuntimeFinalHandler crepeRuntimeState
       "host" 1 2 3 4).1 = .finalFfi "halt" := by
-  native_decide
+  decide
 
 theorem crepe_runtime_shared_load :
     (crepRuntimeSharedMem crepeRuntimeSharedHandler crepeRuntimeState
       .load 5 10).1 = .normal ∧
     (crepRuntimeSharedMem crepeRuntimeSharedHandler crepeRuntimeState
       .load 5 10).2.locals 5 = some 7 := by
-  native_decide
+  decide
 
 theorem crepe_runtime_shared_address_error :
     (crepRuntimeSharedMem crepeRuntimeSharedHandler
       { crepeRuntimeState with shMemaddrs := fun _ => false }
       .load 5 10).1 = .error := by
-  native_decide
+  decide
 
 def crepeRuntimeReturnProgram : CrepProg Nat :=
   .seq (.assign 5 (.const 3)) (.return [.var 5])
@@ -207,21 +207,21 @@ theorem crepe_runtime_full_return :
       crepeSemanticsPrimitive 20 crepeRuntimeState
       crepeRuntimeReturnProgram).map Prod.fst =
       some (.returned [3]) := by
-  native_decide
+  decide +kernel
 
 theorem crepe_runtime_full_final_ffi :
     (evalCrepRuntimeResult crepeRuntimeFinalHandler
       crepeSemanticsPrimitive 20 crepeRuntimeState
       (.extCall "host" 1 2 3 4)).map Prod.fst =
       some (.finalFfi "halt") := by
-  native_decide
+  decide +kernel
 
 theorem crepe_runtime_tick_timeout :
     (evalCrepRuntimeResult crepeRuntimeSharedHandler
       crepeSemanticsPrimitive 2 { crepeRuntimeState with clock := 0 }
       .tick).map Prod.fst =
       some (.timeout : CrepRuntimeResult Nat String) := by
-  native_decide
+  decide +kernel
 
 theorem crepe_runtime_memory_domain_error :
     (evalCrepRuntimeResult crepeRuntimeSharedHandler
@@ -229,7 +229,7 @@ theorem crepe_runtime_memory_domain_error :
       { crepeRuntimeState with memaddrs := fun _ => false }
       (.store (.const 10) (.const 7))).map Prod.fst =
       some (.error : CrepRuntimeResult Nat String) := by
-  native_decide
+  decide +kernel
 
 def crepeRuntimeCallState : CrepRuntimeState Nat Unit :=
   { crepeRuntimeState with
@@ -245,7 +245,7 @@ theorem crepe_runtime_call_result :
       (.call (some ([5], none)) "inc" [.const 41])).map
         (fun result => (result.1, result.2.locals 5)) =
       some (.normal, some 42) := by
-  native_decide
+  decide +kernel
 
 def crepeCallFullState : CrepState (RiscV.Word 64) :=
   { locals := fun _ => none
