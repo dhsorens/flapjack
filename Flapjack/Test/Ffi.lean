@@ -188,4 +188,35 @@ example :
       [6] [] (writeRegister (zeroState 64) 1 28) = some [33] := by
   native_decide
 
+def loopFfiBreakProgram : WordProg (Word 64) :=
+  .seq
+    (.loop []
+      (.seq (.ffi "inc" 2 3 4 5 ([], [])) (.break 0)) [])
+    (.return 0 [2])
+
+def loopFfiLinkedCode : Option (List (Instruction 64)) := do
+  let (_, _, artifact) ← compileLinkedWordFunctionWithFfi
+    ({ targets := [], services := [("inc", 7)] } : WordCallFfiContext 64)
+    (0, [], loopFfiBreakProgram)
+  let (code, _) ← artifact
+  pure code
+
+def loopFfiIncrementHost : WordFfiHost 64 :=
+  fun service configuration _ _ _ state =>
+    if service = 7 then
+      some { (writeRegister state 2 (configuration + 1)) with
+        pc := state.pc + 4 }
+    else none
+
+def loopFfiExecution : Option (List (Word 64)) := do
+  let code ← loopFfiLinkedCode
+  executeFunctionAtWithFfi loopFfiIncrementHost 100 0 0 100 [] code [2] []
+    (writeRegister (writeRegister (zeroState 64) 1 100) 2 41)
+
+example : loopFfiLinkedCode.isSome := by
+  native_decide
+
+example : loopFfiExecution = some [42] := by
+  native_decide
+
 end Flapjack

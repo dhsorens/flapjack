@@ -1249,6 +1249,8 @@ definitions, pass ordering, examples, and proof obligations.
   including function-local handler labels and the reserved raise stub.
 - [x] Exercise source `extCall` lowering through the StackLang/LabLang RISC-V
   image with a concrete service-table regression.
+- [x] Exercise loop-aware Word FFI lowering through generated RISC-V control
+  flow and observe a host update after a generated `break`.
 - [x] Add explicit raised control outcomes and handler propagation to the
   executable StackLang machine evaluator.
 - [x] Add an FFI-aware StackLang evaluator and one-step host-transition
