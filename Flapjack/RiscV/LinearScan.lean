@@ -442,6 +442,53 @@ def wordCheckLiveTree (colour : Nat → Nat) : WordLiveTree →
 termination_by tree => sizeOf tree
 decreasing_by all_goals decreasing_trivial
 
+def wordLinearScanLocationColour (state : WordLinearScanState) :
+    WordLocation → Nat
+  | .register register => register
+  | .stack slot => 2 * state.maxColours + 1 + slot
+
+def wordLinearScanColourAt (state : WordLinearScanState) (register : Nat) : Nat :=
+  match lookupNatInfo register state.locations with
+  | some location => wordLinearScanLocationColour state location
+  | none => 0
+
+def wordLinearScanLocationsComplete (state : WordLinearScanState) :
+    List Nat → Bool
+  | [] => true
+  | register :: registers =>
+      (lookupNatInfo register state.locations).isSome &&
+        wordLinearScanLocationsComplete state registers
+
+def wordLinearScanForcedSafe (state : WordLinearScanState) :
+    List (Nat × Nat) → Bool
+  | [] => true
+  | (left, right) :: edges =>
+      match lookupNatInfo left state.locations,
+        lookupNatInfo right state.locations with
+      | some leftLocation, some rightLocation =>
+          wordLinearScanLocationColour state leftLocation !=
+            wordLinearScanLocationColour state rightLocation &&
+            wordLinearScanForcedSafe state edges
+      | _, _ => false
+
+def wordLinearScanAllocationSafe (tree : WordClashTree)
+    (forced : List (Nat × Nat)) (state : WordLinearScanState) : Bool :=
+  let liveTree := wordGetLiveTree tree
+  wordLinearScanLocationsComplete state (wordLiveTreeRegisters liveTree) &&
+    (wordCheckLiveTree (wordLinearScanColourAt state) liveTree [] []).isSome &&
+    wordLinearScanForcedSafe state forced
+
+def wordLinearScanAllocateClashTreeChecked (colours stackStart : Nat)
+    (tree : WordClashTree) (forced : List (Nat × Nat))
+    (moves : List WordMove) : Option WordLinearScanState :=
+  match wordLinearScanAllocateClashTree colours stackStart tree forced moves with
+  | some state =>
+      if wordLinearScanAllocationSafe tree forced state then
+        some state
+      else
+        none
+  | none => none
+
 def wordFixLiveTree (tree : WordLiveTree) : WordLiveTree :=
   let live := wordGetLiveBackward tree []
   if live.isEmpty then tree else .seq (.writes live) tree

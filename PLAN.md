@@ -490,6 +490,8 @@ definitions, pass ordering, examples, and proof obligations.
   colour reuse, physical-register reservations, stealing, and spill slots.
 - [x] Connect linear-scan intervals, forced colours, and move preferences to a
   program-level clash-tree allocation entry point.
+- [x] Add an executable linear-scan acceptance boundary requiring complete
+  locations, live-tree safety, and forced-clash separation.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware
   RISC-V contracts before claiming general call-aware allocation correctness.
 - [x] Add a combined graph-allocation soundness contract exposing fixed tags,
