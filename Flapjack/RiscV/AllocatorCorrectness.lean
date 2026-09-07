@@ -1,6 +1,7 @@
 import Flapjack.RiscV.Allocator
 import Flapjack.RiscV.Backend
 import Flapjack.RiscV.RegAlloc
+import Flapjack.RiscV.ParallelMoveCorrectness
 import Flapjack.WordSemantics
 
 /-!
@@ -803,6 +804,132 @@ theorem evalWordSsaRenameProgram_return_singleton [NeZero width]
     simp [registerOfNat, hsource, executeInstructions, execute, nextPc,
       writeRegister, readRegister, wordControlResultValues]
     simpa [readRegister] using hvalue
+
+/-! The list form of `Return` is the ABI counterpart of the source theorem:
+    its move list is required to be acyclic so that the RISC-V move compiler
+    can be related to the source values position by position. -/
+
+theorem evalWordSsaRenameProgram_return [NeZero width]
+    (ssa : WordSsaState) (source target : State width)
+    (hregister : ∀ name,
+      (do
+        let register ← registerOfNat name
+        pure (readRegister source register)) =
+      (do
+        let register ← registerOfNat (wordSsaRead ssa name)
+        pure (readRegister target register)))
+    (fuel label : Nat) (values : List Nat)
+    (hvalid : ∀ move, move ∈
+        (wordSsaCallAbiRegisters 1 values.length).zip
+          (values.map (wordSsaRead ssa)) →
+      move.1 < 32 ∧ move.2 < 32 ∧ move.1 ≠ 31 ∧ move.2 ≠ 31)
+    (hdestNonzero : ∀ move, move ∈
+        (wordSsaCallAbiRegisters 1 values.length).zip
+          (values.map (wordSsaRead ssa)) → move.1 ≠ 0)
+    (hdestinations :
+      (((wordSsaCallAbiRegisters 1 values.length).zip
+        (values.map (wordSsaRead ssa))).map Prod.fst).Nodup)
+    (hnoSource : ∀ move, move ∈
+        (wordSsaCallAbiRegisters 1 values.length).zip
+          (values.map (wordSsaRead ssa)) →
+      move.2 ∉ ((wordSsaCallAbiRegisters 1 values.length).zip
+        (values.map (wordSsaRead ssa))).map Prod.fst) :
+    (evalWordFunctionWithHandlersAndFfi []
+        (fun _ _ _ _ _ state => some state) (fuel + 1) source
+        (.return label values)).map wordControlResultValues =
+      (evalWordFunctionWithHandlersAndFfi []
+        (fun _ _ _ _ _ state => some state) (fuel + 2) target
+        (wordSsaRenameProgram ssa (.return label values)).2).map
+        wordControlResultValues := by
+  let destinations := wordSsaCallAbiRegisters 1 values.length
+  let sources := values.map (wordSsaRead ssa)
+  let moves := destinations.zip sources
+  have hlength : destinations.length = sources.length := by
+    simp [destinations, sources, wordSsaCallAbiRegisters]
+  have hmoveCode : wordMoveToInstructions (width := width) moves =
+      some (moves.flatMap (wordMoveInstructionList (width := width))) := by
+    apply wordMoveToInstructions_of_no_source_destination
+    · simpa [moves, destinations, sources] using hdestinations
+    · simpa [moves, destinations, sources] using hnoSource
+    · simpa [moves, destinations, sources] using hvalid
+  have hmoveValues : ∀ move, move ∈ moves →
+      wordReadRegisterNat
+          (executeInstructions target
+            (moves.flatMap (wordMoveInstructionList (width := width)))) move.1 =
+        wordReadRegisterNat target move.2 := by
+    intro move hmove
+    have hread := executeWordMoves_preserves_sources target moves
+      (by simpa [moves, destinations, sources] using hdestinations)
+      (by simpa [moves, destinations, sources] using hnoSource)
+      (by simpa [moves, destinations, sources] using hvalid)
+      (by simpa [moves, destinations, sources] using hdestNonzero)
+      move hmove
+    have hmoveValid := hvalid move (by simpa [moves, destinations, sources] using hmove)
+    simpa [wordReadRegisterNat, registerOfNat, hmoveValid.1,
+      hmoveValid.2.1] using hread
+  have hreturnValues :
+      List.mapM (wordReadRegisterNat
+          (executeInstructions target
+            (moves.flatMap (wordMoveInstructionList (width := width))))) destinations =
+        List.mapM (wordReadRegisterNat target) sources := by
+    apply wordReadRegisterNat_mapM_zip target
+    · intro move hmove
+      exact hmoveValues move (by simpa [moves, destinations, sources] using hmove)
+    · exact hlength
+  have hsourceValues :
+      List.mapM (wordReadRegisterNat source) values =
+        List.mapM (wordReadRegisterNat target) sources := by
+    have hforall : ∀ values : List Nat,
+        List.mapM (wordReadRegisterNat source) values =
+          List.mapM (wordReadRegisterNat target)
+            (values.map (wordSsaRead ssa)) := by
+      intro values
+      induction values with
+      | nil => rfl
+      | cons value values ih =>
+          simp only [List.mapM_cons, List.map]
+          have hvalue := hregister value
+          have hvalue' : wordReadRegisterNat source value =
+              wordReadRegisterNat target (wordSsaRead ssa value) := by
+            simpa [wordReadRegisterNat, Option.map] using hvalue
+          rw [hvalue', ih]
+    simpa [sources] using hforall values
+  have hreturnValues' := hreturnValues
+  change List.mapM (fun name =>
+    (registerOfNat name).bind (fun register =>
+      some (readRegister
+        (executeInstructions target
+          (moves.flatMap (wordMoveInstructionList (width := width)))) register)))
+      destinations =
+    List.mapM (fun name =>
+      (registerOfNat name).bind (fun register =>
+        some (readRegister target register))) sources at hreturnValues'
+  have hsourceValues' := hsourceValues
+  change List.mapM (fun name =>
+    (registerOfNat name).bind (fun register =>
+      some (readRegister source register))) values =
+      List.mapM (fun name =>
+        (registerOfNat name).bind (fun register =>
+          some (readRegister target register))) sources at hsourceValues'
+  have hprogram :
+      (wordSsaRenameProgram ssa
+        (.return label values : WordProg (Word width))).2 =
+        (.seq (.move 0 moves)
+          (.return (wordSsaRead ssa label) destinations) :
+            WordProg (Word width)) := by
+    simp [moves, destinations, sources, wordSsaRenameProgram,
+      wordSsaRenameProgramWithLoops, wordSsaRead, wordSsaSeq,
+      wordSsaCallAbiRegisters]
+  rw [hprogram]
+  simp only [evalWordFunctionWithHandlersAndFfi, evalWordFunction]
+  rw [hmoveCode]
+  simp
+  rw [hsourceValues', hreturnValues']
+  cases hresult : List.mapM (fun name =>
+      (registerOfNat name).bind (fun register =>
+        some (readRegister target register))) sources with
+  | none => simp
+  | some returnedValues => simp [wordControlResultValues]
 
 /-! FFI is an explicit semantic environment at the Word boundary.  This
     lemma records the exact compatibility condition required when a completed
