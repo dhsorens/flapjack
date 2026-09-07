@@ -103,9 +103,17 @@ def wordAllocateGraphFunctionWithHeuristics (parameters : List Nat)
     (wordClashTree renamedProgram [])
   let forced := wordProgForcedClashes renamedProgram
   let (moves, _) := wordGetHeuristics algorithm currentFunction renamedProgram
-  (wordAllocateGraphWithPrioritizedMoves tree forced
-      (wordStackOnlyUnion fixedSources stackOnly.forced)
-      moves colours stackStart).map
+  /- CakeML's Simple allocator (modes 0 and 1) deliberately receives no
+     move preferences.  IRC (modes 2 and 3) receives the prioritized list;
+     the linear-scan modes are dispatched before reaching this wrapper. -/
+  let allocation := if algorithm < 2 then
+      wordAllocateGraph tree (wordProgForcedClashes renamedProgram)
+        (wordStackOnlyUnion fixedSources stackOnly.forced) [] colours stackStart
+    else
+      wordAllocateGraphWithPrioritizedMoves tree forced
+        (wordStackOnlyUnion fixedSources stackOnly.forced)
+        moves colours stackStart
+  allocation.map
     (fun allocation =>
       (state, renamedParameters, allocation,
         wordApplyColour (wordGraphColouringAt allocation.colouring) renamedProgram))
@@ -127,16 +135,26 @@ theorem wordAllocateGraphFunctionWithHeuristics_sound
           (wordClashTree (wordSsaRenameFunction parameters program).2.snd []))
         [] []).isSome = true := by
   simp [wordAllocateGraphFunctionWithHeuristics] at halloc
-  rcases halloc with ⟨allocation', hgraph, rfl, rfl, rfl, rfl⟩
-  exact wordAllocateGraphWithPrioritizedMoves_sound
-    (WordClashTree.seq
-      (.set (wordSsaRenameFunction parameters program).2.fst)
-      (wordClashTree (wordSsaRenameFunction parameters program).2.snd []))
-    (wordProgForcedClashes (wordSsaRenameFunction parameters program).2.snd)
-    (wordStackOnlyUnion fixedSources
-      (wordStackOnly (wordSsaRenameFunction parameters program).2.snd).forced)
-    (wordGetHeuristics algorithm currentFunction
-      (wordSsaRenameFunction parameters program).2.snd).1
-    colours stackStart allocation' hgraph
+  split at halloc
+  · rcases halloc with ⟨allocation', hgraph, rfl, rfl, rfl, rfl⟩
+    exact wordAllocateGraph_sound
+      (WordClashTree.seq
+        (.set (wordSsaRenameFunction parameters program).2.fst)
+        (wordClashTree (wordSsaRenameFunction parameters program).2.snd []))
+      (wordProgForcedClashes (wordSsaRenameFunction parameters program).2.snd)
+      (wordStackOnlyUnion fixedSources
+        (wordStackOnly (wordSsaRenameFunction parameters program).2.snd).forced)
+      [] colours stackStart allocation' hgraph
+  · rcases halloc with ⟨allocation', hgraph, rfl, rfl, rfl, rfl⟩
+    exact wordAllocateGraphWithPrioritizedMoves_sound
+      (WordClashTree.seq
+        (.set (wordSsaRenameFunction parameters program).2.fst)
+        (wordClashTree (wordSsaRenameFunction parameters program).2.snd []))
+      (wordProgForcedClashes (wordSsaRenameFunction parameters program).2.snd)
+      (wordStackOnlyUnion fixedSources
+        (wordStackOnly (wordSsaRenameFunction parameters program).2.snd).forced)
+      (wordGetHeuristics algorithm currentFunction
+        (wordSsaRenameFunction parameters program).2.snd).1
+      colours stackStart allocation' hgraph
 
 end Flapjack
