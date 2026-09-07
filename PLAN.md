@@ -1261,6 +1261,8 @@ definitions, pass ordering, examples, and proof obligations.
   machine/Nat simulation witness and composition theorem.
 - [x] Thread bitmap state through recursive call-handler lowering in the
   stateful Word-to-Stack compiler.
+- [x] Thread bitmap state through both branches of conditional Word-to-Stack
+  lowering, preserving distinct bitmap indices for branch-local allocations.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
