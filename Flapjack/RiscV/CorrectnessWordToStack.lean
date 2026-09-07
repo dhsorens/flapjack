@@ -729,6 +729,46 @@ theorem evalStackProgFuelWithCodeAndFfi_wordToStackProgNatWithBitmapBuilder_call
     (result := some result) hmove hcall
   simp [hseq]
 
+theorem wordToStackProgNatWithBitmapBuilder_raise
+    [BEq Nat] (config : WordStackConfig)
+    (bitmapBuilder : List Nat → List Nat)
+    (registerCount bitmapRegister frameSlots wordBits : Nat)
+    (storeConstsStub : Option Nat) (state : WordStackBitmapState)
+    (exception : Nat) :
+    wordToStackProgNatWithBitmapBuilder config bitmapBuilder registerCount
+      bitmapRegister frameSlots wordBits storeConstsStub state
+      (.raise exception) = some (wordToStackRaise exception, state) := by
+  simp only [wordToStackProgNatWithBitmapBuilder]
+  rw [wordToStackProgNat]
+  rfl
+
+theorem evalStackProgFuelWithCodeAndFfi_wordToStackProgNatWithBitmapBuilder_raise
+    [BEq Nat] [NeZero width] (host : StackMachineFfiHandler width)
+    (fuel : Nat) (code : Nat → Option (StackProg Nat))
+    (config : WordStackConfig)
+    (bitmapBuilder : List Nat → List Nat)
+    (registerCount bitmapRegister frameSlots wordBits : Nat)
+    (storeConstsStub : Option Nat) (bitmapState : WordStackBitmapState)
+    (machineState : WordStackMachineState width)
+    (exception : Nat) (result : StackMachineControl width)
+    (hraise : evalStackProgFuelWithCodeAndFfi host (fuel + 1) code machineState
+      (wordToStackRaise exception) = some result) :
+    (wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+      registerCount bitmapRegister frameSlots wordBits storeConstsStub bitmapState
+      (.raise exception)).bind
+        (fun compiled =>
+          (evalStackProgFuelWithCodeAndFfi host (fuel + 1) code machineState
+            compiled.1).map (fun control => (control, compiled.2))) =
+      some (result, bitmapState) := by
+  have hcompile := wordToStackProgNatWithBitmapBuilder_raise
+    (config := config) (bitmapBuilder := bitmapBuilder)
+    (registerCount := registerCount) (bitmapRegister := bitmapRegister)
+    (frameSlots := frameSlots) (wordBits := wordBits)
+    (storeConstsStub := storeConstsStub) (state := bitmapState)
+    (exception := exception)
+  rw [hcompile]
+  simp [hraise]
+
 /-! The state-threaded compiler composes the results of sequential source
     programs.  Keeping both intermediate states in the theorem makes the
     equation useful for composing an allocating prefix with a later FFI or

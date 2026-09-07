@@ -1501,6 +1501,8 @@ definitions, pass ordering, examples, and proof obligations.
   execution under explicit argument-move and return-call premises.
 - [x] Cover zero-return direct calls, including their raw StackLang call code,
   in the state-threaded lowering and execution equations.
+- [x] Expose state-threaded raise lowering and its bounded execution equation,
+  retaining the runtime raise-stub execution as an explicit premise.
 - [x] Expose the state-threaded Word-to-Stack FFI equation, retaining the
   bitmap accumulator across ABI argument lowering.
 - [x] Compose state-threaded Word-to-Stack FFI lowering with bounded
