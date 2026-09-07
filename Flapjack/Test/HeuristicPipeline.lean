@@ -13,6 +13,6 @@ example :
 example :
     (pipelineWordFunctionsAllocatedWithHeuristics 1
       [(0, [], (.skip : LoopProg (RiscV.Word 64))) ]).isSome = true := by
-  native_decide
+  decide +kernel
 
 end Flapjack

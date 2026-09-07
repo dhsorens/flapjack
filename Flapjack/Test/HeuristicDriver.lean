@@ -8,14 +8,14 @@ example :
     wordHeuristicDriverUsesOracle
       (wordAllocateFunctionWithOracleOrHeuristicOrSpill
         [] (.skip : WordProg Nat) [] 1 7 13 26 []) = true := by
-  native_decide
+  decide +kernel
 
 example :
     wordHeuristicDriverUsesGraph
       (wordAllocateFunctionWithOracleOrHeuristicOrSpill
         [] (.inst (.arith (.longMul 0 1 2 3)) : WordProg Nat)
           [] 1 7 13 26 []) = true := by
-  native_decide
+  decide +kernel
 
 example (parameters : List Nat) (program : WordProg Nat)
     (fixedSources : List Nat)
