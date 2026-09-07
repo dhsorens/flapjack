@@ -577,6 +577,8 @@ definitions, pass ordering, examples, and proof obligations.
   materializing spilled source and address operands in temporary registers.
 - [x] Prove constant assignment lowering preserves unrelated mapped values
   when writing a register or a spilled destination through `scratch`.
+- [x] Prove StackStore lookup assignment preserves unrelated mapped values,
+  including a spilled destination and an explicit store-name mapping.
 - [x] Expose soundness of the entry-aware SSA spill allocator, including its
   clash, special-location, and clash-tree checks.
 - [x] Expose location coverage for every variable in the entry-aware SSA spill
