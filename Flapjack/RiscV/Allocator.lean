@@ -503,6 +503,80 @@ def wordSsaReconcile : List Nat → WordSsaState → WordSsaState → Nat →
 termination_by names => sizeOf names
 decreasing_by all_goals decreasing_trivial
 
+/-! CakeML's branch merge has a second responsibility beyond reconciling
+    different versions: a name introduced on only one branch must be given a
+    value on the other branch.  The HOL implementation does this in two
+    passes, first merging names present on both sides and then inserting fake
+    zero-register moves for one-sided names.  Keep the two passes explicit so
+    the SSA state returned by the left branch is the merged state used by the
+    caller, just as in `fix_inconsistencies`. -/
+
+def wordSsaBranchPriority (preferred : Option Bool) (leftBranch : Bool) : Nat :=
+  match preferred with
+  | none => 1
+  | some preferred => if preferred = leftBranch then 2 else 1
+
+def wordSsaPriorityMove (preferred : Option Bool) (leftBranch : Bool)
+    (moves : List (Nat × Nat)) : WordProg α :=
+  if moves.isEmpty then
+    .skip
+  else
+    .move (wordSsaBranchPriority preferred leftBranch) moves
+
+def wordSsaMergeMoves : List Nat → WordSsaState → WordSsaState → Nat →
+    List (Nat × Nat) × List (Nat × Nat) × Nat × WordSsaState × WordSsaState
+  | [], left, right, next => ([], [], next, left, right)
+  | name :: names, left, right, next =>
+      let (leftMoves, rightMoves, next, left, right) :=
+        wordSsaMergeMoves names left right next
+      match lookupNatInfo name left.current, lookupNatInfo name right.current with
+      | some leftName, some rightName =>
+          if leftName = rightName then
+            (leftMoves, rightMoves, next, left, right)
+          else
+            ([(next, leftName)] ++ leftMoves, [(next, rightName)] ++ rightMoves,
+              next + 4, wordSsaForceRename [(name, next)] left,
+              wordSsaForceRename [(name, next)] right)
+      | _, _ => (leftMoves, rightMoves, next, left, right)
+termination_by names => sizeOf names
+decreasing_by all_goals decreasing_trivial
+
+def wordSsaFakeInconsistencyMoves (preferred : Option Bool) :
+    List Nat → WordSsaState → WordSsaState → Nat →
+      WordProg α × WordProg α × Nat × WordSsaState × WordSsaState
+  | [], left, right, next => (.skip, .skip, next, left, right)
+  | name :: names, left, right, next =>
+      let (leftMoves, rightMoves, next, left, right) :=
+        wordSsaFakeInconsistencyMoves preferred names left right next
+      match lookupNatInfo name left.current, lookupNatInfo name right.current with
+      | none, some rightName =>
+          (wordSsaSeq leftMoves (.move 0 [(next, 0)]),
+            wordSsaSeq rightMoves
+              (.move (wordSsaBranchPriority preferred false) [(next, rightName)]),
+            next + 4, wordSsaForceRename [(name, next)] left,
+            wordSsaForceRename [(name, next)] right)
+      | some leftName, none =>
+          (wordSsaSeq leftMoves
+              (.move (wordSsaBranchPriority preferred true) [(next, leftName)]),
+            wordSsaSeq rightMoves (.move 0 [(next, 0)]),
+            next + 4, wordSsaForceRename [(name, next)] left,
+            wordSsaForceRename [(name, next)] right)
+      | _, _ => (leftMoves, rightMoves, next, left, right)
+termination_by names => sizeOf names
+decreasing_by all_goals decreasing_trivial
+
+def wordSsaFixInconsistencies (preferred : Option Bool)
+    (left right : WordSsaState) (next : Nat) :
+    WordSsaState × WordProg α × WordProg α :=
+  let names := (wordSsaKeys left ++ wordSsaKeys right).eraseDups
+  let (mergeLeft, mergeRight, next, left, right) :=
+    wordSsaMergeMoves names left right next
+  let (fakeLeft, fakeRight, next, left, _right) :=
+    wordSsaFakeInconsistencyMoves preferred names left right next
+  ({ left with next := next },
+    wordSsaSeq (wordSsaPriorityMove preferred true mergeLeft) fakeLeft,
+    wordSsaSeq (wordSsaPriorityMove preferred false mergeRight) fakeRight)
+
 structure WordSsaLoopFrame where
   entry : WordSsaState
   exit : WordSsaState
@@ -785,9 +859,12 @@ def wordSsaRenameProgramWithLoops (frames : List WordSsaLoopFrame)
         let elseInput := { state with next := thenState.next }
         let (elseState, elseBranch) :=
           wordSsaRenameProgramWithLoops frames elseInput elseBranch
-        let names := wordSsaBranchNames state thenState elseState
+        let preferred := match thenBranch, elseBranch with
+          | .skip, _ => some true
+          | _, .skip => some false
+          | _, _ => none
         let (merged, thenMoves, elseMoves) :=
-          wordSsaReconcile names thenState elseState elseState.next
+          wordSsaFixInconsistencies preferred thenState elseState elseState.next
         ({ current := merged.current, next := merged.next },
           .ite operator (wordSsaRead state condition) right
             (wordSsaSeq thenBranch thenMoves)
@@ -803,15 +880,18 @@ theorem wordSsaRenameProgram_ite :
     wordSsaRenameProgram ({ current := [], next := 10 } : WordSsaState)
         (.ite .equal 0 (.reg 0)
           (.assign 1 (.var 0)) (.assign 1 (.var 0)) : WordProg α) =
-      ({ current := [(1, 18)], next := 22 },
+        ({ current := [(1, 18)], next := 22 },
         .ite .equal 0 (.reg 0)
-          (.seq (.assign 10 (.var 0)) (.assign 18 (.var 10)))
-          (.seq (.assign 14 (.var 0)) (.assign 18 (.var 14)))) := by
+          (.seq (.assign 10 (.var 0)) (.move 1 [(18, 10)]))
+          (.seq (.assign 14 (.var 0)) (.move 1 [(18, 14)]))) := by
   simp [wordSsaRenameProgram, wordSsaRenameProgramWithLoops,
     wordSsaRenameExp, wordSsaRenameRegImm,
-    wordSsaRead, wordSsaFresh, wordSsaBranchNames, wordSsaKeys,
-    wordSsaReconcile, wordSsaSeq, List.eraseDups, List.eraseDupsBy,
-    List.eraseDupsBy.loop, lookupNatInfo]
+    wordSsaRead, wordSsaFresh, wordSsaKeys, wordSsaSeq,
+    wordSsaFixInconsistencies, wordSsaPriorityMove,
+    wordSsaBranchPriority, wordSsaMergeMoves,
+    wordSsaFakeInconsistencyMoves, wordSsaForceRename,
+    List.eraseDups, List.eraseDupsBy, List.eraseDupsBy.loop,
+    lookupNatInfo]
 
 /-! Program-level variable collection and liveness.  Sequencing and branch
     paths use backwards transfers; loop entry/exit sets remain conservative

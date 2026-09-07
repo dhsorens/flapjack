@@ -1055,6 +1055,8 @@ definitions, pass ordering, examples, and proof obligations.
   marshalling and post-install pointer/cut-set restoration.
 - [x] Port CakeML's SSA StoreConsts boundary, including code/data length ABI
   marshalling and fresh result restoration.
+- [x] Match CakeML's two-pass SSA branch reconciliation, including prioritized
+  merge moves and zero-register initialization for one-sided names.
 - [x] Marshal allocated Word call arguments into the even-numbered ABI
   registers before StackLang call-frame construction, for both handler-free
   and handler-aware calls.
