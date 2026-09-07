@@ -1195,6 +1195,8 @@ definitions, pass ordering, examples, and proof obligations.
   length, including the public decoder wrapper.
 - [x] Prove that successful bitmap root collection preserves the input stack
   length after encode, root movement, and decode.
+- [x] Prove that successful full bitmap collection preserves stack length
+  through the subsequent heap scan loop.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 

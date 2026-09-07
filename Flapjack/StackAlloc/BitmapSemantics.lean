@@ -724,6 +724,28 @@ theorem stackGcNatMoveRootsBitmaps_length
           cases hresult
           exact hlength
 
+theorem stackGcNatFullBitmaps_length
+    (config : StackGcConfig) (bitmaps : List Nat)
+    (stack : List StackGcNatValue)
+    (newBase oldBase : Nat) (memory : Nat → Nat)
+    (domain : Nat → Bool) (fuel : Nat) (result : StackGcValueRootsResult)
+    (hresult :
+      stackGcNatFullBitmaps config bitmaps stack newBase oldBase memory domain fuel =
+        some result) :
+    result.values.length = stack.length := by
+  unfold stackGcNatFullBitmaps at hresult
+  cases hmove :
+      stackGcNatMoveRootsBitmaps config bitmaps stack 0 newBase oldBase
+        memory domain with
+  | none =>
+      simp [hmove] at hresult
+  | some moved =>
+      have hlength := stackGcNatMoveRootsBitmaps_length config bitmaps stack
+        0 newBase oldBase memory domain moved hmove
+      simp [hmove] at hresult
+      cases hresult
+      exact hlength
+
 @[simp] theorem stackGcNatFullReadBitmap_zero (config : StackGcConfig)
     (bitmaps : List Nat) :
     stackGcNatFullReadBitmap config bitmaps (.word 0) = none := by
