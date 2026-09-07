@@ -1243,6 +1243,8 @@ definitions, pass ordering, examples, and proof obligations.
   transfer and handler execution under explicit evaluation witnesses.
 - [x] Prove the complementary full-Crepe uncaught-exception call rule,
   preserving the callee memory in the propagated result.
+- [x] Compose machine bitmap-root movement and heap scanning with the Nat
+  full bitmap collector result under explicit root and loop witnesses.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
