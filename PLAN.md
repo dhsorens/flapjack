@@ -1036,6 +1036,10 @@ definitions, pass ordering, examples, and proof obligations.
   variable range, with unused formals retained in spill allocation inputs.
 - [x] Align the allocated pipeline with the established Loop-to-Word context
   and `name + 2` formal-parameter mapping before function SSA setup.
+- [x] Port CakeML's source-faithful SSA FFI boundary: refresh the live cut set,
+  marshal the four ABI arguments, emit the FFI node, and restore the cut set.
+- [x] Preserve every architectural even-numbered Word name in spill
+  allocation, including FFI ABI operands that are not formal parameters.
 - [x] Marshal allocated Word call arguments into the even-numbered ABI
   registers before StackLang call-frame construction, for both handler-free
   and handler-aware calls.

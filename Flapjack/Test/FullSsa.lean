@@ -21,6 +21,21 @@ example :
       .move 1 [(5, 2), (9, 3)] := by
   rfl
 
+/- The FFI SSA boundary refreshes the live cut set around the ABI call and
+   restores it afterwards, matching CakeML's `ssa_cc_trans` shape. -/
+example :
+    wordSsaRenameProgram ({ current := [], next := 10 } : WordSsaState)
+      (.ffi "f" 1 2 3 4 ([5], [6]) : WordProg Nat) =
+      ({ current := [(6, 26), (5, 22)], next := 30 },
+        .seq (.move 0 [(12, 5), (16, 6)])
+          (.seq (.move 0 [(2, 1), (4, 2), (6, 3), (8, 4)])
+            (.seq (.ffi "f" 2 4 6 8 ([12], [16]))
+              (.move 0 [(22, 12), (26, 16)])))) := by
+  simp [wordSsaRenameProgram, wordSsaRenameProgramWithLoops,
+    wordSsaListNextVarRenameMove, wordSsaReadCutsets, wordSsaFreshList,
+    wordSsaFresh, wordSsaRead, wordSsaRestrict, wordSsaSeq, List.eraseDups,
+    List.eraseDupsBy, List.eraseDupsBy.loop, lookupNatInfo]
+
 /- The entry-aware graph boundary accepts an unused ABI formal and returns a
    coloured program containing its setup move. -/
 example :

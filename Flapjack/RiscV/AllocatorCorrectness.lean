@@ -272,7 +272,8 @@ theorem wordAllocateSsaFunctionWithEntryAndClashTreeWithSpillsAndPreferencesFixe
       (wordClashTree (wordSsaRenameFunctionWithEntry parameters program).2.snd []) []).snd
     (wordProgPreferenceEdges
       (wordSsaRenameFunctionWithEntry parameters program).2.snd)
-    parameters alloc hallocation
+    (wordPhysicalFixedSources parameters
+      (wordSsaRenameFunctionWithEntry parameters program).2.snd) alloc hallocation
   intro name hname
   apply hslots name
   simp [hname]
