@@ -98,6 +98,44 @@ def stackGcNatDecodeStack (config : StackGcConfig)
     Option (List StackGcNatValue) :=
   stackGcNatDecodeStackFuel config bitmaps (stack.length + 1) encoded stack
 
+structure StackGcValueRootsResult where
+  values : List StackGcNatValue
+  nextIndex : Nat
+  nextAddress : Nat
+  memory : Nat → Nat
+  condition : Bool
+
+def stackGcNatMoveValueRoots (config : StackGcConfig) :
+    List StackGcNatValue → Nat → Nat → Nat → (Nat → Nat) → (Nat → Bool) →
+      StackGcValueRootsResult
+  | [], index, destination, _, memory, _ =>
+      { values := []
+        nextIndex := index
+        nextAddress := destination
+        memory := memory
+        condition := true }
+  | value :: values, index, destination, oldBase, memory, domain =>
+      let moved := stackGcValueMove config value index destination oldBase
+        memory domain
+      let rest := stackGcNatMoveValueRoots config values moved.nextIndex
+        moved.nextAddress oldBase moved.memory domain
+      { values := moved.value :: rest.values
+        nextIndex := rest.nextIndex
+        nextAddress := rest.nextAddress
+        memory := rest.memory
+        condition := moved.condition && rest.condition }
+
+theorem stackGcNatMoveValueRoots_length (config : StackGcConfig)
+    (values : List StackGcNatValue) (index destination oldBase : Nat)
+    (memory : Nat → Nat) (domain : Nat → Bool) :
+    (stackGcNatMoveValueRoots config values index destination oldBase memory domain).values.length =
+      values.length := by
+  induction values generalizing index destination memory with
+  | nil =>
+      rfl
+  | cons value values ih =>
+      simp [stackGcNatMoveValueRoots, ih]
+
 example :
     stackGcNatEncodeStack { wordBits := 8 } [3]
         [.word 1, .word 11, .word 0] = some [.word 11] := by
@@ -116,6 +154,17 @@ example :
 example :
     stackGcNatDecodeStack { wordBits := 8 } [3] []
         [.word 1, .word 0] = none := by
+  native_decide
+
+example :
+    (stackGcNatMoveValueRoots { wordBits := 8 }
+      [.loc 4 0, .word 2] 0 100 0 (fun _ => 0) (fun _ => true)).values =
+      [.loc 4 0, .word 2] := by
+  native_decide
+
+example :
+    (stackGcNatMoveValueRoots { wordBits := 8 }
+      [.loc 4 1] 0 100 0 (fun _ => 0) (fun _ => true)).condition = false := by
   native_decide
 
 
