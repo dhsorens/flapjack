@@ -67,8 +67,8 @@ theorem ffiIdentity_mappedLocals : loopLocalsMappedToRiscV ({ vars := [] } : Wor
             · simp [ffiIdentityLoopState, h1, h2, h3, h4] at hvalue)
   · simp [evalLoopFfi, ffiIdentityLoopHandler, ffiIdentityLoopState]
   · simp [loopToWordProg, evalWordFfi, ffiIdentityWordHandler,
-      registerOfNat, wordFindVar, lookupNatInfo, writeRegister,
-      readRegister]
+      registerOfNat, wordFindVar, lookupNatInfo, 
+      ]
 
 example : loopLocalsMappedToRiscV ({ vars := [] } : WordContext)
     ffiIdentityLoopState.locals ffiIdentityWordState := by
@@ -99,7 +99,7 @@ example : loopLocalsMappedToRiscV ({ vars := [] } : WordContext)
       ffiIdentityLoopState]
   · simp [loopToWordProg, evalWordFunctionWithHandlersAndFfi,
       ffiIdentityWordHandler, registerOfNat, wordFindVar, lookupNatInfo,
-      writeRegister, readRegister]
+      ]
 
 example : loopLocalsMappedToRiscV ({ vars := [] } : WordContext)
     ffiIdentityLoopState.locals

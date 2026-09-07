@@ -172,7 +172,7 @@ example :
     checkProg (α := Nat) checkerContext
       (.assign .local "missing" (.const 7)) =
       staticError (.scope "unknown local variable: missing") := by
-  simp [checkProg, staticError, staticBind, checkerContext, lookupInfo]
+  simp [checkProg, staticError, checkerContext, lookupInfo]
 
 example :
     staticResultErrorMessage (checkProg (α := Nat) checkerContext

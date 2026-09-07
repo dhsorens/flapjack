@@ -260,7 +260,7 @@ example :
       .seq .skip
         (.seq (.assign 3 (.const 8))
           (.seq (.assign 4 (.const 255)) (.store32 3 4))) := by
-  simp [loopCompileProg, loopCompileExp, loopCompileExps, loopNestedSeq,
+  simp [loopCompileProg, loopCompileExp, loopNestedSeq,
     loopContext]
 
 example :

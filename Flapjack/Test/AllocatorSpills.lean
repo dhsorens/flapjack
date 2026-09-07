@@ -17,9 +17,9 @@ theorem wordAllocateSsaProgramWithSpills_example :
     wordClashPairs, wordProgVariables, wordAllocateVarsWithSpills,
     wordGreedyAllocateWithSpills, wordUsedLocationRegisters,
     wordColourCandidates, wordFirstAvailable, wordNeighbours,
-    wordPreferredRegister, wordRemoveRegisters, wordAllocatableRegisters,
+    wordPreferredRegister, wordAllocatableRegisters,
     wordSpillAllocationRespectsClashes, lookupNatInfo,
-    wordSpecialArithLocationsSafe, wordProgSpecialLocationsSafe,
+    wordProgSpecialLocationsSafe,
     wordExpReadVars, List.eraseDups, List.eraseDupsBy,
     List.eraseDupsBy.loop]
 
@@ -54,9 +54,9 @@ example :
       wordClashPairs, wordProgVariables, wordAllocateVarsWithSpills,
       wordGreedyAllocateWithSpills, wordUsedLocationRegisters,
       wordColourCandidates, wordFirstAvailable, wordNeighbours,
-      wordPreferredRegister, wordRemoveRegisters, wordAllocatableRegisters,
+      wordPreferredRegister, wordAllocatableRegisters,
       wordSpillAllocationRespectsClashes, lookupNatInfo,
-      wordSpecialArithLocationsSafe, wordProgSpecialLocationsSafe,
+      wordProgSpecialLocationsSafe,
       wordExpReadVars, List.eraseDups, List.eraseDupsBy,
       List.eraseDupsBy.loop]
   have h := wordAllocateSsaProgramWithSpills_maps_variables
@@ -92,7 +92,7 @@ example :
           (.return 0 [3]) (.return 0 [4]) : WordProg Nat) [] =
       .seq (.delta [] [1, 2])
         (.branch none (.delta [] [3]) (.delta [] [4])) := by
-  simp [wordClashTree, wordExpReadVars]
+  simp [wordClashTree]
 
 example :
     wordClashTree
@@ -155,8 +155,8 @@ example :
     wordProgWriteVars, wordExpReadVars, wordAllocateVarsWithSpills,
     wordGreedyAllocateWithSpills, wordUsedLocationRegisters,
     wordColourCandidates, wordFirstAvailable, wordNeighbours,
-    wordPreferredRegister, wordRemoveRegisters, wordAllocatableRegisters,
-    wordSpillAllocationRespectsClashes, wordSpecialArithLocationsSafe,
+    wordPreferredRegister, wordAllocatableRegisters,
+    wordSpillAllocationRespectsClashes, 
     wordProgSpecialLocationsSafe, lookupNatInfo, List.eraseDups,
     List.eraseDupsBy, List.eraseDupsBy.loop]
 
@@ -196,12 +196,12 @@ example :
     wordPreferenceLocationRegisters,
     wordColourCandidatesWithSpillPreferences,
     wordUsedLocationRegisters, wordColourCandidates, wordFirstAvailable,
-    wordNeighbours, wordPreferredRegister, wordRemoveRegisters,
+    wordNeighbours, wordPreferredRegister, 
     wordAllocatableRegisters, wordSpillAllocationRespectsClashes,
-    wordSpecialArithLocationsSafe, wordProgSpecialLocationsSafe,
+    wordProgSpecialLocationsSafe,
     wordProgPreferenceEdges, lookupNatInfo, wordSpillClashTreeChecked,
     wordSpillLocationColour, wordClashTreeCheck, wordCheckPartialColour,
-    wordNumSetDelete, wordCheckColour, List.eraseDups,
+    wordNumSetDelete, List.eraseDups,
     List.eraseDupsBy, List.eraseDupsBy.loop]
 
 example (slots : List Nat) (edges : List (Nat × Nat))

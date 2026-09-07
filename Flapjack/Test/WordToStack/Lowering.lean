@@ -183,7 +183,7 @@ example :
     wordStackPhysicalMovesTo, wordStackParallelLocationMove,
     wordStackParallelLocationMoveAux, wordStackLocationMoveDestinations,
     wordStackLocationMoveReady, wordStackLocationMoveRemoveDestination,
-    wordStackLocationMove, wordStackMoveToPhysical, wordStackLocation,
+    wordStackLocationMove, wordStackLocation,
     wordStackOffset, lookupNatInfo, wordStackJoin]
 
 example :
@@ -364,7 +364,7 @@ example :
     wordStackPhysicalMovesFrom, wordStackParallelLocationMove,
     wordStackParallelLocationMoveAux, wordStackLocationMoveDestinations,
     wordStackLocationMoveReady, wordStackLocationMoveRemoveDestination,
-    wordStackLocationMove, wordStackMoveToPhysical, wordStackMoveFromPhysical,
+    wordStackLocationMove, 
     wordStackLocation, lookupNatInfo]
 
 example :
@@ -384,12 +384,12 @@ example :
         ((.call none (some 7) [0] (some (1, .raise 0, 0, 0))) : WordProg Nat)).isSome =
       true := by
   simp [wordToStackProg, wordStackReturnCode, wordStackMovesToPhysical,
-    wordStackPhysicalMovesTo, wordStackMoveToPhysical,
-    wordStackMovesFromPhysical, wordStackPhysicalMovesFrom,
+    wordStackPhysicalMovesTo, 
+    
     wordStackParallelLocationMove, wordStackParallelLocationMoveAux,
     wordStackLocationMoveDestinations, wordStackLocationMoveReady,
     wordStackLocationMoveRemoveDestination, wordStackLocationMove,
-    wordStackMoveFromPhysical, wordStackLocation, wordStackOffset,
+    wordStackLocation, wordStackOffset,
     lookupNatInfo, wordToStackCallWithHandler, wordToStackRaise,
     stackSeq, stackArgs, stackMove, stackPushHandler, stackHandlerArgs,
     wordStackJoin]

@@ -88,6 +88,6 @@ theorem loopFfi_simulation_mapped_locals :
       loopFfiSimulationLoopHandler, loopFfiSimulationLoopState]
   · simp [loopToWordProg, RiscV.evalWordLoopProgWithHandlersAndFfi,
       loopFfiSimulationWordHandler, registerOfNat, wordFindVar,
-      lookupNatInfo, writeRegister, readRegister]
+      lookupNatInfo]
 
 end Flapjack

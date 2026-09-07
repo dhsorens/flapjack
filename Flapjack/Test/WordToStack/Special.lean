@@ -11,8 +11,8 @@ example :
       some (.inst (.arith (.longMul 4 5 6 7)) : StackProg Nat) := by
   simp [wordStackArithInst, wordSpecialArithLocationsSafe,
     wordStackLongMulInst, wordStackLongMulLocationsSafe,
-    wordStackLongMulLocationSafe, wordStackLongMulMoveToPhysical,
-    wordStackLongMulMoveFromPhysical, wordStackLocation, wordStackJoin,
+    wordStackLongMulLocationSafe, 
+    wordStackLocation, 
     lookupNatInfo]
 
 example :
@@ -23,8 +23,8 @@ example :
       some (.inst (.arith (.addCarry 4 5 6 7 8)) : StackProg Nat) := by
   simp [wordStackArithInst, wordSpecialArithLocationsSafe,
     wordStackAddCarryInst, wordStackAddCarryLocationSafe,
-    wordStackLongMulMoveToPhysical, wordStackLongMulMoveFromPhysical,
-    wordStackJoin, wordStackLocation, lookupNatInfo]
+    
+    wordStackLocation, lookupNatInfo]
 
 example :
     wordStackArithInst
@@ -33,7 +33,7 @@ example :
           scratch := 31, stackBase := 10 } (.longMul 0 1 2 3) =
       (none : Option (StackProg Nat)) := by
   simp [wordStackArithInst, wordSpecialArithLocationsSafe,
-    wordStackLocation, lookupNatInfo]
+    lookupNatInfo]
 
 example :
     wordStackArithInst
@@ -42,7 +42,7 @@ example :
       some (.inst (.arith (.longDiv 0 3 3 0 6)) : StackProg Nat) := by
   simp [wordStackArithInst, wordSpecialArithLocationsSafe,
     wordStackLongDivInst, wordStackLocation,
-    wordStackJoin, lookupNatInfo]
+    lookupNatInfo]
 
 example :
     wordStackArithInst
@@ -52,7 +52,7 @@ example :
         (.inst (.arith (.longDiv 0 3 3 0 31))) : StackProg Nat) := by
   simp [wordStackArithInst, wordSpecialArithLocationsSafe,
     wordStackLongDivInst, wordStackLocation,
-    wordStackOffset, wordStackJoin, lookupNatInfo]
+    wordStackOffset, lookupNatInfo]
 
 example :
     wordStackArithInst
@@ -60,7 +60,7 @@ example :
           scratch := 31, stackBase := 10 } (.longDiv 0 3 3 0 4) =
       (none : Option (StackProg Nat)) := by
   simp [wordStackArithInst, wordSpecialArithLocationsSafe,
-    wordStackLongDivInst, wordStackReadRegister, wordStackLocation,
+    wordStackLongDivInst, wordStackLocation,
     lookupNatInfo]
 
 example :
@@ -70,7 +70,7 @@ example :
           scratch := 31, stackBase := 10 } (.addCarry 0 1 2 3 4) =
       (none : Option (StackProg Nat)) := by
   simp [wordStackArithInst, wordSpecialArithLocationsSafe,
-    wordStackLocation, lookupNatInfo]
+    lookupNatInfo]
 
 example :
     wordToStackProgNat

@@ -126,9 +126,9 @@ example :
     pipelineFunctionInfos, pipelineLoopFunctions, pipelineLoopFunctionsAux,
     pipelineWordFunctions, pipelinePrependInitializers,
     compileToCrepe, compileFunctions, compileFunDecl, compileParamVars,
-    compileProg, loopCompileProg, loopCompileExp, loopCompileExp.loopCompileExps,
-    loopCompileExps, loopNestedSeq, loopTempNames, wordFindVar, lookupInfo,
-    lookupNatInfo]
+    compileProg, loopCompileProg, 
+    
+    ]
 
 example [NeZero width] :
     pipelineRiscVFunctions
