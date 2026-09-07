@@ -1390,6 +1390,8 @@ definitions, pass ordering, examples, and proof obligations.
   compiler entry point, with a spill-aware source-location regression.
 - [x] Expose the state-threaded handler-call equation for the Word-to-Stack
   compiler, retaining the generated call shape and bitmap state.
+- [x] Expose the state-threaded Word-to-Stack FFI equation, retaining the
+  bitmap accumulator across ABI argument lowering.
 - [x] Add abstract and bounded FFI loop-break simulation equations, with
   FFI-in-loop regressions.
 - [x] Expose the abstract StackLang FFI returned-callee continuation equation,
