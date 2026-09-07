@@ -1241,6 +1241,8 @@ definitions, pass ordering, examples, and proof obligations.
   lookup, and handler-result setup under successful context lookups.
 - [x] Prove the full-Crepe caught-exception call rule, including callee memory
   transfer and handler execution under explicit evaluation witnesses.
+- [x] Prove the complementary full-Crepe uncaught-exception call rule,
+  preserving the callee memory in the propagated result.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
