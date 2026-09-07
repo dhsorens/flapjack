@@ -24,6 +24,7 @@ import Flapjack.RiscV.PanSemantics
 import Flapjack.RiscV.Allocator
 import Flapjack.RiscV.RegAlloc
 import Flapjack.RiscV.Heuristics
+import Flapjack.RiscV.SpillCosts
 import Flapjack.RiscV.OracleAllocator
 import Flapjack.RiscV.AllocatorCorrectness
 import Flapjack.RiscV.AllocatorDriver
