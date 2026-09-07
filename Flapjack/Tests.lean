@@ -4,6 +4,7 @@ import Flapjack.Test.Correctness
 import Flapjack.Test.Runtime
 import Flapjack.Test.CollectorSemantics
 import Flapjack.Test.SpillAllocation
+import Flapjack.Test.CorrectnessBackend
 
 /-!
 # Flapjack regression tests

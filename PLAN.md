@@ -471,6 +471,8 @@ definitions, pass ordering, examples, and proof obligations.
   location-aware Word-to-Stack bitmap entry point.
 - [x] Connect the SSA/graph allocator's renamed output and graph-derived
   locations to the location-aware StackLang function entry point.
+- [x] Prove compositional Word-to-RISC-V correctness for the straight-line
+  instruction-list fragment, including sequential code composition.
 - [x] Preserve CakeML WordLang's `MustTerminate` wrapper through Word
   semantics, SSA/clash analysis, colouring, Word-to-Stack, and RISC-V lowering,
   with focused regressions.
