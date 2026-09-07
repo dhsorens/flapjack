@@ -85,4 +85,17 @@ example :
       [(1, 0), (3, 1)] [(1, 2), (3, 3)]) = true := by
   native_decide
 
+example :
+    wordLinearScanSortRegistersSource
+      [(1, 0), (2, 0), (3, -1)] [2, 1, 3] = [3, 1, 2] := by
+  native_decide
+
+example :
+    wordLinearScanSortMovesSource
+      [{ priority := 3, left := 1, right := 2 },
+       { priority := 1, left := 3, right := 4 }] =
+      [{ priority := 1, left := 3, right := 4 },
+       { priority := 3, left := 1, right := 2 }] := by
+  native_decide
+
 end Flapjack

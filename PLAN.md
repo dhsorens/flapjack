@@ -504,6 +504,8 @@ definitions, pass ordering, examples, and proof obligations.
   and forced-clash/move remapping.
 - [x] Expose CakeML-shaped linear-scan pass-one/pass-two states, adjacency
   filtering, stack extraction, and the two-pass runner.
+- [x] Port source-faithful interval-order register sorting and move-priority
+  sorting before the linear-scan passes.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware
   RISC-V contracts before claiming general call-aware allocation correctness.
 - [x] Add a combined graph-allocation soundness contract exposing fixed tags,

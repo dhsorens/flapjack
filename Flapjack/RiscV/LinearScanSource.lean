@@ -266,6 +266,53 @@ def wordLinearScanTwoPass (colours : Nat)
       nextSpill := colours + stackRegisters.length }
   pure (first, stackRegisters, second)
 
+def wordLinearScanRegisterPrecedes (beginnings : NatInfoMap Int)
+    (register head : Nat) : Bool :=
+  match lookupNatInfo register beginnings, lookupNatInfo head beginnings with
+  | some registerBeginning, some headBeginning =>
+      registerBeginning < headBeginning ||
+        (registerBeginning == headBeginning && register ≤ head)
+  | some _, none => true
+  | none, _ => false
+
+def wordLinearScanInsertRegisterSource (beginnings : NatInfoMap Int)
+    (register : Nat) : List Nat → List Nat
+  | [] => [register]
+  | head :: tail =>
+      if wordLinearScanRegisterPrecedes beginnings register head then
+        register :: head :: tail
+      else
+        head :: wordLinearScanInsertRegisterSource beginnings register tail
+termination_by registers => sizeOf registers
+decreasing_by all_goals decreasing_trivial
+
+def wordLinearScanSortRegistersSource (beginnings : NatInfoMap Int) :
+    List Nat → List Nat
+  | [] => []
+  | register :: registers =>
+      wordLinearScanInsertRegisterSource beginnings register
+        (wordLinearScanSortRegistersSource beginnings registers)
+termination_by registers => sizeOf registers
+decreasing_by all_goals decreasing_trivial
+
+def wordLinearScanInsertMoveSource (move : WordMove) : List WordMove → List WordMove
+  | [] => [move]
+  | head :: moves =>
+      if move.priority < head.priority then
+        move :: head :: moves
+      else
+        head :: wordLinearScanInsertMoveSource move moves
+termination_by moves => sizeOf moves
+decreasing_by all_goals decreasing_trivial
+
+def wordLinearScanSortMovesSource : List WordMove → List WordMove
+  | [] => []
+  | move :: moves =>
+      wordLinearScanInsertMoveSource move
+        (wordLinearScanSortMovesSource moves)
+termination_by moves => sizeOf moves
+decreasing_by all_goals decreasing_trivial
+
 /-! A direct executable port of `check_number_property`.  The property is
 passed as a Boolean predicate so this remains suitable for native evaluation
 in the same way as the source allocator's checks. -/
