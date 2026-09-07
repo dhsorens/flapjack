@@ -19,7 +19,7 @@ example :
             (wordStackJoin (.stackLoad 13 13)
               (.ffi "echo" 10 11 12 13 0)))) : StackProg Nat) := by
   apply wordStackFfi_eq_join
-  · native_decide
+  · decide
   all_goals simp [ffiStackShapeConfig, wordStackFfiMove,
     wordStackLocation, wordStackOffset, lookupNatInfo]
 example [NeZero width]
