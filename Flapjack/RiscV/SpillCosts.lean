@@ -110,4 +110,33 @@ def wordAllocateGraphFunctionWithHeuristics (parameters : List Nat)
       (state, renamedParameters, allocation,
         wordApplyColour (wordGraphColouringAt allocation.colouring) renamedProgram))
 
+theorem wordAllocateGraphFunctionWithHeuristics_sound
+    (parameters : List Nat) (program : WordProg α)
+    (fixedSources : List Nat)
+    (algorithm currentFunction colours stackStart : Nat)
+    (state : WordSsaState) (renamedParameters : List Nat)
+    (allocation : WordGraphAllocation) (renamedProgram : WordProg α)
+    (halloc : wordAllocateGraphFunctionWithHeuristics parameters program
+      fixedSources algorithm currentFunction colours stackStart =
+      some (state, renamedParameters, allocation, renamedProgram)) :
+    wordGraphTagsAreFixed allocation.graph = true ∧
+      wordGraphColouringRespectsEdges allocation.graph = true ∧
+      (wordClashTreeCheck (wordGraphColouringAt allocation.colouring)
+        (WordClashTree.seq
+          (.set (wordSsaRenameFunction parameters program).2.fst)
+          (wordClashTree (wordSsaRenameFunction parameters program).2.snd []))
+        [] []).isSome = true := by
+  simp [wordAllocateGraphFunctionWithHeuristics] at halloc
+  rcases halloc with ⟨allocation', hgraph, rfl, rfl, rfl, rfl⟩
+  exact wordAllocateGraphWithPrioritizedMoves_sound
+    (WordClashTree.seq
+      (.set (wordSsaRenameFunction parameters program).2.fst)
+      (wordClashTree (wordSsaRenameFunction parameters program).2.snd []))
+    (wordProgForcedClashes (wordSsaRenameFunction parameters program).2.snd)
+    (wordStackOnlyUnion fixedSources
+      (wordStackOnly (wordSsaRenameFunction parameters program).2.snd).forced)
+    (wordGetHeuristics algorithm currentFunction
+      (wordSsaRenameFunction parameters program).2.snd).1
+    colours stackStart allocation' hgraph
+
 end Flapjack

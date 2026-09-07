@@ -922,6 +922,23 @@ def wordAllocateGraphWithPrioritizedMoves (tree : WordClashTree)
   else
     none
 
+theorem wordAllocateGraphWithPrioritizedMoves_sound
+    (tree : WordClashTree)
+    (forced : List (Nat × Nat)) (fixedSources : List Nat)
+    (moves : List WordMove) (colours stackStart : Nat)
+    (allocation : WordGraphAllocation)
+    (halloc : wordAllocateGraphWithPrioritizedMoves tree forced fixedSources
+      moves colours stackStart = some allocation) :
+    wordGraphTagsAreFixed allocation.graph = true ∧
+      wordGraphColouringRespectsEdges allocation.graph = true ∧
+      (wordClashTreeCheck (wordGraphColouringAt allocation.colouring)
+        tree [] []).isSome = true := by
+  simp [wordAllocateGraphWithPrioritizedMoves] at halloc
+  rcases halloc with ⟨hchecks, heq⟩
+  cases heq
+  rcases hchecks with ⟨⟨hfixed, hedges⟩, htree⟩
+  exact ⟨hfixed, hedges, htree⟩
+
 theorem wordAllocateGraph_sound (tree : WordClashTree)
     (forced : List (Nat × Nat)) (fixedSources : List Nat)
     (moves : List (Nat × Nat)) (colours stackStart : Nat)

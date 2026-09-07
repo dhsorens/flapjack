@@ -44,4 +44,16 @@ example :
       [] (.move 9 [(0, 1)] : WordProg Nat) [] 1 7 13 26).isSome = true := by
   native_decide
 
+example (parameters : List Nat) (program : WordProg Nat)
+    (fixedSources : List Nat) (algorithm currentFunction colours stackStart : Nat)
+    (state : WordSsaState) (renamedParameters : List Nat)
+    (allocation : WordGraphAllocation) (renamedProgram : WordProg Nat)
+    (halloc : wordAllocateGraphFunctionWithHeuristics parameters program
+      fixedSources algorithm currentFunction colours stackStart =
+      some (state, renamedParameters, allocation, renamedProgram)) :
+    wordGraphTagsAreFixed allocation.graph = true := by
+  exact (wordAllocateGraphFunctionWithHeuristics_sound parameters program
+    fixedSources algorithm currentFunction colours stackStart state
+    renamedParameters allocation renamedProgram halloc).1
+
 end Flapjack
