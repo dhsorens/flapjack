@@ -3214,6 +3214,40 @@ theorem evalStackFrameFuel_stackGcMoveLoop_iterate [NeZero width]
             stackGcShiftImmediate config .lsl 7 config.wordShift,
             stackGcAdd 8 7])]) step hcondition hbody hfinal)
 
+theorem evalStackFrameFuel_stackGcMoveBitmaps_iterate [NeZero width]
+    (config : StackGcConfig) (fuel stepFuel iterations : Nat)
+    (state : StackFrameMachineState width)
+    (step : StackFrameMachineState width → StackFrameMachineState width)
+    (hcondition : ∀ current, current < iterations →
+      stackMachineCondition
+        (stackFrameIterate step current state).machine .notTest 0 (.reg 0) = true)
+    (hbody : ∀ current extra, current < iterations →
+      evalStackFrameFuel (extra + stepFuel)
+        (stackFrameIterate step current state)
+        (stackSeq [
+          .bitmapLoad 7 9,
+          stackGcMoveBitmapCode config,
+          .bitmapLoad 0 9,
+          stackGcAddOne config 9,
+          stackGcShiftImmediate config .lsr 0 (config.wordBits - 1)]) =
+        some (.normal (stackFrameIterate step (current + 1) state)))
+    (hfinal : stackMachineCondition
+        (stackFrameIterate step iterations state).machine
+          .notTest 0 (.reg 0) = false) :
+    evalStackFrameFuel (fuel + iterations + stepFuel + 3) state
+        (stackGcMoveBitmapsCode config) =
+      some (.normal (stackFrameIterate step iterations state)) := by
+  simpa [stackGcMoveBitmapsCode, stackGcWhile] using
+    (evalStackFrameFuel_loop_iterate fuel stepFuel iterations state
+      .notTest 0 (.reg 0)
+      (stackSeq [
+        .bitmapLoad 7 9,
+        stackGcMoveBitmapCode config,
+        .bitmapLoad 0 9,
+        stackGcAddOne config 9,
+        stackGcShiftImmediate config .lsr 0 (config.wordBits - 1)])
+      step hcondition hbody hfinal)
+
 theorem evalStackFrameFuel_stackGcMoveLoop_data_branch [NeZero width]
     (config : StackGcConfig) (fuel : Nat)
     (state final : StackFrameMachineState width)
