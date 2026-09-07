@@ -769,6 +769,53 @@ theorem evalStackProgFuelWithCodeAndFfi_wordToStackProgNatWithBitmapBuilder_rais
   rw [hcompile]
   simp [hraise]
 
+theorem wordToStackProgNatWithBitmapBuilder_return
+    [BEq Nat] (config : WordStackConfig)
+    (bitmapBuilder : List Nat → List Nat)
+    (registerCount bitmapRegister frameSlots wordBits : Nat)
+    (storeConstsStub : Option Nat) (state : WordStackBitmapState)
+    (label : Nat) (values : List Nat) (returnCode : StackProg Nat)
+    (hreturn : wordStackReturn config values = some returnCode) :
+    wordToStackProgNatWithBitmapBuilder config bitmapBuilder registerCount
+      bitmapRegister frameSlots wordBits storeConstsStub state
+      (.return label values) = some (returnCode, state) := by
+  simp only [wordToStackProgNatWithBitmapBuilder]
+  rw [wordToStackProgNat]
+  have hreturn' := congrArg
+    (fun result : Option (StackProg Nat) =>
+      result.map (fun program => (program, state))) hreturn
+  simpa [wordStackReturn] using hreturn'
+
+theorem evalStackProgFuelWithCodeAndFfi_wordToStackProgNatWithBitmapBuilder_return
+    [BEq Nat] [NeZero width] (host : StackMachineFfiHandler width)
+    (fuel : Nat) (code : Nat → Option (StackProg Nat))
+    (config : WordStackConfig)
+    (bitmapBuilder : List Nat → List Nat)
+    (registerCount bitmapRegister frameSlots wordBits : Nat)
+    (storeConstsStub : Option Nat) (bitmapState : WordStackBitmapState)
+    (machineState : WordStackMachineState width)
+    (label : Nat) (values : List Nat) (returnCode : StackProg Nat)
+    (result : StackMachineControl width)
+    (hreturn : wordStackReturn config values = some returnCode)
+    (heval : evalStackProgFuelWithCodeAndFfi host (fuel + 1) code machineState
+      returnCode = some result) :
+    (wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+      registerCount bitmapRegister frameSlots wordBits storeConstsStub bitmapState
+      (.return label values)).bind
+        (fun compiled =>
+          (evalStackProgFuelWithCodeAndFfi host (fuel + 1) code machineState
+            compiled.1).map (fun control => (control, compiled.2))) =
+      some (result, bitmapState) := by
+  have hcompile := wordToStackProgNatWithBitmapBuilder_return
+    (config := config) (bitmapBuilder := bitmapBuilder)
+    (registerCount := registerCount) (bitmapRegister := bitmapRegister)
+    (frameSlots := frameSlots) (wordBits := wordBits)
+    (storeConstsStub := storeConstsStub) (state := bitmapState)
+    (label := label) (values := values) (returnCode := returnCode)
+    (hreturn := hreturn)
+  rw [hcompile]
+  simp [heval]
+
 /-! The state-threaded compiler composes the results of sequential source
     programs.  Keeping both intermediate states in the theorem makes the
     equation useful for composing an allocating prefix with a later FFI or

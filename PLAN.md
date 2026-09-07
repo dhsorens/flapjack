@@ -1503,6 +1503,8 @@ definitions, pass ordering, examples, and proof obligations.
   in the state-threaded lowering and execution equations.
 - [x] Expose state-threaded raise lowering and its bounded execution equation,
   retaining the runtime raise-stub execution as an explicit premise.
+- [x] Expose state-threaded return lowering and its bounded execution equation,
+  retaining the generated return-code execution as an explicit premise.
 - [x] Expose the state-threaded Word-to-Stack FFI equation, retaining the
   bitmap accumulator across ABI argument lowering.
 - [x] Compose state-threaded Word-to-Stack FFI lowering with bounded
