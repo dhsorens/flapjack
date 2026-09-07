@@ -974,6 +974,8 @@ definitions, pass ordering, examples, and proof obligations.
   preserving the complete frame state.
 - [x] Add reusable bounded-frame sequence and conditional evaluator equations
   for compositional collector proofs.
+- [x] Prove the generated bitmap `MoveBitmap` and `MoveBitmaps` sentinel
+  machine states terminate without changing the frame state.
 - [x] Prove the exact bounded-frame collector memcpy-body transition,
   including scratch-register state and destination-memory update.
 - [x] Compose that transition with the bounded loop evaluator for the
