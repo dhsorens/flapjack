@@ -27,6 +27,7 @@ import Flapjack.RiscV.Heuristics
 import Flapjack.RiscV.SpillCosts
 import Flapjack.RiscV.HeuristicDriver
 import Flapjack.RiscV.HeuristicPipeline
+import Flapjack.RiscV.LinearScan
 import Flapjack.RiscV.OracleAllocator
 import Flapjack.RiscV.AllocatorCorrectness
 import Flapjack.RiscV.AllocatorDriver

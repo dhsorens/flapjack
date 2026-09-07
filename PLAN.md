@@ -482,6 +482,8 @@ definitions, pass ordering, examples, and proof obligations.
   function driver.
 - [x] Thread heuristic allocation through the RISC-V Word-to-Stack pipeline
   and expose an end-to-end StackRemove entry point.
+- [x] Port CakeML's linear-scan live-tree representation, backward liveness,
+  register extraction, and executable colouring check.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware
   RISC-V contracts before claiming general call-aware allocation correctness.
 - [x] Add a combined graph-allocation soundness contract exposing fixed tags,
