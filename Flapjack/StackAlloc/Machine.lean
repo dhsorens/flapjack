@@ -164,10 +164,11 @@ theorem evalStackProgFuelWithCode_raise [NeZero width]
 theorem evalStackProgFuelWithCode_call_raise_handler [NeZero width]
     (fuel : Nat) (code : Nat → Option (StackProg Nat))
     (state : WordStackMachineState width) (target exceptionRegister
-      handlerLabel register : Nat) (handlerCode : StackProg Nat)
+      handlerLabel : Nat) (returnCode : StackProg Nat)
+    (link returnLabel entryLabel register : Nat) (handlerCode : StackProg Nat)
     (hcallee : code target = some (.raise register)) :
     evalStackProgFuelWithCode (fuel + 2) code state
-        (.call none (.label target)
+        (.call (some (returnCode, link, returnLabel, entryLabel)) (.label target)
           (some (handlerCode, exceptionRegister, handlerLabel))) =
       evalStackProgFuelWithCode (fuel + 1) code
         (wordStackMachineWriteRegister state exceptionRegister

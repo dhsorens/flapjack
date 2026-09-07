@@ -105,7 +105,7 @@ def zeroStackMachineState : RiscV.WordStackMachineState 64 :=
 
 def handlerStackMachineState : RiscV.WordStackMachineState 64 :=
   { zeroStackMachineState with
-    registers := fun register => if register = 2 then 7 else 0 }
+    registers := fun register => if register = 31 then 7 else 0 }
 
 example :
     Option.map (fun result =>
@@ -113,7 +113,9 @@ example :
           | .returned state value => (state.registers 3, value)
           | _ => (0, 0))
       (evalStackProgFuelWithCode 20
-        (stackMachineLookup [(1, (.raise 2 : StackProg Nat))])
+        (stackMachineLookup [
+          (0, (.raise 31 : StackProg Nat)),
+          (1, (.call none (.label 0) none : StackProg Nat))])
         handlerStackMachineState
         (.call (some (.skip, 0, 0, 0)) (.label 1)
           (some ((.return 3 : StackProg Nat), 3, 0)))) =
