@@ -156,6 +156,19 @@ example :
   rfl
 
 example :
+    evalStackProgFuelWithCodeAndFfi identityStackFfi 20
+      (stackMachineLookup [(0, (.return 3 : StackProg Nat))])
+      zeroStackMachineState
+      (.call (some ((.ffi "echo" 2 3 4 5 0 : StackProg Nat), 0, 0, 0))
+        (.label 0) none) =
+      evalStackProgFuelWithCodeAndFfi identityStackFfi 19
+        (stackMachineLookup [(0, (.return 3 : StackProg Nat))])
+        zeroStackMachineState
+        (.ffi "echo" 2 3 4 5 0 : StackProg Nat) := by
+  apply RiscV.evalStackProgFuelWithCodeAndFfi_call_return_handler
+  rfl
+
+example :
     Option.map (fun result =>
           match result with
           | .returned state value => (state.registers 3, value)

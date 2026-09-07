@@ -1373,6 +1373,8 @@ definitions, pass ordering, examples, and proof obligations.
   equation, with a return-path FFI regression.
 - [x] Add abstract and bounded FFI loop-break simulation equations, with
   FFI-in-loop regressions.
+- [x] Expose the abstract StackLang FFI returned-callee continuation equation,
+  matching the bounded frame boundary.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 

@@ -288,6 +288,20 @@ theorem evalStackProgFuelWithCodeAndFfi_loop_break [NeZero width]
       (.loop body) = some (.normal state') := by
   simp [evalStackProgFuelWithCodeAndFfi, hbody]
 
+theorem evalStackProgFuelWithCodeAndFfi_call_return_handler [NeZero width]
+    (host : StackMachineFfiHandler width)
+    (fuel : Nat) (code : Nat → Option (StackProg Nat))
+    (state : WordStackMachineState width) (target register : Nat)
+    (returnCode : StackProg Nat) (link returnLabel entryLabel : Nat)
+    (handler : Option (StackProg Nat × Nat × Nat))
+    (hcallee : code target = some (.return register)) :
+    evalStackProgFuelWithCodeAndFfi host (fuel + 2) code state
+        (.call (some (returnCode, link, returnLabel, entryLabel)) (.label target)
+          handler) =
+      evalStackProgFuelWithCodeAndFfi host (fuel + 1) code state returnCode := by
+  simp [evalStackProgFuelWithCodeAndFfi, evalStackProgFuelWithCode,
+    hcallee]
+
 theorem evalStackGcMoveCode_immediate
     (config : StackGcConfig) (fuel : Nat)
     (state : WordStackMachineState 64)
