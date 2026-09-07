@@ -1513,6 +1513,8 @@ definitions, pass ordering, examples, and proof obligations.
   StackLang execution, retaining the bitmap state in the result relation.
 - [x] Expose sequential state-threaded Word-to-Stack composition, including
   an allocating prefix followed by an FFI lowering.
+- [x] Compose state-threaded sequential lowering with bounded StackLang
+  execution, threading both the intermediate machine and bitmap states.
 - [x] Expose state-threaded Word-to-Stack conditional composition, including
   condition materialization and branch-state threading.
 - [x] Expose state-threaded Word-to-Stack loop and MustTerminate composition.
