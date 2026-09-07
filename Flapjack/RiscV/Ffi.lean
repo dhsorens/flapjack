@@ -244,6 +244,19 @@ theorem evalWordFunctionWithCallsAndFfi_seq_normal [NeZero width]
       (.seq first second) = some (final, values) := by
   simp [evalWordFunctionWithCallsAndFfi, hfirst, hsecond]
 
+theorem evalWordFunctionWithCallsAndFfi_seq_terminal [NeZero width]
+    (functions : List (Nat × List Nat × WordProg (Word width)))
+    (handler : FunName → Word width → Word width → Word width → Word width →
+      State width → Option (State width))
+    (fuel : Nat) (state middle : State width)
+    (first second : WordProg (Word width)) (values : List (Word width))
+    (hfirst : evalWordFunctionWithCallsAndFfi functions handler fuel state first =
+      some (middle, values))
+    (hvalues : values ≠ []) :
+    evalWordFunctionWithCallsAndFfi functions handler (fuel + 1) state
+      (.seq first second) = some (middle, values) := by
+  simp [evalWordFunctionWithCallsAndFfi, hfirst, hvalues]
+
 theorem evalWordFunctionWithCallsAndFfi_ite_true [NeZero width]
     (functions : List (Nat × List Nat × WordProg (Word width)))
     (handler : FunName → Word width → Word width → Word width → Word width →
