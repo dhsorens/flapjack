@@ -242,4 +242,20 @@ example :
         ((.move 7 [(2, 1), (3, 2)]) : WordProg Nat) = [(2, 1), (3, 2)] := by
   rfl
 
+example :
+    wordSsaRenameProgram
+        ({ current := [], next := 10 } : WordSsaState)
+        ((.ite .equal 0 (.reg 0)
+          (.assign 1 (.var 0)) .skip) : WordProg Nat) =
+      ({ current := [(1, 14)], next := 18 },
+        .ite .equal 0 (.reg 0)
+          (.seq (.assign 10 (.var 0)) (.move 1 [(14, 10)]))
+          (.move 0 [(14, 0)])) := by
+  simp [wordSsaRenameProgram, wordSsaRenameProgramWithLoops,
+    wordSsaRenameExp, wordSsaRenameRegImm, wordSsaRead, wordSsaFresh,
+    wordSsaKeys, wordSsaSeq, wordSsaFixInconsistencies,
+    wordSsaPriorityMove, wordSsaBranchPriority, wordSsaMergeMoves,
+    wordSsaFakeInconsistencyMoves, wordSsaForceRename, List.eraseDups,
+    List.eraseDupsBy, List.eraseDupsBy.loop, lookupNatInfo]
+
 end Flapjack
