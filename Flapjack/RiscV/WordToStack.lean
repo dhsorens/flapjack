@@ -1846,6 +1846,17 @@ def wordToStackProgNatWithBitmapBuilder [BEq Nat]
         registerCount
         bitmapRegister frameSlots wordBits storeConstsStub state second
       pure (.seq first second, state)
+  | .ite operator condition right thenBranch elseBranch => do
+      let (prelude, condition, right) ←
+        wordStackConditionOperands config condition right
+      let (thenBranch, state) ← wordToStackProgNatWithBitmapBuilder config
+        bitmapBuilder registerCount bitmapRegister frameSlots wordBits
+        storeConstsStub state thenBranch
+      let (elseBranch, state) ← wordToStackProgNatWithBitmapBuilder config
+        bitmapBuilder registerCount bitmapRegister frameSlots wordBits
+        storeConstsStub state elseBranch
+      pure (wordStackJoin prelude
+        (.ite operator condition right thenBranch elseBranch), state)
   | .loop liveIn body liveOut => do
       let (body, state) ← wordToStackProgNatWithBitmapBuilder config bitmapBuilder
         registerCount

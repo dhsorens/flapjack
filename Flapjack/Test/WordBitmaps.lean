@@ -80,4 +80,18 @@ example :
       some ([4, 28], 2) := by
   native_decide
 
+def wordBitmapBranchProgram : WordProg Nat :=
+  .ite .equal 1 (.imm 0)
+    (.alloc 0 ([], [2]))
+    (.storeConsts 0 1 2 3 [(true, 7), (false, 9)])
+
+example :
+    (wordToStackProgNatWithBitmaps
+      { wordBitmapTestConfig with locations := [(1, .register 2)] }
+      1 30 3 8 none
+      (wordStackInitialBitmaps false) wordBitmapBranchProgram).map
+        (fun result => (result.2.data, result.2.length)) =
+      some ([4, 28, 5, 7, 9], 5) := by
+  native_decide
+
 end Flapjack
