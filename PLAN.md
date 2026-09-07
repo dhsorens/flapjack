@@ -1263,6 +1263,8 @@ definitions, pass ordering, examples, and proof obligations.
   stateful Word-to-Stack compiler.
 - [x] Thread bitmap state through both branches of conditional Word-to-Stack
   lowering, preserving distinct bitmap indices for branch-local allocations.
+- [x] Prove bitmap-state length invariants for insertion, allocation, and
+  constant-storage lowering.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
