@@ -982,6 +982,8 @@ definitions, pass ordering, examples, and proof obligations.
   bitmap-root `MoveBitmaps` loop.
 - [x] Add the corresponding fuel-indexed iteration API for the generated
   `MoveRootsBitmaps` root loop.
+- [x] Compose the bitmap root-movement phase with the subsequent heap-scan
+  phase at the bounded frame-machine boundary.
 - [x] Prove the exact bounded-frame collector memcpy-body transition,
   including scratch-register state and destination-memory update.
 - [x] Compose that transition with the bounded loop evaluator for the
