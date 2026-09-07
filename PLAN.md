@@ -1269,6 +1269,8 @@ definitions, pass ordering, examples, and proof obligations.
   Word-to-Stack builder, including sequences, branches, loops, and handlers.
 - [x] Prove the one-step FFI compatibility equation across register colouring,
   with the host transition retained as an explicit semantic hypothesis.
+- [x] Compose generated FFI agreement through instruction-list sequencing and
+  the call-aware Word compiler.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
