@@ -75,6 +75,21 @@ theorem testRelation_target [NeZero width] (state : State width) :
 
 example [NeZero width] (state : State width) :
     ∃ source' target',
+      evalWordProg state (.move 1 [(3, 4), (5, 6)]) = some source' ∧
+      evalWordProg (testTargetState state)
+          (wordApplyColour testColour (.move 1 [(3, 4), (5, 6)])) = some target' ∧
+      testRelation source' target' := by
+  exact evalWordProg_moveTwo_applyColour testColour testColourValidFn
+    testColour_injective testColour_zero state (testTargetState state)
+    (testRelation_target state) 3 4 5 6
+    (by omega) (by omega) (by omega) (by omega)
+    (by decide) (by decide) (by decide) (by decide)
+    (by simp [testColour]) (by simp [testColour])
+    (by simp [testColour]) (by simp [testColour])
+    (by decide) (by decide) (by decide) (by decide) (by decide)
+
+example [NeZero width] (state : State width) :
+    ∃ source' target',
       evalWordProg state (.move 1 [(3, 4)]) = some source' ∧
       evalWordProg (testTargetState state)
           (wordApplyColour testColour (.move 1 [(3, 4)])) = some target' ∧

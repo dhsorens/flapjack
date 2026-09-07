@@ -1,4 +1,5 @@
 import Flapjack.RiscV.AllocatorCorrectness
+import Flapjack.RiscV.CorrectnessBackend
 
 /-!
 Correctness of applying a register colouring to a small, executable Word
@@ -1195,6 +1196,116 @@ theorem evalWordProg_moveOne_applyColour [NeZero width]
   refine ⟨source', target', hsourceMove.trans hsource', ?_, hrelation'⟩
   exact htargetMove.trans (by simpa [wordApplyColour, wordApplyColourExp]
     using htarget')
+
+theorem evalWordProg_moveTwo_applyColour [NeZero width]
+    (colour : Nat → Nat) (valid : wordColourValid colour)
+    (injective : Function.Injective colour) (colourZero : colour 0 = 0)
+    (source target : State width)
+    (hrelation : WordColourStateRelation colour source target)
+    (destinationOne sourceOne destinationTwo sourceTwo : Nat)
+    (hdestinationOne : destinationOne < 32) (hsourceOne : sourceOne < 32)
+    (hdestinationTwo : destinationTwo < 32) (hsourceTwo : sourceTwo < 32)
+    (hdestinationOne31 : destinationOne ≠ 31) (hsourceOne31 : sourceOne ≠ 31)
+    (hdestinationTwo31 : destinationTwo ≠ 31) (hsourceTwo31 : sourceTwo ≠ 31)
+    (hcolourDestinationOne31 : colour destinationOne ≠ 31)
+    (hcolourSourceOne31 : colour sourceOne ≠ 31)
+    (hcolourDestinationTwo31 : colour destinationTwo ≠ 31)
+    (hcolourSourceTwo31 : colour sourceTwo ≠ 31)
+    (hdestinations : destinationOne ≠ destinationTwo)
+    (hsourceOneDestinationOne : sourceOne ≠ destinationOne)
+    (hsourceOneDestinationTwo : sourceOne ≠ destinationTwo)
+    (hsourceTwoDestinationOne : sourceTwo ≠ destinationOne)
+    (hsourceTwoDestinationTwo : sourceTwo ≠ destinationTwo) :
+    ∃ source' target',
+      evalWordProg source
+          (.move 1 [(destinationOne, sourceOne), (destinationTwo, sourceTwo)]) =
+        some source' ∧
+      evalWordProg target
+          (wordApplyColour colour
+            (.move 1 [(destinationOne, sourceOne), (destinationTwo, sourceTwo)])) =
+        some target' ∧
+      WordColourStateRelation colour source' target' := by
+  have hdestinationTwoOne : destinationTwo ≠ destinationOne := Ne.symm hdestinations
+  have hsourceOneDestinationOne' : destinationOne ≠ sourceOne :=
+    Ne.symm hsourceOneDestinationOne
+  have hsourceTwoDestinationTwo' : destinationTwo ≠ sourceTwo :=
+    Ne.symm hsourceTwoDestinationTwo
+  have hcolourDestinations : colour destinationOne ≠ colour destinationTwo := fun heq =>
+    hdestinations (injective heq)
+  have hcolourDestinations' : colour destinationTwo ≠ colour destinationOne :=
+    Ne.symm hcolourDestinations
+  have hcolourSourceOneDestinationOne : colour sourceOne ≠ colour destinationOne := fun heq =>
+    hsourceOneDestinationOne (injective heq)
+  have hcolourSourceOneDestinationTwo : colour sourceOne ≠ colour destinationTwo := fun heq =>
+    hsourceOneDestinationTwo (injective heq)
+  have hcolourSourceTwoDestinationOne : colour sourceTwo ≠ colour destinationOne := fun heq =>
+    hsourceTwoDestinationOne (injective heq)
+  have hcolourSourceTwoDestinationTwo : colour sourceTwo ≠ colour destinationTwo := fun heq =>
+    hsourceTwoDestinationTwo (injective heq)
+  have executeInstructions_two (state : State width)
+      (first second : Instruction width) :
+      executeInstructions state [first, second] = execute (execute state first) second := by
+    simpa only [List.singleton_append, executeInstructions_single] using
+      (executeInstructions_append state [first] [second])
+  have hsourceMove :
+      evalWordProg source
+          (.move 1 [(destinationOne, sourceOne), (destinationTwo, sourceTwo)]) =
+        evalWordProg source
+          (.seq (.move 1 [(destinationOne, sourceOne)])
+            (.move 1 [(destinationTwo, sourceTwo)])) := by
+    simp [evalWordProg, wordMoveToInstructions, wordMoveToInstructionsAux,
+      wordMoveRegisterDestinations, wordMoveRegisterReady,
+      wordMoveRegisterRemoveDestination, wordExpToInstructions,
+      wordExpToInstruction, registerOfNat, hdestinationOne, hsourceOne,
+      hdestinationTwo, hsourceTwo, hdestinationOne31, hsourceOne31,
+      hdestinationTwo31, hsourceTwo31, hdestinations,
+      hdestinationTwoOne, hsourceOneDestinationOne,
+      hsourceOneDestinationTwo, hsourceTwoDestinationTwo,
+      executeInstructions_two]
+  have htargetMove :
+      evalWordProg target
+          (wordApplyColour colour
+            (.move 1 [(destinationOne, sourceOne), (destinationTwo, sourceTwo)])) =
+        evalWordProg target
+          (.seq
+            (.move 1 [(colour destinationOne, colour sourceOne)])
+            (.move 1 [(colour destinationTwo, colour sourceTwo)])) := by
+    simp [evalWordProg, wordApplyColour, wordMoveToInstructions,
+      wordMoveToInstructionsAux, wordMoveRegisterDestinations,
+      wordMoveRegisterReady, wordMoveRegisterRemoveDestination,
+      wordExpToInstructions, wordExpToInstruction, registerOfNat,
+      valid destinationOne hdestinationOne, valid sourceOne hsourceOne,
+      valid destinationTwo hdestinationTwo, valid sourceTwo hsourceTwo,
+      hcolourDestinationOne31, hcolourSourceOne31,
+      hcolourDestinationTwo31, hcolourSourceTwo31, hcolourDestinations,
+      hcolourDestinations', hcolourSourceOneDestinationOne,
+      hcolourSourceOneDestinationTwo, hcolourSourceTwoDestinationTwo,
+      executeInstructions_two]
+  rcases evalWordProg_moveOne_applyColour colour valid injective colourZero
+      source target hrelation destinationOne sourceOne hdestinationOne hsourceOne
+      hdestinationOne31 hsourceOne31 hcolourDestinationOne31 hcolourSourceOne31
+      hsourceOneDestinationOne' with
+    ⟨sourceMiddle, targetMiddle, hsourceOneEval, htargetOneEval, hrelationMiddle⟩
+  rcases evalWordProg_moveOne_applyColour colour valid injective colourZero
+      sourceMiddle targetMiddle hrelationMiddle destinationTwo sourceTwo
+      hdestinationTwo hsourceTwo hdestinationTwo31 hsourceTwo31
+      hcolourDestinationTwo31 hcolourSourceTwo31 hsourceTwoDestinationTwo' with
+    ⟨source', target', hsourceTwoEval, htargetTwoEval, hrelation'⟩
+  have htargetOneEval' :
+      evalWordProg target
+          (.move 1 [(colour destinationOne, colour sourceOne)]) = some targetMiddle := by
+    simpa [wordApplyColour, wordApplyColourExp] using htargetOneEval
+  have htargetTwoEval' :
+      evalWordProg targetMiddle
+          (.move 1 [(colour destinationTwo, colour sourceTwo)]) = some target' := by
+    simpa [wordApplyColour, wordApplyColourExp] using htargetTwoEval
+  refine ⟨source', target', hsourceMove.trans ?_, htargetMove.trans ?_, hrelation'⟩
+  · rw [evalWordProg]
+    rw [hsourceOneEval]
+    simpa using hsourceTwoEval
+  · rw [evalWordProg]
+    rw [htargetOneEval']
+    simpa using htargetTwoEval'
 
 inductive WordVarStraightLine (width : Nat) : WordProg (Word width) → Prop where
   | skip : WordVarStraightLine width .skip
