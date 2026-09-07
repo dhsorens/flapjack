@@ -1042,6 +1042,9 @@ definitions, pass ordering, examples, and proof obligations.
   allocation, including FFI ABI operands that are not formal parameters.
 - [x] Port CakeML's SSA call ABI boundary for handler-free calls, including
   argument-register moves and refreshed normal-return cut sets.
+- [x] Port the returned-call exception-handler SSA boundary, including
+  ABI return copies and explicit reconciliation of normal and exceptional
+  handler states.
 - [x] Marshal allocated Word call arguments into the even-numbered ABI
   registers before StackLang call-frame construction, for both handler-free
   and handler-aware calls.
