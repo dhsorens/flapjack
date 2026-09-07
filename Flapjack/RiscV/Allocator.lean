@@ -379,6 +379,9 @@ def wordSsaListNextVarRenameMove (state : WordSsaState) (next : Nat)
   let (state, destinations) := wordSsaFreshList { state with next := next } names
   (state, state.next, .move 0 (destinations.zip sources))
 
+def wordSsaCallAbiRegisters (start count : Nat) : List Nat :=
+  (List.range count).map (fun index => 2 * (start + index))
+
 def wordSsaRenameMove (state : WordSsaState) (priority : Nat)
     (moves : List (Nat × Nat)) : WordSsaState × WordProg α :=
   let destinations := moves.map (fun move => move.1)
@@ -629,10 +632,35 @@ mutual
             (state, .shareInst operator name address)
         | .store | .store8 | .store16 | .store32 =>
             (state, .shareInst operator (wordSsaRead state name) address)
-    | .call returns target arguments none =>
+    | .call none target arguments none =>
         let arguments := arguments.map (wordSsaRead state)
-        let (state, returns) := wordSsaRenameReturns state returns
-        (state, .call returns target arguments none)
+        let abiArguments := wordSsaCallAbiRegisters 0 arguments.length
+        let moveArguments := .move 0 (abiArguments.zip arguments)
+        (state, wordSsaSeq moveArguments
+          (.call none target abiArguments none))
+    | .call (some (destinations, cutsets, returnCode, returnLabel, entryLabel))
+        target arguments none =>
+        let names := (cutsets.1 ++ cutsets.2).eraseDups
+        let (stackState, stackNext, stackMove) :=
+          wordSsaListNextVarRenameMove state (state.next + 2) names
+        let stackCutsets := wordSsaReadCutsets stackState cutsets
+        let cutState := wordSsaRestrict stackState names
+        let arguments := arguments.map (wordSsaRead state)
+        let abiArguments := wordSsaCallAbiRegisters 1 arguments.length
+        let moveArguments := .move 0 (abiArguments.zip arguments)
+        let (state, _, restoreMove) :=
+          wordSsaListNextVarRenameMove cutState (stackNext + 2) names
+        let (state, destinations) := wordSsaFreshList state destinations
+        let (state, returnCode) :=
+          wordSsaRenameProgramWithLoops frames state returnCode
+        let abiReturns := wordSsaCallAbiRegisters 1 destinations.length
+        let returnMove := .move 0 (destinations.zip abiReturns)
+        let returnHandler := wordSsaSeq restoreMove
+          (wordSsaSeq returnMove returnCode)
+        (state, wordSsaSeq stackMove
+          (wordSsaSeq moveArguments
+            (.call (some (abiReturns, stackCutsets, returnHandler,
+              returnLabel, entryLabel)) target abiArguments none)))
     | .call returns target arguments (some (exception, body, handlerLabel, entryLabel)) =>
         let incoming := state
         let arguments := arguments.map (wordSsaRead state)
