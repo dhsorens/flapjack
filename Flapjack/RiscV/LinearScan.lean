@@ -129,6 +129,228 @@ decreasing_by all_goals decreasing_trivial
 def wordIntervalIntersect (left right : Int × Int) : Bool :=
   left.1 ≤ right.2 && right.1 ≤ left.2
 
+/-! The executable state used by CakeML's two-pass linear allocator.  Colours
+are compressed allocator colours; `wordLinearScanLocations` turns them into
+the even RISC-V registers used by the Word backend. -/
+structure WordLinearScanState where
+  active : List (Int × Nat)
+  colorPool : List Nat
+  physicalColours : List Nat
+  nextColour : Nat
+  maxColours : Nat
+  nextSpill : Nat
+  colours : NatInfoMap Nat
+  locations : NatInfoMap WordLocation
+  deriving DecidableEq, Repr
+
+def wordLinearScanUpdateColour (register colour : Nat)
+    (colours : NatInfoMap Nat) : NatInfoMap Nat :=
+  (register, colour) :: colours.filter (fun entry => entry.1 != register)
+
+def wordLinearScanInsertActive (interval : Int × Nat) :
+    List (Int × Nat) → List (Int × Nat)
+  | [] => [interval]
+  | head :: tail =>
+      if interval.1 ≤ head.1 then
+        interval :: head :: tail
+      else
+        head :: wordLinearScanInsertActive interval tail
+termination_by active => sizeOf active
+decreasing_by all_goals decreasing_trivial
+
+def wordLinearScanReleaseInactiveAux (beginning : Int)
+    (colours : NatInfoMap Nat) :
+    List (Int × Nat) → List Nat → List (Int × Nat) × List Nat
+  | [], pool => ([], pool)
+  | (ending, register) :: active, pool =>
+      if ending < beginning then
+        let pool := match lookupNatInfo register colours with
+          | some colour => colour :: pool
+          | none => pool
+        wordLinearScanReleaseInactiveAux beginning colours active pool
+      else
+        ((ending, register) :: active, pool)
+termination_by active => sizeOf active
+decreasing_by all_goals decreasing_trivial
+
+def wordLinearScanReleaseInactive (beginning : Int)
+    (state : WordLinearScanState) : WordLinearScanState :=
+  let (active, pool) := wordLinearScanReleaseInactiveAux beginning
+    state.colours state.active state.colorPool
+  { state with active := active, colorPool := pool }
+
+def wordLinearScanTakeAvailable : List Nat → List Nat →
+    Option (Nat × List Nat)
+  | [], _ => none
+  | colour :: colours, forbidden =>
+      if colour ∈ forbidden then
+        wordLinearScanTakeAvailable colours forbidden |>.map
+          (fun result => (result.1, colour :: result.2))
+      else
+        some (colour, colours)
+
+def wordLinearScanFreshColour (state : WordLinearScanState) :
+    WordLinearScanState × Option Nat :=
+  if state.nextColour < state.maxColours then
+    ({ state with nextColour := state.nextColour + 1 }, some state.nextColour)
+  else
+    (state, none)
+
+def wordLinearScanFindColour (state : WordLinearScanState)
+    (forbidden preferred : List Nat) :
+    WordLinearScanState × Option Nat :=
+  let preferred := preferred.filter (fun colour => colour ∈ state.colorPool)
+  match wordLinearScanTakeAvailable preferred forbidden with
+  | some (colour, _) =>
+      let pool := state.colorPool.filter (fun candidate => candidate != colour)
+      ({ state with colorPool := pool }, some colour)
+  | none =>
+      match wordLinearScanTakeAvailable state.colorPool forbidden with
+      | some (colour, pool) =>
+          ({ state with colorPool := pool }, some colour)
+      | none => wordLinearScanFreshColour state
+
+def wordLinearScanSpill (register : Nat) (state : WordLinearScanState) :
+    WordLinearScanState :=
+  { state with
+    nextSpill := state.nextSpill + 1
+    colours := wordLinearScanUpdateColour register state.nextSpill state.colours
+    locations := (register, .stack state.nextSpill) ::
+      state.locations.filter (fun entry => entry.1 != register) }
+
+def wordLinearScanColourRegister (register colour : Nat) (ending : Int)
+    (state : WordLinearScanState) : WordLinearScanState :=
+  let physical := register % 2 = 0
+  let active := wordLinearScanInsertActive (ending, register) state.active
+  let physicalColours :=
+    if physical then wordListUnion [colour] state.physicalColours
+    else state.physicalColours
+  { state with
+    active := active
+    physicalColours := physicalColours
+    colours := wordLinearScanUpdateColour register colour state.colours
+    locations := (register, .register (2 * (colour + 1))) ::
+      state.locations.filter (fun entry => entry.1 != register) }
+
+def wordLinearScanFindLastStealableAux (forbidden : List Nat)
+    (colours : NatInfoMap Nat) :
+    List (Int × Nat) →
+    Option ((Int × Nat) × List (Int × Nat))
+  | [] => none
+  | head :: tail =>
+      match wordLinearScanFindLastStealableAux forbidden colours tail with
+      | some (candidate, rest) => some (candidate, head :: rest)
+      | none =>
+          let register := head.2
+          match lookupNatInfo register colours with
+          | some colour =>
+              if register % 2 != 0 && colour ∉ forbidden then
+                some (head, tail)
+              else
+                none
+          | none => none
+termination_by active => sizeOf active
+decreasing_by all_goals decreasing_trivial
+
+def wordLinearScanFindLastStealable (forbidden : List Nat)
+    (state : WordLinearScanState) :
+    Option ((Int × Nat) × List (Int × Nat)) :=
+  wordLinearScanFindLastStealableAux forbidden state.colours state.active
+
+def wordLinearScanFindSpill (forbidden : List Nat) (register : Nat)
+    (ending : Int) (force : Bool) (state : WordLinearScanState) :
+    WordLinearScanState :=
+  match wordLinearScanFindLastStealable forbidden state with
+  | some ((stealEnding, stealRegister), active) =>
+      if force || ending < stealEnding then
+        match lookupNatInfo stealRegister state.colours with
+        | some colour =>
+            let state := wordLinearScanSpill stealRegister
+              { state with active := active }
+            wordLinearScanColourRegister register colour ending state
+        | none => wordLinearScanSpill register state
+      else
+        wordLinearScanSpill register state
+  | none => wordLinearScanSpill register state
+
+def wordLinearScanStep (forbidden preferred : List Nat)
+    (register : Nat) (beginning ending : Int) (force : Bool)
+    (state : WordLinearScanState) : WordLinearScanState :=
+  let state := wordLinearScanReleaseInactive beginning state
+  if register % 4 = 3 then
+    wordLinearScanSpill register state
+  else if register % 2 = 0 && register ≥ 2 * state.maxColours then
+    wordLinearScanSpill register state
+  else
+    let forbidden :=
+      if register % 2 = 0 then
+        wordListUnion state.physicalColours forbidden
+      else
+        forbidden
+    let (state, colour) := wordLinearScanFindColour state forbidden preferred
+    match colour with
+    | some colour => wordLinearScanColourRegister register colour ending state
+    | none => wordLinearScanFindSpill forbidden register ending force state
+
+def wordLinearScanInsertByBeginning (beginnings : NatInfoMap Int)
+    (register : Nat) : List Nat → List Nat
+  | [] => [register]
+  | head :: tail =>
+      match lookupNatInfo register beginnings,
+        lookupNatInfo head beginnings with
+      | some registerBeginning, some headBeginning =>
+          if registerBeginning ≤ headBeginning then
+            register :: head :: tail
+          else
+            head :: wordLinearScanInsertByBeginning beginnings register tail
+      | some _, none => register :: head :: tail
+      | none, _ =>
+          head :: wordLinearScanInsertByBeginning beginnings register tail
+termination_by registers => sizeOf registers
+decreasing_by all_goals decreasing_trivial
+
+def wordLinearScanSortRegisters (beginnings : NatInfoMap Int) :
+    List Nat → List Nat
+  | [] => []
+  | register :: registers =>
+      wordLinearScanInsertByBeginning beginnings register
+        (wordLinearScanSortRegisters beginnings registers)
+termination_by registers => sizeOf registers
+decreasing_by all_goals decreasing_trivial
+
+def wordLinearScanAllocateRegisters
+    (forbidden : Nat → List Nat) (preferred : Nat → List Nat)
+    : List Nat → (NatInfoMap Int) → (NatInfoMap Int) →
+    WordLinearScanState → Option WordLinearScanState
+  | [], _, _, state => some state
+  | register :: registers, beginnings, endings, state =>
+      match lookupNatInfo register beginnings,
+        lookupNatInfo register endings with
+      | some beginning, some ending =>
+          let state := wordLinearScanStep
+            (forbidden register) (preferred register)
+            register beginning ending false state
+          wordLinearScanAllocateRegisters forbidden preferred registers
+            beginnings endings state
+      | _, _ => none
+termination_by registers => sizeOf registers
+decreasing_by all_goals decreasing_trivial
+
+def wordLinearScanInitialState (colours : Nat) (stackStart : Nat) :
+    WordLinearScanState :=
+  { active := []
+    colorPool := []
+    physicalColours := []
+    nextColour := 0
+    maxColours := colours
+    nextSpill := stackStart
+    colours := []
+    locations := [] }
+
+def wordLinearScanLocations (state : WordLinearScanState) :
+    NatInfoMap WordLocation :=
+  state.locations
+
 /-! Check a partial colouring while walking a live tree.  The two live lists
 are kept in lockstep, with the second one carrying the corresponding colours.
 This is the direct executable analogue of CakeML's `check_live_tree`. -/

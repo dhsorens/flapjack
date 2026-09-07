@@ -41,6 +41,31 @@ example :
   native_decide
 
 example :
+    wordLinearScanSortRegisters [(1, 2), (5, 0)] [1, 5] = [5, 1] := by
+  native_decide
+
+example :
+    let state := wordLinearScanStep [] [] 1 0 5 false
+      (wordLinearScanInitialState 1 0)
+    lookupNatInfo 1 state.colours = some 0 := by
+  native_decide
+
+example :
+    let state := wordLinearScanStep [] [] 1 0 5 false
+      (wordLinearScanInitialState 1 0)
+    let state := wordLinearScanStep [] [] 5 1 3 false state
+    lookupNatInfo 1 state.locations = some (.stack 0) &&
+      lookupNatInfo 5 state.locations = some (.register 2) := by
+  native_decide
+
+example :
+    (wordLinearScanAllocateRegisters
+      (fun _ => []) (fun _ => []) [1, 5]
+      [(1, 0), (5, 1)] [(1, 5), (5, 3)]
+      (wordLinearScanInitialState 1 0)).isSome = true := by
+  native_decide
+
+example :
     (wordCheckLiveTree id (.seq (.reads [1, 2]) (.writes [1])) [] []).isSome =
       true := by
   native_decide
