@@ -13,6 +13,7 @@ import Flapjack.Test.HeuristicDriver
 import Flapjack.Test.HeuristicPipeline
 import Flapjack.Test.LinearScan
 import Flapjack.Test.LinearScanDriver
+import Flapjack.Test.AllocationModePipeline
 import Flapjack.Test.CorrectnessCondition
 import Flapjack.Test.CorrectnessCode
 import Flapjack.Test.CorrectnessConditional
