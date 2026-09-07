@@ -1259,6 +1259,8 @@ definitions, pass ordering, examples, and proof obligations.
   stack-frame checks and host transitions through calls and returns.
 - [x] Package the complete bitmap-root/heap-scan collector as an explicit
   machine/Nat simulation witness and composition theorem.
+- [x] Thread bitmap state through recursive call-handler lowering in the
+  stateful Word-to-Stack compiler.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
