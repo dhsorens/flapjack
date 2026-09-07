@@ -9,6 +9,12 @@ def linearScanSourceShape : WordClashTree → Bool
       writes == [1] && reads == [3] && names == [5]
   | _ => false
 
+def linearScanSecondColour :
+    Option (WordLinearScanState × List Nat × WordLinearScanState) → Bool
+  | some (_, [3], second) =>
+      (lookupNatInfo 3 second.colours == some 2)
+  | _ => false
+
 example :
     wordFixDomination (.reads [1, 2]) =
       .seq (.writes [1, 2]) (.reads [1, 2]) := by
@@ -62,6 +68,21 @@ example :
     let state := wordLinearScanBijection
       (.delta [5] [7] : WordClashTree)
     wordLinearScanApplyBijectionForced state [(5, 7)] = [(1, 3)] := by
+  native_decide
+
+example :
+    wordLinearScanAdjacency [(1, 2)] =
+      [(2, [1]), (1, [2])] := by
+  native_decide
+
+example :
+    (wordLinearScanTwoPass 2 [] [] [1, 3]
+      [(1, 0), (3, 1)] [(1, 2), (3, 3)]).isSome = true := by
+  native_decide
+
+example :
+    linearScanSecondColour (wordLinearScanTwoPass 2 [] [] [1, 3]
+      [(1, 0), (3, 1)] [(1, 2), (3, 3)]) = true := by
   native_decide
 
 end Flapjack

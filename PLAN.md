@@ -502,6 +502,8 @@ definitions, pass ordering, examples, and proof obligations.
   start-live, point-inside-interval, and interval-colouring checks.
 - [x] Port linear-scan source-variable normalization, clash-tree traversal,
   and forced-clash/move remapping.
+- [x] Expose CakeML-shaped linear-scan pass-one/pass-two states, adjacency
+  filtering, stack extraction, and the two-pass runner.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware
   RISC-V contracts before claiming general call-aware allocation correctness.
 - [x] Add a combined graph-allocation soundness contract exposing fixed tags,
