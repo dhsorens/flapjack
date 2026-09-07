@@ -2633,6 +2633,16 @@ theorem wordAllocateSsaFunctionWithEntryAndClashTreeWithSpillsAndPreferencesFixe
   apply hslots name
   simp [hname]
 
+theorem wordAllocateVarsWithFixedSources_sound (slots : List Nat)
+    (edges preferences : List (Nat × Nat)) (fixedSources : List Nat)
+    (state : WordSpillState)
+    (hstate : wordAllocateVarsWithFixedSources slots edges preferences
+      fixedSources = some state) :
+    wordSpillAllocationRespectsClashes edges state.locations = true := by
+  simp [wordAllocateVarsWithFixedSources] at hstate
+  rcases hstate with ⟨hcheck, heq⟩
+  simpa [heq] using hcheck
+
 /-! Spill allocation over the complete CakeML-shaped SSA function.  In
     contrast with the historical entry point above, the explicit formal
     parameter moves are present in the clash tree, preferences, and returned
