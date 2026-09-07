@@ -30,6 +30,7 @@ import Flapjack.RiscV.HeuristicPipeline
 import Flapjack.RiscV.LinearScan
 import Flapjack.RiscV.LinearScanDriver
 import Flapjack.RiscV.LinearScanPipeline
+import Flapjack.RiscV.AllocationModePipeline
 import Flapjack.RiscV.OracleAllocator
 import Flapjack.RiscV.AllocatorCorrectness
 import Flapjack.RiscV.AllocatorDriver

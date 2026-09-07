@@ -494,6 +494,8 @@ definitions, pass ordering, examples, and proof obligations.
   locations, live-tree safety, and forced-clash separation.
 - [x] Integrate checked linear-scan allocation at the SSA function and RISC-V
   Word-to-Stack/StackRemove pipeline boundaries.
+- [x] Port CakeML numeric allocation-mode decoding and dispatch modes 4+ to
+  the checked linear-scan RISC-V pipeline.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware
   RISC-V contracts before claiming general call-aware allocation correctness.
 - [x] Add a combined graph-allocation soundness contract exposing fixed tags,
