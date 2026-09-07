@@ -569,6 +569,8 @@ definitions, pass ordering, examples, and proof obligations.
   Word-to-Stack state relation for subsequent spill-aware instruction proofs.
 - [x] Prove binary expression lowering preserves the reusable spill relation,
   including explicit destination, scratch, and address-scratch non-aliasing.
+- [x] Prove shift expression lowering preserves the reusable spill relation
+  when both operands are spilled and both temporary registers are clobbered.
 - [x] Expose soundness of the entry-aware SSA spill allocator, including its
   clash, special-location, and clash-tree checks.
 - [x] Expose location coverage for every variable in the entry-aware SSA spill
