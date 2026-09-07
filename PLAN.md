@@ -564,6 +564,8 @@ definitions, pass ordering, examples, and proof obligations.
   full-SSA entry-inclusive function program.
 - [x] Expose the corresponding ABI-correct spill-backed Word-to-Stack pipeline
   for entry-inclusive full-SSA functions.
+- [x] Expose an end-to-end Flapjack-to-RISC-V compiler entry point using the
+  full-SSA spill pipeline.
 - [x] Route the spill-aware RISC-V pipeline through the implemented
   clash-tree/preference allocator and retain its allocation witness at the
   Word-to-Stack boundary.
