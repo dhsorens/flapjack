@@ -540,6 +540,38 @@ theorem wordToStackProgNatWithBitmapBuilder_seq
       some (.seq firstCode secondCode, finalState) := by
   simp [wordToStackProgNatWithBitmapBuilder, hfirst, hsecond]
 
+/-! Conditional compilation threads the bitmap state through the two branch
+    compilations in the same order as the executable compiler.  The explicit
+    condition-prelude witness keeps this equation compositional for spilled
+    conditions as well. -/
+
+theorem wordToStackProgNatWithBitmapBuilder_ite
+    [BEq Nat] (config : WordStackConfig)
+    (bitmapBuilder : List Nat → List Nat)
+    (registerCount bitmapRegister frameSlots wordBits : Nat)
+    (storeConstsStub : Option Nat)
+    (state state1 finalState : WordStackBitmapState)
+    (operator : Cmp) (condition : Nat) (right : WordRegImm Nat)
+    (thenBranch elseBranch : WordProg Nat)
+    (conditionPrelude : StackProg Nat) (conditionRegister : Nat)
+    (rightOperand : WordRegImm Nat)
+    (thenCode elseCode : StackProg Nat)
+    (hcondition : wordStackConditionOperands config condition right =
+      some (conditionPrelude, conditionRegister, rightOperand))
+    (hthen : wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+      registerCount bitmapRegister frameSlots wordBits storeConstsStub state
+      thenBranch = some (thenCode, state1))
+    (helse : wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+      registerCount bitmapRegister frameSlots wordBits storeConstsStub state1
+      elseBranch = some (elseCode, finalState)) :
+    wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+      registerCount bitmapRegister frameSlots wordBits storeConstsStub state
+      (.ite operator condition right thenBranch elseBranch) =
+      some (wordStackJoin conditionPrelude
+        (.ite operator conditionRegister rightOperand thenCode elseCode),
+        finalState) := by
+  simp [wordToStackProgNatWithBitmapBuilder, hcondition, hthen, helse]
+
 /-! The state-threaded compiler has no special bitmap effect for an FFI
     instruction.  Its lowering equation therefore returns the original
     accumulator while exposing the same four-move ABI prefix as the

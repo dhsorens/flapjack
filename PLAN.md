@@ -1396,6 +1396,8 @@ definitions, pass ordering, examples, and proof obligations.
   StackLang execution, retaining the bitmap state in the result relation.
 - [x] Expose sequential state-threaded Word-to-Stack composition, including
   an allocating prefix followed by an FFI lowering.
+- [x] Expose state-threaded Word-to-Stack conditional composition, including
+  condition materialization and branch-state threading.
 - [x] Add abstract and bounded FFI loop-break simulation equations, with
   FFI-in-loop regressions.
 - [x] Expose the abstract StackLang FFI returned-callee continuation equation,
