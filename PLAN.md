@@ -533,6 +533,8 @@ definitions, pass ordering, examples, and proof obligations.
   evaluator.
 - [x] Integrate the two-entry move case into the reusable straight-line
   coloring simulation induction, with an entry-shaped regression.
+- [x] Prove source-ordered lowering for arbitrary acyclic parallel-move lists,
+  covering the fresh full-SSA formal-entry case without scratch-register use.
 - [x] Prove the reserved-x31 five-instruction rotate-right colouring boundary
   under explicit scratch non-aliasing hypotheses.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware
