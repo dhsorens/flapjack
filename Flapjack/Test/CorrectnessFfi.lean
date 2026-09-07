@@ -237,12 +237,23 @@ def sourceFfiImage : Option (Word 64 × List (Instruction 64)) := do
   let code := entries.flatMap (fun (_, _, _, code, _) => code)
   pure (entry, code)
 
-#guard
+theorem sourceFfi_machine_execution :
     sourceFfiImage.bind (fun (entry, code) =>
       executeFunctionAtWithFfi sourceFfiHost 100 0 entry 100 [] code [4] []
         (writeRegister (zeroState 64) 1 100)) = some [42]
+  := by
+  native_decide
 
-#guard
+theorem sourceFfi_source_execution :
+    (evalPanProgWithCallsAndFfi sourceFfiFunctions sourceFfiHandler 20
+      (fun _ => none) sourceFfiMainBody).map
+        (fun result => match result with
+        | .returned _ values => values
+        | _ => []) = some [42]
+  := by
+  decide +kernel
+
+theorem sourceFfi_source_machine_agreement :
     (evalPanProgWithCallsAndFfi sourceFfiFunctions sourceFfiHandler 20
       (fun _ => none) sourceFfiMainBody).map
         (fun result => match result with
@@ -250,6 +261,7 @@ def sourceFfiImage : Option (Word 64 × List (Instruction 64)) := do
         | _ => []) = some [42] ∧
       sourceFfiImage.bind (fun (entry, code) =>
         executeFunctionAtWithFfi sourceFfiHost 100 0 entry 100 [] code [4] []
-          (writeRegister (zeroState 64) 1 100)) = some [42]
+          (writeRegister (zeroState 64) 1 100)) = some [42] :=
+  ⟨sourceFfi_source_execution, sourceFfi_machine_execution⟩
 
 end Flapjack

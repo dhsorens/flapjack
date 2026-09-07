@@ -532,6 +532,8 @@ definitions, pass ordering, examples, and proof obligations.
   result-level correctness witness for downstream lowering.
 - [x] Expose renamed formal-parameter locations through the composed spill
   fallback driver.
+- [x] Name the source-level FFI-to-RISC-V machine execution and agreement
+  theorem instead of leaving the end-to-end result as an anonymous guard.
 - [x] Add a combined graph-allocation soundness contract exposing fixed tags,
   edge safety, and the clash-tree witness at the function boundary.
 - [x] Add the spill-aware function allocator contract exposing clash safety,
