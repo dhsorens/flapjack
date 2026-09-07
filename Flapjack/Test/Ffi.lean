@@ -118,6 +118,16 @@ example :
 
 example :
     evalWordFunctionWithCallsAndFfi [] ffiWordHandler 2 ffiAbiState
+        (.seq (.return 0 [2]) (.ffi "sum" 2 3 4 5 ([], []))) =
+      some (ffiAbiState, [10]) := by
+  apply evalWordFunctionWithCallsAndFfi_seq_terminal
+    (middle := ffiAbiState) (values := [10])
+  · simp [evalWordFunctionWithCallsAndFfi, evalWordFunction,
+      ffiAbiState, writeRegister, readRegister, registerOfNat]
+  · simp
+
+example :
+    evalWordFunctionWithCallsAndFfi [] ffiWordHandler 2 ffiAbiState
         (.ite .equal 2 (.imm (10 : Word 64))
           (.ffi "sum" 2 3 4 5 ([], [])) .skip) =
       some (writeRegister ffiAbiState 6 33, []) := by

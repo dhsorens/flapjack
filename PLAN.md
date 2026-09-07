@@ -1363,6 +1363,8 @@ definitions, pass ordering, examples, and proof obligations.
   call-aware Word FFI evaluator, with a concrete FFI-then-return regression.
 - [x] Expose true- and false-branch equations for the fuel-bounded FFI-aware
   Word conditional evaluator, with branch-selected FFI and return tests.
+- [x] Expose the early-return sequence equation for the fuel-bounded FFI-aware
+  Word evaluator, including a regression that skips a later FFI operation.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
