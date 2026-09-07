@@ -1187,6 +1187,8 @@ definitions, pass ordering, examples, and proof obligations.
   value movement, and shape-preserving decoding.
 - [x] Compose bitmap-managed root collection with the existing heap scan loop
   into a full collector result contract.
+- [x] Prove that successful bitmap filtering and reconstruction leave the same
+  stack suffix, using root-list length preservation.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
