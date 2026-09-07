@@ -66,9 +66,11 @@ example :
         ({ current := [(2, 100)], next := 200 } : WordSsaState)
         ((.seq (.locValue 3 2) (.return 0 [3])) : WordProg Nat) =
         ({ current := [(3, 200), (2, 100)], next := 204 },
-        .seq (.locValue 200 100) (.return 0 [200])) := by
+        .seq (.locValue 200 100)
+          (.seq (.move 0 [(2, 200)]) (.return 0 [2]))) := by
   simp [wordSsaRenameProgram, wordSsaRenameProgramWithLoops,
-    wordSsaFresh, wordSsaRead, lookupNatInfo]
+    wordSsaCallAbiRegisters, wordSsaFresh, wordSsaRead, wordSsaSeq,
+    lookupNatInfo]
 
 example :
     wordProgReadVars
@@ -149,6 +151,15 @@ example :
     wordSsaFindLoopFrame, wordSsaReconcileTo, wordSsaRead,
     wordSsaSeq, lookupNatInfo, List.eraseDups, List.eraseDupsBy,
     List.eraseDupsBy.loop]
+
+example :
+    wordSsaRenameProgram
+        ({ current := [(3, 100)], next := 200 } : WordSsaState)
+      ((.raise 3 : WordProg Nat)) =
+      ({ current := [(3, 100)], next := 200 },
+        .seq (.move 0 [(2, 100)]) (.raise 2)) := by
+  simp [wordSsaRenameProgram, wordSsaRenameProgramWithLoops,
+    wordSsaRead, wordSsaSeq, lookupNatInfo]
 
 example :
     wordSsaRenameProgram

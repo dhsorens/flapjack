@@ -9,11 +9,13 @@ example :
     wordSsaRenameFunction [2, 3]
         (.return 0 [2, 3] : WordProg Nat) =
       ({ current := [(3, 9), (2, 5)], next := 13 },
-        [5, 9], .return 0 [5, 9]) := by
+        [5, 9], .seq (.move 0 [(2, 5), (4, 9)])
+          (.return 0 [2, 4])) := by
+  have hAbi : wordSsaCallAbiRegisters 1 2 = [2, 4] := by rfl
   simp [wordSsaRenameFunction, wordSsaSetupParameters, wordSsaLimitVar,
     wordListMaximum, wordProgVariables, wordProgReadVars, wordProgWriteVars,
     wordSsaRenameProgram, wordSsaRenameProgramWithLoops, wordSsaRead,
-    wordSsaFreshList, wordSsaFresh, lookupNatInfo]
+    wordSsaFreshList, wordSsaFresh, wordSsaSeq, hAbi, lookupNatInfo]
 
 /- An unused formal is still included in the allocation input, because the
    generated entry move must have a destination. -/

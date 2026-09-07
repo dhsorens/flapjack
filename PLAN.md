@@ -1049,6 +1049,8 @@ definitions, pass ordering, examples, and proof obligations.
   refreshed names and zero-initializing newly introduced names.
 - [x] Port CakeML's cut-set-aware SSA allocation boundary, including ABI
   size marshalling and post-allocation cut-set restoration.
+- [x] Port CakeML's SSA Raise and Return ABI equations, moving exceptions and
+  result values through the fixed return register sequence.
 - [x] Marshal allocated Word call arguments into the even-numbered ABI
   registers before StackLang call-frame construction, for both handler-free
   and handler-aware calls.

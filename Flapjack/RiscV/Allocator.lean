@@ -587,10 +587,14 @@ def wordSsaRenameProgramWithLoops (frames : List WordSsaLoopFrame)
         (state, .store (wordSsaRenameExp state address) (wordSsaRead state value))
     | .set store value =>
         (state, .set store (wordSsaRenameExp state value))
-    | .raise exception =>
-        (state, .raise (wordSsaRead state exception))
     | .return label values =>
-        (state, .return label (values.map (wordSsaRead state)))
+        let values := values.map (wordSsaRead state)
+        let abiValues := wordSsaCallAbiRegisters 1 values.length
+        (state, wordSsaSeq (.move 0 (abiValues.zip values))
+          (.return (wordSsaRead state label) abiValues))
+    | .raise exception =>
+        let exception := wordSsaRead state exception
+        (state, wordSsaSeq (.move 0 [(2, exception)]) (.raise 2))
     | .tick => (state, .tick)
     | .break label =>
         match wordSsaFindLoopFrame label frames with
