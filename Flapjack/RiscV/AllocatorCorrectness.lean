@@ -664,6 +664,87 @@ theorem evalWordRaise_ssaRename [NeZero width]
       simp_all [
         wordControlResultException]
 
+/-! The previous theorem compares source and renamed `Raise` nodes.  The
+    allocator emits one more ABI step: the renamed exception is copied to x2
+    before the fixed-register `Raise 2`.  This theorem closes that generated
+    boundary directly. -/
+
+theorem wordMoveToInstructions_abi_singleton [NeZero width]
+    (source : Nat) (hsource : source < 32) (hsourceScratch : source ≠ 31) :
+    wordMoveToInstructions (width := width) [(2, source)] =
+      if source = 2 then
+        some ([.addi 31 2 (0 : Word width), .addi 2 31 0] :
+          List (Instruction width))
+      else
+        some ([.addi 2 ⟨source, hsource⟩ (0 : Word width)] :
+          List (Instruction width)) := by
+  by_cases htwo : source = 2
+  · subst source
+    simp [wordMoveToInstructions, wordMoveToInstructionsAux,
+      wordMoveRegisterDestinations, wordMoveRegisterReady,
+      wordMoveRegisterRemoveDestination, wordExpToInstructions,
+      wordExpToInstruction, registerOfNat]
+  · simp [wordMoveToInstructions, wordMoveToInstructionsAux,
+      wordMoveRegisterDestinations, wordMoveRegisterReady,
+      wordMoveRegisterRemoveDestination, wordExpToInstructions,
+      wordExpToInstruction, registerOfNat, hsource, hsourceScratch, htwo]
+
+theorem evalWordSsaRenameProgram_raise [NeZero width]
+    (ssa : WordSsaState) (source target : State width)
+    (hregister : ∀ name,
+      (do
+        let register ← registerOfNat name
+        pure (readRegister source register)) =
+      (do
+        let register ← registerOfNat (wordSsaRead ssa name)
+        pure (readRegister target register)))
+    (fuel exception : Nat)
+    (hsource : exception < 32) (htarget : wordSsaRead ssa exception < 32)
+    (htargetScratch : wordSsaRead ssa exception ≠ 31) :
+    (evalWordFunctionWithHandlersAndFfi []
+        (fun _ _ _ _ _ state => some state) (fuel + 1) source
+        (.raise exception)).map wordControlResultException =
+      (evalWordFunctionWithHandlersAndFfi []
+        (fun _ _ _ _ _ state => some state) (fuel + 2) target
+        (wordSsaRenameProgram ssa (.raise exception)).2).map
+        wordControlResultException := by
+  have hexceptionValue :
+      readRegister source ⟨exception, hsource⟩ =
+        readRegister target ⟨wordSsaRead ssa exception, htarget⟩ := by
+    have h := hregister exception
+    simpa [registerOfNat, hsource, htarget] using h
+  have hprogram :
+      (wordSsaRenameProgram ssa
+        (.raise exception : WordProg (Word width))).2 =
+        (.seq (.move 0 [(2, wordSsaRead ssa exception)]) (.raise 2) :
+          WordProg (Word width)) := by
+    simp [wordSsaRenameProgram, wordSsaRenameProgramWithLoops,
+      wordSsaRead, wordSsaSeq]
+  have hmove := wordMoveToInstructions_abi_singleton (width := width)
+    (wordSsaRead ssa exception) htarget htargetScratch
+  rw [hprogram]
+  by_cases htwo : wordSsaRead ssa exception = 2
+  · have hmove' : wordMoveToInstructions (width := width)
+        [(2, wordSsaRead ssa exception)] =
+        some ([.addi 31 2 (0 : Word width), .addi 2 31 0] :
+          List (Instruction width)) := by
+      simpa [htwo] using hmove
+    simp only [evalWordFunctionWithHandlersAndFfi, evalWordFunction]
+    rw [hmove']
+    simp [registerOfNat, hsource, executeInstructions, execute, nextPc,
+      writeRegister, readRegister, wordControlResultException]
+    simpa [readRegister, htwo] using hexceptionValue
+  · have hmove' : wordMoveToInstructions (width := width)
+        [(2, wordSsaRead ssa exception)] =
+        some ([.addi 2 ⟨wordSsaRead ssa exception, htarget⟩ (0 : Word width)] :
+          List (Instruction width)) := by
+      simpa [htwo] using hmove
+    simp only [evalWordFunctionWithHandlersAndFfi, evalWordFunction]
+    rw [hmove']
+    simp [registerOfNat, hsource, executeInstructions, execute, nextPc,
+      writeRegister, readRegister, wordControlResultException]
+    simpa [readRegister] using hexceptionValue
+
 /-! FFI is an explicit semantic environment at the Word boundary.  This
     lemma records the exact compatibility condition required when a completed
     colouring changes the four ABI argument registers: the host transition on
