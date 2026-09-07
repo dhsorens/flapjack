@@ -3283,6 +3283,24 @@ theorem evalStackFrameFuel_stackGcMoveRootsBitmaps_iterate [NeZero width]
         .stackLoadAny 9 8])
       step hcondition hbody hfinal)
 
+theorem evalStackFrameFuel_stackGcRootBitmaps_then_moveLoop [NeZero width]
+    (config : StackGcConfig) (fuel : Nat)
+    (state roots final : StackFrameMachineState width)
+    (hroots :
+      evalStackFrameFuel fuel state (stackGcMoveRootsBitmapsCode config) =
+        some (.normal roots))
+    (hloop :
+      evalStackFrameFuel fuel roots (stackGcMoveLoopCode config) =
+        some (.normal final)) :
+    evalStackFrameFuel (fuel + 1) state
+        (stackSeq [stackGcMoveRootsBitmapsCode config,
+          stackGcMoveLoopCode config]) =
+      some (.normal final) := by
+  simpa [stackSeq, hloop] using
+    (evalStackFrameFuel_seq_normal fuel state roots
+      (stackGcMoveRootsBitmapsCode config)
+      (stackGcMoveLoopCode config) hroots)
+
 theorem evalStackFrameFuel_stackGcMoveLoop_data_branch [NeZero width]
     (config : StackGcConfig) (fuel : Nat)
     (state final : StackFrameMachineState width)
