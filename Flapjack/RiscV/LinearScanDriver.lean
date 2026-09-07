@@ -26,4 +26,29 @@ def wordAllocateLinearScanFunction (parameters : List Nat)
     (fun allocation =>
       (state, renamedParameters, allocation, renamedProgram))
 
+theorem wordAllocateLinearScanFunction_safe
+    (parameters : List Nat) (program : WordProg α)
+    (colours stackStart : Nat)
+    (state : WordSsaState) (renamedParameters : List Nat)
+    (allocation : WordLinearScanState) (renamedProgram : WordProg α)
+    (halloc : wordAllocateLinearScanFunction parameters program colours stackStart =
+      some (state, renamedParameters, allocation, renamedProgram)) :
+    wordLinearScanAllocationSafe
+      (WordClashTree.seq
+        (.set (wordSsaRenameFunction parameters program).2.fst)
+        (wordClashTree (wordSsaRenameFunction parameters program).2.snd []))
+      (wordProgForcedClashes (wordSsaRenameFunction parameters program).2.snd)
+      allocation = true := by
+  simp [wordAllocateLinearScanFunction] at halloc
+  rcases halloc with ⟨allocation', hchecked, rfl, rfl, rfl, rfl⟩
+  exact wordLinearScanAllocateClashTreeChecked_safe
+    colours stackStart
+    (WordClashTree.seq
+      (.set (wordSsaRenameFunction parameters program).2.fst)
+      (wordClashTree (wordSsaRenameFunction parameters program).2.snd []))
+    (wordProgForcedClashes (wordSsaRenameFunction parameters program).2.snd)
+    (wordPreferenceMoves
+      (wordProgPreferenceEdges (wordSsaRenameFunction parameters program).2.snd))
+    allocation' hchecked
+
 end Flapjack

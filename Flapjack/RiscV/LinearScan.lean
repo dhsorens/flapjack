@@ -489,6 +489,26 @@ def wordLinearScanAllocateClashTreeChecked (colours stackStart : Nat)
         none
   | none => none
 
+theorem wordLinearScanAllocateClashTreeChecked_safe
+    (colours stackStart : Nat) (tree : WordClashTree)
+    (forced : List (Nat × Nat)) (moves : List WordMove)
+    (state : WordLinearScanState)
+    (halloc :
+      wordLinearScanAllocateClashTreeChecked colours stackStart tree forced moves =
+        some state) :
+    wordLinearScanAllocationSafe tree forced state = true := by
+  by_cases hsafe : wordLinearScanAllocationSafe tree forced state = true
+  · exact hsafe
+  · cases hraw : wordLinearScanAllocateClashTree colours stackStart tree
+        forced moves with
+    | none =>
+        simp [wordLinearScanAllocateClashTreeChecked, hraw] at halloc
+    | some allocated =>
+        simp [wordLinearScanAllocateClashTreeChecked, hraw] at halloc
+        rcases halloc with ⟨hsafeAllocated, heq⟩
+        subst state
+        exact False.elim (hsafe hsafeAllocated)
+
 def wordFixLiveTree (tree : WordLiveTree) : WordLiveTree :=
   let live := wordGetLiveBackward tree []
   if live.isEmpty then tree else .seq (.writes live) tree

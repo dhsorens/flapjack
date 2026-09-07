@@ -496,6 +496,8 @@ definitions, pass ordering, examples, and proof obligations.
   Word-to-Stack/StackRemove pipeline boundaries.
 - [x] Port CakeML numeric allocation-mode decoding and dispatch modes 4+ to
   the checked linear-scan RISC-V pipeline.
+- [x] Prove the checked linear-scan safety predicate and lift it through the
+  SSA-renamed function allocation boundary.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware
   RISC-V contracts before claiming general call-aware allocation correctness.
 - [x] Add a combined graph-allocation soundness contract exposing fixed tags,
