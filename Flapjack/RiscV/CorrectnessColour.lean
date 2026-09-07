@@ -620,6 +620,244 @@ theorem evalWordProg_assignBinaryVarConst_applyColour
         wordColourStateRelation_executeImmediateBinary colour valid injective colourZero
           source target hrelation .xor name sourceName value hname hsource⟩
 
+theorem wordColourStateRelation_executeSllForRotate
+    (colour : Nat → Nat) (valid : wordColourValid colour)
+    (injective : Function.Injective colour) (colourZero : colour 0 = 0)
+    (source target : State width) [NeZero width]
+    (hrelation : WordColourStateRelation colour source target)
+    (name left right : Nat) (hname : name < 32) (hleft : left < 32)
+    (hright : right < 32) :
+    WordColourStateRelation colour
+      (execute source (.sll ⟨name, hname⟩ ⟨left, hleft⟩ ⟨right, hright⟩))
+      (execute target (.sll ⟨colour name, valid name hname⟩
+        ⟨colour left, valid left hleft⟩ ⟨colour right, valid right hright⟩)) := by
+  have hvalue :
+      BitVec.shiftLeft (readRegister source ⟨left, hleft⟩)
+          (shiftAmount (readRegister source ⟨right, hright⟩)) =
+        BitVec.shiftLeft (readRegister target ⟨colour left, valid left hleft⟩)
+          (shiftAmount (readRegister target ⟨colour right, valid right hright⟩)) := by
+    rw [hrelation.register left hleft (valid left hleft),
+      hrelation.register right hright (valid right hright)]
+  have hnext := wordColourStateRelation_nextPc colour valid source target hrelation
+  simpa [execute] using
+    (wordColourStateRelation_writeRegister colour valid injective colourZero
+      {source with pc := nextPc source} {target with pc := nextPc target}
+      hnext name hname
+      (BitVec.shiftLeft (readRegister source ⟨left, hleft⟩)
+        (shiftAmount (readRegister source ⟨right, hright⟩)))
+      (BitVec.shiftLeft (readRegister target ⟨colour left, valid left hleft⟩)
+        (shiftAmount (readRegister target ⟨colour right, valid right hright⟩))) hvalue)
+
+theorem wordColourStateRelation_executeSrlForRotate
+    (colour : Nat → Nat) (valid : wordColourValid colour)
+    (injective : Function.Injective colour) (colourZero : colour 0 = 0)
+    (source target : State width) [NeZero width]
+    (hrelation : WordColourStateRelation colour source target)
+    (name left right : Nat) (hname : name < 32) (hleft : left < 32)
+    (hright : right < 32) :
+    WordColourStateRelation colour
+      (execute source (.srl ⟨name, hname⟩ ⟨left, hleft⟩ ⟨right, hright⟩))
+      (execute target (.srl ⟨colour name, valid name hname⟩
+        ⟨colour left, valid left hleft⟩ ⟨colour right, valid right hright⟩)) := by
+  have hvalue :
+      BitVec.ushiftRight (readRegister source ⟨left, hleft⟩)
+          (shiftAmount (readRegister source ⟨right, hright⟩)) =
+        BitVec.ushiftRight (readRegister target ⟨colour left, valid left hleft⟩)
+          (shiftAmount (readRegister target ⟨colour right, valid right hright⟩)) := by
+    rw [hrelation.register left hleft (valid left hleft),
+      hrelation.register right hright (valid right hright)]
+  have hnext := wordColourStateRelation_nextPc colour valid source target hrelation
+  simpa [execute] using
+    (wordColourStateRelation_writeRegister colour valid injective colourZero
+      {source with pc := nextPc source} {target with pc := nextPc target}
+      hnext name hname
+      (BitVec.ushiftRight (readRegister source ⟨left, hleft⟩)
+        (shiftAmount (readRegister source ⟨right, hright⟩)))
+      (BitVec.ushiftRight (readRegister target ⟨colour left, valid left hleft⟩)
+        (shiftAmount (readRegister target ⟨colour right, valid right hright⟩))) hvalue)
+
+theorem wordColourStateRelation_executeRotateRight
+    (colour : Nat → Nat) (valid : wordColourValid colour)
+    (injective : Function.Injective colour) (colourZero : colour 0 = 0)
+    (colourScratch : colour 31 = 31)
+    (source target : State width) [NeZero width]
+    (hrelation : WordColourStateRelation colour source target)
+    (name left right : Nat) (hname : name < 32) (hleft : left < 32)
+    (hright : right < 32) (hnameScratch : name ≠ 31)
+    (hleftScratch : left ≠ 31) (hrightScratch : right ≠ 31) :
+    WordColourStateRelation colour
+      (executeInstructions source
+        [.ori 31 0 (BitVec.ofNat width width), .sub 31 31 ⟨right, hright⟩,
+          .sll 31 ⟨left, hleft⟩ 31, .srl ⟨name, hname⟩ ⟨left, hleft⟩ ⟨right, hright⟩,
+          .or ⟨name, hname⟩ ⟨name, hname⟩ 31])
+      (executeInstructions target
+        [.ori ⟨colour 31, valid 31 (by omega)⟩ ⟨colour 0, valid 0 (by omega)⟩
+            (BitVec.ofNat width width),
+          .sub ⟨colour 31, valid 31 (by omega)⟩ ⟨colour 31, valid 31 (by omega)⟩
+            ⟨colour right, valid right hright⟩,
+          .sll ⟨colour 31, valid 31 (by omega)⟩ ⟨colour left, valid left hleft⟩
+            ⟨colour 31, valid 31 (by omega)⟩,
+          .srl ⟨colour name, valid name hname⟩ ⟨colour left, valid left hleft⟩
+            ⟨colour right, valid right hright⟩,
+          .or ⟨colour name, valid name hname⟩ ⟨colour name, valid name hname⟩
+            ⟨colour 31, valid 31 (by omega)⟩]) := by
+  have hnameColourScratch : colour name ≠ 31 := by
+    intro h
+    apply hnameScratch
+    apply injective
+    simpa [colourScratch] using h
+  have hleftColourScratch : colour left ≠ 31 := by
+    intro h
+    apply hleftScratch
+    apply injective
+    simpa [colourScratch] using h
+  have hrightColourScratch : colour right ≠ 31 := by
+    intro h
+    apply hrightScratch
+    apply injective
+    simpa [colourScratch] using h
+  have h1 := wordColourStateRelation_executeImmediateBinary colour valid
+    injective colourZero source target hrelation .or 31 0 (BitVec.ofNat width width)
+      (by omega) (by omega)
+  have h1' :
+      WordColourStateRelation colour
+        (execute source (.ori 31 0 (BitVec.ofNat width width)))
+        (execute target (.ori 31 0 (BitVec.ofNat width width))) := by
+    simpa [colourScratch, colourZero] using h1
+  have h2 := wordColourStateRelation_executeBinary colour valid injective colourZero
+    (execute source (.ori 31 0 (BitVec.ofNat width width)))
+    (execute target (.ori 31 0 (BitVec.ofNat width width))) h1' .sub 31 31 right
+      (by omega) (by omega) hright
+  have h2' :
+      WordColourStateRelation colour
+        (execute (execute source (.ori 31 0 (BitVec.ofNat width width)))
+          (.sub 31 31 ⟨right, hright⟩))
+        (execute (execute target (.ori 31 0 (BitVec.ofNat width width)))
+          (.sub 31 31 ⟨colour right, valid right hright⟩)) := by
+    simpa [colourScratch] using h2
+  have h3 := wordColourStateRelation_executeSllForRotate colour valid injective colourZero
+    (execute (execute source (.ori 31 0 (BitVec.ofNat width width)))
+      (.sub 31 31 ⟨right, hright⟩))
+    (execute (execute target (.ori 31 0 (BitVec.ofNat width width)))
+      (.sub 31 31 ⟨colour right, valid right hright⟩)) h2' 31 left 31
+      (by omega) hleft (by omega)
+  have h3' :
+      WordColourStateRelation colour
+        (execute
+          (execute (execute source (.ori 31 0 (BitVec.ofNat width width)))
+            (.sub 31 31 ⟨right, hright⟩))
+          (.sll 31 ⟨left, hleft⟩ 31))
+        (execute
+          (execute (execute target (.ori 31 0 (BitVec.ofNat width width)))
+            (.sub 31 31 ⟨colour right, valid right hright⟩))
+          (.sll 31 ⟨colour left, valid left hleft⟩ 31)) := by
+    simpa [colourScratch] using h3
+  have h4 := wordColourStateRelation_executeSrlForRotate colour valid injective colourZero
+    (execute
+      (execute (execute source (.ori 31 0 (BitVec.ofNat width width)))
+        (.sub 31 31 ⟨right, hright⟩))
+      (.sll 31 ⟨left, hleft⟩ 31))
+    (execute
+      (execute (execute target (.ori 31 0 (BitVec.ofNat width width)))
+        (.sub 31 31 ⟨colour right, valid right hright⟩))
+      (.sll 31 ⟨colour left, valid left hleft⟩ 31)) h3' name left right
+      hname hleft hright
+  have h4' :
+      WordColourStateRelation colour
+        (execute
+          (execute
+            (execute (execute source (.ori 31 0 (BitVec.ofNat width width)))
+              (.sub 31 31 ⟨right, hright⟩))
+            (.sll 31 ⟨left, hleft⟩ 31))
+          (.srl ⟨name, hname⟩ ⟨left, hleft⟩ ⟨right, hright⟩))
+        (execute
+          (execute
+            (execute (execute target (.ori 31 0 (BitVec.ofNat width width)))
+              (.sub 31 31 ⟨colour right, valid right hright⟩))
+            (.sll 31 ⟨colour left, valid left hleft⟩ 31))
+          (.srl ⟨colour name, valid name hname⟩ ⟨colour left, valid left hleft⟩
+            ⟨colour right, valid right hright⟩)) := by
+    simpa [colourScratch] using h4
+  have h5 := wordColourStateRelation_executeBinary colour valid injective colourZero
+    (execute
+      (execute
+        (execute (execute source (.ori 31 0 (BitVec.ofNat width width)))
+          (.sub 31 31 ⟨right, hright⟩))
+        (.sll 31 ⟨left, hleft⟩ 31))
+      (.srl ⟨name, hname⟩ ⟨left, hleft⟩ ⟨right, hright⟩))
+    (execute
+      (execute
+        (execute (execute target (.ori 31 0 (BitVec.ofNat width width)))
+          (.sub 31 31 ⟨colour right, valid right hright⟩))
+        (.sll 31 ⟨colour left, valid left hleft⟩ 31))
+      (.srl ⟨colour name, valid name hname⟩ ⟨colour left, valid left hleft⟩
+        ⟨colour right, valid right hright⟩)) h4' .or name name 31
+      (by omega) hname (by omega)
+  simpa [executeInstructions, colourScratch, colourZero] using h5
+
+theorem evalWordProg_assignRotateRight_applyColour
+    (colour : Nat → Nat) (valid : wordColourValid colour)
+    (injective : Function.Injective colour) (colourZero : colour 0 = 0)
+    (colourScratch : colour 31 = 31)
+    (source target : State width) [NeZero width]
+    (hrelation : WordColourStateRelation colour source target)
+    (name left right : Nat) (hname : name < 32) (hleft : left < 32)
+    (hright : right < 32) (hnameScratch : name ≠ 31)
+    (hleftScratch : left ≠ 31) (hrightScratch : right ≠ 31) :
+    ∃ source' target',
+      evalWordProg source
+          (.assign name (.shift .ror (.var left) (.var right))) = some source' ∧
+      evalWordProg target
+          (wordApplyColour colour
+            (.assign name (.shift .ror (.var left) (.var right)))) = some target' ∧
+      WordColourStateRelation colour source' target' := by
+  have hsourceEval :
+      evalWordProg source (.assign name (.shift .ror (.var left) (.var right))) =
+        some (executeInstructions source
+          [.ori 31 0 (BitVec.ofNat width width), .sub 31 31 ⟨right, hright⟩,
+            .sll 31 ⟨left, hleft⟩ 31, .srl ⟨name, hname⟩ ⟨left, hleft⟩ ⟨right, hright⟩,
+            .or ⟨name, hname⟩ ⟨name, hname⟩ 31]) := by
+    simp [evalWordProg, wordExpToInstructions, wordExpToInstruction,
+      registerOfNat, hname, hleft, hright, hnameScratch, hleftScratch,
+      hrightScratch, executeInstructions]
+  have hnameColourScratch : colour name ≠ 31 := by
+    intro h
+    apply hnameScratch
+    apply injective
+    simpa [colourScratch] using h
+  have hleftColourScratch : colour left ≠ 31 := by
+    intro h
+    apply hleftScratch
+    apply injective
+    simpa [colourScratch] using h
+  have hrightColourScratch : colour right ≠ 31 := by
+    intro h
+    apply hrightScratch
+    apply injective
+    simpa [colourScratch] using h
+  have htargetEval :
+      evalWordProg target
+          (wordApplyColour colour
+            (.assign name (.shift .ror (.var left) (.var right)))) =
+        some (executeInstructions target
+          [.ori 31 0 (BitVec.ofNat width width),
+            .sub 31 31 ⟨colour right, valid right hright⟩,
+            .sll 31 ⟨colour left, valid left hleft⟩ 31,
+            .srl ⟨colour name, valid name hname⟩ ⟨colour left, valid left hleft⟩
+              ⟨colour right, valid right hright⟩,
+            .or ⟨colour name, valid name hname⟩ ⟨colour name, valid name hname⟩ 31]) := by
+    simp [evalWordProg, wordApplyColour, wordApplyColourExp,
+      wordExpToInstructions, wordExpToInstruction, registerOfNat,
+      hname, hleft, hright, hnameScratch, hleftScratch, hrightScratch,
+      valid name hname, valid left hleft, valid right hright,
+      hnameColourScratch, hleftColourScratch, hrightColourScratch,
+      colourScratch, colourZero, executeInstructions]
+  refine ⟨_, _, hsourceEval, htargetEval, ?_⟩
+  simpa [colourScratch, colourZero] using
+    (wordColourStateRelation_executeRotateRight colour valid injective colourZero
+      colourScratch source target hrelation name left right hname hleft hright
+      hnameScratch hleftScratch hrightScratch)
+
 theorem wordColourStateRelation_executeShiftImmediate
     (colour : Nat → Nat) (valid : wordColourValid colour)
     (injective : Function.Injective colour) (colourZero : colour 0 = 0)
