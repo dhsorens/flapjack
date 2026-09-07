@@ -464,6 +464,8 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Port the CakeML oracle-colouring acceptance boundary for function-level
   Word allocation, checking the clash tree, forced clashes, and stack colours
   before applying total colours.
+- [x] Compose oracle acceptance with the SSA, stack-only, forced-clash, and
+  graph-colouring fallback at the function-level allocation boundary.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware
   RISC-V contracts before claiming general call-aware allocation correctness.
 - [x] Add a combined graph-allocation soundness contract exposing fixed tags,

@@ -25,6 +25,7 @@ import Flapjack.RiscV.Allocator
 import Flapjack.RiscV.RegAlloc
 import Flapjack.RiscV.OracleAllocator
 import Flapjack.RiscV.AllocatorCorrectness
+import Flapjack.RiscV.AllocatorDriver
 import Flapjack.RiscV.WordToStack
 import Flapjack.RiscV.Backend
 import Flapjack.RiscV.CorrectnessBackend
