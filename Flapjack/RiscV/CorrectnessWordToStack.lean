@@ -515,6 +515,30 @@ theorem wordToStackProgNatWithBitmapBuilder_call_handler
         finalState) := by
   simp [wordToStackProgNatWithBitmapBuilder, hargs, hreturn, hhandler]
 
+theorem wordToStackProgNatWithBitmapBuilder_call_no_handler
+    [BEq Nat] (config : WordStackConfig)
+    (bitmapBuilder : List Nat → List Nat)
+    (registerCount bitmapRegister frameSlots wordBits : Nat)
+    (storeConstsStub : Option Nat) (state : WordStackBitmapState)
+    (returns : Option (List Nat × (List Nat × List Nat) × WordProg Nat × Nat × Nat))
+    (target : Nat) (arguments : List Nat)
+    (argumentMoves returnCode : StackProg Nat)
+    (hargs : wordStackMovesToPhysical config arguments 2 = some argumentMoves)
+    (hreturn : wordStackReturnCode config returns = some returnCode)
+    (hreturns : returns ≠ none) :
+    wordToStackProgNatWithBitmapBuilder config bitmapBuilder registerCount
+      bitmapRegister frameSlots wordBits storeConstsStub state
+      (.call returns (some target) arguments none) =
+      some (wordStackJoin argumentMoves
+        (wordToStackCallNoHandler config.perf target arguments.length
+          config.frameOffset config.scratch
+          (returns.map (fun result => result.1) |>.getD []) returnCode
+          config.returnLabel config.entryLabel), state) := by
+  simp only [wordToStackProgNatWithBitmapBuilder]
+  rw [wordToStackProgNat]
+  simp_all [wordStackReturnCode]
+  all_goals exact hreturns
+
 /-! The handler-call lowering equation composes with bounded StackLang
     execution.  Argument moves are kept as an explicit premise because their
     machine-level proof depends on the caller's location relation; once they
