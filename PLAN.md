@@ -574,6 +574,8 @@ definitions, pass ordering, examples, and proof obligations.
   theorem instead of leaving the end-to-end result as an anonymous guard.
 - [x] Add a reusable parameterized Word call/return semantic contract for the
   stack-based RISC-V calling convention.
+- [x] Expose the arbitrary-list Loop-to-Word argument-reading agreement used
+  at the call-entry boundary.
 - [x] Add the corresponding parameterized Word tail-call semantic contract.
 - [x] Generalize FrameMachine call equations from leaf callees to explicit
   evaluated callee-state witnesses, with compound return and handler tests.
