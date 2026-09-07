@@ -53,6 +53,21 @@ example :
   rfl
 
 example :
+    evalStackFrameFuelWithCodeAndFfi identityFrameFfi 20
+      (fun target => if target = 0 then
+        some ((.return 3 : StackProg Nat)) else none)
+      frameMachineState
+      (.call (some ((.ffi "echo" 3 4 5 6 0 : StackProg Nat), 0, 0, 0))
+        (.label 0) none) =
+      evalStackFrameFuelWithCodeAndFfi identityFrameFfi 19
+        (fun target => if target = 0 then
+          some ((.return 3 : StackProg Nat)) else none)
+        frameMachineState
+        (.ffi "echo" 3 4 5 6 0 : StackProg Nat) := by
+  apply evalStackFrameFuelWithCodeAndFfi_call_return_handler
+  rfl
+
+example :
     evalStackFrameFuelWithCodeAndFfi identityFrameFfi 6
       (fun target => if target = 7 then
         some ((.seq (.ffi "echo" 3 4 5 6 0) (.return 3)) : StackProg Nat)
