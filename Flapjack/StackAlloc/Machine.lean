@@ -247,6 +247,36 @@ theorem evalStackProgFuelWithCodeAndFfi_ffi [NeZero width]
         (state.registers arrayLength) state).map .normal := by
   rfl
 
+theorem evalStackProgFuelWithCodeAndFfi_seq_normal [NeZero width]
+    (host : StackMachineFfiHandler width)
+    (fuel : Nat) (code : Nat → Option (StackProg Nat))
+    (state middle : WordStackMachineState width)
+    (first second : StackProg Nat)
+    (result : StackMachineControl width)
+    (hfirst : evalStackProgFuelWithCodeAndFfi host fuel code state first =
+      some (.normal middle))
+    (hsecond : evalStackProgFuelWithCodeAndFfi host fuel code middle second =
+      some result) :
+    evalStackProgFuelWithCodeAndFfi host (fuel + 1) code state
+      (.seq first second) = some result := by
+  simp [evalStackProgFuelWithCodeAndFfi, hfirst, hsecond]
+
+theorem evalStackProgFuelWithCodeAndFfi_call_raise_handler [NeZero width]
+    (host : StackMachineFfiHandler width)
+    (fuel : Nat) (code : Nat → Option (StackProg Nat))
+    (state : WordStackMachineState width) (target exceptionRegister
+      handlerLabel : Nat) (returnCode : StackProg Nat)
+    (link returnLabel entryLabel register : Nat) (handlerCode : StackProg Nat)
+    (hcallee : code target = some (.raise register)) :
+    evalStackProgFuelWithCodeAndFfi host (fuel + 2) code state
+        (.call (some (returnCode, link, returnLabel, entryLabel)) (.label target)
+          (some (handlerCode, exceptionRegister, handlerLabel))) =
+      evalStackProgFuelWithCodeAndFfi host (fuel + 1) code
+        (wordStackMachineWriteRegister state exceptionRegister
+          (state.registers register)) handlerCode := by
+  simp [evalStackProgFuelWithCodeAndFfi, evalStackProgFuelWithCode,
+    hcallee]
+
 theorem evalStackGcMoveCode_immediate
     (config : StackGcConfig) (fuel : Nat)
     (state : WordStackMachineState 64)
