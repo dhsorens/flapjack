@@ -1381,6 +1381,8 @@ definitions, pass ordering, examples, and proof obligations.
   simulation theorem, preserving the original mapped source values.
 - [x] Connect the generated Word-to-Stack FFI prefix to the FFI-aware
   StackLang evaluator, including fuel accounting and optional host results.
+- [x] Rewrite the StackLang FFI host arguments to the original mapped Word
+  values at the generated ABI boundary.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 

@@ -258,4 +258,119 @@ theorem evalStackProgFuelWithCodeAndFfi_wordStackFfi_join [NeZero width]
   rw [hshape]
   exact hjoined
 
+theorem evalStackProgFuelWithCodeAndFfi_wordStackFfi_source_values
+    [NeZero width] (host : StackMachineFfiHandler width)
+    (fuel : Nat) (code : Nat → Option (StackProg Nat))
+    (config : WordStackConfig) (state state1 state2 state3 final :
+      WordStackMachineState width)
+    (function : FunName)
+    (configuration configurationLength array arrayLength : Nat)
+    (configurationLocation configurationLengthLocation arrayLocation
+      arrayLengthLocation : WordLocation)
+    (configurationMove configurationLengthMove arrayMove arrayLengthMove :
+      StackProg Nat)
+    (configurationValue configurationLengthValue arrayValue arrayLengthValue :
+      Word width)
+    (hconfiguration : wordStackLocation config configuration =
+      some configurationLocation)
+    (hconfigurationLength : wordStackLocation config configurationLength =
+      some configurationLengthLocation)
+    (harray : wordStackLocation config array = some arrayLocation)
+    (harrayLength : wordStackLocation config arrayLength =
+      some arrayLengthLocation)
+    (hconfigurationDestination : configurationLocation ≠ .register 10)
+    (hconfigurationLengthDestination :
+      configurationLengthLocation ≠ .register 11)
+    (harrayDestination : arrayLocation ≠ .register 12)
+    (harrayLengthDestination : arrayLengthLocation ≠ .register 13)
+    (hsafe : ∀ location, location ∈
+      [configurationLocation, configurationLengthLocation, arrayLocation,
+        arrayLengthLocation] →
+      ∀ destination, destination ∈ [10, 11, 12, 13] →
+        location ≠ .register destination)
+    (hconfigurationMove : wordStackFfiMove config configuration 10 =
+      some configurationMove)
+    (hconfigurationLengthMove : wordStackFfiMove config configurationLength 11 =
+      some configurationLengthMove)
+    (harrayMove : wordStackFfiMove config array 12 = some arrayMove)
+    (harrayLengthMove : wordStackFfiMove config arrayLength 13 =
+      some arrayLengthMove)
+    (hconfigurationValue : wordStackMachineValue config state configuration =
+      some configurationValue)
+    (hconfigurationLengthValue :
+      wordStackMachineValue config state configurationLength =
+        some configurationLengthValue)
+    (harrayValue : wordStackMachineValue config state array =
+      some arrayValue)
+    (harrayLengthValue :
+      wordStackMachineValue config state arrayLength =
+        some arrayLengthValue)
+    (hevalConfiguration :
+      (wordStackFfiMove config configuration 10).bind
+        (evalWordStackMachine state) = some state1)
+    (hevalConfigurationLength :
+      (wordStackFfiMove config configurationLength 11).bind
+        (evalWordStackMachine state1) = some state2)
+    (hevalArray :
+      (wordStackFfiMove config array 12).bind
+        (evalWordStackMachine state2) = some state3)
+    (hevalArrayLength :
+      (wordStackFfiMove config arrayLength 13).bind
+        (evalWordStackMachine state3) = some final) :
+    evalStackProgFuelWithCodeAndFfi host (fuel + 5) code state
+      (wordStackJoin configurationMove
+        (wordStackJoin configurationLengthMove
+          (wordStackJoin arrayMove
+            (wordStackJoin arrayLengthMove
+              (.ffi function 10 11 12 13 0))))) =
+      (host function configurationValue configurationLengthValue
+        arrayValue arrayLengthValue final).map .normal := by
+  have habi := evalWordStackMachine_ffi_argument_moves
+    (config := config) (state := state) (state1 := state1)
+    (state2 := state2) (state3 := state3) (final := final)
+    (configuration := configuration)
+    (configurationLength := configurationLength) (array := array)
+    (arrayLength := arrayLength)
+    (configurationLocation := configurationLocation)
+    (configurationLengthLocation := configurationLengthLocation)
+    (arrayLocation := arrayLocation)
+    (arrayLengthLocation := arrayLengthLocation)
+    hconfiguration hconfigurationLength harray harrayLength hsafe
+    hevalConfiguration hevalConfigurationLength hevalArray hevalArrayLength
+  have hconfigurationRegister : final.registers 10 = configurationValue := by
+    apply Option.some.inj
+    exact habi.1.trans hconfigurationValue
+  have hconfigurationLengthRegister :
+      final.registers 11 = configurationLengthValue := by
+    apply Option.some.inj
+    exact habi.2.1.trans hconfigurationLengthValue
+  have harrayRegister : final.registers 12 = arrayValue := by
+    apply Option.some.inj
+    exact habi.2.2.1.trans harrayValue
+  have harrayLengthRegister :
+      final.registers 13 = arrayLengthValue := by
+    apply Option.some.inj
+    exact habi.2.2.2.trans harrayLengthValue
+  have hstack := evalStackProgFuelWithCodeAndFfi_wordStackFfi_join
+    (host := host) (fuel := fuel) (code := code) (config := config)
+    (state := state) (state1 := state1) (state2 := state2)
+    (state3 := state3) (final := final) (function := function)
+    (configuration := configuration)
+    (configurationLength := configurationLength) (array := array)
+    (arrayLength := arrayLength)
+    (configurationLocation := configurationLocation)
+    (configurationLengthLocation := configurationLengthLocation)
+    (arrayLocation := arrayLocation)
+    (arrayLengthLocation := arrayLengthLocation)
+    (configurationMove := configurationMove)
+    (configurationLengthMove := configurationLengthMove)
+    (arrayMove := arrayMove) (arrayLengthMove := arrayLengthMove)
+    hconfiguration hconfigurationLength harray harrayLength
+    hconfigurationDestination hconfigurationLengthDestination
+    harrayDestination harrayLengthDestination
+    hconfigurationMove hconfigurationLengthMove harrayMove harrayLengthMove
+    hevalConfiguration hevalConfigurationLength hevalArray hevalArrayLength
+  simpa [hconfigurationRegister, hconfigurationLengthRegister,
+    harrayRegister, harrayLengthRegister] using hstack
+
 end Flapjack.RiscV
