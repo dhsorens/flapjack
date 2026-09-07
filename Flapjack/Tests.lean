@@ -2,6 +2,7 @@ import Flapjack.Test.Source
 import Flapjack.Test.Backend
 import Flapjack.Test.Correctness
 import Flapjack.Test.Runtime
+import Flapjack.Test.CollectorSemantics
 
 /-!
 # Flapjack regression tests

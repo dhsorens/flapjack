@@ -1071,8 +1071,8 @@ definitions, pass ordering, examples, and proof obligations.
   equations with fuel and condition threading.
 - [x] Package the bounded frame-machine/Nat `MoveLoop` invariants as a
   reusable source-aligned simulation boundary, including condition soundness.
-- [ ] Prove the collector machine semantics and simulation theorem, and add
-  generational support if it is needed by a selected target configuration.
+- [x] Prove the collector machine semantics and simulation theorem; the current
+  RISC-V target does not require generational support.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state
   accumulator for Word-to-Stack Alloc/StoreConsts, including sequential
   state-threading and fixed-width regression tests.
