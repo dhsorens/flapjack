@@ -2597,7 +2597,7 @@ theorem wordAllocateVarsWithSpills_spills_example :
     (wordAllocateVarsWithSpills (List.range 29)
       (wordPairwiseClashes (List.range 29))).map
         (fun state => state.nextSpill != 0) = some true := by
-  native_decide
+  decide +kernel
 
 theorem wordAllocatableRegisters_safe :
     ∀ register ∈ wordAllocatableRegisters,

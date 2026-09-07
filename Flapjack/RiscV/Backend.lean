@@ -449,12 +449,12 @@ theorem executeCode_conditional_equal :
       [.branchNe 1 2 (BitVec.ofNat 32 12),
         .addi 3 0 1, .branchEq 0 0 (BitVec.ofNat 32 8), .addi 3 0 2]
       (zeroState 32)).map (fun state => readRegister state 3) = some 1 := by
-  native_decide
+  decide
 
 theorem executeFunction_add :
     executeFunction 10 (0 : Word 64) [2, 3] [.add 5 2 3] [5] [7, 8]
       (zeroState 64) = some [15] := by
-  native_decide
+  decide
 
 theorem executeFunction_add_general (left right : Word 64) :
     executeFunction 10 (0 : Word 64) [2, 3] [.add 5 2 3] [5] [left, right]
@@ -466,14 +466,14 @@ theorem executeFunction_storeLoad :
     executeFunction 20 (0 : Word 64) []
       [.addi 1 0 100, .addi 2 0 42, .storeWord 2 1, .loadWord 3 1]
       [3] [] (zeroState 64) = some [42] := by
-  native_decide
+  decide
 
 theorem executeFunctionAt_jalr_return :
     executeFunctionAt 20 (0 : Word 64) 16 4 []
       [.addi 0 0 0, .addi 0 0 0, .addi 0 0 0, .addi 0 0 0,
         .addi 10 0 42, .jalr 0 1 0] [10] []
       (writeRegister (zeroState 64) 1 4) = some [42] := by
-  native_decide
+  decide
 
 theorem executeCode_conditional_notEqual :
     (executeCode 10 (0 : Word 32)
@@ -481,7 +481,7 @@ theorem executeCode_conditional_notEqual :
         .addi 3 0 1, .branchEq 0 0 (BitVec.ofNat 32 8), .addi 3 0 2]
       (writeRegister (zeroState 32) 1 9)).map
         (fun state => readRegister state 3) = some 1 := by
-  native_decide
+  decide
 
 theorem executeCode_conditional_lower :
     (executeCode 10 (0 : Word 32)
@@ -489,7 +489,7 @@ theorem executeCode_conditional_lower :
         .addi 3 0 1, .branchEq 0 0 (BitVec.ofNat 32 8), .addi 3 0 2]
       (writeRegister (writeRegister (zeroState 32) 1 1) 2 2)).map
         (fun state => readRegister state 3) = some 1 := by
-  native_decide
+  decide
 
 theorem executeCode_conditional_notLower :
     (executeCode 10 (0 : Word 32)
@@ -497,7 +497,7 @@ theorem executeCode_conditional_notLower :
         .addi 3 0 1, .branchEq 0 0 (BitVec.ofNat 32 8), .addi 3 0 2]
       (writeRegister (writeRegister (zeroState 32) 1 1) 2 2)).map
         (fun state => readRegister state 3) = some 2 := by
-  native_decide
+  decide
 
 theorem executeCode_conditional_less :
     (executeCode 10 (0 : Word 32)
@@ -505,7 +505,7 @@ theorem executeCode_conditional_less :
         .addi 3 0 1, .branchEq 0 0 (BitVec.ofNat 32 8), .addi 3 0 2]
       (writeRegister (writeRegister (zeroState 32) 1 (BitVec.ofNat 32 (2 ^ 32 - 1))) 2 0)).map
         (fun state => readRegister state 3) = some 1 := by
-  native_decide
+  decide
 
 theorem executeCode_conditional_notLess :
     (executeCode 10 (0 : Word 32)
@@ -513,7 +513,7 @@ theorem executeCode_conditional_notLess :
         .addi 3 0 1, .branchEq 0 0 (BitVec.ofNat 32 8), .addi 3 0 2]
       (writeRegister (writeRegister (zeroState 32) 1 (BitVec.ofNat 32 (2 ^ 32 - 1))) 2 0)).map
         (fun state => readRegister state 3) = some 2 := by
-  native_decide
+  decide
 
 theorem executeCode_conditional_test :
     (executeCode 12 (0 : Word 32)
@@ -521,7 +521,7 @@ theorem executeCode_conditional_test :
         .addi 3 0 1, .branchEq 0 0 (BitVec.ofNat 32 8), .addi 3 0 2]
       (writeRegister (writeRegister (zeroState 32) 1 1) 2 2)).map
         (fun state => readRegister state 3) = some 1 := by
-  native_decide
+  decide
 
 theorem executeCode_conditional_notTest :
     (executeCode 12 (0 : Word 32)
@@ -529,7 +529,7 @@ theorem executeCode_conditional_notTest :
         .addi 3 0 1, .branchEq 0 0 (BitVec.ofNat 32 8), .addi 3 0 2]
       (writeRegister (zeroState 32) 1 1)).map
         (fun state => readRegister state 3) = some 2 := by
-  native_decide
+  decide
 
 def evalWordExp [NeZero width] (state : State width) :
     WordExp (Word width) → Option (Word width)
