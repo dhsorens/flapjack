@@ -1232,6 +1232,142 @@ theorem evalStackFrameFuel_stackGcMoveBitmaps_zero [NeZero width]
   simp [stackGcMoveBitmapsCode, stackGcWhile, evalStackFrameFuel,
     evalStackFrameFuelWithCode, stackMachineCondition, hzero]
 
+theorem evalStackFrameFuel_stackGcMoveBitmap_skip_one [NeZero width]
+    (config : StackGcConfig) (fuel : Nat)
+    (state : StackFrameMachineState width)
+    (hwidth : 2 ≤ width)
+    (hscratch7 : config.immediateScratch ≠ 7)
+    (hscratch8 : config.immediateScratch ≠ 8)
+    (hbitmap : state.machine.registers 7 = BitVec.ofNat width 2) :
+    stackFrameNormalRegisterNat
+        (evalStackFrameFuel (fuel + 12) state
+          (stackGcMoveBitmapCode config)) 7 =
+        some 1 ∧
+      stackFrameNormalRegisterNat
+    (evalStackFrameFuel (fuel + 12) state
+          (stackGcMoveBitmapCode config)) 8 =
+        some (state.machine.registers 8 +
+          BitVec.ofNat width config.bytesInWord).toNat := by
+  have htwo : 2 < 2 ^ width := by
+    have hpow : 2 ^ 2 ≤ 2 ^ width :=
+      Nat.pow_le_pow_right (by decide) hwidth
+    omega
+  have hcondition :
+      stackMachineCondition state.machine .notLower 7 (.imm 2) = true := by
+    simp [stackMachineCondition, hbitmap, BitVec.lt_def,
+      BitVec.toNat_ofNat, Nat.mod_eq_of_lt htwo,
+      Nat.mod_eq_of_lt htwo]
+  have htest :
+      stackMachineCondition state.machine .test 7 (.imm 1) = true := by
+    change (state.machine.registers 7 &&& BitVec.ofNat width 1 == 0) = true
+    rw [hbitmap]
+    have hand : BitVec.ofNat width 2 &&& BitVec.ofNat width 1 =
+        BitVec.ofNat width 0 := by
+      apply BitVec.eq_of_toNat_eq
+      have handNat : (2 : Nat) &&& 1 = 0 := by decide
+      have hone : 1 < 2 ^ width := by omega
+      simp only [BitVec.toNat_and, BitVec.toNat_ofNat]
+      rw [Nat.mod_eq_of_lt htwo, Nat.mod_eq_of_lt hone]
+      rw [handNat]
+      simp
+    simp [hand]
+  have hshiftValue :
+      wordStackMachineShift .lsr (BitVec.ofNat width 2)
+        (BitVec.ofNat width 1) = BitVec.ofNat width 1 := by
+    have hone : 1 < 2 ^ width := Nat.lt_of_lt_of_le (by omega) htwo
+    have honeWidth : 1 < width := by omega
+    simp only [wordStackMachineShift]
+    apply BitVec.eq_of_toNat_eq
+    change (BitVec.ofNat width 2 >>> shiftAmount (BitVec.ofNat width 1)).toNat =
+      (BitVec.ofNat width 1).toNat
+    rw [BitVec.toNat_ushiftRight]
+    simp [shiftAmount, BitVec.toNat_ofNat, Nat.mod_eq_of_lt htwo,
+      Nat.mod_eq_of_lt hone, Nat.mod_eq_of_lt honeWidth]
+  have hshiftNotation :
+      (BitVec.ofNat width 2 >>> shiftAmount (BitVec.ofNat width 1)) =
+        BitVec.ofNat width 1 := by
+    simpa [wordStackMachineShift] using hshiftValue
+  have hbit :
+      (BitVec.ofNat width 2 &&& BitVec.ofNat width 1 ==
+        BitVec.ofNat width 0) = true := by
+    simpa [stackMachineCondition, hbitmap] using htest
+  have hguard : 2 % 2 ^ width ≤ 2 % 2 ^ width := by
+    exact Nat.le_refl _
+  have hshift : BitVec.ofNat width 1 < BitVec.ofNat width 2 := by
+    have hone : 1 < 2 ^ width := Nat.lt_of_lt_of_le (by omega) htwo
+    rw [BitVec.lt_def]
+    simp only [BitVec.toNat_ofNat]
+    rw [Nat.mod_eq_of_lt hone, Nat.mod_eq_of_lt htwo]
+    decide
+  have hnotguard : ¬ (BitVec.ofNat width 2 ≤ BitVec.ofNat width 1) := by
+    have hone : 1 < 2 ^ width := Nat.lt_of_lt_of_le (by omega) htwo
+    simp [BitVec.lt_def, BitVec.toNat_ofNat,
+      Nat.mod_eq_of_lt hone, Nat.mod_eq_of_lt htwo, hshift]
+  have hnotguardNat : ¬ (2 % 2 ^ width ≤ 1 % 2 ^ width) := by
+    rw [Nat.mod_eq_of_lt htwo, Nat.mod_eq_of_lt (by omega)]
+    omega
+  have hnotguardNatOne : ¬ (2 % 2 ^ width ≤ 1) := by
+    rw [Nat.mod_eq_of_lt htwo]
+    omega
+  let afterScratch := stackFrameWriteRegister state config.immediateScratch
+    (BitVec.ofNat width 1)
+  let afterShift := stackFrameWriteRegister afterScratch 7
+    (BitVec.ofNat width 1)
+  let afterBytesScratch := stackFrameWriteRegister afterShift
+    config.immediateScratch (BitVec.ofNat width config.bytesInWord)
+  let after := stackFrameWriteRegister afterBytesScratch 8
+    (wordStackMachineBinOp .add
+      (afterBytesScratch.machine.registers 8)
+      (afterBytesScratch.machine.registers config.immediateScratch))
+  have hbody :
+      evalStackFrameFuel (fuel + 10) state
+        (stackSeq [
+          .ite .test 7 (.imm 1)
+            (stackSeq [
+              stackGcShiftImmediate config .lsr 7 1,
+              stackGcAddBytes config 8])
+            (stackSeq [
+              .stackLoadAny 5 8,
+              stackGcShiftImmediate config .lsr 7 1,
+              stackGcMoveCode config,
+              .stackStoreAny 5 8,
+              stackGcAddBytes config 8])]) =
+        some (.normal after) := by
+    simp [after, afterBytesScratch, afterShift, afterScratch,
+      stackSeq, evalStackFrameFuel, evalStackFrameFuelWithCode,
+      stackMachineCondition, stackGcShiftImmediate, stackGcAddImmediate,
+      stackGcConst, stackGcAdd, stackGcAddBytes, stackFrameBasic, stackFrameWriteRegister,
+      wordStackMachineWriteRegister, wordStackMachineBinOp,
+      wordStackMachineShift, hbitmap, hbit, hshiftValue, hshiftNotation, hscratch7,
+      hscratch8, Ne.symm hscratch7, Ne.symm hscratch8]
+  have hbody' :
+      evalStackFrameFuelWithCode (fuel + 10) (fun _ => none) state
+        (stackSeq [
+          .ite .test 7 (.imm 1)
+            (stackSeq [
+              stackGcShiftImmediate config .lsr 7 1,
+              stackGcAddBytes config 8])
+            (stackSeq [
+              .stackLoadAny 5 8,
+              stackGcShiftImmediate config .lsr 7 1,
+              stackGcMoveCode config,
+              .stackStoreAny 5 8,
+              stackGcAddBytes config 8])]) =
+        some (.normal after) := by
+    simpa [evalStackFrameFuel] using hbody
+  have hafter : after.machine.registers 7 = BitVec.ofNat width 1 := by
+    simp [after, afterBytesScratch, afterShift, afterScratch,
+      stackFrameWriteRegister, wordStackMachineWriteRegister,
+      hscratch7, hscratch8, Ne.symm hscratch7, Ne.symm hscratch8]
+  have hpositive : 0 < width := by omega
+  simp [stackGcMoveBitmapCode, stackGcWhile, evalStackFrameFuel,
+    evalStackFrameFuelWithCode, stackMachineCondition, hbitmap,
+    hcondition, hnotguard, hnotguardNat, hnotguardNatOne, hbody', after, hafter, afterBytesScratch,
+    afterShift, afterScratch, stackFrameNormalRegisterNat,
+    stackFrameWriteRegister, wordStackMachineWriteRegister,
+    wordStackMachineBinOp, hscratch7, hscratch8, Ne.symm hscratch7,
+    Ne.symm hscratch8, hpositive]
+
 theorem evalStackFrameGcMoveCode_immediate [NeZero width]
     (config : StackGcConfig) (fuel : Nat)
     (state : StackFrameMachineState width)
