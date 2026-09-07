@@ -1162,6 +1162,8 @@ definitions, pass ordering, examples, and proof obligations.
   arbitrary MoveList loop iteration.
 - [x] Lift the extended state relation through arbitrary outer MoveLoop
   iteration and package the resulting machine evaluator theorem.
+- [x] Prove the corresponding fuel-indexed Nat MoveLoop iteration equation,
+  composing arbitrary recursive step equations before termination.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
