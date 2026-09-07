@@ -78,7 +78,7 @@ example :
     ((wordFfiToRiscV { services := [("sum", 7)] } "sum" 2 3 4 5).bind
         (executeInstructionsWithFfi ffiAbiHost ffiAbiState)).map
         (fun state => readRegister state 6) = some 33 := by
-  native_decide
+  decide
 
 example [NeZero width] :
     wordFunctionToRiscVWithCallsAndFfi
@@ -96,13 +96,13 @@ example :
         (.seq (.ffi "sum" 2 3 4 5 ([], [])) (.return 0 [6]))).bind
       (fun result => executeInstructionsWithFfi ffiAbiHost ffiAbiState result.1)).map
         (fun state => readRegister state 6) = some 33 := by
-  native_decide
+  decide +kernel
 
 example :
     (evalWordFunctionWithCallsAndFfi [] ffiWordHandler 10 ffiAbiState
         (.seq (.ffi "sum" 2 3 4 5 ([], [])) (.return 0 [6]))).map
         (fun result => result.2) = some [33] := by
-  native_decide
+  decide +kernel
 
 example :
     evalWordFunctionWithCallsAndFfi [] ffiWordHandler 2 ffiAbiState
@@ -132,7 +132,7 @@ example :
           (.ffi "sum" 2 3 4 5 ([], [])) .skip) =
       some (writeRegister ffiAbiState 6 33, []) := by
   apply evalWordFunctionWithCallsAndFfi_ite_true
-  · native_decide
+  · decide
   · simp [evalWordFunctionWithCallsAndFfi, evalWordFfi, ffiWordHandler,
       ffiAbiState, writeRegister, readRegister, registerOfNat]
 
@@ -142,7 +142,7 @@ example :
           .skip (.return 0 [2])) =
       some (ffiAbiState, [10]) := by
   apply evalWordFunctionWithCallsAndFfi_ite_false
-  · native_decide
+  · decide
   · simp [evalWordFunctionWithCallsAndFfi, evalWordFunction,
       ffiAbiState, writeRegister, readRegister, registerOfNat]
 
@@ -152,7 +152,7 @@ example :
       (.loop [] (.seq (.ffi "sum" 2 3 4 5 ([], [])) (.break 0)) []) =
       some ([.addi 10 2 0, .addi 11 3 0, .addi 12 4 0, .addi 13 5 0,
         .addi 14 0 7, .ecall, .jal 0 8, .jal 0 (0 - BitVec.ofNat 64 28)], []) := by
-  native_decide
+  decide +kernel
 
 example :
     linkWordFunctionsWithFfi (0 : Word 64) [("sum", 7)]
@@ -190,7 +190,7 @@ example :
         (fun result => match result with
         | .normal state => readRegister state 6
         | _ => 0) = some 42 := by
-  native_decide
+  decide +kernel
 
 def combinedHandlerFunctions : List (Nat × List Nat × WordProg (Word 64)) :=
   [(8, [3], .raise 3)]
@@ -203,7 +203,7 @@ example :
         (fun result => match result with
         | .normal state => readRegister state 7
         | _ => 0) = some 9 := by
-  native_decide
+  decide +kernel
 
 example :
     (executeWithFfi ffiAbiHost
@@ -213,7 +213,7 @@ example :
               (writeRegister (writeRegister (zeroState 64) 10 10) 11 1)
                 12 20) 13 2) 14 7) .ecall).map
         (fun state => readRegister state 6) = some 33 := by
-  native_decide
+  decide
 
 def ffiRunnerHost : WordFfiHost 64 :=
   fun service configuration configurationLength array arrayLength state =>
@@ -228,7 +228,7 @@ example :
       [.addi 10 0 10, .addi 11 0 1, .addi 12 0 20, .addi 13 0 2,
         .addi 14 0 7, .ecall, .jalr 0 1 0]
       [6] [] (writeRegister (zeroState 64) 1 28) = some [33] := by
-  native_decide
+  decide
 
 def loopFfiBreakProgram : WordProg (Word 64) :=
   .seq
@@ -256,9 +256,9 @@ def loopFfiExecution : Option (List (Word 64)) := do
     (writeRegister (writeRegister (zeroState 64) 1 100) 2 41)
 
 example : loopFfiLinkedCode.isSome := by
-  native_decide
+  decide +kernel
 
 example : loopFfiExecution = some [42] := by
-  native_decide
+  decide +kernel
 
 end Flapjack

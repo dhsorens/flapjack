@@ -18,7 +18,7 @@ example :
     (RiscV.executeCodeUntil 30 (0 : RiscV.Word 64) 16 linkedCallCode
       (RiscV.writeRegister (RiscV.zeroState 64) 6 41)).map
         (fun state => RiscV.readRegister state 4) = some 42 := by
-  native_decide
+  decide
 
 example :
     RiscV.linkRiscVFunctions (0 : RiscV.Word 64)
@@ -30,7 +30,7 @@ example :
     RiscV.wordCallToRiscVLabel
       [(7, (32 : RiscV.Word 64), [2], [], [10])] 7 [2] [10] [6] [4] =
       some [.addi 2 6 0, .addi 31 0 32, .jalr 1 31 0, .addi 4 10 0] := by
-  native_decide
+  decide
 
 example [NeZero width] :
     RiscV.wordFunctionToRiscVWithCalls
@@ -77,7 +77,7 @@ example :
       (.seq (.inst (.mem .store16 3 2)) (.inst (.mem .load16 1 2)))).map
         (fun result => RiscV.readRegister result.1 1) =
       some (BitVec.ofNat 64 0xBEEF) := by
-  native_decide
+  decide +kernel
 
 example :
     RiscV.wordFunctionToRiscVWithCalls (width := 8)
@@ -88,7 +88,7 @@ example :
           (.return 0 [3])) : WordProg (RiscV.Word 8)) =
       some ([.ori 31 0 7, .branchNe 1 31 12,
         .addi 3 0 1, .branchEq 0 0 8, .addi 3 0 2], [3]) := by
-  native_decide
+  decide +kernel
 
 example [NeZero width] :
     RiscV.wordFunctionToRiscVWithCalls
@@ -117,7 +117,7 @@ example :
     (RiscV.executeCodeUntil 40 (0 : RiscV.Word 64) 24 selectedLinkedCallCode
       (RiscV.writeRegister (RiscV.zeroState 64) 6 41)).map
         (fun state => RiscV.readRegister state 4) = some 42 := by
-  native_decide
+  decide +kernel
 
 def linkedWordCallFunctions :
     List (Nat × List Nat × WordProg (RiscV.Word 64)) :=
@@ -182,7 +182,7 @@ def linkedWordCallImage : List (RiscV.Instruction 64) :=
 example :
     RiscV.executeFunctionAt 80 (0 : RiscV.Word 64) 4 36 [6]
       linkedWordCallImage [4] [41] (RiscV.zeroState 64) = some [41] := by
-  native_decide
+  decide
 
 example :
     (RiscV.evalWordFunctionWithCalls
@@ -190,7 +190,7 @@ example :
       (RiscV.writeRegister (RiscV.zeroState 64) 2 9)
       (.call (some ([3], ([], []), .skip, 0, 0)) (some 7) [2] none)).map (fun result =>
         result.1.registers 3) = some 9 := by
-  native_decide
+  decide +kernel
 
 example :
     (RiscV.evalWordFunctionWithHandlers
@@ -203,7 +203,7 @@ example :
           match result with
           | .returned state values => (RiscV.readRegister state 5, values)
           | _ => (0, [])) = some (9, [9]) := by
-  native_decide
+  decide +kernel
 
 def wordFfiTestState : RiscV.State 64 :=
   RiscV.writeRegister
@@ -224,7 +224,7 @@ example :
     (RiscV.evalWordFfi wordFfiTestHandler 10 wordFfiTestState
       (.ffi "sum" 1 2 3 4 ([], []))).map (fun result =>
         RiscV.readRegister result.1 5) = some 33 := by
-  native_decide
+  decide +kernel
 
 example [NeZero width] :
     RiscV.wordFunctionToRiscV
@@ -259,7 +259,7 @@ example :
     (RiscV.execute
       (RiscV.writeRegister (RiscV.zeroState 64) 2 (100 : RiscV.Word 64))
       (.jalr 1 2 3)).pc = 102 := by
-  native_decide
+  decide
 
 example :
     RiscV.executeFunctionAt 20 (0 : RiscV.Word 64) 16 4 []

@@ -56,7 +56,7 @@ theorem primitivePipeline_source_correct :
           | [.word value] => some value
           | _ => none) =
       some (some (BitVec.ofNat 64 3)) := by
-  native_decide
+  decide +kernel
 
 theorem primitivePipeline_full_source_correct :
     (evalPanValueProgWithPrimitiveCallsAndFfi
@@ -69,7 +69,7 @@ theorem primitivePipeline_full_source_correct :
           | .returned _ _ _ [.word value] => some value
           | _ => none) =
       some (some (BitVec.ofNat 64 3)) := by
-  native_decide
+  decide +kernel
 
 theorem primitivePipeline_correct :
     primitivePipelineRun =
@@ -123,7 +123,7 @@ theorem primitiveCall_full_source_correct :
           | .returned _ _ _ [.word value] => some value
           | _ => none) =
       some (some (BitVec.ofNat 64 3)) := by
-  native_decide
+  decide +kernel
 
 theorem primitivePipeline_call_link_correct :
     primitivePipelineCallLinkedRun = some [BitVec.ofNat 64 3] := by
