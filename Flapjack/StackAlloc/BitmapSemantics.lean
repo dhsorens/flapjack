@@ -643,6 +643,50 @@ theorem stackGcNatMoveBitmap_values_length
                           cases hresult
                           exact ⟨bits, rfl, hpartition.1⟩
 
+theorem stackGcNatMoveBitmap_remainder
+    (config : StackGcConfig) (bitmaps : List Nat)
+    (descriptor : StackGcNatValue) (stack : List StackGcNatValue)
+    (index destination oldBase : Nat) (memory : Nat → Nat)
+    (domain : Nat → Bool) (result : StackGcBitmapMoveResult)
+    (hresult :
+      stackGcNatMoveBitmap config bitmaps descriptor stack index destination oldBase
+        memory domain = some result) :
+    ∃ bits selected remainder,
+      stackGcNatFullReadBitmap config bitmaps descriptor = some bits ∧
+      stackGcNatFilterBitmap bits stack = some (selected, remainder) ∧
+      result.remainder = remainder := by
+  unfold stackGcNatMoveBitmap at hresult
+  cases hfull : stackGcNatFullReadBitmap config bitmaps descriptor with
+  | none =>
+      simp [hfull] at hresult
+  | some bits =>
+      cases hfilter : stackGcNatFilterBitmap bits stack with
+      | none =>
+          simp [hfull, hfilter] at hresult
+      | some pair =>
+          cases pair with
+          | mk selected remainder =>
+              let moved := stackGcNatMoveValueRoots config selected index destination
+                oldBase memory domain
+              cases hmap : stackGcNatMapBitmap bits moved.values stack with
+              | none =>
+                  simp [hfull, hfilter, moved, hmap] at hresult
+              | some pair =>
+                  cases pair with
+                  | mk values restPair =>
+                      cases restPair with
+                      | mk restMoved restValues =>
+                          have htuple :
+                              { values := values
+                                remainder := remainder
+                                nextIndex := moved.nextIndex
+                                nextAddress := moved.nextAddress
+                                memory := moved.memory
+                                condition := moved.condition } = result := by
+                            simpa [hfull, hfilter, moved, hmap] using hresult
+                          cases htuple
+                          exact ⟨bits, selected, remainder, rfl, hfilter, rfl⟩
+
 theorem stackGcNatDecodeStackFuel_length
     (config : StackGcConfig) (bitmaps : List Nat) (fuel : Nat)
     (encoded stack result : List StackGcNatValue)

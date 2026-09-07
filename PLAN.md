@@ -1195,6 +1195,8 @@ definitions, pass ordering, examples, and proof obligations.
   consumed by false bitmap bits.
 - [x] Prove successful per-frame bitmap movement emits one reconstructed value
   per bitmap bit.
+- [x] Expose the full-read and filter witnesses for every successful per-frame
+  bitmap move, including its untouched remainder.
 - [x] Prove that successful fuel-bounded bitmap decoding preserves stack
   length, including the public decoder wrapper.
 - [x] Prove that successful bitmap root collection preserves the input stack
