@@ -62,6 +62,8 @@ import Flapjack.RiscV.CorrectnessGetSpill
 import Flapjack.Test.GetSpillRelation
 import Flapjack.RiscV.CorrectnessMemorySpill
 import Flapjack.Test.MemorySpillRelation
+import Flapjack.RiscV.CorrectnessDirectSet
+import Flapjack.Test.DirectSetRelation
 
 /-!
 # Flapjack regression tests
