@@ -47,11 +47,19 @@ example :
     wordSsaRenameProgram
         ({ current := [(2, 100)], next := 200 } : WordSsaState)
         ((.call (some ([3, 4], ([2], []), .skip, 0, 0)) (some 7) [2, 5] none) : WordProg Nat) =
-      ({ current := [(4, 204), (3, 200), (2, 100)], next := 208 },
-        .call (some ([200, 204], ([100], []), .skip, 0, 0)) (some 7) [100, 5] none) := by
+      ({ current := [(4, 216), (3, 212), (2, 208)], next := 220 },
+        .seq (.move 0 [(202, 100)])
+          (.seq (.move 0 [(2, 100), (4, 5)])
+            (.call (some ([2, 4], ([202], []),
+              .seq (.move 0 [(208, 202)])
+                (.move 0 [(212, 2), (216, 4)]), 0, 0))
+              (some 7) [2, 4] none))) := by
+  have hAbi : wordSsaCallAbiRegisters 1 2 = [2, 4] := by rfl
   simp [wordSsaRenameProgram, wordSsaRenameProgramWithLoops,
-    wordSsaRenameReturns, wordSsaFreshList, wordSsaFresh, wordSsaRead,
-        lookupNatInfo, wordSsaReadCutsets]
+    wordSsaListNextVarRenameMove, hAbi,
+    wordSsaFreshList, wordSsaFresh, wordSsaRead, lookupNatInfo,
+    wordSsaReadCutsets, wordSsaRestrict, wordSsaSeq, List.eraseDups,
+    List.eraseDupsBy, List.eraseDupsBy.loop]
 
 example :
     wordSsaRenameProgram

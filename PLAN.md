@@ -1040,6 +1040,8 @@ definitions, pass ordering, examples, and proof obligations.
   marshal the four ABI arguments, emit the FFI node, and restore the cut set.
 - [x] Preserve every architectural even-numbered Word name in spill
   allocation, including FFI ABI operands that are not formal parameters.
+- [x] Port CakeML's SSA call ABI boundary for handler-free calls, including
+  argument-register moves and refreshed normal-return cut sets.
 - [x] Marshal allocated Word call arguments into the even-numbered ABI
   registers before StackLang call-frame construction, for both handler-free
   and handler-aware calls.
