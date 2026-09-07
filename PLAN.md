@@ -980,6 +980,8 @@ definitions, pass ordering, examples, and proof obligations.
   destination/register separation and successful bitmap lookup conditions.
 - [x] Add the fuel-indexed frame-machine iteration API for the generated
   bitmap-root `MoveBitmaps` loop.
+- [x] Add the corresponding fuel-indexed iteration API for the generated
+  `MoveRootsBitmaps` root loop.
 - [x] Prove the exact bounded-frame collector memcpy-body transition,
   including scratch-register state and destination-memory update.
 - [x] Compose that transition with the bounded loop evaluator for the
