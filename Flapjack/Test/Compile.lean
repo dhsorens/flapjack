@@ -286,8 +286,7 @@ example :
     loopAssignedVars (LoopProg.seq (.assign 1 (.const 0)) (.load32 1 2)) = [1, 2] := by
   rfl
 
-example :
-  loopAccVars (LoopProg.assign 1 (.op .add [.var 2, .const 0])) [] = [2, 1] := by
-  native_decide
+#guard
+  loopAccVars (LoopProg.assign 1 (.op .add [.var 2, .const 0])) [] = [2, 1]
 
 end Flapjack
