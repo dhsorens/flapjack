@@ -1,8 +1,27 @@
 import Flapjack.RiscV.WordToStack
 import Flapjack.RiscV.Backend
 import Flapjack.RiscV.Correctness
+import Flapjack.RiscV.CorrectnessWordToStack
 
 namespace Flapjack.RiscV
+
+def ffiStackShapeConfig : WordStackConfig :=
+  { locations := [(0, .register 4), (1, .register 5),
+      (2, .stack 2), (3, .stack 3)]
+    scratch := 31
+    stackBase := 10 }
+
+example :
+    wordStackFfi ffiStackShapeConfig "echo" 0 1 2 3 =
+      some (wordStackJoin (.arith .or 10 4 4)
+        (wordStackJoin (.arith .or 11 5 5)
+          (wordStackJoin (.stackLoad 12 12)
+            (wordStackJoin (.stackLoad 13 13)
+              (.ffi "echo" 10 11 12 13 0)))) : StackProg Nat) := by
+  apply wordStackFfi_eq_join
+  · native_decide
+  all_goals simp [ffiStackShapeConfig, wordStackFfiMove,
+    wordStackLocation, lookupNatInfo]
 example [NeZero width]
     (state final : WordStackState width)
     (heval : (wordStackMove (α := Nat)
