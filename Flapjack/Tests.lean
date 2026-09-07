@@ -10,6 +10,7 @@ import Flapjack.Test.AllocatorDriver
 import Flapjack.Test.Heuristics
 import Flapjack.Test.SpillCosts
 import Flapjack.Test.HeuristicDriver
+import Flapjack.Test.HeuristicPipeline
 import Flapjack.Test.CorrectnessCondition
 import Flapjack.Test.CorrectnessCode
 import Flapjack.Test.CorrectnessConditional

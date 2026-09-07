@@ -480,6 +480,8 @@ definitions, pass ordering, examples, and proof obligations.
   heuristic graph allocator.
 - [x] Lift prioritized graph soundness through the composed oracle/heuristic
   function driver.
+- [x] Thread heuristic allocation through the RISC-V Word-to-Stack pipeline
+  and expose an end-to-end StackRemove entry point.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware
   RISC-V contracts before claiming general call-aware allocation correctness.
 - [x] Add a combined graph-allocation soundness contract exposing fixed tags,
