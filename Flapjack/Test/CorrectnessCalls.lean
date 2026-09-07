@@ -36,7 +36,7 @@ theorem handlerCall_mappedLocals :
   intro name value hvalue
   by_cases hname : name = 2
   · subst name
-    refine ⟨2, by native_decide, ?_⟩
+    refine ⟨2, by decide, ?_⟩
     simpa [handlerCallLoopState, handlerCallWordState, readRegister,
       writeRegister] using hvalue
   · simp [handlerCallLoopState, hname] at hvalue
@@ -108,15 +108,15 @@ example : loopLocalsMappedToRiscV ({ vars := [] } : WordContext)
     (hlookupLoop := by simp [lookupLoopFunction, handlerCallBody])
     (hlookupWord := by simp [RiscV.lookupWordFunction, loopToWordProg,
       handlerCallBody, wordFindVar, lookupNatInfo, wordCompileExp])
-    (hparameter := by native_decide)
+    (hparameter := by decide)
     (hparameter_nonzero := by decide)
-    (hexception := by native_decide)
+    (hexception := by decide)
     (hexception_nonzero := by decide)
     (hargument := by simp [handlerCallLoopState])
     (hnoalias := by
       intro name hname register hregister
       have hfive : RiscV.registerOfNat 5 = some (5 : Fin 32) := by
-        native_decide
+        decide
       intro heq
       have hsame := RiscV.registerOfNat_injective hregister hfive heq
       exact hname hsame)
@@ -124,15 +124,15 @@ example : loopLocalsMappedToRiscV ({ vars := [] } : WordContext)
       intro calleeLoop calleeWord loopResult wordResult hzero hloop hword
       change calleeWord.registers 0 = 0 at hzero
       simp [handlerCallBody, loopToWordProg, wordCompileExp,
-        wordFindVar, lookupNatInfo, lookupLoopFunction, RiscV.lookupWordFunction,
-        evalLoopProgWithCallsAndFfi, evalLoopCallWithCallsAndFfi, evalLoopProg,
-        evalLoopExp, loopReadLocals, loopBindParameters, updateLoopLocal,
+        wordFindVar, lookupNatInfo, 
+        evalLoopProgWithCallsAndFfi, evalLoopProg,
+        evalLoopExp, updateLoopLocal,
         RiscV.evalWordFunctionWithHandlersAndFfi, RiscV.evalWordFunction,
-        RiscV.evalWordProg, RiscV.wordExpToInstructions,
-        RiscV.wordExpToInstruction, RiscV.wordInstToInstruction,
+        RiscV.wordExpToInstructions,
+        RiscV.wordExpToInstruction, 
         RiscV.executeInstructions, RiscV.execute, RiscV.nextPc,
         RiscV.registerOfNat, RiscV.readRegister, RiscV.writeRegister, hzero,
-        loopCallBodyResultCompatible] at hloop hword
+        ] at hloop hword
       cases hloop
       cases hword
       simp [loopCallBodyResultCompatible])
@@ -143,17 +143,17 @@ example : loopLocalsMappedToRiscV ({ vars := [] } : WordContext)
   · simp [evalLoopCallWithCallsAndFfi, evalLoopProgWithCallsAndFfi,
       evalLoopProg, evalLoopExp, loopReadLocals, loopBindParameters,
       lookupLoopFunction, handlerCallBody, handlerCallLoopState,
-      handlerCallFinalLoop, handlerCallLoopHandler, updateLoopLocal]
+      handlerCallFinalLoop, updateLoopLocal]
   · simp [RiscV.evalWordCallWithHandlersAndFfi, RiscV.lookupWordFunction,
       RiscV.readWordRegisters, RiscV.bindWordRegisters,
       RiscV.clearWordRegisters, handlerCallBody,
       handlerCallWordState, handlerCallFinalWord, loopToWordProg,
       wordCompileExp, wordFindVar, lookupNatInfo,
       RiscV.evalWordFunctionWithHandlersAndFfi, RiscV.evalWordFunction,
-      RiscV.evalWordProg, RiscV.wordExpToInstructions,
-      RiscV.wordExpToInstruction, RiscV.wordInstToInstruction,
+      RiscV.wordExpToInstructions,
+      RiscV.wordExpToInstruction, 
       RiscV.executeInstructions, RiscV.execute, RiscV.nextPc,
       RiscV.registerOfNat, RiscV.readRegister, RiscV.writeRegister,
-      handlerCallWordHandler]
+      ]
 
 end Flapjack

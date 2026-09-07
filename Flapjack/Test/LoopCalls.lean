@@ -49,7 +49,7 @@ example :
         (fun result => ((loopResultState result).locals 5,
           (loopResultState result).locals 6)) =
       some (some (BitVec.ofNat 64 3), some (BitVec.ofNat 64 0)) := by
-  native_decide
+  decide
 
 def loopAddCarryMachineState : RiscV.State 64 :=
   RiscV.writeRegister
@@ -66,7 +66,7 @@ example :
           (.primitive [5, 6] .addCarry [2, 3, 4]))).map
         (fun result => (some (RiscV.readRegister result.1 5),
           some (RiscV.readRegister result.1 6))) := by
-  native_decide
+  decide +kernel
 
 def addCarrySourceLocals : VarName → Option (PanValue (RiscV.Word 64)) :=
   fun name =>
@@ -109,7 +109,7 @@ example :
           memory := fun _ => none } addCarryCompiledLoop).map
         (fun result => ((loopResultState result).locals 0,
           (loopResultState result).locals 1)) := by
-  native_decide
+  decide +kernel
 
 example :
     (evalLoopProg 10 loopSharedMemoryTestState
@@ -119,7 +119,7 @@ example :
         match result with
         | .normal state => state.locals 3
         | _ => none) = some (some 42) := by
-  native_decide
+  decide
 
 example :
     (evalLoopFfi loopFfiTestHandler 10 loopFfiTestState
@@ -127,7 +127,7 @@ example :
         match result with
         | .normal state => state.locals 5
         | _ => none) = some (some 33) := by
-  native_decide
+  decide +kernel
 
 example :
     (evalLoopProgWithCallsAndFfi
@@ -139,7 +139,7 @@ example :
         match result with
         | .normal state => state.locals 5
         | _ => none) = some (some 33) := by
-  native_decide
+  decide +kernel
 
 /- The composed evaluator permits an FFI in a callee followed by a primitive
    in the caller.  The old call/FFI evaluator intentionally rejects the
@@ -158,7 +158,7 @@ example :
       match result with
       | .normal state => (state.locals 7, state.locals 8)
       | _ => (none, none)) = some (some 35, some 1) := by
-  native_decide
+  decide +kernel
 
 /- The same boundary also handles primitives in exception handlers. -/
 example :
@@ -173,7 +173,7 @@ example :
       match result with
       | .normal state => (state.locals 7, state.locals 8)
       | _ => (none, none)) = some (some 12, some 1) := by
-  native_decide
+  decide +kernel
 
 example :
     (evalLoopProgWithFunctions
@@ -182,13 +182,13 @@ example :
         match result with
         | .normal state => state.locals 3
         | _ => none) = some (some 9) := by
-  native_decide
+  decide +kernel
 
 example :
     (evalLoopProgWithFunctions
       [(8, [1], (.return [1] : LoopProg Nat))] 10 loopCallTestState
       (.call none (some 8) [1] none)).map loopResultValues = some [9] := by
-  native_decide
+  decide +kernel
 
 example :
     (evalLoopProgWithFunctions
@@ -198,7 +198,7 @@ example :
         match result with
         | .normal state => state.locals 3
         | _ => none) = some (some 9) := by
-  native_decide
+  decide +kernel
 
 example :
     (evalLoopProgWithFunctions
@@ -211,7 +211,7 @@ example :
         match result with
         | .normal state => state.locals 3
         | _ => none) = some (some 9) := by
-  native_decide
+  decide +kernel
 
 example :
     (evalLoopProgWithFunctions
@@ -223,6 +223,6 @@ example :
         match result with
         | .normal state => state.locals 3
         | _ => none) = some (some 9) := by
-  native_decide
+  decide +kernel
 
 end Flapjack

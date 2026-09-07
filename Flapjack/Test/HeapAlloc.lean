@@ -23,6 +23,6 @@ example :
 example :
     compileStackProgramToRiscV (width := 64) { services := [] }
       heapAllocTestConfig 0 0 (.alloc 1 : StackProg (Word 64)) = none := by
-  native_decide
+  decide +kernel
 
 end Flapjack

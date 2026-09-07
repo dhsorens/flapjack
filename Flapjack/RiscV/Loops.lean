@@ -123,6 +123,6 @@ theorem execute_lowered_loop_break :
           (executeCode 10 (0 : Word 64) result.1 (zeroState 64)).map
             (fun state => state.pc)) =
       some (BitVec.ofNat 64 8) := by
-  native_decide
+  decide +kernel
 
 end Flapjack.RiscV

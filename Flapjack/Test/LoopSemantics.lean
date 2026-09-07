@@ -15,96 +15,96 @@ example :
     (evalLoopProg 10 loopDivisionState
       (.seq (.arith (.div 3 1 2)) (.return [3]))).map loopResultValues =
       some [7] := by
-  native_decide
+  decide
 
 example :
     (evalLoopProg 1 loopDivisionState (.arith (.div 3 1 2))).map
       (fun result => match result with
         | .normal state => state.locals 3
         | _ => none) = some (some 7) := by
-  native_decide
+  decide
 
 example :
     (evalLoopProg 1
       { loopDivisionState with locals := fun name =>
           if name = 1 then some 42 else if name = 2 then some 0 else none }
       (.arith (.div 3 1 2))).isNone = true := by
-  native_decide
+  decide
 
 example :
     evalLoopExp emptyLoopState
       (.op .add [.const 6, .crepOp .mul [.const 5, .const 6]]) = some 36 := by
-  native_decide
+  decide
 
 example :
     evalLoopExp emptyLoopState
       (.op .sub [.const 9, .const 4]) = some 5 := by
-  native_decide
+  decide
 
 example :
     evalLoopExp emptyLoopState
       (.op .and [.const 13, .const 6]) = some 4 := by
-  native_decide
+  decide
 
 example :
     evalLoopExp emptyLoopState
       (.op .or [.const 8, .const 3]) = some 11 := by
-  native_decide
+  decide
 
 example :
     evalLoopExp emptyLoopState
       (.op .xor [.const 13, .const 6]) = some 11 := by
-  native_decide
+  decide
 
 example :
     evalLoopExp emptyLoopState
       (.shift .lsl (.const 3) (.const 2)) = some 12 := by
-  native_decide
+  decide
 
 example :
     evalLoopExp emptyLoopState
       (.shift .lsr (.const 13) (.const 2)) = some 3 := by
-  native_decide
+  decide
 
 example :
     evalLoopExp emptyLoopState
       (.cmp .lower (.const 3) (.const 5)) = some 1 := by
-  native_decide
+  decide
 
 example :
     evalLoopExp emptyLoopState
       (.cmp .notLower (.const 5) (.const 3)) = some 1 := by
-  native_decide
+  decide
 
 example : evalLoopCondition .less (3 : Nat) 5 = some true := by
-  native_decide
+  decide
 
 example : evalLoopCondition .notLess (5 : Nat) 3 = some true := by
-  native_decide
+  decide
 
 example : evalLoopCondition .test (5 : Nat) 2 = some true := by
-  native_decide
+  decide
 
 example : evalLoopCondition .notTest (5 : Nat) 1 = some true := by
-  native_decide
+  decide
 
 example : evalLoopExp emptyLoopState (.cmp .less (.const (3 : Nat)) (.const 5)) =
     some 1 := by
-  native_decide
+  decide
 
 example : evalLoopExp emptyLoopState (.cmp .test (.const (5 : Nat)) (.const 2)) =
     some 1 := by
-  native_decide
+  decide
 
 example : evalLoopExp emptyLoopState (.cmp .notTest (.const (5 : Nat)) (.const 1)) =
     some 1 := by
-  native_decide
+  decide
 
 example :
     (evalLoopProg 10 emptyLoopState
       (.seq (.assign 0 (.const 42)) (.return [0]))).map loopResultValues =
       some [42] := by
-  native_decide
+  decide
 
 example :
     evalLoopProg 1 emptyLoopState (.break 7) =
@@ -124,7 +124,7 @@ example :
 example :
     (evalLoopProg 10 emptyLoopState
       (.loop [] (.break 0) [])).map loopResultValues = some [] := by
-  native_decide
+  decide
 
 example :
     (evalLoopProg 12 emptyLoopState
@@ -138,20 +138,20 @@ example :
       (loopCompileProg loopContext []
           (.return [(.crepOp .mul [.const (α := Nat) 6, .const 7])]))) =
       some [42] := by
-  native_decide
+  decide +kernel
 
 example :
     evalPanCondition (α := Nat)
         (fun name => if name == "x" then some 7 else none)
         (.cmp .equal (.var .local "x") (.const 7)) = some true := by
-  native_decide
+  decide
 
 example :
     evalPanProg (α := Nat)
         (fun name => if name == "x" then some 7 else none)
         (.ite (.cmp .equal (.var .local "x") (.const 7))
           (.return (.const 1)) (.return (.const 0))) = some [1] := by
-  native_decide
+  decide
 
 example :
     (evalPanMemProgFuel 4
@@ -165,32 +165,32 @@ example :
 example :
     evalPanExp (α := Nat) (fun _ => none)
       (.op .sub [.const 9, .const 4]) = some 5 := by
-  native_decide
+  decide
 
 example :
     evalPanExp (α := Nat) (fun _ => none)
       (.op .and [.const 5, .const 3]) = some 1 := by
-  native_decide
+  decide
 
 example :
     evalPanExp (α := Nat) (fun _ => none)
       (.op .xor [.const 5, .const 3]) = some 6 := by
-  native_decide
+  decide
 
 example :
     evalPanExp (α := Nat) (fun _ => none)
       (.cmp .lower (.const 3) (.const 5)) = some 1 := by
-  native_decide
+  decide
 
 example :
     evalPanCondition (α := Nat) (fun _ => none)
       (.cmp .notLower (.const 5) (.const 3)) = some true := by
-  native_decide
+  decide
 
 example :
     evalPanExp (α := Nat) (fun _ => none)
       (.shift .lsl (.const 3) (.const 2)) = some 12 := by
-  native_decide
+  decide
 
 example :
     evalPanValueExp (α := Nat) []

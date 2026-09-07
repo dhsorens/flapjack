@@ -18,7 +18,7 @@ example :
     wordToStackProgNat wordOperationTestConfig
         (.get 0 .heapLength : WordProg Nat) =
       some (.get 5 .heapLength) := by
-  simp [wordToStackProgNat, wordStackGet, wordStackStoreNameNat,
+  simp [wordToStackProgNat, wordStackGet, 
     wordStackStoreName, wordStackLocation, lookupNatInfo,
     wordOperationTestConfig]
 
@@ -60,7 +60,7 @@ example :
     wordToStackProgNat wordOperationSpillConfig
         (.get 0 .heapLength : WordProg Nat) =
       some (.seq (.get 31 .heapLength) (.stackStore 31 13)) := by
-  simp [wordToStackProgNat, wordStackGet, wordStackStoreNameNat,
+  simp [wordToStackProgNat, wordStackGet, 
     wordStackStoreName, wordStackLocation, wordStackOffset, lookupNatInfo, wordStackJoin,
     wordOperationSpillConfig]
 

@@ -61,14 +61,14 @@ example :
       [.function
         { name := "main", inline := false, exported := false, params := [],
           body := .return (.const 7), returnShape := .one }]) = true := by
-  native_decide
+  decide +kernel
 
 example :
     staticResultOk (compileFlapjackChecked (α := Nat) .rv64i 1 id
       [.function
         { name := "main", inline := false, exported := false, params := [],
           body := .skip, returnShape := .one }]) = false := by
-  native_decide
+  decide +kernel
 
 example :
     let result := compileFlapjack (α := Nat) .rv64i 1 id
@@ -82,37 +82,37 @@ example :
     pipelineFunctionInfos, pipelineLoopFunctions, pipelineLoopFunctionsAux,
     pipelineWordFunctions, pipelinePrependInitializers,
     compileToCrepe, compileFunctions, compileFunDecl, compileParamVars,
-    compileProg, loopCompileProg, loopCompileExp, loopCompileExp.loopCompileExps,
-    loopCompileExps, loopNestedSeq, loopTempNames, wordFindVar, lookupInfo,
-    lookupNatInfo]
+    compileProg, loopCompileProg, 
+    lookupInfo,
+    ]
 
 example :
     staticResultOk (staticCheck (α := Nat)
       [.function
         { name := "main", inline := false, exported := false, params := [],
           body := .return (.const 7), returnShape := .one }]) = true := by
-  native_decide
+  decide +kernel
 
 example :
     staticResultOk (staticCheck (α := Nat)
       [.function
         { name := "main", inline := false, exported := false, params := [],
           body := .return (.rStruct []), returnShape := .one }]) = false := by
-  native_decide
+  decide +kernel
 
 example :
     staticResultOk (staticCheck (α := Nat)
       [.function
         { name := "main", inline := false, exported := false, params := [],
           body := .skip, returnShape := .one }]) = false := by
-  native_decide
+  decide +kernel
 
 example :
     (staticCheck (α := Nat)
       [.function
         { name := "main", inline := false, exported := false, params := [],
           body := .seq (.return (.const 7)) .skip, returnShape := .one }]).2.length = 1 := by
-  native_decide
+  decide +kernel
 
 example :
     staticResultOk (staticCheck (α := Nat)
@@ -129,7 +129,7 @@ example :
       [.decl .one "g" (.rStruct []), .function
         { name := "main", inline := false, exported := false, params := [],
           body := .return (.const 0), returnShape := .one }]) = false := by
-  native_decide
+  decide +kernel
 
 
 end Flapjack

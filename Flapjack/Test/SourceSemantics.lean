@@ -10,21 +10,21 @@ example :
     evalPanProg (fun _ => none)
       (.dec "x" .one (.const 7)
         (.return (.var .local "x"))) = some [7] := by
-  native_decide
+  decide
 
 example :
     (evalPanStateProg (fun _ => none)
       (.dec "x" .one (.const 7)
         (.return (.var .local "x")))).map (fun result => result.2) =
       some [7] := by
-  native_decide
+  decide
 
 example :
     (evalPanProgWithCalls [] 4 (fun _ => none)
       (.dec "x" .one (.const 7)
         (.return (.var .local "x")))).map (fun result => result.2) =
       some [7] := by
-  native_decide
+  decide +kernel
 
 example :
     (evalPanProgWithHandlers [] 4 (fun _ => none)
@@ -33,6 +33,6 @@ example :
           match result with
           | .returned _ values => values
           | _ => []) = some [7] := by
-  native_decide
+  decide +kernel
 
 end Flapjack

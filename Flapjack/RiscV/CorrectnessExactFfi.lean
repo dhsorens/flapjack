@@ -47,7 +47,7 @@ theorem executeInstructionsWithExactFfi_abi [NeZero width]
     have hzero' : state.machine.registers 0 = 0 := by
       simpa [readRegister] using hzero
     simp [executeInstructions, execute, writeRegister, readRegister,
-      nextPc, hzero', hservice_bounded, Nat.mod_eq_of_lt hservice_bounded]
+      nextPc, hzero', Nat.mod_eq_of_lt hservice_bounded]
   have hresult' : exactRiscVFfiCall context
       { machine := execute (execute (execute (execute
           (execute state.machine (.addi 10 configuration (0#width)))

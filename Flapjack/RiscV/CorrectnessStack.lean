@@ -28,7 +28,7 @@ theorem evalStackRemoveGet [NeZero width]
   cases store <;>
     simp_all [stackRemoveGet, stackRemoveAddress, stackRemoveJoin,
       evalWordStackMachine, wordStackMachineBinOp,
-      wordStackMachineWriteRegister, haddress, Ne.symm haddress]
+      wordStackMachineWriteRegister, Ne.symm haddress]
 
 theorem evalStackRemoveSet [NeZero width]
     (config : StackRemoveConfig) (state : WordStackMachineState width)
@@ -47,7 +47,7 @@ theorem evalStackRemoveSet [NeZero width]
     simp_all [stackRemoveSet, stackRemoveAddress, stackRemoveJoin,
       evalWordStackMachine, wordStackMachineBinOp,
       wordStackMachineWriteRegister, wordStackMachineWriteMemory,
-      haddress, Ne.symm haddress, hsource, Ne.symm hsource]
+      Ne.symm haddress, Ne.symm hsource]
 
 theorem evalStackRemoveGetCurrHeap [NeZero width]
     (config : StackRemoveConfig) (state : WordStackMachineState width)
@@ -83,7 +83,7 @@ theorem evalStackRemoveStackAlloc_small [NeZero width]
     simp [stackRemoveStackAlloc, stackRemoveStackDelta, evalWordStackMachine]
   · simp [stackRemoveStackAlloc, stackRemoveStackDelta, hzero,
       stackRemoveJoin, evalWordStackMachine, wordStackMachineBinOp,
-      wordStackMachineWriteRegister, hwords, hscratch, Ne.symm hscratch]
+      wordStackMachineWriteRegister, hwords, Ne.symm hscratch]
 
 theorem evalStackRemoveStackLoad [NeZero width]
     (config : StackRemoveConfig) (state : WordStackMachineState width)
@@ -100,7 +100,7 @@ theorem evalStackRemoveStackLoad [NeZero width]
       some (state.stack offset) := by
   simp [stackRemoveStackLoad, stackRemoveStackAddress, stackRemoveJoin,
     evalWordStackMachine, wordStackMachineBinOp,
-    wordStackMachineWriteRegister, haddress, Ne.symm haddress, hmemory]
+    wordStackMachineWriteRegister, Ne.symm haddress, hmemory]
 
 theorem evalStackRemoveStackStore [NeZero width]
     (config : StackRemoveConfig) (state : WordStackMachineState width)
@@ -125,12 +125,12 @@ theorem evalStackRemoveStackStore [NeZero width]
     simp [stackRemoveStackStore, stackRemoveStackAddress, stackRemoveMove,
       stackRemoveJoin, evalWordStackMachine, wordStackMachineBinOp,
       wordStackMachineWriteRegister, wordStackMachineWriteMemory,
-      hmove, haddress, Ne.symm haddress, hscratch, Ne.symm hscratch,
-      hscratchPointer, Ne.symm hscratchPointer, hsourceAddress]
+      hmove, Ne.symm haddress, 
+      hsourceAddress]
   · simp [stackRemoveStackStore, stackRemoveStackAddress, stackRemoveMove,
       stackRemoveJoin, evalWordStackMachine, wordStackMachineBinOp,
       wordStackMachineWriteRegister, wordStackMachineWriteMemory,
-      hmove, haddress, Ne.symm haddress, hscratch, Ne.symm hscratch,
-      hscratchPointer, Ne.symm hscratchPointer]
+      hmove, Ne.symm haddress, Ne.symm hscratch,
+      Ne.symm hscratchPointer]
 
 end Flapjack.RiscV

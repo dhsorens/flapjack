@@ -527,8 +527,8 @@ theorem compileLabSection_ffi [NeZero width] :
       ⟨2, [
         .labAsm (.callFfi "sum") [] 0]⟩ =
       some [.addi 14 0 (BitVec.ofNat width 7), .ecall] := by
-  simp [compileLabSection, labCollectLabels, labCompileLines,
-    labLineInstructionCount, labCompileAsm, lookupWordFfiService]
+  simp [compileLabSection, labCompileLines,
+    labCompileAsm, lookupWordFfiService]
 
 theorem compileLabProgram_cross_section_jump [NeZero width] :
     compileLabProgram (width := width) { services := [] }

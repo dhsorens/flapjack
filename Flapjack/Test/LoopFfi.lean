@@ -33,7 +33,7 @@ def loopByteFfiTestState : LoopFfiState Nat Unit :=
 
 example :
     (loopFfiReadBytes loopByteFfiTestState 10 1) = some [42] := by
-  native_decide
+  decide
 
 example :
     match loopFfiSharedMem loopByteFfiTestState .load 5 10 with
@@ -42,7 +42,7 @@ example :
   simp [loopFfiSharedMem, loopFfiSharedLoad, loopFfiIsLoad,
     loopFfiMemWidth, loopFfiSharedAddress, loopFfiSharedOperator,
     loopFfiByteCount, loopByteFfiTestState, callFfi, loopFfiUpdateLocal,
-    loopFfiReadBytes]
+    ]
 
 example :
     match loopFfiSharedMem { loopByteFfiTestState with shMemaddrs := fun _ => false }
@@ -50,7 +50,7 @@ example :
     | (.error _, _) => True
     | _ => False := by
   simp [loopFfiSharedMem, loopFfiSharedLoad, loopFfiIsLoad,
-    loopFfiMemWidth, loopFfiSharedAddress, loopByteFfiTestState]
+    loopByteFfiTestState]
 
 example :
     match loopFfiSharedMem loopByteFfiTestState .store8 5 10 with
@@ -58,7 +58,7 @@ example :
     | _ => False := by
   simp [loopFfiSharedMem, loopFfiSharedStore, loopFfiIsLoad,
     loopFfiMemWidth, loopFfiSharedAddress, loopFfiSharedOperator,
-    loopFfiByteCount, loopByteFfiTestState, callFfi, loopFfiUpdateByte]
+    loopFfiByteCount, loopByteFfiTestState, callFfi]
 
 example :
     match loopFfiExtCall loopByteFfiTestState "echo" 10 1 20 2 with

@@ -146,7 +146,7 @@ def wordExpToInstruction [NeZero width] (destination : Nat) :
 
 def wordArithToInstruction [NeZero width] :
     WordArith → Option (Instruction width)
-  | .longMul destinationLeft destinationRight sourceLeft sourceRight =>
+  | .longMul _destinationLeft _destinationRight _sourceLeft _sourceRight =>
       none
   | .longDiv _ _ _ _ _ => none
   | .addCarry _ _ _ _ _ => none
@@ -449,12 +449,12 @@ theorem executeCode_conditional_equal :
       [.branchNe 1 2 (BitVec.ofNat 32 12),
         .addi 3 0 1, .branchEq 0 0 (BitVec.ofNat 32 8), .addi 3 0 2]
       (zeroState 32)).map (fun state => readRegister state 3) = some 1 := by
-  native_decide
+  decide
 
 theorem executeFunction_add :
     executeFunction 10 (0 : Word 64) [2, 3] [.add 5 2 3] [5] [7, 8]
       (zeroState 64) = some [15] := by
-  native_decide
+  decide
 
 theorem executeFunction_add_general (left right : Word 64) :
     executeFunction 10 (0 : Word 64) [2, 3] [.add 5 2 3] [5] [left, right]
@@ -466,14 +466,14 @@ theorem executeFunction_storeLoad :
     executeFunction 20 (0 : Word 64) []
       [.addi 1 0 100, .addi 2 0 42, .storeWord 2 1, .loadWord 3 1]
       [3] [] (zeroState 64) = some [42] := by
-  native_decide
+  decide
 
 theorem executeFunctionAt_jalr_return :
     executeFunctionAt 20 (0 : Word 64) 16 4 []
       [.addi 0 0 0, .addi 0 0 0, .addi 0 0 0, .addi 0 0 0,
         .addi 10 0 42, .jalr 0 1 0] [10] []
       (writeRegister (zeroState 64) 1 4) = some [42] := by
-  native_decide
+  decide
 
 theorem executeCode_conditional_notEqual :
     (executeCode 10 (0 : Word 32)
@@ -481,7 +481,7 @@ theorem executeCode_conditional_notEqual :
         .addi 3 0 1, .branchEq 0 0 (BitVec.ofNat 32 8), .addi 3 0 2]
       (writeRegister (zeroState 32) 1 9)).map
         (fun state => readRegister state 3) = some 1 := by
-  native_decide
+  decide
 
 theorem executeCode_conditional_lower :
     (executeCode 10 (0 : Word 32)
@@ -489,7 +489,7 @@ theorem executeCode_conditional_lower :
         .addi 3 0 1, .branchEq 0 0 (BitVec.ofNat 32 8), .addi 3 0 2]
       (writeRegister (writeRegister (zeroState 32) 1 1) 2 2)).map
         (fun state => readRegister state 3) = some 1 := by
-  native_decide
+  decide
 
 theorem executeCode_conditional_notLower :
     (executeCode 10 (0 : Word 32)
@@ -497,7 +497,7 @@ theorem executeCode_conditional_notLower :
         .addi 3 0 1, .branchEq 0 0 (BitVec.ofNat 32 8), .addi 3 0 2]
       (writeRegister (writeRegister (zeroState 32) 1 1) 2 2)).map
         (fun state => readRegister state 3) = some 2 := by
-  native_decide
+  decide
 
 theorem executeCode_conditional_less :
     (executeCode 10 (0 : Word 32)
@@ -505,7 +505,7 @@ theorem executeCode_conditional_less :
         .addi 3 0 1, .branchEq 0 0 (BitVec.ofNat 32 8), .addi 3 0 2]
       (writeRegister (writeRegister (zeroState 32) 1 (BitVec.ofNat 32 (2 ^ 32 - 1))) 2 0)).map
         (fun state => readRegister state 3) = some 1 := by
-  native_decide
+  decide
 
 theorem executeCode_conditional_notLess :
     (executeCode 10 (0 : Word 32)
@@ -513,7 +513,7 @@ theorem executeCode_conditional_notLess :
         .addi 3 0 1, .branchEq 0 0 (BitVec.ofNat 32 8), .addi 3 0 2]
       (writeRegister (writeRegister (zeroState 32) 1 (BitVec.ofNat 32 (2 ^ 32 - 1))) 2 0)).map
         (fun state => readRegister state 3) = some 2 := by
-  native_decide
+  decide
 
 theorem executeCode_conditional_test :
     (executeCode 12 (0 : Word 32)
@@ -521,7 +521,7 @@ theorem executeCode_conditional_test :
         .addi 3 0 1, .branchEq 0 0 (BitVec.ofNat 32 8), .addi 3 0 2]
       (writeRegister (writeRegister (zeroState 32) 1 1) 2 2)).map
         (fun state => readRegister state 3) = some 1 := by
-  native_decide
+  decide
 
 theorem executeCode_conditional_notTest :
     (executeCode 12 (0 : Word 32)
@@ -529,7 +529,7 @@ theorem executeCode_conditional_notTest :
         .addi 3 0 1, .branchEq 0 0 (BitVec.ofNat 32 8), .addi 3 0 2]
       (writeRegister (zeroState 32) 1 1)).map
         (fun state => readRegister state 3) = some 2 := by
-  native_decide
+  decide
 
 def evalWordExp [NeZero width] (state : State width) :
     WordExp (Word width) → Option (Word width)
@@ -790,7 +790,7 @@ theorem compileWordAdd_sound [NeZero width] (state : State width) :
     evalWordProg state
         (.assign 1 (.op .add [.var 2, .var 3])) =
       some (executeInstructions state [.add 1 2 3]) := by
-  simp [evalWordProg, wordExpToInstructions, wordExpToInstruction, evalWordExp,
+  simp [evalWordProg, wordExpToInstructions, wordExpToInstruction, 
     executeInstructions, registerOfNat,
     execute, writeRegister, nextPc]
 
@@ -896,7 +896,7 @@ theorem compileWordRotateRight_immediate_sound [NeZero width] (state : State wid
     Nat.mod_lt _ (Nat.pos_of_ne_zero (NeZero.ne width))
   have complement_lt : (width - shiftAmount amount) % width < width :=
     Nat.mod_lt _ (Nat.pos_of_ne_zero (NeZero.ne width))
-  simp [evalWordProg, wordExpToInstructions, wordExpToInstruction,
+  simp [evalWordProg, wordExpToInstructions, 
     evalWordExp, rotateRight, registerOfNat, executeInstructions,
     execute, writeRegister, readRegister, nextPc,
     shiftAmount_ofNat_of_lt amount_lt,
@@ -907,21 +907,21 @@ theorem compileWordAdd_zeroState [NeZero width] :
     evalWordProg (zeroState width)
         (.assign 1 (.const (7 : Word width))) =
       some (executeInstructions (zeroState width) [.addi 1 0 7]) := by
-  simp [evalWordProg, wordExpToInstructions, wordExpToInstruction, evalWordExp,
+  simp [evalWordProg, wordExpToInstructions, wordExpToInstruction, 
     executeInstructions, registerOfNat,
-    execute, writeRegister, nextPc, ZeroRegister, zeroState, readRegister]
+    execute, writeRegister, nextPc, zeroState, readRegister]
 
 theorem compileWordLoadByte_sound [NeZero width] (state : State width) :
     evalWordProg state (.inst (.mem .load8 1 2)) =
       some (execute state (.loadByte 1 2)) := by
-  simp [evalWordProg, registerOfNat, execute, writeRegister, writeByte,
+  simp [evalWordProg, registerOfNat, execute, writeRegister, 
     readByte, nextPc]
 
 theorem compileWordStoreByte_sound [NeZero width] (state : State width) :
     evalWordProg state (.inst (.mem .store8 1 2)) =
       some (execute state (.storeByte 1 2)) := by
-  simp [evalWordProg, registerOfNat, execute, writeRegister, writeByte,
-    readByte, nextPc]
+  simp [evalWordProg, registerOfNat, execute, writeByte,
+    nextPc]
 
 theorem compileWordLoad16_sound [NeZero width] (state : State width) :
     evalWordProg state (.inst (.mem .load16 1 2)) =
@@ -950,9 +950,9 @@ theorem compileWordStore32_sound [NeZero width] (state : State width) :
 theorem compileWordStoreWord_sound [NeZero width] (state : State width) :
     evalWordProg state (.store (.var 2) 1) =
       some (execute state (.storeWord 1 2)) := by
-  simp [evalWordProg, evalWordShareInst, wordStoreToInstructions,
+  simp [evalWordProg, evalWordShareInst, 
     wordShareInstToInstructions,
-    wordInstToInstruction, evalWordExp, registerOfNat, executeInstructions,
+    wordInstToInstruction, registerOfNat, executeInstructions,
     execute,
     writeWordValue, writeByte, byteAddress, nextPc]
 
@@ -1075,7 +1075,7 @@ theorem wordFunctionToRiscV_return_const [NeZero width] (value : Word width) :
   simp [wordFunctionToRiscV, wordExpToInstructions, wordExpToInstruction, registerOfNat]
 
 theorem evalWordFunction_return_const [NeZero width] (state : State width)
-    (value : Word width) (zero : ZeroRegister state) :
+    (value : Word width) (_zero : ZeroRegister state) :
     evalWordFunction state
         ((.seq (.assign 1 (.const value)) (.return 0 [1])) :
           WordProg (Word width)) =
@@ -1101,7 +1101,7 @@ theorem wordArithToInstructions_longMul_alias [NeZero width] :
 theorem compileWordLongMul_sound [NeZero width] (state : State width) :
     evalWordProg state (.inst (.arith (.longMul 1 1 2 3))) =
       some (executeInstructions state [.mulHU 1 2 3, .mul 1 2 3]) := by
-  simp [evalWordProg, wordArithToInstructions, wordArithToInstruction,
+  simp [evalWordProg, wordArithToInstructions, 
     executeInstructions, registerOfNat]
 
 theorem wordFunctionToRiscV_longMul [NeZero width] :
@@ -1175,6 +1175,6 @@ example [NeZero width] :
 example [NeZero width] :
     wordInstToInstruction (width := width) (.arith (.longMul 1 1 2 3)) =
       none := by
-  simp [wordInstToInstruction, wordArithToInstruction, registerOfNat]
+  simp [wordInstToInstruction, wordArithToInstruction]
 
 end Flapjack.RiscV

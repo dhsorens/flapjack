@@ -67,8 +67,8 @@ theorem ffiIdentity_mappedLocals : loopLocalsMappedToRiscV ({ vars := [] } : Wor
             · simp [ffiIdentityLoopState, h1, h2, h3, h4] at hvalue)
   · simp [evalLoopFfi, ffiIdentityLoopHandler, ffiIdentityLoopState]
   · simp [loopToWordProg, evalWordFfi, ffiIdentityWordHandler,
-      registerOfNat, wordFindVar, lookupNatInfo, writeRegister,
-      readRegister]
+      registerOfNat, wordFindVar, lookupNatInfo, 
+      ]
 
 example : loopLocalsMappedToRiscV ({ vars := [] } : WordContext)
     ffiIdentityLoopState.locals ffiIdentityWordState := by
@@ -99,7 +99,7 @@ example : loopLocalsMappedToRiscV ({ vars := [] } : WordContext)
       ffiIdentityLoopState]
   · simp [loopToWordProg, evalWordFunctionWithHandlersAndFfi,
       ffiIdentityWordHandler, registerOfNat, wordFindVar, lookupNatInfo,
-      writeRegister, readRegister]
+      ]
 
 example : loopLocalsMappedToRiscV ({ vars := [] } : WordContext)
     ffiIdentityLoopState.locals
@@ -207,7 +207,7 @@ example :
         (fun result => match result with
         | .returned _ values => values
         | _ => []) = some [42] := by
-  native_decide
+  decide +kernel
 
 example :
     (evalPanProgWithCallsAndFfi [] sourceFfiHandler 10
@@ -217,7 +217,7 @@ example :
           (.const 0) (.const 0)))).map (fun result => match result with
         | .normal locals => locals "x"
         | _ => none) = some (some 41) := by
-  native_decide
+  decide +kernel
 
 example :
     sourceFfiPipeline.pipeline.word.length = 2 &&

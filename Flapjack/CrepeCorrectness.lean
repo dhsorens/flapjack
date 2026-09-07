@@ -85,7 +85,7 @@ theorem compile_full_store_load_const_correct
   simp [compileProg, compileExp, freshNames, nestedDecs, stores, crepNestedSeq,
     loadShape, evalCrepFullResult, evalCrepFullProg, evalCrepFullExps,
     evalCrepFullExp, evalPanMemResult, evalPanMemProg, evalPanMemExp,
-    updateMemory, updateCrepLocal, restoreCrepResult, restoreCrepLocal]
+    updateMemory, updateCrepLocal, restoreCrepResult]
 
 theorem compile_full_ite_const_correct
     [BEq α] [LawfulBEq α] [OfNat α 0] [OfNat α 1] [Add α] [Mul α]
@@ -109,8 +109,8 @@ theorem compile_full_ite_const_correct
   simp [compileProg, compileExp, evalCrepFullResult, evalCrepFullProg,
     evalCrepFullExps, evalCrepFullExp, evalPanMemResult,
     evalPanMemProg, evalPanMemCondition, evalPanMemExp]
-  split <;> simp_all [evalCrepFullProg, evalCrepFullExp,
-    evalPanMemProg, evalPanMemCondition, evalPanMemExp]
+  split <;> simp_all [
+    ]
 
 theorem compile_full_local_assign_return_const_correct
     [BEq α] [LawfulBEq α] [OfNat α 0] [OfNat α 1] [Add α] [Mul α]
@@ -156,7 +156,7 @@ theorem compile_full_local_return_correct
     evalCrepFullProg, evalCrepFullExps, evalCrepFullExp,
     evalPanMemResult, evalPanMemProg, evalPanMemExp,
     environment_agrees]
-  cases h : locals name <;> simp [h]
+  cases h : locals name <;> simp []
 
 theorem compile_full_extCall_const_noop_correct
     [BEq α] [LawfulBEq α] [OfNat α 0] [OfNat α 1] [Add α] [Mul α]
@@ -198,16 +198,16 @@ theorem compile_full_extCall_const_noop_correct
           (offset + 1) (base (offset + 1)) = base := by
     funext current
     by_cases h1 : current = offset + 1
-    · simp [restoreCrepLocal, updateCrepLocal, h1]
+    · simp [restoreCrepLocal, h1]
     by_cases h2 : current = offset + 2
-    · simp [restoreCrepLocal, updateCrepLocal, h1, h2]
+    · simp [restoreCrepLocal, h2]
     by_cases h3 : current = offset + 3
-    · simp [restoreCrepLocal, updateCrepLocal, h1, h2, h3]
+    · simp [restoreCrepLocal, h3]
     by_cases h4 : current = offset + 4
-    · simp [restoreCrepLocal, updateCrepLocal, h1, h2, h3, h4]
+    · simp [restoreCrepLocal, h4]
     · simp [restoreCrepLocal, updateCrepLocal, h1, h2, h3, h4]
   simp [compileProg, firstCompiledExp, compileExp, nestedDecs,
     evalCrepFullProg, evalCrepFullExp, evalPanExp, evalPanFfiProg, evalPanExtCall,
-    updateCrepLocal, restoreCrepResult, restoreCrepLocal, hrestoreFour]
+    updateCrepLocal, restoreCrepResult, hrestoreFour]
 
 end Flapjack

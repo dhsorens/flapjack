@@ -339,7 +339,7 @@ theorem wordSsaFresh_next (state : WordSsaState) (name : Nat) :
 theorem wordSsaFresh_preserves_residue (state : WordSsaState) (name : Nat)
     (residue : Nat) (hresidue : state.next % 4 = residue) :
     (wordSsaFresh state name).1.next % 4 = residue := by
-  simp [wordSsaFresh, Nat.add_mod, hresidue]
+  simp [wordSsaFresh, hresidue]
 
 def wordSsaFreshList (state : WordSsaState) : List Nat →
     WordSsaState × List Nat
@@ -996,7 +996,7 @@ def wordClashTree : WordProg α → List (List Nat × List Nat) → WordClashTre
   | .call returns _ arguments none, _ =>
       match returns with
       | none => .set arguments.eraseDups
-      | some (values, cutsets, returnCode, _, _) =>
+      | some (values, cutsets, _returnCode, _, _) =>
           let live := cutsets.1 ++ cutsets.2
           .seq (.set (wordClashTreeCallSet values live))
             (.set (wordClashTreeCallSet arguments live))
@@ -1113,7 +1113,7 @@ def wordClashTreeCheck (colour : Nat → Nat) : WordClashTree →
       | some (thenOut, fThenOut) =>
           match wordClashTreeCheck colour elseBranch live flive with
           | none => none
-          | some (elseOut, fElseOut) =>
+          | some (elseOut, _fElseOut) =>
               match branchLive with
               | none =>
                   wordCheckPartialColour colour
@@ -1350,7 +1350,7 @@ theorem wordClashTreeAnalyze_assign (name source : Nat)
       ([source], [(name, source)]) := by
   have hneq' : source ≠ name := Ne.symm hneq
   simp [wordClashTree, wordClashTreeAnalyze, wordExpReadVars,
-    wordClashPairs, wordListUnion, hneq, hneq', List.eraseDups,
+    wordClashPairs, wordListUnion, hneq', List.eraseDups,
     List.eraseDupsBy, List.eraseDupsBy.loop]
 
 theorem wordClashTreeAnalyze_seq (first second : WordProg α)
@@ -1646,13 +1646,13 @@ theorem wordApplyColourPreservesLabelsAux
           have hreturn :=
             wordApplyColourPreservesLabelsAux colour returnProgram
           cases handler with
-          | none => simp [wordApplyColour, wordProgLabels, hreturn]
+          | none => simp [wordApplyColour, wordProgLabels]
           | some handlerValue =>
               rcases handlerValue with ⟨exception, handlerProgram,
                 handlerLabel, handlerEntryLabel⟩
               have hhandler :=
                 wordApplyColourPreservesLabelsAux colour handlerProgram
-              simp [wordApplyColour, wordProgLabels, hreturn, hhandler]
+              simp [wordApplyColour, wordProgLabels, hhandler]
   | .alloc _ cutsets => by
       cases cutsets <;> simp [wordApplyColour, wordProgLabels]
   | .storeConsts _ _ _ _ _ => by simp [wordApplyColour, wordProgLabels]
@@ -2113,7 +2113,7 @@ theorem wordGreedyAllocateWithSpills_maps_names (names : List Nat)
                         simp [wordGreedyAllocateWithSpills, forbidden, allocated, havailable]
                 _ = lookupNatInfo head allocated.locations := htail_lookup
                 _ = some (.stack state.nextSpill) := by
-                  simp [allocated, havailable, lookupNatInfo, hself]
+                  simp [allocated, havailable, lookupNatInfo]
           · simpa [wordGreedyAllocateWithSpills, forbidden, allocated,
               havailable] using ih allocated name htail
       | some register =>
@@ -2137,7 +2137,7 @@ theorem wordGreedyAllocateWithSpills_maps_names (names : List Nat)
                         simp [wordGreedyAllocateWithSpills, forbidden, allocated, havailable]
                 _ = lookupNatInfo head allocated.locations := htail_lookup
                 _ = some (.register register) := by
-                  simp [allocated, havailable, lookupNatInfo, hself]
+                  simp [allocated, havailable, lookupNatInfo]
           · simpa [wordGreedyAllocateWithSpills, forbidden, allocated,
               havailable] using ih allocated name htail
 
@@ -2278,7 +2278,7 @@ theorem wordGreedyAllocateWithSpillsAndPreferences_maps_names
                             forbidden, candidates, allocated, havailable]
                 _ = lookupNatInfo head allocated.locations := htail_lookup
                 _ = some (.stack state.nextSpill) := by
-                  simp [allocated, havailable, lookupNatInfo, hself]
+                  simp [allocated, havailable, lookupNatInfo]
           · simpa [wordGreedyAllocateWithSpillsAndPreferences, forbidden,
               candidates, allocated, havailable] using ih allocated name htail
       | some register =>
@@ -2305,7 +2305,7 @@ theorem wordGreedyAllocateWithSpillsAndPreferences_maps_names
                             forbidden, candidates, allocated, havailable]
                 _ = lookupNatInfo head allocated.locations := htail_lookup
                 _ = some (.register register) := by
-                  simp [allocated, havailable, lookupNatInfo, hself]
+                  simp [allocated, havailable, lookupNatInfo]
           · simpa [wordGreedyAllocateWithSpillsAndPreferences, forbidden,
               candidates, allocated, havailable] using ih allocated name htail
 
@@ -2597,7 +2597,7 @@ theorem wordAllocateVarsWithSpills_spills_example :
     (wordAllocateVarsWithSpills (List.range 29)
       (wordPairwiseClashes (List.range 29))).map
         (fun state => state.nextSpill != 0) = some true := by
-  native_decide
+  decide +kernel
 
 theorem wordAllocatableRegisters_safe :
     ∀ register ∈ wordAllocatableRegisters,

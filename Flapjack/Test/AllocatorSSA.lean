@@ -113,7 +113,7 @@ example :
         (fun result => match result with
           | .normal state => RiscV.readRegister state 202
           | _ => 0) := by
-  native_decide
+  decide +kernel
 
 example :
     (wordSsaRenameProgram

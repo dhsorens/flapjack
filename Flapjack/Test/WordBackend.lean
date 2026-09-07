@@ -30,32 +30,32 @@ example :
     RiscV.wordExpToInstructions (width := 8) 1
       (.shift .ror (.var 2) (.const (3 : RiscV.Word 8))) =
       some [.srli 31 2 3, .slli 1 2 5, .or 1 1 31] := by
-  native_decide
+  decide
 
 example :
     RiscV.wordExpToInstructions (width := 8) 1
       (.shift .ror (.var 2) (.var 3)) =
       some [.ori 31 0 8, .sub 31 31 3, .sll 31 2 31,
         .srl 1 2 3, .or 1 1 31] := by
-  native_decide
+  decide
 
 example :
     RiscV.wordExpToInstructions (width := 8) 31
       (.shift .ror (.var 2) (.const (3 : RiscV.Word 8))) = none := by
-  native_decide
+  decide
 
 example :
     RiscV.executeFunction 20 (0 : RiscV.Word 8) [2]
       [.srli 31 2 1, .slli 1 2 7, .or 1 1 31] [1]
       [129] (RiscV.zeroState 8) = some [192] := by
-  native_decide
+  decide
 
 example :
     RiscV.executeFunction 30 (0 : RiscV.Word 8) [2, 3]
       [.ori 31 0 8, .sub 31 31 3, .sll 31 2 31,
         .srl 1 2 3, .or 1 1 31] [1]
       [129, 1] (RiscV.zeroState 8) = some [192] := by
-  native_decide
+  decide
 
 example [NeZero width] (state : RiscV.State width) :
     RiscV.evalWordProg state
@@ -77,17 +77,17 @@ example [NeZero width] (state : RiscV.State width) :
 
 example :
     RiscV.shiftAmount (BitVec.ofNat 64 65) = 1 := by
-  native_decide
+  decide
 
 example :
     evalPanExp (fun _ => none)
       (.panOp .mul [.const (α := Nat) 6, .const 7]) = some 42 := by
-  native_decide
+  decide
 
 example :
     evalCrepExp (fun _ => none)
       (.crepOp .mul [.const (α := Nat) 6, .const 7]) = some 42 := by
-  native_decide
+  decide
 
 example :
     evalCrepProg (fun _ => none)

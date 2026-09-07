@@ -159,31 +159,31 @@ mutual
       (baseAddress topAddress : α) :
       Nat → CrepState α → CrepProg α → Option (CrepControlResult α)
     | 0, _, _ => none
-    | fuel + 1, state, .skip => some (.normal state)
+    | _fuel + 1, state, .skip => some (.normal state)
     | fuel + 1, state, .dec name value body => do
         let value ← evalCrepFullExp state.locals state.memory baseAddress topAddress value
         let result ← evalCrepFullProg functions primitive ffi sharedMem
           baseAddress topAddress fuel
           { state with locals := updateCrepLocal state.locals name value } body
         pure (restoreCrepResult name (state.locals name) result)
-    | fuel + 1, state, .assign name value => do
+    | _fuel + 1, state, .assign name value => do
         let value ← evalCrepFullExp state.locals state.memory baseAddress topAddress value
         pure (.normal { state with locals := updateCrepLocal state.locals name value })
-    | fuel + 1, state, .primitive names operator arguments => do
+    | _fuel + 1, state, .primitive names operator arguments => do
         let arguments ← arguments.mapM state.locals
         let values ← primitive operator arguments
         let locals ← assignCrepValues state.locals names values
         pure (.normal { state with locals := locals })
-    | fuel + 1, state, .store address value => do
+    | _fuel + 1, state, .store address value => do
         let address ← evalCrepFullExp state.locals state.memory baseAddress topAddress address
         let value ← evalCrepFullExp state.locals state.memory baseAddress topAddress value
         pure (.normal { state with memory := updateMemory state.memory address value })
-    | fuel + 1, state, .store32 address value
-    | fuel + 1, state, .storeByte address value => do
+    | _fuel + 1, state, .store32 address value
+    | _fuel + 1, state, .storeByte address value => do
         let address ← evalCrepFullExp state.locals state.memory baseAddress topAddress address
         let value ← evalCrepFullExp state.locals state.memory baseAddress topAddress value
         pure (.normal { state with memory := updateMemory state.memory address value })
-    | fuel + 1, state, .storeGlob address value => do
+    | _fuel + 1, state, .storeGlob address value => do
         let value ← evalCrepFullExp state.locals state.memory baseAddress topAddress value
         pure (.normal { state with memory := updateMemory state.memory address value })
     | fuel + 1, state, .seq first second => do
@@ -217,28 +217,28 @@ mutual
           | .continued state label => pure (.continued state (label - 1))
           | .broke state label => pure (.broke state (label - 1))
           | result => pure result
-    | fuel + 1, state, .break label => pure (.broke state label)
-    | fuel + 1, state, .continue label => pure (.continued state label)
+    | _fuel + 1, state, .break label => pure (.broke state label)
+    | _fuel + 1, state, .continue label => pure (.continued state label)
     | fuel + 1, state, .call info function arguments =>
         evalCrepFullCall functions primitive ffi sharedMem
           baseAddress topAddress fuel state info function arguments
-    | fuel + 1, state, .extCall function configuration configurationLength array arrayLength => do
+    | _fuel + 1, state, .extCall function configuration configurationLength array arrayLength => do
         let configuration ← state.locals configuration
         let configurationLength ← state.locals configurationLength
         let array ← state.locals array
         let arrayLength ← state.locals arrayLength
         let state ← ffi function configuration configurationLength array arrayLength state
         pure (.normal state)
-    | fuel + 1, state, .raise exception => pure (.raised state exception)
-    | fuel + 1, state, .return values => do
+    | _fuel + 1, state, .raise exception => pure (.raised state exception)
+    | _fuel + 1, state, .return values => do
         let values ← evalCrepFullExps state.locals state.memory
           baseAddress topAddress values
         pure (.returned state values)
-    | fuel + 1, state, .shMem operator name address => do
+    | _fuel + 1, state, .shMem operator name address => do
         let address ← evalCrepFullExp state.locals state.memory baseAddress topAddress address
         let state ← sharedMem operator name address state
         pure (.normal state)
-    | fuel + 1, state, .tick => pure (.normal state)
+    | _fuel + 1, state, .tick => pure (.normal state)
     termination_by fuel _ _ => fuel
 end
 

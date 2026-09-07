@@ -171,7 +171,7 @@ example [NeZero width]
     (haddress := by simp [config, wordStackLocation, lookupNatInfo])
     (hsourceValue := by simpa [config] using hsourceValue)
     (haddressValue := by simpa [config] using haddressValue)
-    (hscratch := by simp [config]) (hsafe := by simp [config, wordStackStoreLocationsSafe])
+    (hscratch := by simp [config]) (hsafe := by simp [wordStackStoreLocationsSafe])
     (by simpa [config] using heval)
 
 example [NeZero width]
@@ -315,9 +315,9 @@ example [NeZero width]
     (hdivisorValue := by simpa [config] using hdivisorValue)
     (hdivisorNonzero := hdivisorNonzero)
     (hscratch := by simp [config])
-    (hdestinationSafe := by simp [config, wordStackDivLocationSafe])
-    (hdividendSafe := by simp [config, wordStackDivLocationSafe])
-    (hdivisorSafe := by simp [config, wordStackDivLocationSafe])
+    (hdestinationSafe := by simp [wordStackDivLocationSafe])
+    (hdividendSafe := by simp [wordStackDivLocationSafe])
+    (hdivisorSafe := by simp [wordStackDivLocationSafe])
     (by simpa [config] using heval)
 
 example [NeZero width]
@@ -354,7 +354,7 @@ example [NeZero width]
     (hright := by simp [config, wordStackLocation, lookupNatInfo])
     (hleftValue := by simpa [config] using hleftValue)
     (hrightValue := by simpa [config] using hrightValue)
-    (hsafe := by simp [config, wordStackBinaryLocationsSafe])
+    (hsafe := by simp [wordStackBinaryLocationsSafe])
     (by simpa [config] using heval)
 
 example [NeZero width]
@@ -428,7 +428,7 @@ example [NeZero width]
     (hright := by simp [config, wordStackLocation, lookupNatInfo])
     (hleftValue := by simpa [config] using hleftValue)
     (hrightValue := by simpa [config] using hrightValue)
-    (hsafe := by simp [config, wordStackBinaryLocationsSafe])
+    (hsafe := by simp [wordStackBinaryLocationsSafe])
     (by simpa [config] using heval)
 
 example [NeZero width]

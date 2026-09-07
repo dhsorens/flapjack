@@ -17,7 +17,7 @@ def misalignedMemoryState : RiscV.State 64 :=
 
 example :
     (RiscV.executeChecked alignedMemoryState (.loadHalf 2 1)).isSome := by
-  native_decide
+  decide
 
 example :
     RiscV.executeChecked misalignedMemoryState (.load32 2 1) = none := by
@@ -27,16 +27,16 @@ example :
 example :
     RiscV.accessAligned .read (BitVec.ofNat 64 2) 4 =
       some .loadFault := by
-  native_decide
+  decide
 
 example :
     RiscV.executeTrap (RiscV.zeroState 64) .ecall =
       some .mModeEnvCall := by
-  native_decide
+  decide
 
 example :
     RiscV.executeChecked (RiscV.zeroState 64) .ecall = none := by
-  native_decide
+  decide
 
 def signedOrderState : RiscV.State 8 :=
   { (RiscV.zeroState 8) with
@@ -48,39 +48,39 @@ example :
     RiscV.readRegister
       (RiscV.execute signedOrderState (.slt 3 1 2)) 3 =
       BitVec.ofNat 8 1 := by
-  native_decide
+  decide
 
 example :
     RiscV.readRegister
       (RiscV.execute signedOrderState (.slt 3 2 1)) 3 =
       BitVec.ofNat 8 0 := by
-  native_decide
+  decide
 
 example :
     RiscV.readRegister
       (RiscV.execute signedOrderState (.sltiu 3 1 (BitVec.ofNat 8 2))) 3 =
       BitVec.ofNat 8 0 := by
-  native_decide
+  decide
 
 example :
     RiscV.readRegister
       (RiscV.execute (RiscV.zeroState 64)
         (.lui 3 (BitVec.ofNat 64 1))) 3 =
       BitVec.ofNat 64 4096 := by
-  native_decide
+  decide
 
 example :
     RiscV.readRegister
       (RiscV.execute (RiscV.zeroState 64)
         (.auipc 3 (BitVec.ofNat 64 1))) 3 =
       BitVec.ofNat 64 4096 := by
-  native_decide
+  decide
 
 example :
     (RiscV.execute signedOrderState
       (.branchLt 1 2 (BitVec.ofNat 8 12))).pc =
       BitVec.ofNat 8 12 := by
-  native_decide
+  decide
 
 example [NeZero width] :
     Flapjack.RiscV.compileWordAdd (width := width) 1 2 3 =
@@ -94,7 +94,7 @@ example [NeZero width] (state : Flapjack.RiscV.State width)
         (.assign 1 (.const (7 : Flapjack.RiscV.Word width))) =
       some (Flapjack.RiscV.execute state (.addi 1 0 7)) := by
   simp [Flapjack.RiscV.evalWordProg, Flapjack.RiscV.wordExpToInstructions,
-    Flapjack.RiscV.wordExpToInstruction, Flapjack.RiscV.evalWordExp,
+    Flapjack.RiscV.wordExpToInstruction, 
     Flapjack.RiscV.registerOfNat, Flapjack.RiscV.executeInstructions,
     Flapjack.RiscV.execute,
     Flapjack.RiscV.writeRegister, Flapjack.RiscV.nextPc, zero]
@@ -159,7 +159,7 @@ example :
           WordProg (RiscV.Word 8)) =
       some [.ori 31 0 7, .branchNe 1 31 12,
         .addi 3 0 1, .branchEq 0 0 8, .addi 3 0 2] := by
-  native_decide
+  decide +kernel
 
 example :
     RiscV.wordProgToRiscV (width := 8)
@@ -168,14 +168,14 @@ example :
           WordProg (RiscV.Word 8)) =
       some [.andi 31 1 3, .branchNe 31 0 12,
         .addi 3 0 1, .branchEq 0 0 8, .addi 3 0 2] := by
-  native_decide
+  decide +kernel
 
 example :
     RiscV.wordProgToRiscV (width := 8)
         ((.ite .equal 31 (.imm 7)
           (.assign 3 (.const 1)) (.assign 3 (.const 2))) :
           WordProg (RiscV.Word 8)) = none := by
-  native_decide
+  decide +kernel
 
 example :
     RiscV.wordFunctionToRiscV (width := 8)
@@ -185,7 +185,7 @@ example :
           (.return 0 [3])) : WordProg (RiscV.Word 8)) =
       some ([.ori 31 0 7, .branchNe 1 31 12,
         .addi 3 0 1, .branchEq 0 0 8, .addi 3 0 2], [3]) := by
-  native_decide
+  decide
 
 example :
     (RiscV.executeCode 20 (0 : RiscV.Word 8)
@@ -193,7 +193,7 @@ example :
         .addi 3 0 1, .branchEq 0 0 8, .addi 3 0 2]
       (RiscV.writeRegister (RiscV.zeroState 8) 1 7)).map
         (fun state => RiscV.readRegister state 3) = some 1 := by
-  native_decide
+  decide
 
 example [NeZero width] :
     RiscV.wordProgToRiscV
@@ -283,7 +283,7 @@ example [NeZero width] :
           (.return 0 [3])) : WordProg (RiscV.Word width)) =
       some ([.branchNe 1 2 (BitVec.ofNat width 12),
         .addi 3 0 1, .branchEq 0 0 (BitVec.ofNat width 8), .addi 3 0 2], [3]) := by
-  simp [RiscV.wordFunctionToRiscV, RiscV.wordProgToRiscV,
+  simp [RiscV.wordFunctionToRiscV, 
     RiscV.wordExpToInstruction, RiscV.registerOfNat]
 
 example [NeZero width] :
@@ -310,7 +310,7 @@ example [NeZero width] :
       some ([.branchNe 1 2 (BitVec.ofNat width 12),
         .addi 3 0 1, .branchEq 0 0 (BitVec.ofNat width 8),
         .addi 3 0 2], [3]) := by
-  simp [RiscV.wordFunctionToRiscV, RiscV.wordProgToRiscV,
+  simp [RiscV.wordFunctionToRiscV, 
     RiscV.wordExpToInstruction, RiscV.registerOfNat]
 
 example [NeZero width] :
@@ -322,7 +322,7 @@ example [NeZero width] :
       some ([.branchNe 1 2 (BitVec.ofNat width 12),
         .addi 3 0 1, .branchEq 0 0 (BitVec.ofNat width 8),
         .addi 3 0 2, .addi 0 0 0], [3]) := by
-  simp [RiscV.wordFunctionToRiscV, RiscV.wordProgToRiscV,
+  simp [RiscV.wordFunctionToRiscV, 
     RiscV.wordExpToInstruction, RiscV.registerOfNat]
 
 example :
@@ -331,7 +331,7 @@ example :
         .addi 3 0 1, .branchEq 0 0 (BitVec.ofNat 32 8), .addi 3 0 2]
       (RiscV.zeroState 32)).map (fun state => RiscV.readRegister state 3) =
       some 1 := by
-  native_decide
+  decide
 
 example :
     (RiscV.executeCode 10 (0 : RiscV.Word 32)
@@ -340,7 +340,7 @@ example :
       (RiscV.zeroState 32)).map
         (fun state => RiscV.readRegister state 3) =
       some 2 := by
-  native_decide
+  decide
 
 example :
     panSimpProg (.seq (.skip : Prog Nat) (.return (.const 7))) =
@@ -369,7 +369,7 @@ example :
         (.nField "right" (.nStruct "pair" [("right", .const 7), ("left", .const 3)])) =
       .rField 1 (.rStruct [.const 3, .const 7]) := by
   simp [structCompileExp, structCompileExp.structCompileFields,
-    structCompileExp.structCompileExps, structOldExpShape, structFindFieldIndex,
+    structOldExpShape, structFindFieldIndex,
     structSelectFields, lookupInfo]
 
 end Flapjack

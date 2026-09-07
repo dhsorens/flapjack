@@ -177,7 +177,7 @@ example :
             [.const (α := Nat) 1, .const 2, .const 0])
           (.return (.var .local "pair"))))).map Prod.snd =
       some [3, 0] := by
-  native_decide
+  decide +kernel
 
 def crepWordContext : CompileContext (RiscV.Word 64) :=
   { vars := [("pair", (.comb [.one, .one], [0, 1]))], functions := [],
@@ -201,7 +201,7 @@ example :
         crepPrimitiveSourceLocals (fun _ => none) (fun _ => none)
         RiscV.panPrimitiveHandler crepPrimitiveSource).map
         (fun result => result.2.2.2.flatMap panValueWords) := by
-  native_decide
+  decide +kernel
 
 example :
     evalCrepMemResultWithPrimitive
@@ -214,7 +214,7 @@ example :
           (.primitive [0] .addCarry [1, 2, 3])
           (.return [.load (.const 10), .var 0]))) =
       some [7, 6] := by
-  native_decide
+  decide +kernel
 
 example :
     evalCrepMemResult (fun _ => none) (fun _ => none)
@@ -260,7 +260,7 @@ example :
       .seq .skip
         (.seq (.assign 3 (.const 8))
           (.seq (.assign 4 (.const 255)) (.store32 3 4))) := by
-  simp [loopCompileProg, loopCompileExp, loopCompileExps, loopNestedSeq,
+  simp [loopCompileProg, loopCompileExp, loopNestedSeq,
     loopContext]
 
 example :

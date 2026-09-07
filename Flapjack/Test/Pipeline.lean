@@ -126,9 +126,9 @@ example :
     pipelineFunctionInfos, pipelineLoopFunctions, pipelineLoopFunctionsAux,
     pipelineWordFunctions, pipelinePrependInitializers,
     compileToCrepe, compileFunctions, compileFunDecl, compileParamVars,
-    compileProg, loopCompileProg, loopCompileExp, loopCompileExp.loopCompileExps,
-    loopCompileExps, loopNestedSeq, loopTempNames, wordFindVar, lookupInfo,
-    lookupNatInfo]
+    compileProg, loopCompileProg, 
+    
+    ]
 
 example [NeZero width] :
     pipelineRiscVFunctions
@@ -146,14 +146,14 @@ example :
       [(7, [], (.seq (.ffi "sum" 2 3 4 5 ([], [])) (.return 0 [6])))] =
       [(7, [], some ([.addi 10 2 0, .addi 11 3 0, .addi 12 4 0,
         .addi 13 5 0, .addi 14 0 7, .ecall], [6]))] := by
-  native_decide
+  decide +kernel
 
 example :
     let result := pipelineRiscVFunctionsWithFfi (width := 64) []
       [(7, [2], (.return 0 [2])),
        (8, [6], (.call (some ([4], ([], []), .skip, 0, 0)) (some 7) [6] none))]
     result.length = 2 && result.all (fun (_, _, artifact) => artifact.isSome) := by
-  native_decide
+  decide +kernel
 
 example [NeZero width] (state : RiscV.State width) (value : RiscV.Word width)
     (zero : RiscV.ZeroRegister state) :
@@ -173,7 +173,7 @@ example :
     (loopCompileExp loopContext 3 []
       (.crepOp .mul [.var 0, .var 1])).code.map loopProgLongMulFingerprint =
       [none, none, some (5, 5, 3, 4)] := by
-  native_decide
+  decide +kernel
 
 example :
     let result := compileFlapjackRiscV (width := 64) .rv64i
@@ -230,23 +230,23 @@ example :
 example :
     RiscV.executeFunction 10 (0 : RiscV.Word 64) [2, 3]
       [.divU 5 2 3] [5] [42, 6] (RiscV.zeroState 64) = some [7] := by
-  native_decide
+  decide
 
 example :
     RiscV.executeFunction 10 (0 : RiscV.Word 64) [2, 3]
       [.remU 5 2 3] [5] [43, 6] (RiscV.zeroState 64) = some [1] := by
-  native_decide
+  decide
 
 example :
     RiscV.executeFunction 10 (0 : RiscV.Word 64) [2, 3]
       [.divU 5 2 3] [5] [42, 0] (RiscV.zeroState 64) =
         some [BitVec.ofNat 64 (2 ^ 64 - 1)] := by
-  native_decide
+  decide
 
 example :
     RiscV.executeFunction 10 (0 : RiscV.Word 64) [2, 3]
       [.remU 5 2 3] [5] [42, 0] (RiscV.zeroState 64) = some [42] := by
-  native_decide
+  decide
 
 example [NeZero width] :
     RiscV.wordArithToInstructions (width := width) (.addCarry 5 6 2 3 4) =
@@ -276,13 +276,13 @@ example :
     RiscV.executeFunction 10 (0 : RiscV.Word 8) [2]
       [.andi 5 2 15, .ori 6 5 16, .xori 7 6 3] [7] [BitVec.ofNat 8 10]
       (RiscV.zeroState 8) = some [25] := by
-  native_decide
+  decide
 
 example :
     RiscV.executeFunction 10 (0 : RiscV.Word 8) [2]
       [.slli 5 2 2, .srli 6 5 1, .srai 7 6 1] [7] [BitVec.ofNat 8 10]
       (RiscV.zeroState 8) = some [10] := by
-  native_decide
+  decide
 
 example [NeZero width] :
     RiscV.wordArithToInstructions (width := width) (.longMul 1 2 3 4) =
@@ -302,20 +302,20 @@ example :
       [.sltu 31 0 4, .add 5 2 3, .sltu 6 5 3, .add 5 5 31,
         .sltu 31 5 31, .or 6 6 31] [5, 6]
       [BitVec.ofNat 8 255, 1, 1] (RiscV.zeroState 8) = some [1, 1] := by
-  native_decide
+  decide
 
 example :
     RiscV.executeFunction 20 (0 : RiscV.Word 8) [2, 3]
       [.mulHU 5 2 3, .mul 6 2 3] [5, 6]
       [BitVec.ofNat 8 255, 2] (RiscV.zeroState 8) = some [1, 254] := by
-  native_decide
+  decide
 
 example :
     RiscV.executeFunction 20 (0 : RiscV.Word 8) [2, 3, 4]
       [.sltu 31 0 4, .add 5 2 3, .sltu 6 5 3, .add 5 5 31,
         .sltu 31 5 31, .or 6 6 31] [5, 6] [10, 20, 7]
       (RiscV.zeroState 8) = some [31, 0] := by
-  native_decide
+  decide
 
 example :
     loopToWordProg ({ vars := [] } : WordContext)
@@ -338,7 +338,7 @@ example :
       match declaration with
       | .function function => function.name
       | _ => "not-main") = ["main"] := by
-  native_decide
+  decide +kernel
 
 example :
     (pipelineEnsureMain (α := Nat)
@@ -356,7 +356,7 @@ example :
           | .name name _ => name
           | .exnDecl name _ => name) =
       ["main", "global", "worker"] := by
-  native_decide
+  decide +kernel
 
 example :
     let result := compileFlapjackRiscVTarget (width := 64) .rv64i
@@ -368,6 +368,6 @@ example :
       match declaration with
       | .function function => function.name
       | _ => "not-function") = ["main", "worker"] := by
-  native_decide
+  decide +kernel
 
 end Flapjack

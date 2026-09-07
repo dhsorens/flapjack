@@ -8,7 +8,7 @@ example :
     wordClashTree
         (.call (some ([5], ([6], []), .skip, 0, 0)) (some 7) [8] none : WordProg Nat) [] =
       .seq (.set [5, 6]) (.set [8, 6]) := by
-  simp [wordClashTree, wordClashTreeCallSet, wordClashTreeCallCutSet,
+  simp [wordClashTree, wordClashTreeCallSet, 
     List.eraseDups,
     List.eraseDupsBy, List.eraseDupsBy.loop]
 

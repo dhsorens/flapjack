@@ -72,7 +72,7 @@ example :
     RiscV.wordStackLocationMoveDestinations,
     RiscV.wordStackLocationMoveReady,
     RiscV.wordStackLocationMoveRemoveDestination,
-    RiscV.wordStackLocationMove, RiscV.wordStackMoveFromPhysical,
+    RiscV.wordStackLocationMove, 
     RiscV.wordStackJoin, RiscV.wordStackLocation, RiscV.wordStackOffset,
     lookupNatInfo,
     RiscV.wordProgToNat]

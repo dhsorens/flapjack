@@ -121,7 +121,7 @@ theorem loopToWord_primitive_addCarry_agreement [NeZero width]
     simp [RiscV.registerOfNat, hresultCarry_lt] at h
     exact h
   simp [evalLoopProgWithPrimitive, RiscV.loopPrimitiveHandler,
-    loopReadLocals, loopAssignValues, updateLoopLocal,
+    loopReadLocals, loopAssignValues, 
     hleft, hright, hcarry, loopToWordProg, RiscV.evalWordProg,
     RiscV.wordArithToInstructions,
     RiscV.registerOfNat, hleft_lt, hright_lt, hcarry_lt,
@@ -179,7 +179,7 @@ theorem crepToLoop_primitive_agreement
               loopReadLocals (loopStateOfCrepLocals locals).locals arguments =
                 some values := by
             simpa [loopStateOfCrepLocals] using hargs
-          simp [hargs, hargs', hprimitive, loopCompileProg,
+          simp [hargs', hprimitive, loopCompileProg,
             evalLoopProgWithPrimitive]
       | some result =>
           have hargs' :
@@ -201,14 +201,14 @@ theorem crepToLoop_primitive_agreement
                       updateLoopLocal base name value by rfl]
                     exact ih _
           by_cases hlength : destinations.length = result.length
-          · simp [hargs, hargs', hprimitive, hlength, loopCompileProg,
+          · simp [hargs, hprimitive, hlength, loopCompileProg,
               evalLoopProgWithPrimitive, assignCrepValues, loopAssignValues,
               loopStateOfCrepLocals, loopResultState, loopResultValues, hfold,
-              updateCrepLocal, updateLoopLocal]
-          · simp [hargs, hargs', hprimitive, hlength, loopCompileProg,
+              ]
+          · simp [hargs, hprimitive, hlength, loopCompileProg,
               evalLoopProgWithPrimitive, assignCrepValues, loopAssignValues,
               loopStateOfCrepLocals, loopResultState, loopResultValues, hfold,
-              updateCrepLocal, updateLoopLocal]
+              ]
 
 theorem addCarry_preserves_mapped_locals [NeZero width]
     (context : WordContext) (locals : Nat → Option (RiscV.Word width))
@@ -218,20 +218,20 @@ theorem addCarry_preserves_mapped_locals [NeZero width]
       carryRegister : Fin 32)
     (leftValue rightValue carryValue : RiscV.Word width)
     (hlocals : loopLocalsMappedToRiscV context locals state)
-    (hleft : locals left = some leftValue)
-    (hright : locals right = some rightValue)
-    (hcarry : locals carry = some carryValue)
+    (_hleft : locals left = some leftValue)
+    (_hright : locals right = some rightValue)
+    (_hcarry : locals carry = some carryValue)
     (hdestination :
       RiscV.registerOfNat (wordFindVar context destination) =
         some destinationRegister)
     (hresultCarry :
       RiscV.registerOfNat (wordFindVar context resultCarry) =
         some resultCarryRegister)
-    (hleft_register :
+    (_hleft_register :
       RiscV.registerOfNat (wordFindVar context left) = some leftRegister)
-    (hright_register :
+    (_hright_register :
       RiscV.registerOfNat (wordFindVar context right) = some rightRegister)
-    (hcarry_register :
+    (_hcarry_register :
       RiscV.registerOfNat (wordFindVar context carry) = some carryRegister)
     (hleft_state : RiscV.readRegister state leftRegister = leftValue)
     (hright_state : RiscV.readRegister state rightRegister = rightValue)
@@ -247,11 +247,11 @@ theorem addCarry_preserves_mapped_locals [NeZero width]
     (hright_scratch : rightRegister ≠ 31)
     (hcarry_scratch : carryRegister ≠ 31)
     (hdestination_name_resultCarry : destination ≠ resultCarry)
-    (hdestination_name_scratch : wordFindVar context destination ≠ 31)
-    (hresultCarry_name_scratch : wordFindVar context resultCarry ≠ 31)
-    (hleft_name_scratch : wordFindVar context left ≠ 31)
-    (hright_name_scratch : wordFindVar context right ≠ 31)
-    (hcarry_name_scratch : wordFindVar context carry ≠ 31)
+    (_hdestination_name_scratch : wordFindVar context destination ≠ 31)
+    (_hresultCarry_name_scratch : wordFindVar context resultCarry ≠ 31)
+    (_hleft_name_scratch : wordFindVar context left ≠ 31)
+    (_hright_name_scratch : wordFindVar context right ≠ 31)
+    (_hcarry_name_scratch : wordFindVar context carry ≠ 31)
     (hnoalias :
       ∀ name, name ≠ destination → name ≠ resultCarry →
         ∀ register,
@@ -316,33 +316,33 @@ theorem addCarry_preserves_mapped_locals [NeZero width]
           simp [RiscV.executeInstructions, RiscV.execute,
             RiscV.writeRegister, RiscV.readRegister,
             hdestination_nonzero, hresultCarry_nonzero,
-            hdestination_resultCarry, hdestination_sourceRight,
-            hdestination_scratch, hresultCarry_scratch,
-            hleft_scratch, hright_scratch, hcarry_scratch,
+            hdestination_resultCarry, 
+            hresultCarry_scratch,
+            hleft_scratch, hright_scratch, 
             Ne.symm hdestination_resultCarry,
             Ne.symm hdestination_sourceRight,
             Ne.symm hdestination_scratch,
             Ne.symm hresultCarry_scratch,
-            Ne.symm hleft_scratch, Ne.symm hright_scratch,
-            Ne.symm hcarry_scratch,
+            
+            
             hzero_value, hnonalias.1, hnonalias.2.1, hnonalias.2.2,
-            Ne.symm hnonalias.1, Ne.symm hnonalias.2.1,
+            
             Ne.symm hnonalias.2.2]
         · simp [RiscV.executeInstructions, RiscV.execute,
-            RiscV.writeRegister, RiscV.readRegister, hzero_register,
+            RiscV.writeRegister, RiscV.readRegister, 
             hdestination_nonzero, hresultCarry_nonzero,
-            hdestination_resultCarry, hdestination_sourceRight,
-            hdestination_scratch, hresultCarry_scratch,
-            hleft_scratch, hright_scratch, hcarry_scratch,
+            hdestination_resultCarry, 
+            hresultCarry_scratch,
+            hleft_scratch, hright_scratch, 
             Ne.symm hdestination_resultCarry,
             Ne.symm hdestination_sourceRight,
             Ne.symm hdestination_scratch,
             Ne.symm hresultCarry_scratch,
-            Ne.symm hleft_scratch, Ne.symm hright_scratch,
-            Ne.symm hcarry_scratch,
+            
+            
             hzero_value, hnonalias.1, hnonalias.2.1, hnonalias.2.2,
-            Ne.symm hnonalias.1, Ne.symm hnonalias.2.1,
-            Ne.symm hnonalias.2.2]
+            
+            ]
       exact hpreserved.trans hregister_value
 
 /-!
@@ -568,7 +568,7 @@ theorem loopToWord_primitive_addCarry_combined_simulation [NeZero width]
                 have hstate : intermediate = wordResult := by
                   simpa [hfunction, hvalues] using hword
                 subst wordResult
-                simpa [hvalues] using hfunction
+                simp []
             | cons value values =>
                 simp [hfunction, hvalues] at hword
   have hwordProg :

@@ -33,7 +33,7 @@ example :
         match value with
         | .word value => some value
         | _ => none)) = some (some 41) := by
-  native_decide
+  decide +kernel
 
 example :
     (panValueProgramResult sourceDeclarationInitialState sourceDeclarationNoPrimitive
@@ -43,7 +43,7 @@ example :
          { name := "main", inline := false, exported := true, params := [],
            body := .return (.var .global "answer"), returnShape := .one }]
       "main" []).bind sourceDeclarationSingleWord = some 41 := by
-  native_decide
+  decide +kernel
 
 example :
     (panValueProgramResult sourceDeclarationInitialState sourceDeclarationNoPrimitive
@@ -55,7 +55,7 @@ example :
              (.nStruct "Pair" [("left", .const 3), ("right", .const 5)])),
            returnShape := .one }]
       "main" []).bind sourceDeclarationSingleWord = some 5 := by
-  native_decide
+  decide +kernel
 
 def sourceDeclarationFfi : PanValueFfiHandler Nat :=
   fun function configuration _ array _ locals =>
@@ -72,7 +72,7 @@ example :
              (.extCall "inc" (.const 20) (.const 0) (.const 21) (.const 0))
              (.return (.var .local "result")), returnShape := .one }]
       "main" []).bind sourceDeclarationSingleWord = some 42 := by
-  native_decide
+  decide +kernel
 
 example :
     (evalPanValueProgram sourceDeclarationInitialState sourceDeclarationNoPrimitive
@@ -81,6 +81,6 @@ example :
          { name := "main", inline := false, exported := true, params := [],
            body := .return (.const 41), returnShape := .comb [.one, .one] }]
       "main" []).isNone = true := by
-  native_decide
+  decide +kernel
 
 end Flapjack

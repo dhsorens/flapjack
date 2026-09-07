@@ -48,7 +48,7 @@ example :
     panShapeMatches.panShapeListMatches]
 
 example : RiscV.accessAligned .read (0 : RiscV.Word 32) 4 = none := by
-  native_decide
+  decide
 
 example : RiscV.writeRegister (RiscV.zeroState 32) 0 (7 : RiscV.Word 32) =
     RiscV.zeroState 32 := by
@@ -68,27 +68,27 @@ example : nestedSeq ([] : List (Prog Nat)) = .skip := by
 
 example :
     expLocalVars (.op .add [.var .local "x", .var .global "g", .const 1]) = ["x"] := by
-  native_decide
+  decide +kernel
 
 example :
     expGlobalVars (Exp.nStruct (α := Nat) "Pair"
       [("left", .var .local "x"), ("right", .var .global "g")]) = ["g"] := by
-  native_decide
+  decide +kernel
 
 def pairContext : StructContext :=
   [("Pair", { fields := [("left", .one), ("right", .one)], size := 2 })]
 
 example : isWfShape pairContext (.named "Pair") = true := by
-  native_decide
+  decide +kernel
 
 example : isWfShape pairContext (.comb [.one, .named "Pair"]) = true := by
-  native_decide
+  decide +kernel
 
 example : isWfShape pairContext (.named "Missing") = false := by
-  native_decide
+  decide +kernel
 
 example : isWfContext pairContext = true := by
-  native_decide
+  decide +kernel
 
 example : shapeSizeWithContext pairContext (.named "Pair") = 2 := by
   native_decide
@@ -97,13 +97,13 @@ def duplicateContext : StructContext :=
   [("Pair", { fields := [], size := 0 }), ("Pair", { fields := [], size := 0 })]
 
 example : isWfContext duplicateContext = false := by
-  native_decide
+  decide
 
 example : validateDecl pairContext (.decl .one "answer" (.const 42)) = true := by
-  native_decide
+  decide +kernel
 
 example : validateDecl pairContext (.decl (.named "Missing") "bad" (.const 0)) = false := by
-  native_decide
+  decide +kernel
 
 def checkerContext : Context :=
   { locals := [("x", { shapedBased := .word .trusted }),
@@ -172,26 +172,26 @@ example :
     checkProg (α := Nat) checkerContext
       (.assign .local "missing" (.const 7)) =
       staticError (.scope "unknown local variable: missing") := by
-  simp [checkProg, staticError, staticBind, checkerContext, lookupInfo]
+  simp [checkProg, staticError, checkerContext, lookupInfo]
 
 example :
     staticResultErrorMessage (checkProg (α := Nat) checkerContext
       (.seq (.annot "location" "body")
         (.assign .local "missing" (.const 7)))) =
       some "unknown local variable: missing" := by
-  native_decide
+  decide +kernel
 
 example :
     staticResultLocation (checkProg (α := Nat) checkerContext
       (.seq (.annot "location" "body") (.skip))) = some "AT body: " := by
-  native_decide
+  decide +kernel
 
 example :
     staticResultErrorMessage (checkProg (α := Nat) checkerContext
       (.ite (.const 1) (.annot "location" "then")
         (.assign .local "missing" (.const 7)))) =
       some "unknown local variable: missing" := by
-  native_decide
+  decide +kernel
 
 example :
     checkProg (α := Nat) checkerContext
@@ -248,25 +248,25 @@ example :
     staticResultOk (checkProg (α := Nat) checkerPrimitiveContext
       (.primitive "carry" .addCarry [.const 1, .const 2, .const 0])) =
       true := by
-  native_decide
+  decide +kernel
 
 example :
     staticResultOk (checkProg (α := Nat) checkerHandlerContext
       (.call (some (none, some ("E", "exceptionValue", .skip))) "f" [])) =
       true := by
-  native_decide
+  decide +kernel
 
 example :
     staticResultOk (checkProg (α := Nat) checkerCallContext
       (.decCall "result" .one "f" [] .skip)) =
       true := by
-  native_decide
+  decide +kernel
 
 example :
     staticResultOk (checkProg (α := Nat) checkerContext
       (.extCall "ffi" (.const 1) (.const 2) (.const 3) (.const 4))) =
       true := by
-  native_decide
+  decide +kernel
 
 example :
     checkExp (α := Nat)

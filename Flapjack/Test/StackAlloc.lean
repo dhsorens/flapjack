@@ -61,13 +61,13 @@ example :
     (compileStackProgramNatListWithStackAllocToRiscV (width := 64)
       { services := [] } stackAllocRemoveConfig stackAllocTestConfig 0 0
       [(1, (.alloc 1 : StackProg Nat))]).isSome := by
-  native_decide
+  decide +kernel
 
 example :
     (compileStackProgramNatListWithHaltToRiscV (width := 64)
       { services := [] } stackAllocRemoveConfig 0 0
       [(1, (.halt 1 : StackProg Nat))]).isSome := by
-  native_decide
+  decide +kernel
 
 def stackGcTestConfig : StackGcConfig :=
   { shiftLength := 11
@@ -94,7 +94,7 @@ example :
     (compileStackProgramNatListWithSimpleGcToRiscV (width := 64)
       { services := [] } stackAllocRemoveConfig stackAllocTestConfig
       stackGcTestConfig 0 0 [(1, (.alloc 1 : StackProg Nat))]).isSome := by
-  native_decide
+  decide +kernel
 
 def zeroStackMachineState : RiscV.WordStackMachineState 64 :=
   { registers := fun _ => 0
@@ -201,18 +201,18 @@ example :
 example :
     (evalStackProgFuel 4 zeroStackMachineState
       (.seq (.const 1 7) (.set .allocSize 1) : StackProg Nat)).isSome := by
-  native_decide
+  decide
 
 example :
     (evalStackProgFuel 3000 zeroStackMachineState
       (stackGcSimpleCode stackGcTestConfig)).isSome := by
-  native_decide
+  decide
 
 example :
     stackGcSimpleZeroObservation
       (evalStackProgFuel 3000 zeroStackMachineState
         (stackGcSimpleCode stackGcTestConfig)) = true := by
-  native_decide
+  decide
 
 def forwardedPointerState : RiscV.WordStackMachineState 64 :=
   { registers := fun register => if register = 5 then 3 else 0
@@ -241,39 +241,39 @@ example :
     stackMachineNormalRegisterEquals
       (evalStackProgFuel 500 forwardedPointerState
         (stackGcMoveCode stackGcTestConfig)) 5 3 = true := by
-  native_decide
+  decide
 
 example :
     stackMachineNormalRegisterEquals
       (evalStackProgFuel 500 movedForwardingPointerState
         (stackGcMoveCode stackGcTestConfig)) 5 2051 = true := by
-  native_decide
+  decide
 
 example :
     stackMachineNormalRegisterEquals
       (evalStackProgFuel 1000 oneWordObjectState
         (stackGcMoveCode stackGcTestConfig)) 5 2051 = true := by
-  native_decide
+  decide
 
 example :
     stackMachineNormalMemoryEquals
       (evalStackProgFuel 1000 oneWordObjectState
         (stackGcMoveCode stackGcTestConfig)) 100 3 = true := by
-  native_decide
+  decide
 
 example :
     (evalStackLabelCallFuel 3000
       (fun target => if target = 77 then
         some (stackGcSimpleStub stackGcTestConfig) else none)
       zeroStackMachineState 77 (.skip : StackProg Nat)).isSome := by
-  native_decide
+  decide
 
 example :
     (evalStackSectionsFuel 6000
       (stackAllocCompileWithSimpleGc stackAllocTestConfig stackGcTestConfig
         [(1, (.alloc 1 : StackProg Nat))])
       1 zeroStackMachineState).isSome := by
-  native_decide
+  decide +kernel
 
 example :
     stackGcSimpleZeroObservation
@@ -281,7 +281,7 @@ example :
         (stackAllocCompileWithSimpleGc stackAllocTestConfig stackGcTestConfig
           [(1, (.alloc 1 : StackProg Nat))])
         1 zeroStackMachineState) = true := by
-  native_decide
+  decide +kernel
 
 def oneWordObjectNatMemory : Nat → Nat :=
   fun address => if address = 0 then 3 else 0
@@ -292,12 +292,12 @@ def allAddressesInDomain : Nat → Bool :=
 example :
     (stackGcNatMove stackGcTestConfig 3 1 100 0
       oneWordObjectNatMemory allAddressesInDomain).value = 2051 := by
-  native_decide
+  decide
 
 example :
     (stackGcNatMove stackGcTestConfig 3 1 100 0
       oneWordObjectNatMemory allAddressesInDomain).memory 100 = 3 := by
-  native_decide
+  decide
 
 example :
     stackMachineNormalRegisterNat
@@ -305,22 +305,22 @@ example :
         (stackGcMoveCode stackGcTestConfig)) 5 =
       some (stackGcNatMove stackGcTestConfig 3 1 100 0
         oneWordObjectNatMemory allAddressesInDomain).value := by
-  native_decide
+  decide
 
 example :
     (stackGcNatMoveRoots stackGcTestConfig [3, 2] 1 100 0
       oneWordObjectNatMemory allAddressesInDomain).values = [2051, 2] := by
-  native_decide
+  decide
 
 example :
     (stackGcNatMoveList stackGcTestConfig 1 0 1 100 0
       oneWordObjectNatMemory allAddressesInDomain).nextScan = 8 := by
-  native_decide
+  decide
 
 example :
     (stackGcNatMoveList stackGcTestConfig 1 0 1 100 0
       oneWordObjectNatMemory allAddressesInDomain).memory 100 = 3 := by
-  native_decide
+  decide
 
 example :
     (stackGcNatFull stackGcTestConfig [3] 100 0
@@ -329,6 +329,6 @@ example :
         oneWordObjectNatMemory allAddressesInDomain 10).nextAddress = 108 ∧
       (stackGcNatFull stackGcTestConfig [3] 100 0
         oneWordObjectNatMemory allAddressesInDomain 10).condition = true := by
-  native_decide
+  decide
 
 end Flapjack

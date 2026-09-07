@@ -91,7 +91,7 @@ example :
         (wordStackMachineValue config state 0,
           wordStackMachineValue config state 1)) =
       some (some (BitVec.ofNat 8 0), some (BitVec.ofNat 8 12)) := by
-  native_decide
+  decide +kernel
 
 example :
     let state : State 8 :=
@@ -103,7 +103,7 @@ example :
         .add 27 27 31, .sltu 31 27 31, .or 28 28 31]
     (readRegister final 27, readRegister final 28) =
       (BitVec.ofNat 8 1, BitVec.ofNat 8 1) := by
-  native_decide
+  decide
 
 example [NeZero width] (state : State width)
     (zero : readRegister state 0 = 0) :
@@ -161,7 +161,7 @@ example :
         (wordStackMachineValue config state 0,
           wordStackMachineValue config state 1)) =
       some (some (BitVec.ofNat 8 1), some (BitVec.ofNat 8 1)) := by
-  native_decide
+  decide +kernel
 
 example :
     wordToStackProg
@@ -183,7 +183,7 @@ example :
     wordStackPhysicalMovesTo, wordStackParallelLocationMove,
     wordStackParallelLocationMoveAux, wordStackLocationMoveDestinations,
     wordStackLocationMoveReady, wordStackLocationMoveRemoveDestination,
-    wordStackLocationMove, wordStackMoveToPhysical, wordStackLocation,
+    wordStackLocationMove, wordStackLocation,
     wordStackOffset, lookupNatInfo, wordStackJoin]
 
 example :
@@ -236,7 +236,7 @@ example (state final : WordStackMachineState 8)
         state 2 := by
   apply evalWordStackMachine_ffi_move_preserves_value
     (sourceLocation := .register 4)
-  · native_decide
+  · decide
   · decide
   · exact heval
 
@@ -250,7 +250,7 @@ example (state final : WordStackMachineState 8)
         state 2 := by
   apply evalWordStackMachine_ffi_move_preserves_value
     (sourceLocation := .stack 2)
-  · native_decide
+  · decide
   · decide
   · exact heval
 
@@ -418,7 +418,7 @@ example :
         { locations := [(0, .register 5)], scratch := 31, stackBase := 10 }
         state 0) =
       some (BitVec.ofNat 8 42) := by
-  native_decide
+  decide +kernel
 
 example :
     (wordToStackProg
@@ -431,7 +431,7 @@ example :
     wordStackPhysicalMovesFrom, wordStackParallelLocationMove,
     wordStackParallelLocationMoveAux, wordStackLocationMoveDestinations,
     wordStackLocationMoveReady, wordStackLocationMoveRemoveDestination,
-    wordStackLocationMove, wordStackMoveToPhysical, wordStackMoveFromPhysical,
+    wordStackLocationMove, 
     wordStackLocation, lookupNatInfo]
 
 example :
@@ -442,7 +442,7 @@ example :
         (fun program => match program with
           | .seq (.arith .or 2 5 5) _ => true
           | _ => false) = some true := by
-  native_decide
+  decide +kernel
 
 example :
     (wordToStackProg
@@ -451,12 +451,12 @@ example :
         ((.call none (some 7) [0] (some (1, .raise 0, 0, 0))) : WordProg Nat)).isSome =
       true := by
   simp [wordToStackProg, wordStackReturnCode, wordStackMovesToPhysical,
-    wordStackPhysicalMovesTo, wordStackMoveToPhysical,
-    wordStackMovesFromPhysical, wordStackPhysicalMovesFrom,
+    wordStackPhysicalMovesTo, 
+    
     wordStackParallelLocationMove, wordStackParallelLocationMoveAux,
     wordStackLocationMoveDestinations, wordStackLocationMoveReady,
     wordStackLocationMoveRemoveDestination, wordStackLocationMove,
-    wordStackMoveFromPhysical, wordStackLocation, wordStackOffset,
+    wordStackLocation, wordStackOffset,
     lookupNatInfo, wordToStackCallWithHandler, wordToStackRaise,
     stackSeq, stackArgs, stackMove, stackPushHandler, stackHandlerArgs,
     wordStackJoin]

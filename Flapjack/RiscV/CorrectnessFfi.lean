@@ -992,7 +992,7 @@ theorem loopToWord_call_loop_control_simulation_single_parameter_with_handler
           calleeWord (loopToWordProg context loopBody) = some bodyWordResult →
       loopResultMappedToWordLoop context bodyResult bodyWordResult)
     (hhandler : ∀ exceptionValue
-        (handlerLoopState : LoopState (Word width))
+        (_handlerLoopState : LoopState (Word width))
         (handlerWordState : State width)
         (handlerResult : LoopResult (Word width))
         (handlerWordResult : WordLoopControlResult width),

@@ -220,7 +220,7 @@ mutual
         else evalWordFunctionWithCallsAndFfi functions handler fuel state elseBranch
     | fuel + 1, state, .mustTerminate body =>
         evalWordFunctionWithCallsAndFfi functions handler fuel state body
-    | fuel + 1, state, program => evalWordFunction state program
+    | _fuel + 1, state, program => evalWordFunction state program
     termination_by fuel _ _ => fuel
 end
 

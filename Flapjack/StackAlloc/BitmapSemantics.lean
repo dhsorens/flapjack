@@ -58,9 +58,9 @@ def stackGcNatValueRootValid : StackGcNatValue → Prop
 def stackGcNatEncodeStackFuel (config : StackGcConfig)
     (bitmaps : List Nat) : Nat → List StackGcNatValue → Option (List StackGcNatValue)
   | 0, _ => none
-  | Nat.succ fuel, [] => none
-  | Nat.succ fuel, [.word 0] => some []
-  | Nat.succ fuel, .word 0 :: _ => none
+  | Nat.succ _fuel, [] => none
+  | Nat.succ _fuel, [.word 0] => some []
+  | Nat.succ _fuel, .word 0 :: _ => none
   | Nat.succ fuel, value :: values =>
       match stackGcNatFullReadBitmap config bitmaps value with
       | none => none
@@ -81,10 +81,10 @@ def stackGcNatDecodeStackFuel (config : StackGcConfig)
     (bitmaps : List Nat) : Nat → List StackGcNatValue →
       List StackGcNatValue → Option (List StackGcNatValue)
   | 0, _, _ => none
-  | Nat.succ fuel, _, [] => none
-  | Nat.succ fuel, [], [.word 0] => some [.word 0]
-  | Nat.succ fuel, _, [.word 0] => none
-  | Nat.succ fuel, _, .word 0 :: _ => none
+  | Nat.succ _fuel, _, [] => none
+  | Nat.succ _fuel, [], [.word 0] => some [.word 0]
+  | Nat.succ _fuel, _, [.word 0] => none
+  | Nat.succ _fuel, _, .word 0 :: _ => none
   | Nat.succ fuel, encoded, value :: values =>
       match stackGcNatFullReadBitmap config bitmaps value with
       | none => none
@@ -211,69 +211,69 @@ theorem stackGcNatMoveValueRoots_length (config : StackGcConfig)
 example :
     stackGcNatEncodeStack { wordBits := 8 } [3]
         [.word 1, .word 11, .word 0] = some [.word 11] := by
-  native_decide
+  decide +kernel
 
 example :
     stackGcNatDecodeStack { wordBits := 8 } [3] [.word 11]
         [.word 1, .word 11, .word 0] = some [.word 1, .word 11, .word 0] := by
-  native_decide
+  decide +kernel
 
 example :
     stackGcNatEncodeStack { wordBits := 8 } [3]
         [.word 1, .word 11] = none := by
-  native_decide
+  decide +kernel
 
 example :
     stackGcNatDecodeStack { wordBits := 8 } [3] []
         [.word 1, .word 0] = none := by
-  native_decide
+  decide +kernel
 
 example :
     (stackGcNatMoveValueRoots { wordBits := 8 }
       [.loc 4 0, .word 2] 0 100 0 (fun _ => 0) (fun _ => true)).values =
       [.loc 4 0, .word 2] := by
-  native_decide
+  decide
 
 example :
     (stackGcNatMoveValueRoots { wordBits := 8 }
       [.loc 4 1] 0 100 0 (fun _ => 0) (fun _ => true)).condition = false := by
-  native_decide
+  decide
 
 example :
     (stackGcNatMoveBitmap { wordBits := 8 } [3] (.word 1)
       [.word 2, .word 0] 0 100 0 (fun _ => 0) (fun _ => true)).map
         (fun result => result.values) = some [.word 2] := by
-  native_decide
+  decide +kernel
 
 example :
     (stackGcNatMoveBitmap { wordBits := 8 } [3] (.word 1)
       [.word 2, .word 0] 0 100 0 (fun _ => 0) (fun _ => true)).map
         (fun result => result.remainder) = some [.word 0] := by
-  native_decide
+  decide +kernel
 
 example :
     stackGcNatMoveBitmap { wordBits := 8 } [3] (.loc 1 0)
       [.word 2, .word 0] 0 100 0 (fun _ => 0) (fun _ => true) = none := by
-  native_decide
+  decide
 
 example :
     (stackGcNatMoveRootsBitmaps { wordBits := 8 } [3]
       [.word 1, .word 2, .word 0] 0 100 0 (fun _ => 0) (fun _ => true)).map
         (fun result => result.values) =
       some [.word 1, .word 2, .word 0] := by
-  native_decide
+  decide +kernel
 
 example :
     stackGcNatMoveRootsBitmaps { wordBits := 8 } [3]
       [.word 1, .word 2] 0 100 0 (fun _ => 0) (fun _ => true) = none := by
-  native_decide
+  decide +kernel
 
 example :
     (stackGcNatFullBitmaps { wordBits := 8 } [3]
       [.word 1, .word 2, .word 0] 100 0 (fun _ => 0) (fun _ => true) 0).map
         (fun result => result.values) =
       some [.word 1, .word 2, .word 0] := by
-  native_decide
+  decide +kernel
 
 
 @[simp] theorem stackGcNatBitLength_zero :
@@ -282,7 +282,7 @@ example :
 
 @[simp] theorem stackGcNatGetBits_zero :
     stackGcNatGetBits 0 = [] := by
-  simp [stackGcNatGetBits, stackGcNatBitLength]
+  simp [stackGcNatGetBits]
 
 @[simp] theorem stackGcNatReadBitmap_nil (config : StackGcConfig) :
     stackGcNatReadBitmap config [] = none := by
@@ -579,7 +579,7 @@ theorem stackGcNatMapBitmap_length_partition
                           cases hmapped
                           cases hvalues
                           exact ⟨by simp [hlength.1], by
-                            simpa [hlength.2, Nat.add_assoc, Nat.add_comm]⟩
+                            simp [hlength.2, Nat.add_assoc, Nat.add_comm]⟩
           | true =>
               cases moved with
               | nil =>
@@ -607,7 +607,7 @@ theorem stackGcNatMapBitmap_length_partition
                               cases hmapped
                               cases hvalues
                               exact ⟨by simp [hlength.1], by
-                                simpa [hlength.2, Nat.add_assoc, Nat.add_comm]⟩
+                                simp [hlength.2, Nat.add_assoc, Nat.add_comm]⟩
 
 theorem stackGcNatMoveBitmap_values_length
     (config : StackGcConfig) (bitmaps : List Nat)
@@ -916,15 +916,15 @@ theorem stackGcNatFullBitmaps_length
   rfl
 
 example : stackGcNatGetBits 5 = [true, false] := by
-  native_decide
+  decide +kernel
 
 example :
     stackGcNatReadBitmap { wordBits := 8 } [5] = some [true, false] := by
-  native_decide
+  decide +kernel
 
 example :
     stackGcNatFullReadBitmap { wordBits := 8 } [5] (.word 1) =
       some [true, false] := by
-  native_decide
+  decide +kernel
 
 end Flapjack

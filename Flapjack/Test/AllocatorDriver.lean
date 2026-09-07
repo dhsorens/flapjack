@@ -13,14 +13,14 @@ example :
     wordFunctionAllocationResultIsOracle
       (wordAllocateFunctionWithOracleOrGraph
         [] (.skip : WordProg Nat) [] 13 26 []) = true := by
-  native_decide
+  decide +kernel
 
 example :
     wordFunctionAllocationResultIsGraph
       (wordAllocateFunctionWithOracleOrGraph
         [] (.inst (.arith (.longMul 0 1 2 3)) : WordProg Nat)
         [] 13 26 []) = true := by
-  native_decide
+  decide +kernel
 
 example (parameters : List Nat) (program : WordProg Nat)
     (fixedSources : List Nat) (colours stackStart : Nat)

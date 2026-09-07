@@ -24,7 +24,7 @@ theorem loopCallControl_mapped_locals :
   intro name value hvalue
   by_cases hname : name = 2
   · subst name
-    refine ⟨2, by native_decide, ?_⟩
+    refine ⟨2, by decide, ?_⟩
     simpa [loopCallControlLoopState, loopCallControlWordState,
       readRegister, writeRegister] using hvalue
   · simp [loopCallControlLoopState, hname] at hvalue
@@ -54,7 +54,7 @@ theorem loopCallControl_break_simulation :
     (hlookupLoop := by simp [lookupLoopFunction])
     (hlookupWord := by simp [lookupWordFunction, wordFindVar, lookupNatInfo,
       loopToWordProg])
-    (hparameter := by native_decide)
+    (hparameter := by decide)
     (hparameter_nonzero := by decide)
     (hargument := by simp [loopCallControlLoopState])
     (hbody := by
@@ -70,11 +70,11 @@ theorem loopCallControl_break_simulation :
       simp [evalLoopCallWithPrimitiveCallsAndFfi,
         evalLoopProgWithPrimitiveCallsAndFfi, evalLoopProg,
         lookupLoopFunction, loopCallControlLoopState, loopReadLocals,
-        loopBindParameters, updateLoopLocal])
+        loopBindParameters])
     (hword := by
       simp [RiscV.evalWordLoopCallWithHandlersAndFfi,
         RiscV.evalWordLoopProgWithHandlersAndFfi, RiscV.lookupWordFunction,
-        loopToWordProg, loopCallControlWordState, writeRegister,
+        loopCallControlWordState, writeRegister,
         readRegister, RiscV.readWordRegisters, RiscV.bindWordRegisters,
         RiscV.clearWordRegisters, registerOfNat, wordFindVar, lookupNatInfo])
 
@@ -107,7 +107,7 @@ theorem loopCallFfi_simulation :
     (hlookupLoop := by simp [lookupLoopFunction, loopCallFfiBody])
     (hlookupWord := by simp [lookupWordFunction, wordFindVar, lookupNatInfo,
       loopToWordProg, loopCallFfiBody])
-    (hparameter := by native_decide)
+    (hparameter := by decide)
     (hparameter_nonzero := by decide)
     (hargument := by simp [loopCallControlLoopState])
     (hbody := by
@@ -173,7 +173,7 @@ theorem loopCallFfi_simulation :
     (hlocals := loopCallControl_mapped_locals)
     (hloop := by
       simp [evalLoopCallWithPrimitiveCallsAndFfi,
-        evalLoopProgWithPrimitiveCallsAndFfi, evalLoopProg,
+        evalLoopProgWithPrimitiveCallsAndFfi, 
         lookupLoopFunction, loopCallFfiBody, loopCallControlLoopState,
         loopReadLocals, loopBindParameters, updateLoopLocal])
     (hword := by

@@ -28,7 +28,7 @@ def structFindFieldIndex [BEq String] (field : FieldName) :
 
 def structCompileShapeFuel : Nat → StructContext → Shape → Shape
   | 0, _, _ => .one
-  | fuel + 1, context, .one => .one
+  | _fuel + 1, _context, .one => .one
   | fuel + 1, context, .comb shapes =>
       .comb (shapes.map (structCompileShapeFuel fuel context))
   | fuel + 1, context, .named name =>
