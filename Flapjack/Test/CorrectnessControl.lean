@@ -30,7 +30,7 @@ theorem controlTestLocals_relation :
   · subst name
     simp [controlTestLocals] at hvalue
     subst value
-    refine ⟨2, by native_decide, ?_⟩
+    refine ⟨2, by decide, ?_⟩
     simp [controlTestState, RiscV.writeRegister, RiscV.readRegister]
   · simp [controlTestLocals, hname] at hvalue
 

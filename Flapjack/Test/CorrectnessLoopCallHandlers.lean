@@ -31,7 +31,7 @@ theorem loopCallHandler_mapped_locals :
   intro name value hvalue
   by_cases hname : name = 2
   · subst name
-    refine ⟨2, by native_decide, ?_⟩
+    refine ⟨2, by decide, ?_⟩
     simpa [loopCallHandlerLoopState, loopCallHandlerWordState,
       readRegister, writeRegister] using hvalue
   · simp [loopCallHandlerLoopState, hname] at hvalue
@@ -67,9 +67,9 @@ theorem loopCallHandler_simulation :
     (hlookupLoop := by simp [lookupLoopFunction, loopCallHandlerBody])
     (hlookupWord := by simp [lookupWordFunction, wordFindVar, lookupNatInfo,
       loopToWordProg, loopCallHandlerBody])
-    (hparameter := by native_decide)
+    (hparameter := by decide)
     (hparameter_nonzero := by decide)
-    (hexception := by native_decide)
+    (hexception := by decide)
     (hexception_nonzero := by decide)
     (hargument := by simp [loopCallHandlerLoopState])
     (hnoalias := by
@@ -77,7 +77,7 @@ theorem loopCallHandler_simulation :
       intro heq
       have hname' : name = 11 := by
         have h11 : registerOfNat 11 = some (11 : Fin 32) := by
-          native_decide
+          decide
         have hsame :
             registerOfNat (wordFindVar ({ vars := [] } : WordContext) name) =
               some (11 : Fin 32) := by

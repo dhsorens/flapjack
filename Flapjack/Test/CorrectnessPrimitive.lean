@@ -43,19 +43,19 @@ theorem primitiveMappedLocals_relation :
   · subst name
     simp [primitiveMappedLocals] at hvalue
     subst value
-    refine ⟨2, by native_decide, ?_⟩
+    refine ⟨2, by decide, ?_⟩
     simp [primitiveMappedState, RiscV.writeRegister, RiscV.readRegister]
   · by_cases hname_three : name = 3
     · subst name
       simp [primitiveMappedLocals] at hvalue
       subst value
-      refine ⟨3, by native_decide, ?_⟩
+      refine ⟨3, by decide, ?_⟩
       simp [primitiveMappedState, RiscV.writeRegister, RiscV.readRegister]
     · by_cases hname_four : name = 4
       · subst name
         simp [primitiveMappedLocals] at hvalue
         subst value
-        refine ⟨4, by native_decide, ?_⟩
+        refine ⟨4, by decide, ?_⟩
         simp [primitiveMappedState, RiscV.writeRegister, RiscV.readRegister]
       · simp [primitiveMappedLocals, hname, hname_three, hname_four] at hvalue
 
@@ -76,11 +76,11 @@ theorem primitiveMapped_noalias :
       simpa [primitiveMappedContext, wordFindVar, lookupNatInfo,
         hname_thirtyOne, Ne.symm hname_thirtyOne] using hregister
     have hfive : RiscV.registerOfNat 5 = some (5 : Fin 32) := by
-      native_decide
+      decide
     have hsix : RiscV.registerOfNat 6 = some (6 : Fin 32) := by
-      native_decide
+      decide
     have hthirtyOne : RiscV.registerOfNat 31 = some (31 : Fin 32) := by
-      native_decide
+      decide
     constructor
     · intro heq
       have hname : name = 5 :=
@@ -116,17 +116,17 @@ theorem primitiveMapped_addCarry_preserves_mapped_locals :
     (leftValue := BitVec.ofNat 64 1) (rightValue := BitVec.ofNat 64 2)
     (carryValue := BitVec.ofNat 64 0)
     (hlocals := primitiveMappedLocals_relation)
-    (hleft := by native_decide)
-    (hright := by native_decide)
-    (hcarry := by native_decide)
-    (hdestination := by native_decide)
-    (hresultCarry := by native_decide)
-    (hleft_register := by native_decide)
-    (hright_register := by native_decide)
-    (hcarry_register := by native_decide)
-    (hleft_state := by native_decide)
-    (hright_state := by native_decide)
-    (hcarry_state := by native_decide)
+    (hleft := by decide)
+    (hright := by decide)
+    (hcarry := by decide)
+    (hdestination := by decide)
+    (hresultCarry := by decide)
+    (hleft_register := by decide)
+    (hright_register := by decide)
+    (hcarry_register := by decide)
+    (hleft_state := by decide)
+    (hright_state := by decide)
+    (hcarry_state := by decide)
     (hzero := by simp [primitiveMappedState, RiscV.writeRegister,
       RiscV.readRegister, RiscV.zeroState])
     (hdestination_nonzero := by decide)
@@ -180,7 +180,7 @@ theorem primitiveMapped_longMul_noalias :
   have hfive :
       RiscV.registerOfNat (wordFindVar primitiveMappedContext 5) =
         some (5 : Fin 32) := by
-    native_decide
+    decide
   have hname' := RiscV.registerOfNat_injective hregister hfive heq
   by_cases hthirtyOne : name = 31
   · subst name
@@ -229,9 +229,9 @@ example :
         (leftValue := BitVec.ofNat 64 1)
         (rightValue := BitVec.ofNat 64 2)
         (hlocals := primitiveMappedLocals_relation)
-        (hleft := by native_decide)
-        (hright := by native_decide)
-        (hdestination := by native_decide)
+        (hleft := by decide)
+        (hright := by decide)
+        (hdestination := by decide)
         (hdestination_nonzero := by decide)
         (hnoalias := primitiveMapped_longMul_noalias)
         atomicState htarget)
@@ -277,10 +277,10 @@ example :
         (dividendValue := BitVec.ofNat 64 1)
         (divisorValue := BitVec.ofNat 64 2)
         (hlocals := primitiveMappedLocals_relation)
-        (hdividend := by native_decide)
-        (hdivisor := by native_decide)
+        (hdividend := by decide)
+        (hdivisor := by decide)
         (hdivisor_nonzero := by decide)
-        (hdestination := by native_decide)
+        (hdestination := by decide)
         (hdestination_nonzero := by decide)
         (hnoalias := primitiveMapped_longMul_noalias)
         atomicState htarget)
@@ -303,7 +303,7 @@ example :
     ({ vars := [] } : WordContext) loopAddCarryState loopAddCarryMachineState
     5 6 2 3 4 5 6 2 3 4
     (BitVec.ofNat 64 1) (BitVec.ofNat 64 2) (BitVec.ofNat 64 0)
-  all_goals native_decide
+  all_goals decide
 
 example :
     (evalCrepStateProgWithPrimitive RiscV.loopPrimitiveHandler

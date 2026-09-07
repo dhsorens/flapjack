@@ -25,7 +25,7 @@ theorem memoryCorrectness_mappedLocals :
     simp [memoryCorrectnessLoopState] at hvalue
     subst value
     refine ⟨3, ?_, ?_⟩
-    · native_decide
+    · decide
     · simp [memoryCorrectnessWordState, RiscV.writeRegister,
         RiscV.readRegister]
   · simp [memoryCorrectnessLoopState, hname] at hvalue
@@ -37,7 +37,7 @@ theorem memoryCorrectness_noalias :
           some register → register ≠ 2 := by
   intro name hname register hregister heq
   have htwo : RiscV.registerOfNat 2 = some (2 : Fin 32) := by
-    native_decide
+    decide
   have hfind := RiscV.registerOfNat_injective hregister htwo heq
   by_cases hname_one : name = 1
   · subst name
@@ -73,19 +73,19 @@ example :
         simp [memoryCorrectnessLoopState] at hvalue
         subst value
         refine ⟨3, ?_, ?_⟩
-        · native_decide
+        · decide
         · simp [memoryCorrectnessWordState, RiscV.writeRegister,
             RiscV.readRegister]
       · simp [memoryCorrectnessLoopState, hname] at hvalue)
     (haddress := by simp [memoryCorrectnessLoopState])
     (hmemory := by simp [memoryCorrectnessLoopState])
-    (hmachine := by native_decide)
-    (hdestination := by native_decide)
+    (hmachine := by decide)
+    (hdestination := by decide)
     (hdestination_nonzero := by decide)
     (hnoalias := by
       intro name hname register hregister
       have htwo : RiscV.registerOfNat 2 = some (2 : Fin 32) := by
-        native_decide
+        decide
       intro heq
       have hfind := RiscV.registerOfNat_injective hregister htwo heq
       by_cases hname_one : name = 1
@@ -118,9 +118,9 @@ example :
         RiscV.zeroState, RiscV.writeWord32, RiscV.writeByte])
     (hlocals := memoryCorrectness_mappedLocals)
     (haddress := by simp [memoryCorrectnessLoopState])
-    (hmemory := by native_decide)
-    (hmachine := by native_decide)
-    (hdestination := by native_decide)
+    (hmemory := by decide)
+    (hmachine := by decide)
+    (hdestination := by decide)
     (hdestination_nonzero := by decide)
     (hnoalias := memoryCorrectness_noalias)
 
@@ -137,8 +137,8 @@ example :
     (state := memoryCorrectnessWordState)
     (address := 1) (value := 1)
     (addressRegister := 3) (valueRegister := 3)
-    (haddress := by native_decide)
-    (hvalue := by native_decide)
+    (haddress := by decide)
+    (hvalue := by decide)
     (hlocals := memoryCorrectness_mappedLocals)
 
 example :
@@ -200,9 +200,9 @@ example :
         RiscV.zeroState, RiscV.writeWord32, RiscV.writeByte])
     (hlocals := memoryCorrectness_mappedLocals)
     (haddress := by simp [memoryCorrectnessLoopState])
-    (hmemory := by native_decide)
-    (hmachine := by native_decide)
-    (hdestination := by native_decide)
+    (hmemory := by decide)
+    (hmachine := by decide)
+    (hdestination := by decide)
     (hdestination_nonzero := by decide)
     (hnoalias := memoryCorrectness_noalias)
 
@@ -219,8 +219,8 @@ example :
     (state := memoryCorrectnessWordState)
     (address := 1) (value := 1)
     (addressRegister := 3) (valueRegister := 3)
-    (haddress := by native_decide)
-    (hvalue := by native_decide)
+    (haddress := by decide)
+    (hvalue := by decide)
     (hlocals := memoryCorrectness_mappedLocals)
 
 example :
@@ -244,9 +244,9 @@ example :
         RiscV.zeroState, RiscV.writeWord32, RiscV.writeByte])
     (hlocals := memoryCorrectness_mappedLocals)
     (haddress := by simp [memoryCorrectnessLoopState])
-    (hmemory := by native_decide)
-    (hmachine := by native_decide)
-    (hdestination := by native_decide)
+    (hmemory := by decide)
+    (hmachine := by decide)
+    (hdestination := by decide)
     (hdestination_nonzero := by decide)
     (hnoalias := memoryCorrectness_noalias)
 
@@ -263,8 +263,8 @@ example :
     (state := memoryCorrectnessWordState)
     (address := 1) (value := 1)
     (addressRegister := 3) (valueRegister := 3)
-    (haddress := by native_decide)
-    (hvalue := by native_decide)
+    (haddress := by decide)
+    (hvalue := by decide)
     (hlocals := memoryCorrectness_mappedLocals)
 
 example :
@@ -284,9 +284,9 @@ example :
     (value := BitVec.ofNat 64 42)
     (hlocals := memoryCorrectness_mappedLocals)
     (haddress := by simp [memoryCorrectnessLoopState])
-    (hmemory := by native_decide)
-    (hmachine := by native_decide)
-    (hdestination := by native_decide)
+    (hmemory := by decide)
+    (hmachine := by decide)
+    (hdestination := by decide)
     (hdestination_nonzero := by decide)
     (hnoalias := memoryCorrectness_noalias)
 
@@ -303,8 +303,8 @@ example :
     (state := memoryCorrectnessWordState)
     (address := 1) (value := 1)
     (addressRegister := 3) (valueRegister := 3)
-    (haddress := by native_decide)
-    (hvalue := by native_decide)
+    (haddress := by decide)
+    (hvalue := by decide)
     (hlocals := memoryCorrectness_mappedLocals)
 
 example :
@@ -328,7 +328,7 @@ example :
       · subst name
         simp [memoryCorrectnessContext, wordFindVar, lookupNatInfo] at hregister
         have hthree : RiscV.registerOfNat 3 = some (3 : Fin 32) := by
-          native_decide
+          decide
         have hregister' : register = (3 : Fin 32) := by
           exact Option.some.inj (hregister.symm.trans hthree)
         rw [hregister']

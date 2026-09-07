@@ -207,7 +207,7 @@ example :
         (fun result => match result with
         | .returned _ values => values
         | _ => []) = some [42] := by
-  native_decide
+  decide +kernel
 
 example :
     (evalPanProgWithCallsAndFfi [] sourceFfiHandler 10
@@ -217,7 +217,7 @@ example :
           (.const 0) (.const 0)))).map (fun result => match result with
         | .normal locals => locals "x"
         | _ => none) = some (some 41) := by
-  native_decide
+  decide +kernel
 
 example :
     sourceFfiPipeline.pipeline.word.length = 2 &&
