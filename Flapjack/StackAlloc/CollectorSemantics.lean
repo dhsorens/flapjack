@@ -85,9 +85,9 @@ theorem stackFrameMemcpyStep_register_zero [NeZero width]
     (config : StackGcConfig) (words : Nat)
     (state : StackFrameMachineState width)
     (hscratch0 : config.immediateScratch ≠ 0)
-    (hscratch1 : config.immediateScratch ≠ 1)
-    (hscratch2 : config.immediateScratch ≠ 2)
-    (hscratch3 : config.immediateScratch ≠ 3)
+    (_hscratch1 : config.immediateScratch ≠ 1)
+    (_hscratch2 : config.immediateScratch ≠ 2)
+    (_hscratch3 : config.immediateScratch ≠ 3)
     (hcount : state.machine.registers 0 = BitVec.ofNat width (words + 1)) :
     (stackFrameMemcpyStep config state).machine.registers 0 =
       BitVec.ofNat width words := by
@@ -2615,7 +2615,7 @@ private theorem natLandFour_eq_zero_iff_testBit_two_false (value : Nat) :
   constructor
   · intro hzero
     cases hbit : value.testBit 2 with
-    | false => simp [hbit]
+    | false => simp []
     | true =>
         have hmask : (4 : Nat).testBit 2 = true := by decide
         have hand : (value &&& 4).testBit 2 = true := by
@@ -4052,7 +4052,7 @@ theorem evalStackFrameFuel_stackGcMoveList_copy_body_with_nat_relation
     (haddress : state.machine.registers 8 = BitVec.ofNat width scan)
     (hscanBound : scan < 2 ^ width)
     (hnextBound : scan + config.bytesInWord < 2 ^ width)
-    (hmemory : ∀ current, current < 2 ^ width →
+    (_hmemory : ∀ current, current < 2 ^ width →
       (state.machine.memory (BitVec.ofNat width current)).toNat =
         memory current)
     (hloadedNat : memory scan = value)
@@ -4222,7 +4222,7 @@ theorem evalStackFrameFuel_stackGcMoveCopySuffixAfterMemcpy [NeZero width]
     (hscratch0 : config.immediateScratch ≠ 0)
     (hscratch1 : config.immediateScratch ≠ 1)
     (hscratch2 : config.immediateScratch ≠ 2)
-    (hscratch3 : config.immediateScratch ≠ 3)
+    (_hscratch3 : config.immediateScratch ≠ 3)
     (hscratch4 : config.immediateScratch ≠ 4)
     (hscratch5 : config.immediateScratch ≠ 5)
     (hscratch6 : config.immediateScratch ≠ 6)
@@ -4841,7 +4841,7 @@ theorem evalStackFrameFuel_stackGcMoveList_copy_body_iter_with_nat_relation
     (haddress : state.machine.registers 8 = BitVec.ofNat width scan)
     (hscanBound : scan < 2 ^ width)
     (hnextBound : scan + config.bytesInWord < 2 ^ width)
-    (hmemory : ∀ current, current < 2 ^ width →
+    (_hmemory : ∀ current, current < 2 ^ width →
       (state.machine.memory (BitVec.ofNat width current)).toNat =
         memory current)
     (_hloadedNat : memory scan = value)

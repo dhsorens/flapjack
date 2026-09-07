@@ -568,7 +568,7 @@ theorem loopToWord_primitive_addCarry_combined_simulation [NeZero width]
                 have hstate : intermediate = wordResult := by
                   simpa [hfunction, hvalues] using hword
                 subst wordResult
-                simp [hvalues]
+                simp []
             | cons value values =>
                 simp [hfunction, hvalues] at hword
   have hwordProg :

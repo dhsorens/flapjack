@@ -1075,7 +1075,7 @@ theorem wordFunctionToRiscV_return_const [NeZero width] (value : Word width) :
   simp [wordFunctionToRiscV, wordExpToInstructions, wordExpToInstruction, registerOfNat]
 
 theorem evalWordFunction_return_const [NeZero width] (state : State width)
-    (value : Word width) (zero : ZeroRegister state) :
+    (value : Word width) (_zero : ZeroRegister state) :
     evalWordFunction state
         ((.seq (.assign 1 (.const value)) (.return 0 [1])) :
           WordProg (Word width)) =
