@@ -270,8 +270,8 @@ example (state final : WordStackMachineState 8)
   apply evalWordStackMachine_ffi_move_preserves_other_value
     (source := 2) (destination := 10) (other := 3)
     (sourceLocation := .register 4) (otherLocation := .register 6)
-  · native_decide
-  · native_decide
+  · decide
+  · decide
   · decide
   · decide
   · exact heval
