@@ -816,6 +816,74 @@ theorem evalStackProgFuelWithCodeAndFfi_wordToStackProgNatWithBitmapBuilder_retu
   rw [hcompile]
   simp [heval]
 
+/-! Any successful state-threaded compilation whose bitmap result is already
+    exposed can be lifted to bounded execution uniformly.  This small bridge
+    lets leaf-specific compiler equations reuse the same state-preservation
+    proof. -/
+
+theorem evalStackProgFuelWithCodeAndFfi_wordToStackProgNatWithBitmapBuilder_of_compiled
+    [BEq Nat] [NeZero width] (host : StackMachineFfiHandler width)
+    (fuel : Nat) (code : Nat → Option (StackProg Nat))
+    (config : WordStackConfig)
+    (bitmapBuilder : List Nat → List Nat)
+    (registerCount bitmapRegister frameSlots wordBits : Nat)
+    (storeConstsStub : Option Nat) (bitmapState : WordStackBitmapState)
+    (machineState : WordStackMachineState width)
+    (program : WordProg Nat) (compiled : StackProg Nat)
+    (result : StackMachineControl width)
+    (hcompile : wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+      registerCount bitmapRegister frameSlots wordBits storeConstsStub bitmapState
+      program = some (compiled, bitmapState))
+    (heval : evalStackProgFuelWithCodeAndFfi host (fuel + 1) code machineState
+      compiled = some result) :
+    (wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+      registerCount bitmapRegister frameSlots wordBits storeConstsStub bitmapState
+      program).bind
+        (fun generated =>
+          (evalStackProgFuelWithCodeAndFfi host (fuel + 1) code machineState
+            generated.1).map (fun control => (control, generated.2))) =
+      some (result, bitmapState) := by
+  rw [hcompile]
+  simp [heval]
+
+theorem wordToStackProgNatWithBitmapBuilder_break
+    [BEq Nat] (config : WordStackConfig)
+    (bitmapBuilder : List Nat → List Nat)
+    (registerCount bitmapRegister frameSlots wordBits : Nat)
+    (storeConstsStub : Option Nat) (state : WordStackBitmapState)
+    (label : Nat) :
+    wordToStackProgNatWithBitmapBuilder config bitmapBuilder registerCount
+      bitmapRegister frameSlots wordBits storeConstsStub state
+      (.break label) = some (.break label, state) := by
+  simp only [wordToStackProgNatWithBitmapBuilder]
+  rw [wordToStackProgNat]
+  rfl
+
+theorem wordToStackProgNatWithBitmapBuilder_continue
+    [BEq Nat] (config : WordStackConfig)
+    (bitmapBuilder : List Nat → List Nat)
+    (registerCount bitmapRegister frameSlots wordBits : Nat)
+    (storeConstsStub : Option Nat) (state : WordStackBitmapState)
+    (label : Nat) :
+    wordToStackProgNatWithBitmapBuilder config bitmapBuilder registerCount
+      bitmapRegister frameSlots wordBits storeConstsStub state
+      (.continue label) = some (.continue label, state) := by
+  simp only [wordToStackProgNatWithBitmapBuilder]
+  rw [wordToStackProgNat]
+  rfl
+
+theorem wordToStackProgNatWithBitmapBuilder_tick
+    [BEq Nat] (config : WordStackConfig)
+    (bitmapBuilder : List Nat → List Nat)
+    (registerCount bitmapRegister frameSlots wordBits : Nat)
+    (storeConstsStub : Option Nat) (state : WordStackBitmapState) :
+    wordToStackProgNatWithBitmapBuilder config bitmapBuilder registerCount
+      bitmapRegister frameSlots wordBits storeConstsStub state
+      .tick = some (.tick, state) := by
+  simp only [wordToStackProgNatWithBitmapBuilder]
+  rw [wordToStackProgNat]
+  rfl
+
 /-! The state-threaded compiler composes the results of sequential source
     programs.  Keeping both intermediate states in the theorem makes the
     equation useful for composing an allocating prefix with a later FFI or

@@ -1505,6 +1505,8 @@ definitions, pass ordering, examples, and proof obligations.
   retaining the runtime raise-stub execution as an explicit premise.
 - [x] Expose state-threaded return lowering and its bounded execution equation,
   retaining the generated return-code execution as an explicit premise.
+- [x] Add a reusable bounded execution bridge for successful state-threaded
+  compilation, and cover `break`, `continue`, and `tick` lowering.
 - [x] Expose the state-threaded Word-to-Stack FFI equation, retaining the
   bitmap accumulator across ABI argument lowering.
 - [x] Compose state-threaded Word-to-Stack FFI lowering with bounded
