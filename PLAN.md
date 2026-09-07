@@ -488,6 +488,8 @@ definitions, pass ordering, examples, and proof obligations.
   earliest-start/latest-end updates and interval intersection.
 - [x] Port the executable linear-scan active-set state machine, including
   colour reuse, physical-register reservations, stealing, and spill slots.
+- [x] Connect linear-scan intervals, forced colours, and move preferences to a
+  program-level clash-tree allocation entry point.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware
   RISC-V contracts before claiming general call-aware allocation correctness.
 - [x] Add a combined graph-allocation soundness contract exposing fixed tags,
