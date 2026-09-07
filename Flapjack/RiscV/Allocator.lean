@@ -369,6 +369,16 @@ def wordSsaForceRename : List (Nat × Nat) → WordSsaState → WordSsaState
 termination_by renamings => sizeOf renamings
 decreasing_by all_goals decreasing_trivial
 
+/-! Refresh a cut set while retaining the source-to-current mapping used by
+    the surrounding SSA block.  CakeML uses this helper around ABI-sensitive
+    operations such as FFI: every live name receives a fresh SSA version, and
+    the generated Move makes that refresh explicit in the Word program. -/
+def wordSsaListNextVarRenameMove (state : WordSsaState) (next : Nat)
+    (names : List Nat) : WordSsaState × Nat × WordProg α :=
+  let sources := names.map (wordSsaRead state)
+  let (state, destinations) := wordSsaFreshList { state with next := next } names
+  (state, state.next, .move 0 (destinations.zip sources))
+
 def wordSsaRenameMove (state : WordSsaState) (priority : Nat)
     (moves : List (Nat × Nat)) : WordSsaState × WordProg α :=
   let destinations := moves.map (fun move => move.1)
@@ -595,10 +605,22 @@ mutual
         let (state, destination) := wordSsaFresh state destination
         (state, .locValue destination source)
     | .ffi function configuration configurationLength array arrayLength live =>
-        (state, .ffi function (wordSsaRead state configuration)
-          (wordSsaRead state configurationLength) (wordSsaRead state array)
-          (wordSsaRead state arrayLength)
-          (live.1.map (wordSsaRead state), live.2.map (wordSsaRead state)))
+        let names := (live.1 ++ live.2).eraseDups
+        let (stackState, stackNext, stackMove) :=
+          wordSsaListNextVarRenameMove state (state.next + 2) names
+        let stackLive := wordSsaReadCutsets stackState live
+        let configuration := wordSsaRead stackState configuration
+        let configurationLength := wordSsaRead stackState configurationLength
+        let array := wordSsaRead stackState array
+        let arrayLength := wordSsaRead stackState arrayLength
+        let cutState := wordSsaRestrict stackState names
+        let (state, _, restoreMove) :=
+          wordSsaListNextVarRenameMove cutState (stackNext + 2) names
+        (state, wordSsaSeq stackMove
+          (wordSsaSeq (.move 0
+            [(2, configuration), (4, configurationLength),
+             (6, array), (8, arrayLength)])
+            (wordSsaSeq (.ffi function 2 4 6 8 stackLive) restoreMove)))
     | .shareInst operator name address =>
         let address := wordSsaRenameExp state address
         match operator with
@@ -787,6 +809,15 @@ def wordProgWriteVars : WordProg α → List Nat
 
 def wordProgVariables (program : WordProg α) : List Nat :=
   wordProgReadVars program ++ wordProgWriteVars program
+
+/-! Physical Word names denote architectural registers directly.  They can
+    occur in the body independently of the formal-parameter list, notably as
+    the ABI operands of an FFI instruction, so the spill allocator must keep
+    every such name fixed rather than recolouring it. -/
+
+def wordPhysicalFixedSources (parameters : List Nat) (program : WordProg α) :
+    List Nat :=
+  parameters ++ (wordProgVariables program).filter (fun name => name % 2 == 0)
 
 /-! Preference edges corresponding to CakeML's `get_prefs`.  Both explicit
     CakeML moves and the compact copy forms retained by the initial Word IR
@@ -2580,7 +2611,7 @@ def wordAllocateSsaFunctionWithEntryAndClashTreeWithSpillsAndPreferencesFixed
   let preferences := wordProgPreferenceEdges program
   match wordAllocateVarsWithFixedSources
       (renamedParameters ++ wordProgVariables program ++ liveIn)
-      edges preferences parameters with
+      edges preferences (wordPhysicalFixedSources parameters program) with
   | none => none
   | some allocation =>
       if wordProgSpecialLocationsSafe allocation.locations program = true &&
@@ -2604,8 +2635,10 @@ theorem wordAllocateSsaFunctionWithEntryAndClashTreeWithSpillsAndPreferencesFixe
   split at halloc <;> simp_all
   rcases halloc with ⟨_, rfl, rfl, rfl, rfl⟩
   rename_i _ alloc _ hallocation
-  exact wordAllocateVarsWithFixedSources_preserves_fixed_source _ _ _ _ alloc
-    hallocation
+  intro name hname
+  apply wordAllocateVarsWithFixedSources_preserves_fixed_source _ _ _ _ alloc
+    hallocation name
+  exact List.mem_append_left _ hname
 
 theorem wordAllocateSsaFunctionWithEntryAndClashTreeWithSpillsAndPreferencesFixed_maps_parameters
     (parameters : List Nat) (program : WordProg α)
@@ -2632,7 +2665,8 @@ theorem wordAllocateSsaFunctionWithEntryAndClashTreeWithSpillsAndPreferencesFixe
       (wordClashTree (wordSsaRenameFunctionWithEntry parameters program).2.snd []) []).snd
     (wordProgPreferenceEdges
       (wordSsaRenameFunctionWithEntry parameters program).2.snd)
-    parameters alloc hallocation
+    (wordPhysicalFixedSources parameters
+      (wordSsaRenameFunctionWithEntry parameters program).2.snd) alloc hallocation
   intro name hname
   apply hslots name
   simp [hname]
