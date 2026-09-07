@@ -1181,6 +1181,8 @@ definitions, pass ordering, examples, and proof obligations.
   malformed-input behavior.
 - [x] Port location-preserving root traversal over encoded stack values with
   memory, index, destination, and condition threading.
+- [x] Compose bitmap descriptor decoding, live-value filtering, root movement,
+  and stack reconstruction for one frame.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
