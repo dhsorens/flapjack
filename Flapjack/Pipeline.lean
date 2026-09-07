@@ -234,6 +234,32 @@ def pipelineWordFunctionsAllocatedWithGraph [NeZero width] :
       let rest ← pipelineWordFunctionsAllocatedWithGraph functions
       pure ((label, wordParameters, stackBody) :: rest)
 
+/-! Graph-backed pipeline variant using CakeML's complete SSA function entry.
+    The source ABI names are fixed in the graph allocator, while the returned
+    SSA names remain available to the parameter-move lowering. -/
+def pipelineWordFunctionsAllocatedWithGraphAndFullSsa [NeZero width] :
+    List (Nat × List Nat × LoopProg (RiscV.Word width)) →
+      Option (List (Nat × List Nat × StackProg Nat))
+  | [] => some []
+  | (label, parameters, body) :: functions => do
+      let slots := loopAccVars body parameters
+      let context : WordContext :=
+        { vars := slots.map (fun name => (name, name + 2)) }
+      let wordParameters := parameters.map (fun name => name + 2)
+      let unallocatedBody := loopToWordProg context body
+      let (_, renamedParameters, allocation, renamedProgram) ←
+        wordAllocateGraphFunctionWithEntryRenamed wordParameters unallocatedBody
+          wordParameters 13 14
+      let config : RiscV.WordStackConfig :=
+        { locations := wordGraphLocations allocation 13 14
+          scratch := 31
+          stackBase := 0
+          addressScratch := 29 }
+      let stackBody ← RiscV.wordToStackFunctionWithParameters config
+        renamedParameters renamedProgram
+      let rest ← pipelineWordFunctionsAllocatedWithGraphAndFullSsa functions
+      pure ((label, wordParameters, stackBody) :: rest)
+
 /-!
 An allocation-aware variant of the Word-function boundary.  The historical
 `pipelineWordFunctions` definition remains available for existing artifact

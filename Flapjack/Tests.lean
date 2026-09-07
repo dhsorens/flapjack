@@ -32,6 +32,7 @@ import Flapjack.Test.WordToStack.StatefulLoop
 import Flapjack.Test.StatefulPipeline
 import Flapjack.Test.CorrectnessFfiRiscVLoop
 import Flapjack.Test.FullSsa
+import Flapjack.Test.FullSsaPipeline
 
 /-!
 # Flapjack regression tests

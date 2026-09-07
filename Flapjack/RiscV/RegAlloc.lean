@@ -1025,6 +1025,22 @@ def wordAllocateGraphFunctionWithEntry (parameters : List Nat)
       (state, renamedParameters, allocation,
         wordApplyColour (wordGraphColouringAt allocation.colouring) renamedProgram))
 
+/-! The stack boundary needs the SSA names and allocation map together; it
+    applies locations there rather than consuming graph-coloured names. -/
+
+def wordAllocateGraphFunctionWithEntryRenamed (parameters : List Nat)
+    (program : WordProg α) (fixedSources : List Nat) (colours stackStart : Nat) :
+    Option (WordSsaState × List Nat × WordGraphAllocation × WordProg α) :=
+  let (state, renamedParameters, renamedProgram) :=
+    wordSsaRenameFunctionWithEntry parameters program
+  let tree := WordClashTree.seq (.set renamedParameters)
+    (wordClashTree renamedProgram [])
+  let forced := wordProgForcedClashes renamedProgram
+  let moves := wordProgPreferenceEdges renamedProgram
+  (wordAllocateGraph tree forced fixedSources moves colours stackStart).map
+    (fun allocation =>
+      (state, renamedParameters, allocation, renamedProgram))
+
 /-! Backward forced-stack analysis from CakeML's get_stack_only.  The two
     lists correspond to its temporary-stack and forced-stack sets.  Lists are
     used as finite sets here so the analysis remains executable and easy to
