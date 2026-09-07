@@ -33,4 +33,14 @@ example :
       (.skip : WordProg (RiscV.Word 64))).isSome := by
   decide +kernel
 
+example :
+    (wordAllocateSsaFunctionWithEntryAndClashTreeWithSpillsAndPreferencesFixed [2]
+      (.skip : WordProg (RiscV.Word 64))).isSome := by
+  decide +kernel
+
+example :
+    wordAllocateVarsWithFixedSources [2, 5] [] [] [2] =
+      some { locations := [(5, .register 7), (2, .register 2)], nextSpill := 0 } := by
+  rfl
+
 end Flapjack
