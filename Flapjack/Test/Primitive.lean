@@ -71,7 +71,7 @@ theorem primitivePipeline_full_source_correct :
       some (some (BitVec.ofNat 64 3)) := by
   decide +kernel
 
-theorem primitivePipeline_correct :
+#guard
     primitivePipelineRun =
       (evalPanValueProgWithPrimitive (α := RiscV.Word 64) [] 0 100 8
         (fun _ => none) (fun _ => none) (fun _ => none)
@@ -79,10 +79,9 @@ theorem primitivePipeline_correct :
         (fun result =>
           match result.2.2.2 with
           | [.word value] => [value]
-          | _ => []) := by
-  native_decide
+          | _ => [])
 
-theorem primitivePipeline_full_correct :
+#guard
     primitivePipelineRun =
       (evalPanValueProgWithPrimitiveCallsAndFfi
         (α := RiscV.Word 64) RiscV.panPrimitiveHandler
@@ -95,8 +94,7 @@ theorem primitivePipeline_full_correct :
               match value with
               | .word value => value
               | _ => 0)
-          | _ => []) := by
-  native_decide
+          | _ => [])
 
 def primitiveCallSourceFunctions :
     List (FunName × List VarName × Prog (RiscV.Word 64)) :=
@@ -125,8 +123,7 @@ theorem primitiveCall_full_source_correct :
       some (some (BitVec.ofNat 64 3)) := by
   decide +kernel
 
-theorem primitivePipeline_call_link_correct :
-    primitivePipelineCallLinkedRun = some [BitVec.ofNat 64 3] := by
-  native_decide
+#guard
+    primitivePipelineCallLinkedRun = some [BitVec.ofNat 64 3]
 
 end Flapjack

@@ -272,14 +272,12 @@ def crepeCallFullValues :
       | .normal _ => []
       | .raised _ _ | .broke _ _ | .continued _ _ => [])
 
-theorem compileToCrepe_full_call_semantics :
-    crepeCallFullValues = some [BitVec.ofNat 64 41] := by
-  native_decide
+#guard
+    crepeCallFullValues = some [BitVec.ofNat 64 41]
 
-theorem compileToCrepe_full_call_source_agreement :
+#guard
     crepeCallFullValues =
       (evalPanProgWithCalls pipelineCallSourceFunctions 20 (fun _ => none)
-        pipelineCallSourceMain).map (fun result => result.2) := by
-  native_decide
+        pipelineCallSourceMain).map (fun result => result.2)
 
 end Flapjack
