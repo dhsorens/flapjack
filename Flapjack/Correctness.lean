@@ -381,7 +381,7 @@ theorem pipelineCall_compiled_execution :
       pipelineCallImage [4] []
       (RiscV.writeRegister (RiscV.zeroState 64) 1 100) =
       some [BitVec.ofNat 64 41] := by
-  native_decide
+  decide
 
 theorem pipelineCall_generated_compiled_execution :
     (do
@@ -406,7 +406,7 @@ theorem pipelineCall_source_semantics :
     (evalPanProgWithCalls pipelineCallSourceFunctions 20 (fun _ => none)
       pipelineCallSourceMain).map (fun result => result.2) =
       some [BitVec.ofNat 64 41] := by
-  native_decide
+  decide +kernel
 
 def pipelineStructuredNoFfi : PanValueFfiHandler (RiscV.Word 64) :=
   fun _ _ _ _ _ _ => none
@@ -420,7 +420,7 @@ theorem pipelineCall_structured_source_semantics :
         match result with
         | .returned _ _ _ [PanValue.word value] => some value
         | _ => none) = some (some (BitVec.ofNat 64 41)) := by
-  native_decide
+  decide +kernel
 
 def pipelineHandlerSourceFunctions :
     List (FunName × List VarName × Prog (RiscV.Word 64)) :=
@@ -438,7 +438,7 @@ theorem pipelineHandler_source_semantics :
         match result with
         | .returned _ values => values
         | _ => []) = some [BitVec.ofNat 64 7] := by
-  native_decide
+  decide +kernel
 
 def pipelineFfiHandler :
     FunName → RiscV.Word 64 → RiscV.Word 64 → RiscV.Word 64 → RiscV.Word 64 →
@@ -457,7 +457,7 @@ def pipelineFfiSource : Prog (RiscV.Word 64) :=
 theorem pipelineFfi_source_semantics :
     (evalPanFfiProg pipelineFfiHandler (fun _ => none) pipelineFfiSource).map
       (fun locals => locals "result") = some (some (BitVec.ofNat 64 42)) := by
-  native_decide
+  decide
 
 def pipelineFfiCallFunctions :
     List (FunName × List VarName × Prog (RiscV.Word 64)) :=
@@ -478,7 +478,7 @@ theorem pipelineFfi_call_source_semantics :
         match result with
         | .returned _ values => values
         | _ => []) = some [BitVec.ofNat 64 42] := by
-  native_decide
+  decide +kernel
 
 def pipelineStructuredFfiHandler :
     PanValueFfiHandler (RiscV.Word 64) :=
@@ -497,7 +497,7 @@ theorem pipelineFfi_structured_call_source_semantics :
         match result with
         | .returned _ _ _ [PanValue.word value] => some value
         | _ => none) = some (some (BitVec.ofNat 64 42)) := by
-  native_decide
+  decide +kernel
 
 theorem pipelineCall_source_word_machine_agreement :
     (evalPanProgWithCalls pipelineCallSourceFunctions 20 (fun _ => none)

@@ -211,69 +211,69 @@ theorem stackGcNatMoveValueRoots_length (config : StackGcConfig)
 example :
     stackGcNatEncodeStack { wordBits := 8 } [3]
         [.word 1, .word 11, .word 0] = some [.word 11] := by
-  native_decide
+  decide +kernel
 
 example :
     stackGcNatDecodeStack { wordBits := 8 } [3] [.word 11]
         [.word 1, .word 11, .word 0] = some [.word 1, .word 11, .word 0] := by
-  native_decide
+  decide +kernel
 
 example :
     stackGcNatEncodeStack { wordBits := 8 } [3]
         [.word 1, .word 11] = none := by
-  native_decide
+  decide +kernel
 
 example :
     stackGcNatDecodeStack { wordBits := 8 } [3] []
         [.word 1, .word 0] = none := by
-  native_decide
+  decide +kernel
 
 example :
     (stackGcNatMoveValueRoots { wordBits := 8 }
       [.loc 4 0, .word 2] 0 100 0 (fun _ => 0) (fun _ => true)).values =
       [.loc 4 0, .word 2] := by
-  native_decide
+  decide
 
 example :
     (stackGcNatMoveValueRoots { wordBits := 8 }
       [.loc 4 1] 0 100 0 (fun _ => 0) (fun _ => true)).condition = false := by
-  native_decide
+  decide
 
 example :
     (stackGcNatMoveBitmap { wordBits := 8 } [3] (.word 1)
       [.word 2, .word 0] 0 100 0 (fun _ => 0) (fun _ => true)).map
         (fun result => result.values) = some [.word 2] := by
-  native_decide
+  decide +kernel
 
 example :
     (stackGcNatMoveBitmap { wordBits := 8 } [3] (.word 1)
       [.word 2, .word 0] 0 100 0 (fun _ => 0) (fun _ => true)).map
         (fun result => result.remainder) = some [.word 0] := by
-  native_decide
+  decide +kernel
 
 example :
     stackGcNatMoveBitmap { wordBits := 8 } [3] (.loc 1 0)
       [.word 2, .word 0] 0 100 0 (fun _ => 0) (fun _ => true) = none := by
-  native_decide
+  decide
 
 example :
     (stackGcNatMoveRootsBitmaps { wordBits := 8 } [3]
       [.word 1, .word 2, .word 0] 0 100 0 (fun _ => 0) (fun _ => true)).map
         (fun result => result.values) =
       some [.word 1, .word 2, .word 0] := by
-  native_decide
+  decide +kernel
 
 example :
     stackGcNatMoveRootsBitmaps { wordBits := 8 } [3]
       [.word 1, .word 2] 0 100 0 (fun _ => 0) (fun _ => true) = none := by
-  native_decide
+  decide +kernel
 
 example :
     (stackGcNatFullBitmaps { wordBits := 8 } [3]
       [.word 1, .word 2, .word 0] 100 0 (fun _ => 0) (fun _ => true) 0).map
         (fun result => result.values) =
       some [.word 1, .word 2, .word 0] := by
-  native_decide
+  decide +kernel
 
 
 @[simp] theorem stackGcNatBitLength_zero :
@@ -916,15 +916,15 @@ theorem stackGcNatFullBitmaps_length
   rfl
 
 example : stackGcNatGetBits 5 = [true, false] := by
-  native_decide
+  decide +kernel
 
 example :
     stackGcNatReadBitmap { wordBits := 8 } [5] = some [true, false] := by
-  native_decide
+  decide +kernel
 
 example :
     stackGcNatFullReadBitmap { wordBits := 8 } [5] (.word 1) =
       some [true, false] := by
-  native_decide
+  decide +kernel
 
 end Flapjack
