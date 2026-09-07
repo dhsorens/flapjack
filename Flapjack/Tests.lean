@@ -20,6 +20,7 @@ import Flapjack.Test.CorrectnessCode
 import Flapjack.Test.CorrectnessConditional
 import Flapjack.Test.CorrectnessColour
 import Flapjack.Test.FrameMachineCalls
+import Flapjack.Test.StackMachineCalls
 
 /-!
 # Flapjack regression tests
