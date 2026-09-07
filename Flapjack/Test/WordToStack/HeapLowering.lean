@@ -48,4 +48,36 @@ example :
       (codeLength := 2) (dataLength := 3)
       (constants := [(true, 9), (false, 10)]))
 
+example :
+    stackAllocComp ({ gcStubLocation := 90, returnLabel := 91 } : StackAllocConfig)
+      10
+      (wordStackAllocWithBitmapBuilder heapLoweringConfig 26 4
+        heapLoweringInitial [2] (fun _ => [7])).1 =
+      (.seq (.seq (.const 26 2) (.stackStore 26 20))
+          (.call (some (.skip, 0, 91, 10)) (.label 90) none), 11) := by
+  simpa [wordStackAllocWithBitmapBuilder, wordStackBitmapWriteWithBuilder,
+    wordStackInsertBitmap, wordStackJoin, wordStackOffset,
+    stackAllocRuntimeCall, heapLoweringConfig, heapLoweringInitial] using
+    (stackAllocComp_wordStackAllocWithBitmapBuilder_alloc
+      (config := heapLoweringConfig) (bitmapBuilder := fun _ => [7])
+      (bitmapRegister := 26) (frameSlots := 4)
+      (state := heapLoweringInitial) (live := [2])
+      (allocConfig := { gcStubLocation := 90, returnLabel := 91 })
+      (nextLabel := 10))
+
+example :
+    stackAllocComp ({ returnLabel := 91 } : StackAllocConfig) 10
+      (wordStackStoreConstsWithBitmaps heapLoweringConfig 2 28 64 (some 77)
+        heapLoweringInitial [(true, 9), (false, 10)]).1 =
+      (.seq (.const 28 1)
+          (.call (some (.skip, 0, 91, 10)) (.label 77) none), 11) := by
+  simpa [wordStackStoreConstsWithBitmaps, wordStackInsertBitmap,
+    stackAllocRuntimeCall, heapLoweringInitial] using
+    (stackAllocComp_wordStackStoreConstsWithBitmaps
+      (config := heapLoweringConfig) (registerCount := 2)
+      (specialScratch := 28) (wordBits := 64) (storeConstsStub := some 77)
+      (state := heapLoweringInitial)
+      (constants := [(true, 9), (false, 10)])
+      (allocConfig := { returnLabel := 91 }) (nextLabel := 10))
+
 end Flapjack.RiscV

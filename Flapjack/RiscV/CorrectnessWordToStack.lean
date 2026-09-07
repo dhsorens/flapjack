@@ -1341,6 +1341,55 @@ theorem wordToStackProgNatWithBitmapBuilder_storeConsts
         config.specialScratch wordBits storeConstsStub state constants) := by
   simp [wordToStackProgNatWithBitmapBuilder]
 
+/-! `StackAlloc` replaces the heap operation emitted by `Alloc` with the
+    configured collector call.  The bitmap write remains in front of that
+    call, and the returned label is advanced exactly once. -/
+
+theorem stackAllocComp_wordStackAllocWithBitmapBuilder_alloc
+    [BEq Nat] (config : WordStackConfig)
+    (bitmapBuilder : List Nat → List Nat)
+    (bitmapRegister frameSlots : Nat)
+    (state : WordStackBitmapState) (live : List Nat)
+    (allocConfig : StackAllocConfig) (nextLabel : Nat) :
+    stackAllocComp allocConfig nextLabel
+      (wordStackAllocWithBitmapBuilder config bitmapRegister frameSlots
+        state live bitmapBuilder).1 =
+      (wordStackJoin
+          (wordStackBitmapWriteWithBuilder config bitmapRegister frameSlots
+            state live bitmapBuilder).1
+        (stackAllocRuntimeCall allocConfig nextLabel
+            allocConfig.gcStubLocation),
+        nextLabel + 1) := by
+  by_cases hframes : frameSlots = 0
+  · simp [wordStackAllocWithBitmapBuilder, wordStackBitmapWriteWithBuilder,
+      wordStackJoin, stackAllocComp, stackAllocRuntimeCall, hframes]
+  · simp [wordStackAllocWithBitmapBuilder, wordStackBitmapWriteWithBuilder,
+      wordStackJoin, stackAllocComp, stackAllocRuntimeCall, hframes]
+
+theorem stackAllocComp_wordStackStoreConstsWithBitmaps
+    (config : WordStackConfig) (registerCount specialScratch wordBits : Nat)
+    (storeConstsStub : Option Nat) (state : WordStackBitmapState)
+    (constants : List (Bool × Nat))
+    (allocConfig : StackAllocConfig) (nextLabel : Nat) :
+    stackAllocComp allocConfig nextLabel
+      (wordStackStoreConstsWithBitmaps config registerCount specialScratch
+        wordBits storeConstsStub state constants).1 =
+      match storeConstsStub with
+      | none =>
+          (.seq (.const specialScratch state.length)
+            (.storeConsts registerCount (registerCount + 1) none), nextLabel)
+      | some target =>
+          (.seq (.const specialScratch state.length)
+            (stackAllocRuntimeCall allocConfig nextLabel target),
+            nextLabel + 1) := by
+  cases storeConstsStub with
+  | none =>
+      simp [wordStackStoreConstsWithBitmaps, wordStackInsertBitmap,
+        stackAllocComp]
+  | some target =>
+      simp [wordStackStoreConstsWithBitmaps, wordStackInsertBitmap,
+        stackAllocComp, stackAllocRuntimeCall]
+
 /-! The state-threaded compiler has no special bitmap effect for an FFI
     instruction.  Its lowering equation therefore returns the original
     accumulator while exposing the same four-move ABI prefix as the
