@@ -27,7 +27,7 @@ theorem longMulCorrectness_mappedLocals :
     simp [longMulCorrectnessLoopState] at hvalue
     subst value
     refine ⟨3, ?_, ?_⟩
-    · native_decide
+    · decide
     · simp [longMulCorrectnessWordState, RiscV.writeRegister,
         RiscV.readRegister]
   · by_cases hname_four : name = 4
@@ -35,7 +35,7 @@ theorem longMulCorrectness_mappedLocals :
       simp [longMulCorrectnessLoopState] at hvalue
       subst value
       refine ⟨4, ?_, ?_⟩
-      · native_decide
+      · decide
       · simp [longMulCorrectnessWordState, RiscV.writeRegister,
           RiscV.readRegister]
     · simp [longMulCorrectnessLoopState, hname, hname_four] at hvalue
@@ -47,7 +47,7 @@ theorem longMulCorrectness_noalias :
           some register → register ≠ 2 := by
   intro name hname register hregister heq
   have htwo : RiscV.registerOfNat 2 = some (2 : Fin 32) := by
-    native_decide
+    decide
   have hfind := RiscV.registerOfNat_injective hregister htwo heq
   by_cases hname_one : name = 1
   · subst name
@@ -76,7 +76,7 @@ example :
     (hlocals := longMulCorrectness_mappedLocals)
     (hleft := by simp [longMulCorrectnessLoopState])
     (hright := by simp [longMulCorrectnessLoopState])
-    (hdestination := by native_decide)
+    (hdestination := by decide)
     (hdestination_nonzero := by decide)
     (hnoalias := longMulCorrectness_noalias)
 
@@ -97,8 +97,8 @@ example :
     (sourceValue := BitVec.ofNat 64 7)
     (hlocals := longMulCorrectness_mappedLocals)
     (hsource := by simp [longMulCorrectnessLoopState])
-    (hdestination := by native_decide)
-    (hsource_register := by native_decide)
+    (hdestination := by decide)
+    (hsource_register := by decide)
     (hdestination_nonzero := by decide)
     (hnoalias := longMulCorrectness_noalias)
 

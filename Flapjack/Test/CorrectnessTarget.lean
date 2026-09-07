@@ -63,7 +63,7 @@ theorem pipelineCallTarget_compiled_execution :
       pipelineCallTargetImage [4] []
       (RiscV.writeRegister (RiscV.zeroState 64) 1 100) =
       some [BitVec.ofNat 64 41] := by
-  native_decide
+  decide
 
 theorem pipelineCallTarget_source_word_machine_agreement :
     (evalPanProgWithCalls pipelineCallSourceFunctions 20 (fun _ => none)

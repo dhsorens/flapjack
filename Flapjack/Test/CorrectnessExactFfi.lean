@@ -57,12 +57,12 @@ example :
     (context := { services := [("echo", 7)] })
     (state := exactFfiAbiState) (service := 7)
     (function := "echo") (nextState := ()) (nextBytes := [9, 8])
-    (by native_decide)
+    (by decide)
     (by decide)
     (by
       simp only [exactFfiAbiState, exactFfiState]
       congr 1)
-    (by native_decide)
+    (by decide)
 
 example :
     exactFfiResultBytes 20 2 [9, 8]
@@ -71,7 +71,7 @@ example :
       [{ name := .extCall "echo", configuration := [42],
          bytes := [(9, 9), (8, 8)] }]
       (exactRiscVFfiCall { services := [("echo", 7)] } exactFfiAbiState 7) = true := by
-  native_decide
+  decide
 
 def exactFfiResultFinalFailure :
     ExactRiscVFfiResult 64 Unit → Bool
@@ -84,6 +84,6 @@ example :
     exactFfiResultFinalFailure
         (exactRiscVFfiCall { services := [("echo", 7)] }
           exactFfiMismatchState 7) = true := by
-  native_decide
+  decide
 
 end Flapjack.RiscV

@@ -36,7 +36,7 @@ theorem handlerCall_mappedLocals :
   intro name value hvalue
   by_cases hname : name = 2
   · subst name
-    refine ⟨2, by native_decide, ?_⟩
+    refine ⟨2, by decide, ?_⟩
     simpa [handlerCallLoopState, handlerCallWordState, readRegister,
       writeRegister] using hvalue
   · simp [handlerCallLoopState, hname] at hvalue
@@ -108,15 +108,15 @@ example : loopLocalsMappedToRiscV ({ vars := [] } : WordContext)
     (hlookupLoop := by simp [lookupLoopFunction, handlerCallBody])
     (hlookupWord := by simp [RiscV.lookupWordFunction, loopToWordProg,
       handlerCallBody, wordFindVar, lookupNatInfo, wordCompileExp])
-    (hparameter := by native_decide)
+    (hparameter := by decide)
     (hparameter_nonzero := by decide)
-    (hexception := by native_decide)
+    (hexception := by decide)
     (hexception_nonzero := by decide)
     (hargument := by simp [handlerCallLoopState])
     (hnoalias := by
       intro name hname register hregister
       have hfive : RiscV.registerOfNat 5 = some (5 : Fin 32) := by
-        native_decide
+        decide
       intro heq
       have hsame := RiscV.registerOfNat_injective hregister hfive heq
       exact hname hsame)

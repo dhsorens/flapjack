@@ -40,7 +40,7 @@ example :
     ({ services := [("echo", 7)] } : WordFfiContext)
     ffiMachineHost ffiMachineWordHandler ffiMachineState "echo"
     2 3 4 5 7 2 3 4 5
-  all_goals try native_decide
+  all_goals try decide
   simp [ffiMachineHost, ffiMachineWordHandler]
 
 example :
@@ -55,7 +55,7 @@ example :
     ({ services := [("echo", 7)] } : WordFfiContext)
     ffiMachineHost ffiMachineWordHandler ffiMachineState "echo"
     2 3 4 5 7 2 3 4 5
-  all_goals try native_decide
+  all_goals try decide
   simp [ffiMachineHost, ffiMachineWordHandler]
 
 example [NeZero width] (context : WordCallFfiContext width)
