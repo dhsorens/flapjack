@@ -2460,6 +2460,30 @@ def wordAllocateSsaFunctionWithClashTreeWithSpillsAndPreferences
       else
         none
 
+/-! Spill allocation over the complete CakeML-shaped SSA function.  In
+    contrast with the historical entry point above, the explicit formal
+    parameter moves are present in the clash tree, preferences, and returned
+    program. -/
+
+def wordAllocateSsaFunctionWithEntryAndClashTreeWithSpillsAndPreferences
+    (parameters : List Nat) (program : WordProg α) :
+    Option (WordSsaState × List Nat × WordProg α × WordSpillState) :=
+  let (state, renamedParameters, program) :=
+    wordSsaRenameFunctionWithEntry parameters program
+  let tree := wordClashTree program []
+  let (liveIn, edges) := wordClashTreeAnalyze tree []
+  let preferences := wordProgPreferenceEdges program
+  match wordAllocateVarsWithSpillsAndPreferences
+      (renamedParameters ++ wordProgVariables program ++ liveIn)
+      edges preferences with
+  | none => none
+  | some allocation =>
+      if wordProgSpecialLocationsSafe allocation.locations program = true &&
+          wordSpillClashTreeChecked tree allocation.locations then
+        some (state, renamedParameters, program, allocation)
+      else
+        none
+
 theorem wordAllocateSsaFunctionWithSpills_maps_parameters
     (parameters : List Nat) (program : WordProg α)
     (state : WordSsaState) (renamedParameters : List Nat)

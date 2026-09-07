@@ -28,4 +28,9 @@ example :
       (.skip : WordProg (RiscV.Word 64)) [2] 13 0).isSome := by
   decide +kernel
 
+example :
+    (wordAllocateSsaFunctionWithEntryAndClashTreeWithSpillsAndPreferences [2]
+      (.skip : WordProg (RiscV.Word 64))).isSome := by
+  decide +kernel
+
 end Flapjack

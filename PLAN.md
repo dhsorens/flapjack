@@ -554,6 +554,8 @@ definitions, pass ordering, examples, and proof obligations.
   Word program returned to allocation clients.
 - [x] Compose the full-SSA entry sequence with the graph allocator, retaining
   fixed ABI source names and returning the coloured entry-inclusive program.
+- [x] Compose the full-SSA entry sequence with the clash-tree spill allocator,
+  retaining entry moves in its locations, preferences, and returned program.
 - [x] Route the spill-aware RISC-V pipeline through the implemented
   clash-tree/preference allocator and retain its allocation witness at the
   Word-to-Stack boundary.
