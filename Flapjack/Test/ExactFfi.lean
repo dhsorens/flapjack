@@ -53,9 +53,9 @@ example :
       some ([.addi 10 1 0, .addi 11 2 0, .addi 12 3 0,
         .addi 13 4 0, .addi 14 0 (BitVec.ofNat 64 7), .ecall] :
         List (Instruction 64)) := by
-    native_decide
+    decide
   rw [hcode]
-  native_decide
+  decide
 
 example :
     executeWithExactFfi
