@@ -9,6 +9,20 @@ materialization.  These theorems make that boundary explicit.
 
 namespace Flapjack.RiscV
 
+theorem executeInstructionsWithFfi_append
+    [NeZero width] (host : WordFfiHost width) (state : State width)
+    (first second : List (Instruction width)) :
+    executeInstructionsWithFfi host state (first ++ second) =
+      (executeInstructionsWithFfi host state first).bind
+        (fun state => executeInstructionsWithFfi host state second) := by
+  induction first generalizing state with
+  | nil => simp [executeInstructionsWithFfi]
+  | cons instruction first ih =>
+      simp only [List.cons_append, executeInstructionsWithFfi]
+      cases hstep : executeWithFfi host state instruction with
+      | none => simp [hstep]
+      | some nextState => simp [hstep, ih]
+
 theorem executeInstructionsWithFfi_wordFfi_abi
     [NeZero width] (host : WordFfiHost width) (state : State width)
     (service : Nat) (configuration configurationLength array arrayLength : Fin 32)
@@ -231,5 +245,32 @@ theorem wordFunctionToRiscVWithCallsAndFfi_ffi_simulation
       configurationRegister configurationLengthRegister arrayRegister
       arrayLengthRegister hservice hservice_bounded hconfiguration
       hconfigurationLength harray harrayLength hzero hsource hhandler)
+
+/-!
+The one-step FFI theorem composes with the compiler's sequencing rule.  A
+normal first component contributes code without return values, while the
+second component determines the return-register list of the whole sequence.
+-/
+theorem wordFunctionToRiscVWithCallsAndFfi_seq_simulation
+    [NeZero width] (context : WordCallFfiContext width)
+    (host : WordFfiHost width) (state firstState finalState : State width)
+    (first second : WordProg (Word width))
+    (firstCode secondCode : List (Instruction width))
+    (returns : List (Fin 32))
+    (hfirstCompile : wordFunctionToRiscVWithCallsAndFfi context first =
+      some (firstCode, []))
+    (hsecondCompile : wordFunctionToRiscVWithCallsAndFfi context second =
+      some (secondCode, returns))
+    (hfirstExec : executeInstructionsWithFfi host state firstCode =
+      some firstState)
+    (hsecondExec : executeInstructionsWithFfi host firstState secondCode =
+      some finalState) :
+    (wordFunctionToRiscVWithCallsAndFfi context (.seq first second)).bind
+        (fun result =>
+          (executeInstructionsWithFfi host state result.1).map
+            (fun final => (final, returns))) =
+      some (finalState, returns) := by
+  simp [wordFunctionToRiscVWithCallsAndFfi, hfirstCompile, hsecondCompile,
+    executeInstructionsWithFfi_append, hfirstExec, hsecondExec]
 
 end Flapjack.RiscV

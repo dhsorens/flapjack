@@ -58,4 +58,26 @@ example :
   all_goals try native_decide
   simp [ffiMachineHost, ffiMachineWordHandler]
 
+example [NeZero width] (context : WordCallFfiContext width)
+    (host : WordFfiHost width) (state firstState finalState : State width)
+    (first second : WordProg (Word width))
+    (firstCode secondCode : List (Instruction width))
+    (returns : List (Fin 32))
+    (hfirstCompile : wordFunctionToRiscVWithCallsAndFfi context first =
+      some (firstCode, []))
+    (hsecondCompile : wordFunctionToRiscVWithCallsAndFfi context second =
+      some (secondCode, returns))
+    (hfirstExec : executeInstructionsWithFfi host state firstCode =
+      some firstState)
+    (hsecondExec : executeInstructionsWithFfi host firstState secondCode =
+      some finalState) :
+    (wordFunctionToRiscVWithCallsAndFfi context (.seq first second)).bind
+        (fun result =>
+          (executeInstructionsWithFfi host state result.1).map
+            (fun final => (final, returns))) =
+      some (finalState, returns) := by
+  exact wordFunctionToRiscVWithCallsAndFfi_seq_simulation context host state
+    firstState finalState first second firstCode secondCode returns
+    hfirstCompile hsecondCompile hfirstExec hsecondExec
+
 end Flapjack.RiscV
