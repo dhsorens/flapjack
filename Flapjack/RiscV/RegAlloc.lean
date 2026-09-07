@@ -1005,6 +1005,26 @@ def wordAllocateGraphFunction (parameters : List Nat)
       (state, renamedParameters, allocation,
         wordApplyColour (wordGraphColouringAt allocation.colouring) renamedProgram))
 
+/-! Full-SSA graph allocation includes the parameter-entry moves in the
+    coloured program.  `fixedSources` identifies the source names which are
+    already architectural inputs (the usual RISC-V ABI formals); keeping that
+    list explicit lets callers choose the same fixed-source policy as the HOL
+    allocator. -/
+
+def wordAllocateGraphFunctionWithEntry (parameters : List Nat)
+    (program : WordProg α) (fixedSources : List Nat) (colours stackStart : Nat) :
+    Option (WordSsaState × List Nat × WordGraphAllocation × WordProg α) :=
+  let (state, renamedParameters, renamedProgram) :=
+    wordSsaRenameFunctionWithEntry parameters program
+  let tree := WordClashTree.seq (.set renamedParameters)
+    (wordClashTree renamedProgram [])
+  let forced := wordProgForcedClashes renamedProgram
+  let moves := wordProgPreferenceEdges renamedProgram
+  (wordAllocateGraph tree forced fixedSources moves colours stackStart).map
+    (fun allocation =>
+      (state, renamedParameters, allocation,
+        wordApplyColour (wordGraphColouringAt allocation.colouring) renamedProgram))
+
 /-! Backward forced-stack analysis from CakeML's get_stack_only.  The two
     lists correspond to its temporary-stack and forced-stack sets.  Lists are
     used as finite sets here so the analysis remains executable and easy to

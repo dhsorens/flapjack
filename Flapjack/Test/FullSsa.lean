@@ -1,4 +1,4 @@
-import Flapjack.RiscV.Allocator
+import Flapjack.RiscV.RegAlloc
 
 namespace Flapjack
 
@@ -20,5 +20,12 @@ example :
     (wordSsaEntryMove [2, 3] [5, 9] : WordProg Nat) =
       .move 1 [(5, 2), (9, 3)] := by
   rfl
+
+/- The entry-aware graph boundary accepts an unused ABI formal and returns a
+   coloured program containing its setup move. -/
+example :
+    (wordAllocateGraphFunctionWithEntry [2]
+      (.skip : WordProg (RiscV.Word 64)) [2] 13 0).isSome := by
+  decide +kernel
 
 end Flapjack
