@@ -19,6 +19,7 @@ inductive StackMachineControl (width : Nat) where
   | break (state : WordStackMachineState width)
   | continue (state : WordStackMachineState width)
   | returned (state : WordStackMachineState width) (value : Word width)
+  | raised (state : WordStackMachineState width) (value : Word width)
   | halted (state : WordStackMachineState width) (value : Word width)
 
 def stackMachineLookup : List (Nat × StackProg Nat) → Nat →
@@ -119,11 +120,13 @@ def evalStackProgFuelWithCode [NeZero width] :
       | result => result
   | fuel + 1, _, state, .break _ => some (.break state)
   | fuel + 1, _, state, .continue _ => some (.continue state)
+  | fuel + 1, _, state, .raise register =>
+      some (.raised state (state.registers register))
   | fuel + 1, _, state, .return register =>
       some (.returned state (state.registers register))
   | fuel + 1, _, state, .halt register =>
       some (.halted state (state.registers register))
-  | fuel + 1, code, state, .call returnHandler (.label target) none =>
+  | fuel + 1, code, state, .call returnHandler (.label target) handler =>
       match code target with
       | none => none
       | some callee =>
@@ -133,6 +136,13 @@ def evalStackProgFuelWithCode [NeZero width] :
               | some (returnCode, _, _, _) =>
                   evalStackProgFuelWithCode fuel code state returnCode
               | none => some (.returned state value)
+          | some (.raised state value) =>
+              match handler with
+              | some (handlerCode, exceptionRegister, _) =>
+                  evalStackProgFuelWithCode fuel code
+                    (wordStackMachineWriteRegister state exceptionRegister value)
+                    handlerCode
+              | none => some (.raised state value)
           | some (.halted state value) => some (.halted state value)
           | _ => none
   | fuel + 1, _, _, .call _ _ _ => none
@@ -143,6 +153,27 @@ def evalStackProgFuel [NeZero width] :
     Option (StackMachineControl width) :=
   fun fuel state program =>
     evalStackProgFuelWithCode fuel (fun _ => none) state program
+
+theorem evalStackProgFuelWithCode_raise [NeZero width]
+    (fuel : Nat) (code : Nat → Option (StackProg Nat))
+    (state : WordStackMachineState width) (register : Nat) :
+    evalStackProgFuelWithCode (fuel + 1) code state (.raise register) =
+      some (.raised state (state.registers register)) := by
+  rfl
+
+theorem evalStackProgFuelWithCode_call_raise_handler [NeZero width]
+    (fuel : Nat) (code : Nat → Option (StackProg Nat))
+    (state : WordStackMachineState width) (target exceptionRegister
+      handlerLabel : Nat) (returnCode : StackProg Nat)
+    (link returnLabel entryLabel register : Nat) (handlerCode : StackProg Nat)
+    (hcallee : code target = some (.raise register)) :
+    evalStackProgFuelWithCode (fuel + 2) code state
+        (.call (some (returnCode, link, returnLabel, entryLabel)) (.label target)
+          (some (handlerCode, exceptionRegister, handlerLabel))) =
+      evalStackProgFuelWithCode (fuel + 1) code
+        (wordStackMachineWriteRegister state exceptionRegister
+          (state.registers register)) handlerCode := by
+  simp [evalStackProgFuelWithCode, hcallee]
 
 theorem evalStackGcMoveCode_immediate
     (config : StackGcConfig) (fuel : Nat)

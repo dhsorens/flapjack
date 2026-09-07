@@ -103,6 +103,40 @@ def zeroStackMachineState : RiscV.WordStackMachineState 64 :=
     memory := fun _ => 0
     sharedMemory := fun _ => 0 }
 
+def handlerStackMachineState : RiscV.WordStackMachineState 64 :=
+  { zeroStackMachineState with
+    registers := fun register => if register = 31 then 7 else 0 }
+
+example :
+    Option.map (fun result =>
+          match result with
+          | .returned state value => (state.registers 3, value)
+          | _ => (0, 0))
+      (evalStackProgFuelWithCode 20
+        (stackMachineLookup [
+          (0, (.raise 31 : StackProg Nat)),
+          (1, (.call none (.label 0) none : StackProg Nat))])
+        handlerStackMachineState
+        (.call (some (.skip, 0, 0, 0)) (.label 1)
+          (some ((.return 3 : StackProg Nat), 3, 0)))) =
+      some (7, 7) := by
+  decide
+
+example :
+    Option.map (fun result =>
+          match result with
+          | .returned state value => (state.registers 3, value)
+          | _ => (0, 0))
+      (evalStackSectionsFuel 30
+        [
+          (0, (.raise 31 : StackProg Nat)),
+          (1, (.call none (.label 0) none : StackProg Nat)),
+          (2, (.call (some (.skip, 0, 0, 0)) (.label 1)
+            (some ((.return 3 : StackProg Nat), 3, 0)) : StackProg Nat))]
+        2 handlerStackMachineState) =
+      some (7, 7) := by
+  decide
+
 example :
     (evalStackProgFuel 4 zeroStackMachineState
       (.seq (.const 1 7) (.set .allocSize 1) : StackProg Nat)).isSome := by
