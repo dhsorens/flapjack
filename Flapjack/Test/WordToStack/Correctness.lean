@@ -21,7 +21,7 @@ example :
   apply wordStackFfi_eq_join
   · native_decide
   all_goals simp [ffiStackShapeConfig, wordStackFfiMove,
-    wordStackLocation, lookupNatInfo]
+    wordStackLocation, wordStackOffset, lookupNatInfo]
 example [NeZero width]
     (state final : WordStackState width)
     (heval : (wordStackMove (α := Nat)
