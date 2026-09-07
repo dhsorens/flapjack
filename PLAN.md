@@ -478,6 +478,8 @@ definitions, pass ordering, examples, and proof obligations.
   function boundary.
 - [x] Prove fixed-tag, graph-edge, and clash-tree soundness for the prioritized
   heuristic graph allocator.
+- [x] Lift prioritized graph soundness through the composed oracle/heuristic
+  function driver.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware
   RISC-V contracts before claiming general call-aware allocation correctness.
 - [x] Add a combined graph-allocation soundness contract exposing fixed tags,
