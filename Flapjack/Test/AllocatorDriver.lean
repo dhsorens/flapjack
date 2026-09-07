@@ -31,7 +31,8 @@ example (parameters : List Nat) (program : WordProg Nat)
     | .oracle _ _ _ => True
     | .graph _ _ allocation _ =>
         wordGraphTagsAreFixed allocation.graph = true ∧
-          wordGraphColouringRespectsEdges allocation.graph = true := by
+          wordGraphColouringRespectsEdges allocation.graph = true
+    | .spill _ _ _ _ => True := by
   cases result with
   | oracle oracleState oracleParameters oracleProgram =>
       trivial
@@ -40,5 +41,7 @@ example (parameters : List Nat) (program : WordProg Nat)
         parameters program fixedSources colours stackStart oracle graphState
         graphParameters allocation graphProgram halloc
       exact ⟨hsound.1, hsound.2.1⟩
+  | spill spillState spillParameters allocation spillProgram =>
+      trivial
 
 end Flapjack
