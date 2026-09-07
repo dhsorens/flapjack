@@ -498,6 +498,8 @@ definitions, pass ordering, examples, and proof obligations.
   the checked linear-scan RISC-V pipeline.
 - [x] Prove the checked linear-scan safety predicate and lift it through the
   SSA-renamed function allocation boundary.
+- [x] Port linear-scan domination repair and the executable number-property,
+  start-live, point-inside-interval, and interval-colouring checks.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware
   RISC-V contracts before claiming general call-aware allocation correctness.
 - [x] Add a combined graph-allocation soundness contract exposing fixed tags,
