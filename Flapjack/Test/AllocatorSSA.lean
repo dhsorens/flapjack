@@ -163,6 +163,22 @@ example :
 
 example :
     wordSsaRenameProgram
+        ({ current := [(1, 100), (2, 104), (3, 108), (4, 112)], next := 200 } :
+          WordSsaState)
+      ((.install 1 2 3 4 ([1], [2]) : WordProg Nat)) =
+      ({ current := [(2, 220), (1, 216), (202, 212)], next := 224 },
+        .seq (.move 0 [(202, 100), (206, 104)])
+          (.seq (.move 0 [(2, 202), (4, 206)])
+            (.seq (.install 2 4 108 112 ([202], [206]))
+              (.seq (.move 0 [(212, 2)])
+                (.move 0 [(216, 202), (220, 206)]))))) := by
+  simp [wordSsaRenameProgram, wordSsaRenameProgramWithLoops,
+    wordSsaListNextVarRenameMove, wordSsaReadCutsets, wordSsaRestrict,
+    wordSsaFreshList, wordSsaFresh, wordSsaRead, wordSsaSeq,
+    List.eraseDups, List.eraseDupsBy, List.eraseDupsBy.loop, lookupNatInfo]
+
+example :
+    wordSsaRenameProgram
         ({ current := [], next := 10 } : WordSsaState)
       ((.loop [1] (.break 0) []) : WordProg Nat) =
       ({ current := [], next := 14 },

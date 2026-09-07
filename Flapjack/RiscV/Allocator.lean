@@ -734,12 +734,23 @@ def wordSsaRenameProgramWithLoops (frames : List WordSsaLoopFrame)
         let (state, destination) := wordSsaFresh state destination
         (state, .opCurrHeap operator destination source)
     | .install codeBuffer codeLength dataBuffer dataLength cutsets =>
-        let cutsets := wordSsaReadCutsets state cutsets
-        let codeBuffer := wordSsaRead state codeBuffer
-        let codeLength := wordSsaRead state codeLength
-        let dataBuffer := wordSsaRead state dataBuffer
-        let dataLength := wordSsaRead state dataLength
-        (state, .install codeBuffer codeLength dataBuffer dataLength cutsets)
+        let names := (cutsets.1 ++ cutsets.2).eraseDups
+        let (stackState, stackNext, stackMove) :=
+          wordSsaListNextVarRenameMove state (state.next + 2) names
+        let stackCutsets := wordSsaReadCutsets stackState cutsets
+        let codeBuffer := wordSsaRead stackState codeBuffer
+        let codeLength := wordSsaRead stackState codeLength
+        let dataBuffer := wordSsaRead stackState dataBuffer
+        let dataLength := wordSsaRead stackState dataLength
+        let cutState := wordSsaRestrict stackState names
+        let (pointerState, pointer) :=
+          wordSsaFresh { cutState with next := stackNext + 2 } codeBuffer
+        let (state, _, restoreMove) :=
+          wordSsaListNextVarRenameMove pointerState pointerState.next names
+        (state, wordSsaSeq stackMove
+          (wordSsaSeq (.move 0 [(2, codeBuffer), (4, codeLength)])
+            (wordSsaSeq (.install 2 4 dataBuffer dataLength stackCutsets)
+              (wordSsaSeq (.move 0 [(pointer, 2)]) restoreMove))))
     | .codeBufferWrite address value =>
         (state, .codeBufferWrite (wordSsaRead state address)
           (wordSsaRead state value))
