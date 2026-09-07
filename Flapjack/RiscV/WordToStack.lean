@@ -1805,7 +1805,6 @@ theorem evalWordStackMachine_shared_load_preserves_value [NeZero width]
     (hdestination : wordStackLocation config destination =
       some destinationLocation)
     (haddress : wordStackLocation config address = some addressLocation)
-    (hscratch : config.scratch ≠ config.addressScratch)
     (heval : (wordStackSharedMemoryInst config .load destination address).bind
       (evalWordStackMachine state) = some final) :
       wordStackMachineValue config final destination =

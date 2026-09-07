@@ -112,13 +112,8 @@ example :
     (address := 1) (destination := 2) (destinationRegister := 2)
     (addressValue := BitVec.ofNat 64 16)
     (byteValue := BitVec.ofNat 8 42)
-    (zero := by
-      change memoryCorrectnessWordState.registers (0 : Fin 32) = 0
-      simp [memoryCorrectnessWordState, RiscV.writeRegister,
-        RiscV.zeroState, RiscV.writeWord32, RiscV.writeByte])
     (hlocals := memoryCorrectness_mappedLocals)
     (haddress := by simp [memoryCorrectnessLoopState])
-    (hmemory := by decide)
     (hmachine := by decide)
     (hdestination := by decide)
     (hdestination_nonzero := by decide)
@@ -284,7 +279,6 @@ example :
     (value := BitVec.ofNat 64 42)
     (hlocals := memoryCorrectness_mappedLocals)
     (haddress := by simp [memoryCorrectnessLoopState])
-    (hmemory := by decide)
     (hmachine := by decide)
     (hdestination := by decide)
     (hdestination_nonzero := by decide)
