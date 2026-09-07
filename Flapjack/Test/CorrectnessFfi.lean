@@ -242,7 +242,7 @@ def sourceFfiImage : Option (Word 64 × List (Instruction 64)) := do
       executeFunctionAtWithFfi sourceFfiHost 100 0 entry 100 [] code [4] []
         (writeRegister (zeroState 64) 1 100)) = some [42]
 
-theorem sourceFfi_end_to_end_correct :
+#guard
     (evalPanProgWithCallsAndFfi sourceFfiFunctions sourceFfiHandler 20
       (fun _ => none) sourceFfiMainBody).map
         (fun result => match result with
@@ -250,7 +250,6 @@ theorem sourceFfi_end_to_end_correct :
         | _ => []) = some [42] ∧
       sourceFfiImage.bind (fun (entry, code) =>
         executeFunctionAtWithFfi sourceFfiHost 100 0 entry 100 [] code [4] []
-          (writeRegister (zeroState 64) 1 100)) = some [42] := by
-  constructor <;> native_decide
+          (writeRegister (zeroState 64) 1 100)) = some [42]
 
 end Flapjack

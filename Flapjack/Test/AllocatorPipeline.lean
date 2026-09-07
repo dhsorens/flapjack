@@ -54,10 +54,9 @@ example [NeZero width] :
       ([] : List (Nat × List Nat × LoopProg (RiscV.Word width))) = some [] := by
   rfl
 
-example :
+#guard
     (pipelineWordFunctionsAllocatedWithGraph
-      [(0, [0], (.assign 1 (.var 0) : LoopProg (RiscV.Word 64))) ]).isSome := by
-  native_decide
+      [(0, [0], (.assign 1 (.var 0) : LoopProg (RiscV.Word 64))) ]).isSome
 
 example :
     RiscV.wordToStackFunctionWithParameters
@@ -77,38 +76,34 @@ example :
     lookupNatInfo,
     RiscV.wordProgToNat]
 
-example :
+#guard
     (pipelineWordFunctionsAllocatedWithSpills
-      [(0, [0], (.assign 1 (.var 0) : LoopProg (RiscV.Word 64))) ]).isSome := by
-  native_decide
+      [(0, [0], (.assign 1 (.var 0) : LoopProg (RiscV.Word 64))) ]).isSome
 
 
-example :
+#guard
     (pipelineWordFunctionsAllocatedWithSpills
       [(0, [0], (.assign 1 (.var 0) : LoopProg (RiscV.Word 64))) ]).map
         (fun functions => functions.map (fun (_, parameters, _) => parameters)) =
-      some [[2]] := by
-  native_decide
+      some [[2]]
 
-example :
+#guard
     (compileFlapjackRiscVViaAllocatedStack (width := 64) .rv64i
       (BitVec.ofNat 64 8) (fun value => BitVec.ofNat 64 value) []
       { storeBase := 10, currHeap := 12, scratch := 31,
         addressScratch := 29, stackPointer := 20, bytesInWord := 8,
         stackBase := 21, wordShift := 3 }
-      pipelineAllocatedMulDeclarations).isSome := by
-  native_decide
+      pipelineAllocatedMulDeclarations).isSome
 
-example :
+#guard
     (compileFlapjackRiscVViaGraphAllocatedStack (width := 64) .rv64i
       (BitVec.ofNat 64 8) (fun value => BitVec.ofNat 64 value) []
       { storeBase := 10, currHeap := 12, scratch := 31,
         addressScratch := 29, stackPointer := 20, bytesInWord := 8,
         stackBase := 21, wordShift := 3 }
-      pipelineAllocatedMulDeclarations).isSome := by
-  native_decide
+      pipelineAllocatedMulDeclarations).isSome
 
-example :
+#guard
     (compileFlapjackRiscVViaGraphAllocatedStackLinked (width := 64) .rv64i
       (BitVec.ofNat 64 8) (fun value => BitVec.ofNat 64 value) []
       { storeBase := 10, currHeap := 12, scratch := 31,
@@ -116,8 +111,7 @@ example :
         stackBase := 21, wordShift := 3 }
       pipelineAllocatedMulDeclarations).map
         (fun sections => sections.map (fun (label, entry, _) => (label, entry))) =
-      some [(0, BitVec.ofNat 64 0), (1, BitVec.ofNat 64 76)] := by
-  native_decide
+      some [(0, BitVec.ofNat 64 0), (1, BitVec.ofNat 64 76)]
 
 
 end Flapjack

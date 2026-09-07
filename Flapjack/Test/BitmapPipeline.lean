@@ -11,10 +11,9 @@ example :
       some ([], wordStackInitialBitmaps false) := by
   rfl
 
-example :
+#guard
     (compileFlapjackRiscVViaAllocatedStackWithBitmaps (width := 64) .rv64i
       (BitVec.ofNat 64 8) (fun value => BitVec.ofNat 64 value) []
-      pipelineStackRemoveConfig pipelineStackAddDeclarations).isSome := by
-  native_decide
+      pipelineStackRemoveConfig pipelineStackAddDeclarations).isSome
 
 end Flapjack

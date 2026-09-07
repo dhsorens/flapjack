@@ -71,41 +71,36 @@ example :
       ([0, 1], []) := by
   exact wordProgClashAnalysis_ite
 
-example :
+#guard
     (2, 4) ∈ (wordProgClashAnalysis
       ((.call none none []
         (some (9, (.assign 2 (.var 3)), 0, 0)) : WordProg Nat))
-      [4]).2 := by
-  native_decide
+      [4]).2
 
-example :
+#guard
     (9, 3) ∈ (wordProgClashAnalysis
       ((.call none none []
         (some (9, (.assign 2 (.var 3)), 0, 0)) : WordProg Nat))
-      [4]).2 := by
-  native_decide
+      [4]).2
 
-example :
+#guard
     9 ∈ (wordProgClashAnalysis
       ((.call none none []
         (some (9, (.assign 2 (.var 3)), 0, 0)) : WordProg Nat))
-      [4]).1 := by
-  native_decide
+      [4]).1
 
-example :
+#guard
     3 ∈ (wordProgClashAnalysis
       ((.call none none []
         (some (9, (.assign 2 (.var 3)), 0, 0)) : WordProg Nat))
-      [4]).1 := by
-  native_decide
+      [4]).1
 
-example :
+#guard
     (wordAllocateSsaProgram
       ({ current := [], next := 10 } : WordSsaState)
       ((.ite .equal 0 (.reg 0)
         (.assign 1 (.var 0)) (.assign 1 (.var 0))) : WordProg Nat)).isSome =
-      true := by
-  native_decide
+      true
 
 example (slots : List Nat) (edges : List (Nat × Nat))
     (colouring : NatInfoMap Nat)
