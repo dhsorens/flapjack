@@ -69,6 +69,15 @@ example :
 
 example :
     evalStackFrameFuelWithCodeAndFfi identityFrameFfi 6
+      (fun _ => none) frameMachineState
+      (.loop (.seq (.ffi "echo" 3 4 5 6 0) (.break 0))) =
+      some (.normal frameMachineState) := by
+  apply evalStackFrameFuelWithCodeAndFfi_loop_break
+    (state' := frameMachineState)
+  rfl
+
+example :
+    evalStackFrameFuelWithCodeAndFfi identityFrameFfi 6
       (fun target => if target = 7 then
         some ((.seq (.ffi "echo" 3 4 5 6 0) (.return 3)) : StackProg Nat)
         else none)

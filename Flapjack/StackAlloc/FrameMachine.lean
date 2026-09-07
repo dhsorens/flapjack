@@ -487,6 +487,17 @@ theorem evalStackFrameFuelWithCodeAndFfi_call_return_handler [NeZero width]
   simp [evalStackFrameFuelWithCodeAndFfi, evalStackFrameFuelWithCode,
     hcallee]
 
+theorem evalStackFrameFuelWithCodeAndFfi_loop_break [NeZero width]
+    (host : StackFrameMachineFfiHandler width)
+    (fuel : Nat) (code : Nat → Option (StackProg Nat))
+    (state state' : StackFrameMachineState width)
+    (body : StackProg Nat) (hbody :
+      evalStackFrameFuelWithCodeAndFfi host fuel code state body =
+        some (.break state')) :
+    evalStackFrameFuelWithCodeAndFfi host (fuel + 1) code state
+      (.loop body) = some (.normal state') := by
+  simp [evalStackFrameFuelWithCodeAndFfi, hbody]
+
 theorem evalStackFrameFuel_seq_normal [NeZero width]
     (fuel : Nat) (state state' : StackFrameMachineState width)
     (first second : StackProg Nat)

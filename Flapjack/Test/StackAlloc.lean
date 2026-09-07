@@ -147,6 +147,15 @@ example :
   rfl
 
 example :
+    evalStackProgFuelWithCodeAndFfi identityStackFfi 6
+      (stackMachineLookup []) zeroStackMachineState
+      (.loop (.seq (.ffi "echo" 2 3 4 5 0) (.break 0))) =
+      some (.normal zeroStackMachineState) := by
+  apply RiscV.evalStackProgFuelWithCodeAndFfi_loop_break
+    (state' := zeroStackMachineState)
+  rfl
+
+example :
     Option.map (fun result =>
           match result with
           | .returned state value => (state.registers 3, value)

@@ -1371,6 +1371,8 @@ definitions, pass ordering, examples, and proof obligations.
   raised-handler equations, with frame-state regressions.
 - [x] Expose the bounded FrameMachine FFI returned-callee continuation
   equation, with a return-path FFI regression.
+- [x] Add abstract and bounded FFI loop-break simulation equations, with
+  FFI-in-loop regressions.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 

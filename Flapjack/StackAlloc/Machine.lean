@@ -277,6 +277,17 @@ theorem evalStackProgFuelWithCodeAndFfi_call_raise_handler [NeZero width]
   simp [evalStackProgFuelWithCodeAndFfi, evalStackProgFuelWithCode,
     hcallee]
 
+theorem evalStackProgFuelWithCodeAndFfi_loop_break [NeZero width]
+    (host : StackMachineFfiHandler width)
+    (fuel : Nat) (code : Nat → Option (StackProg Nat))
+    (state state' : WordStackMachineState width)
+    (body : StackProg Nat) (hbody :
+      evalStackProgFuelWithCodeAndFfi host fuel code state body =
+        some (.break state')) :
+    evalStackProgFuelWithCodeAndFfi host (fuel + 1) code state
+      (.loop body) = some (.normal state') := by
+  simp [evalStackProgFuelWithCodeAndFfi, hbody]
+
 theorem evalStackGcMoveCode_immediate
     (config : StackGcConfig) (fuel : Nat)
     (state : WordStackMachineState 64)
