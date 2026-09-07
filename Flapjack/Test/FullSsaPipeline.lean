@@ -32,4 +32,12 @@ example :
         { name := "main", inline := false, exported := true, params := [],
           body := .return (.const (BitVec.ofNat 64 7)), returnShape := .one }]).isSome
 
+#guard
+    (compileFlapjackRiscVViaAllocatedStackWithFullSsaLinked (width := 64) .rv64i
+      (BitVec.ofNat 64 8) (fun value => BitVec.ofNat 64 value) []
+      fullSsaPipelineRemoveConfig
+      [.function
+        { name := "main", inline := false, exported := true, params := [],
+          body := .return (.const (BitVec.ofNat 64 7)), returnShape := .one }]).isSome
+
 end Flapjack

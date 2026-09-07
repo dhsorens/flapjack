@@ -566,6 +566,8 @@ definitions, pass ordering, examples, and proof obligations.
   for entry-inclusive full-SSA functions.
 - [x] Expose an end-to-end Flapjack-to-RISC-V compiler entry point using the
   full-SSA spill pipeline.
+- [x] Expose the linked full-SSA RISC-V artifact with section entry addresses
+  for downstream execution and correctness clients.
 - [x] Route the spill-aware RISC-V pipeline through the implemented
   clash-tree/preference allocator and retain its allocation witness at the
   Word-to-Stack boundary.
