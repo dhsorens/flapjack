@@ -373,4 +373,115 @@ theorem evalStackProgFuelWithCodeAndFfi_wordStackFfi_source_values
   simpa [hconfigurationRegister, hconfigurationLengthRegister,
     harrayRegister, harrayLengthRegister] using hstack
 
+/-! Lift the FFI prefix theorem through the actual Word-to-Stack compiler.
+    Keeping the compiler option in the statement makes failed lowering
+    observable and lets callers compose this result with the surrounding
+    `wordToStackProgWord` recursion. -/
+
+theorem evalStackProgFuelWithCodeAndFfi_wordToStackProgWord_ffi
+    [NeZero width] (host : StackMachineFfiHandler width)
+    (fuel : Nat) (code : Nat → Option (StackProg Nat))
+    (config : WordStackConfig) (state state1 state2 state3 final :
+      WordStackMachineState width)
+    (function : FunName)
+    (configuration configurationLength array arrayLength : Nat)
+    (live : List Nat × List Nat)
+    (configurationLocation configurationLengthLocation arrayLocation
+      arrayLengthLocation : WordLocation)
+    (configurationMove configurationLengthMove arrayMove arrayLengthMove :
+      StackProg Nat)
+    (configurationValue configurationLengthValue arrayValue arrayLengthValue :
+      Word width)
+    (hsafe : wordStackFfiSourcesSafe config
+      [configuration, configurationLength, array, arrayLength] = true)
+    (hsafeLocations : ∀ location, location ∈
+      [configurationLocation, configurationLengthLocation, arrayLocation,
+        arrayLengthLocation] →
+      ∀ destination, destination ∈ [10, 11, 12, 13] →
+        location ≠ .register destination)
+    (hconfiguration : wordStackLocation config configuration =
+      some configurationLocation)
+    (hconfigurationLength : wordStackLocation config configurationLength =
+      some configurationLengthLocation)
+    (harray : wordStackLocation config array = some arrayLocation)
+    (harrayLength : wordStackLocation config arrayLength =
+      some arrayLengthLocation)
+    (hconfigurationDestination : configurationLocation ≠ .register 10)
+    (hconfigurationLengthDestination :
+      configurationLengthLocation ≠ .register 11)
+    (harrayDestination : arrayLocation ≠ .register 12)
+    (harrayLengthDestination : arrayLengthLocation ≠ .register 13)
+    (hconfigurationMove : wordStackFfiMove config configuration 10 =
+      some configurationMove)
+    (hconfigurationLengthMove :
+      wordStackFfiMove config configurationLength 11 =
+        some configurationLengthMove)
+    (harrayMove : wordStackFfiMove config array 12 = some arrayMove)
+    (harrayLengthMove : wordStackFfiMove config arrayLength 13 =
+      some arrayLengthMove)
+    (hconfigurationValue : wordStackMachineValue config state configuration =
+      some configurationValue)
+    (hconfigurationLengthValue :
+      wordStackMachineValue config state configurationLength =
+        some configurationLengthValue)
+    (harrayValue : wordStackMachineValue config state array =
+      some arrayValue)
+    (harrayLengthValue : wordStackMachineValue config state arrayLength =
+      some arrayLengthValue)
+    (hevalConfiguration :
+      (wordStackFfiMove config configuration 10).bind
+        (evalWordStackMachine state) = some state1)
+    (hevalConfigurationLength :
+      (wordStackFfiMove config configurationLength 11).bind
+        (evalWordStackMachine state1) = some state2)
+    (hevalArray :
+      (wordStackFfiMove config array 12).bind
+        (evalWordStackMachine state2) = some state3)
+    (hevalArrayLength :
+      (wordStackFfiMove config arrayLength 13).bind
+        (evalWordStackMachine state3) = some final) :
+    (wordToStackProgWord config
+      ((.ffi function configuration configurationLength array arrayLength live) :
+        WordProg (Word width))).bind
+        (fun program => evalStackProgFuelWithCodeAndFfi host (fuel + 5)
+          code state program) =
+      (host function configurationValue configurationLengthValue
+        arrayValue arrayLengthValue final).map .normal := by
+  have hstack := evalStackProgFuelWithCodeAndFfi_wordStackFfi_source_values
+    (host := host) (fuel := fuel) (code := code) (config := config)
+    (state := state) (state1 := state1) (state2 := state2)
+    (state3 := state3) (final := final) (function := function)
+    (configuration := configuration)
+    (configurationLength := configurationLength) (array := array)
+    (arrayLength := arrayLength)
+    (configurationLocation := configurationLocation)
+    (configurationLengthLocation := configurationLengthLocation)
+    (arrayLocation := arrayLocation)
+    (arrayLengthLocation := arrayLengthLocation)
+    (configurationMove := configurationMove)
+    (configurationLengthMove := configurationLengthMove)
+    (arrayMove := arrayMove) (arrayLengthMove := arrayLengthMove)
+    (configurationValue := configurationValue)
+    (configurationLengthValue := configurationLengthValue)
+    (arrayValue := arrayValue) (arrayLengthValue := arrayLengthValue)
+    hconfiguration hconfigurationLength harray harrayLength
+    hconfigurationDestination hconfigurationLengthDestination
+    harrayDestination harrayLengthDestination hsafeLocations
+    hconfigurationMove hconfigurationLengthMove harrayMove harrayLengthMove
+    hconfigurationValue hconfigurationLengthValue harrayValue harrayLengthValue
+    hevalConfiguration hevalConfigurationLength hevalArray hevalArrayLength
+  have hcompile : wordToStackProgWord config
+      ((.ffi function configuration configurationLength array arrayLength live) :
+        WordProg (Word width)) =
+      some (wordStackJoin configurationMove
+        (wordStackJoin configurationLengthMove
+          (wordStackJoin arrayMove
+            (wordStackJoin arrayLengthMove
+              (.ffi function 10 11 12 13 0)))) ) := by
+    simp [wordToStackProgWord, wordProgToNat, wordToStackProgNat,
+      wordStackFfi, hsafe, hconfigurationMove, hconfigurationLengthMove,
+      harrayMove, harrayLengthMove]
+  rw [hcompile]
+  simpa using hstack
+
 end Flapjack.RiscV
