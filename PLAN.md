@@ -484,6 +484,8 @@ definitions, pass ordering, examples, and proof obligations.
   and expose an end-to-end StackRemove entry point.
 - [x] Port CakeML's linear-scan live-tree representation, backward liveness,
   register extraction, and executable colouring check.
+- [x] Port CakeML's linear-scan interval start/end construction, including
+  earliest-start/latest-end updates and interval intersection.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware
   RISC-V contracts before claiming general call-aware allocation correctness.
 - [x] Add a combined graph-allocation soundness contract exposing fixed tags,
