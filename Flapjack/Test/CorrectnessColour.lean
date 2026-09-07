@@ -90,6 +90,21 @@ example [NeZero width] (state : State width) :
 
 example [NeZero width] (state : State width) :
     ∃ source' target',
+      evalWordProg state (.move 1 [(3, 4), (5, 6)]) = some source' ∧
+      evalWordProg (testTargetState state)
+          (wordApplyColour testColour (.move 1 [(3, 4), (5, 6)])) = some target' ∧
+      testRelation source' target' := by
+  apply evalWordProg_wordVarStraightLine_applyColour testColour
+    testColourValidFn testColour_injective testColour_zero testColour_noScratch
+    state (testTargetState state)
+  · exact testRelation_target state
+  · exact .moveTwo 3 4 5 6
+      (by omega) (by omega) (by omega) (by omega)
+      (by decide) (by decide) (by decide) (by decide)
+      (by decide) (by decide) (by decide) (by decide) (by decide)
+
+example [NeZero width] (state : State width) :
+    ∃ source' target',
       evalWordProg state (.move 1 [(3, 4)]) = some source' ∧
       evalWordProg (testTargetState state)
           (wordApplyColour testColour (.move 1 [(3, 4)])) = some target' ∧
