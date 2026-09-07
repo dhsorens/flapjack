@@ -23,6 +23,11 @@ def fullSsaMainLinked :
 def fullSsaMainImage : Option (List (RiscV.Instruction 64)) :=
   fullSsaMainLinked.map (List.flatMap (fun (_, _, code) => code))
 
+def fullSsaMainGraphImage : Option (List (RiscV.Instruction 64)) :=
+  compileFlapjackRiscVViaGraphStackWithFullSsa .rv64i
+    (BitVec.ofNat 64 8) (fun value => BitVec.ofNat 64 value) []
+    fullSsaPipelineRemoveConfig fullSsaMainDeclarations
+
 /-! Regression for the full-SSA entry sequence through graph allocation and
     Word-to-Stack lowering. -/
 
@@ -42,9 +47,19 @@ example :
 #guard
     fullSsaMainLinked.isSome
 
+#guard
+    fullSsaMainGraphImage.isSome
+
 theorem fullSsaMain_compiled_execution :
     (do
       let image ← fullSsaMainImage
+      RiscV.executeFunctionAt 100 0 76 6 [] image [2] []
+        (RiscV.zeroState 64)) = some [BitVec.ofNat 64 7] := by
+  native_decide
+
+theorem fullSsaMain_graph_compiled_execution :
+    (do
+      let image ← fullSsaMainGraphImage
       RiscV.executeFunctionAt 100 0 76 6 [] image [2] []
         (RiscV.zeroState 64)) = some [BitVec.ofNat 64 7] := by
   native_decide
