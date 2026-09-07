@@ -5,6 +5,7 @@ import Flapjack.Test.Runtime
 import Flapjack.Test.CollectorSemantics
 import Flapjack.Test.SpillAllocation
 import Flapjack.Test.CorrectnessBackend
+import Flapjack.Test.OracleAllocator
 import Flapjack.Test.CorrectnessCondition
 import Flapjack.Test.CorrectnessCode
 import Flapjack.Test.CorrectnessConditional

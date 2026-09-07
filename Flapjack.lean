@@ -23,6 +23,7 @@ import Flapjack.RiscV.PanMemory
 import Flapjack.RiscV.PanSemantics
 import Flapjack.RiscV.Allocator
 import Flapjack.RiscV.RegAlloc
+import Flapjack.RiscV.OracleAllocator
 import Flapjack.RiscV.AllocatorCorrectness
 import Flapjack.RiscV.WordToStack
 import Flapjack.RiscV.Backend
