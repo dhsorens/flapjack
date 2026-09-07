@@ -51,4 +51,48 @@ def wordHeuristicDriverUsesSpill
     (result : Option (WordFunctionAllocationResult α)) : Bool :=
   wordFunctionAllocationResultIsSpill result
 
+theorem wordAllocateFunctionWithOracleOrHeuristicOrSpill_graph_sound
+    (parameters : List Nat) (program : WordProg α)
+    (fixedSources : List Nat)
+    (algorithm currentFunction colours stackStart : Nat)
+    (oracle : NatInfoMap Nat) (state : WordSsaState)
+    (renamedParameters : List Nat) (allocation : WordGraphAllocation)
+    (renamedProgram : WordProg α)
+    (halloc :
+      wordAllocateFunctionWithOracleOrHeuristicOrSpill parameters program
+        fixedSources algorithm currentFunction colours stackStart oracle =
+        some (.graph state renamedParameters allocation renamedProgram)) :
+    wordGraphTagsAreFixed allocation.graph = true ∧
+      wordGraphColouringRespectsEdges allocation.graph = true ∧
+      (wordClashTreeCheck
+        (wordGraphColouringAt allocation.colouring)
+        (WordClashTree.seq
+          (.set (wordSsaRenameFunction parameters program).2.fst)
+          (wordClashTree (wordSsaRenameFunction parameters program).2.snd []))
+        [] []).isSome = true := by
+  simp [wordAllocateFunctionWithOracleOrHeuristicOrSpill] at halloc
+  split at halloc
+  · simp_all
+  · cases hgraph : wordAllocateGraphFunctionWithHeuristics parameters program
+      fixedSources algorithm currentFunction colours stackStart with
+    | none =>
+        cases hspill :
+            wordAllocateSsaFunctionWithClashTreeWithSpillsAndPreferences
+              parameters program with
+        | none => simp [hgraph, hspill] at halloc
+        | some value => simp [hgraph, hspill] at halloc
+    | some value =>
+        cases value with
+        | mk graphState rest =>
+            cases rest with
+            | mk graphParameters rest =>
+                cases rest with
+                | mk graphAllocation graphProgram =>
+                    simp [hgraph] at halloc
+                    rcases halloc with ⟨rfl, rfl, rfl, rfl⟩
+                    exact wordAllocateGraphFunctionWithHeuristics_sound
+                      parameters program fixedSources algorithm currentFunction
+                      colours stackStart graphState graphParameters
+                      graphAllocation graphProgram hgraph
+
 end Flapjack
