@@ -899,6 +899,29 @@ def wordAllocateGraph (tree : WordClashTree)
   else
     none
 
+def wordAllocateGraphWithPrioritizedMoves (tree : WordClashTree)
+    (forced : List (Nat × Nat)) (fixedSources : List Nat)
+    (moves : List WordMove) (colours stackStart : Nat) :
+    Option WordGraphAllocation :=
+  let input := wordInitRegAlloc tree forced fixedSources
+  let moveState := wordInitMoveStateWithColours colours input.graph moves
+  let moveState := wordCoalesceAllAvailable colours moveState
+  let moveState := wordFreezeAllAvailable colours moveState
+  let graph := wordColourGraphWithWorklist colours stackStart moveState.graph
+  let colouring := wordGraphTotalColouring input graph moveState.parents
+  let colour := wordGraphColouringAt colouring
+  if wordGraphTagsAreFixed graph &&
+      wordGraphColouringRespectsEdges graph &&
+      (wordClashTreeCheck colour tree [] []).isSome then
+    some
+      { bijection := input.bijection
+        initialTags := input.graph.tags
+        graph := graph
+        colouring := colouring
+        parents := moveState.parents }
+  else
+    none
+
 theorem wordAllocateGraph_sound (tree : WordClashTree)
     (forced : List (Nat × Nat)) (fixedSources : List Nat)
     (moves : List (Nat × Nat)) (colours stackStart : Nat)
@@ -906,9 +929,9 @@ theorem wordAllocateGraph_sound (tree : WordClashTree)
     (halloc : wordAllocateGraph tree forced fixedSources moves colours stackStart =
       some allocation) :
     wordGraphTagsAreFixed allocation.graph = true ∧
-      wordGraphColouringRespectsEdges allocation.graph = true ∧
+    wordGraphColouringRespectsEdges allocation.graph = true ∧
       (wordClashTreeCheck (wordGraphColouringAt allocation.colouring)
-        tree [] []).isSome = true := by
+      tree [] []).isSome = true := by
   simp [wordAllocateGraph] at halloc
   rcases halloc with ⟨hchecks, heq⟩
   cases heq
