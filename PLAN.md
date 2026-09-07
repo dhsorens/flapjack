@@ -1522,6 +1522,8 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Compose the corresponding false branch with bounded StackLang execution
   after condition materialization.
 - [x] Expose state-threaded Word-to-Stack loop and MustTerminate composition.
+- [x] Compose state-threaded loop lowering with bounded StackLang execution for
+  a body that exits through `break`.
 - [x] Expose source-order bitmap threading through the allocated Word-to-Stack
   function pipeline, including a compositional append equation.
 - [x] Add abstract and bounded FFI loop-break simulation equations, with
