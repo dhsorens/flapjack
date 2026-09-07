@@ -1,4 +1,5 @@
 import Flapjack.RiscV.Loops
+import Flapjack.WordSemantics
 
 /-!
 RISC-V call-sequence selection for the first Flapjack calling convention.
@@ -276,5 +277,21 @@ theorem wordFunctionToRiscVWithCalls_shareInst [NeZero width] :
       some ([.load32 5 6], []) := by
   simp [wordFunctionToRiscVWithCalls, wordShareInstToInstructions,
     wordInstToInstruction, registerOfNat]
+
+/-! Word-level semantic contract for the stack-based call convention.  The
+    theorem is parameterized by the argument word, so it can be reused by
+    source-to-Word simulations rather than only checking one numeral. -/
+
+theorem evalWordCall_return_general [NeZero width]
+    (value : Word width) :
+    (evalWordFunctionWithCalls
+      [(7, [2], (.return 0 [2] : WordProg (Word width)))] 10
+      (writeRegister (zeroState width) 2 value)
+      (.call (some ([3], ([], []), .skip, 0, 0)) (some 7) [2] none)).map
+        (fun result => readRegister result.1 3) = some value := by
+  simp [evalWordFunctionWithCalls, evalWordCall,
+    lookupWordFunction, readWordRegisters, bindWordRegisters,
+    assignWordRegisters, clearWordRegisters, evalWordFunction,
+    registerOfNat, writeRegister, readRegister]
 
 end Flapjack.RiscV
