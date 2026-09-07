@@ -258,4 +258,11 @@ example :
     wordSsaFakeInconsistencyMoves, wordSsaForceRename, List.eraseDups,
     List.eraseDupsBy, List.eraseDupsBy.loop, lookupNatInfo]
 
+example :
+    wordSsaReconcileTo
+        ({ current := [(1, 10)], next := 14 } : WordSsaState)
+        ({ current := [(1, 14)], next := 18 } : WordSsaState) [1, 2] =
+      (.move 1 [(14, 10)] : WordProg Nat) := by
+  simp [wordSsaReconcileTo, wordSsaSeq, lookupNatInfo]
+
 end Flapjack
