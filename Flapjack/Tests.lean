@@ -70,6 +70,8 @@ import Flapjack.RiscV.CorrectnessDirectMemory
 import Flapjack.Test.DirectMemoryRelation
 import Flapjack.RiscV.CorrectnessDirectSharedLoad
 import Flapjack.Test.DirectSharedLoadRelation
+import Flapjack.RiscV.CorrectnessDirectSharedStore
+import Flapjack.Test.DirectSharedStoreRelation
 
 /-!
 # Flapjack regression tests
