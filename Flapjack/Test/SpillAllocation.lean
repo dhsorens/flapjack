@@ -34,11 +34,10 @@ example [NeZero width] (config : WordStackConfig) (parameters : List Nat)
 
 /-! The graph allocator, rather than only its location-map adapter, reaches
 the bitmap-aware StackLang function entry point on a concrete function. -/
-example :
+#guard
     (wordAllocateGraphFunctionWithStackOnlyToStack
       { locations := [], scratch := 31, stackBase := 0, addressScratch := 29 }
       [2] (.assign 3 (.var 2) : WordProg (Word 64)) [] 13 14 13 14 13 none
-      (wordStackInitialBitmaps false)).isSome = true := by
-  native_decide
+      (wordStackInitialBitmaps false)).isSome = true
 
 end Flapjack.RiscV

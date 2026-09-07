@@ -234,11 +234,10 @@ example :
       { temporary := [5], forced := [5] } := by
   decide
 
-example :
+#guard
     (wordAllocateGraphFunctionWithStackOnly [2]
       (.seq (.assign 5 (.var 7)) (.assign 3 (.var 5)) : WordProg Nat)
-      [] 1 1).isSome := by
-  native_decide
+      [] 1 1).isSome
 
 example :
     (wordAllocateGraph
@@ -250,38 +249,34 @@ example :
       { temporary := [], forced := [] } := by
   decide
 
-example :
+#guard
     (wordAllocateGraphFunctionWithStackOnly [2]
-      (.assign 3 (.var 2) : WordProg Nat) [] 13 14).isSome := by
-  native_decide
+      (.assign 3 (.var 2) : WordProg Nat) [] 13 14).isSome
 
-example :
+#guard
     ((wordAllocateGraphFunctionWithStackOnly [2]
       (.assign 3 (.var 2) : WordProg (RiscV.Word 64)) [] 13 14).map
         (fun (_, _, allocation, _) =>
           (lookupNatInfo 5 (wordGraphLocations allocation 13 14)).isSome &&
-            (lookupNatInfo 9 (wordGraphLocations allocation 13 14)).isSome)).getD false = true := by
-  native_decide
+            (lookupNatInfo 9 (wordGraphLocations allocation 13 14)).isSome)).getD false = true
 
-example :
+#guard
     ((wordAllocateGraphFunctionWithStackOnly [2]
       (.assign 3 (.var 2) : WordProg (RiscV.Word 64)) [] 13 14).map
         (fun (_, _, allocation, _) =>
           (lookupNatInfo 5 (wordGraphLocations allocation 13 14),
             lookupNatInfo 9 (wordGraphLocations allocation 13 14)))).getD
       (none, none) =
-      (some (WordLocation.register 2), some (WordLocation.register 2)) := by
-  native_decide
+      (some (WordLocation.register 2), some (WordLocation.register 2))
 
-example :
+#guard
     ((wordAllocateGraphFunctionWithStackOnlyRenamed [2]
       (.assign 3 (.var 2) : WordProg (RiscV.Word 64)) [] 13 14).bind
         (fun (_, parameters, allocation, program) =>
           RiscV.wordToStackFunctionWithParameters
             { locations := wordGraphLocations allocation 13 14,
               scratch := 31, stackBase := 0, addressScratch := 29 }
-            parameters program)).isSome := by
-  native_decide
+            parameters program)).isSome
 
 example :
     wordProgForcedClashes
@@ -289,14 +284,13 @@ example :
       [(4, 5), (4, 6), (4, 7)] := by
   decide +kernel
 
-example :
+#guard
     (wordAllocateGraphProgram
       (.assign 2 (.var 3) : WordProg Nat) [] 1 1).map
         (fun allocation =>
           match allocation.2 with
           | .assign destination (.var source) => (destination, source)
           | _ => (0, 0)) =
-      some (2, 2) := by
-  native_decide
+      some (2, 2)
 
 end Flapjack
