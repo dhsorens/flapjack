@@ -132,34 +132,75 @@ def pipelineWordFunctionsAllocatedWithSpills [NeZero width] :
     location-aware Word-to-Stack boundary derives GC roots from the concrete
     spill slots produced by the allocator and carries the updated bitmap
     table into the next function. -/
+def pipelineWordFunctionAllocatedWithSpillsAndBitmaps [NeZero width]
+    (bitmaps : RiscV.WordStackBitmapState)
+    (function : Nat × List Nat × LoopProg (RiscV.Word width)) :
+    Option ((Nat × List Nat × StackProg Nat) × RiscV.WordStackBitmapState) :=
+  let (label, parameters, body) := function
+  do
+    let slots := loopAccVars body parameters
+    let context : WordContext :=
+      { vars := slots.map (fun name => (name, name + 2)) }
+    let wordParameters := parameters.map (fun name => name + 2)
+    let unallocatedBody := loopToWordProg context body
+    let (_, renamedParameters, renamedBody, allocation) ←
+      wordAllocateSsaFunctionWithClashTreeWithSpillsAndPreferences
+        wordParameters unallocatedBody
+    let config : RiscV.WordStackConfig :=
+      { locations := allocation.locations
+        scratch := 31
+        stackBase := 0
+        addressScratch := 29
+        handlerLabel := label }
+    let (stackBody, bitmaps) ←
+      RiscV.wordToStackFunctionWithParametersAndLocationBitmaps config
+        renamedParameters wordAllocatableRegisters.length config.scratch
+        allocation.nextSpill (some 1) bitmaps renamedBody
+    pure ((label, wordParameters, stackBody), bitmaps)
+
 def pipelineWordFunctionsAllocatedWithSpillsAndBitmaps [NeZero width]
     (bitmaps : RiscV.WordStackBitmapState) :
     List (Nat × List Nat × LoopProg (RiscV.Word width)) →
       Option
         (List (Nat × List Nat × StackProg Nat) × RiscV.WordStackBitmapState)
   | [] => some ([], bitmaps)
-  | (label, parameters, body) :: functions => do
-      let slots := loopAccVars body parameters
-      let context : WordContext :=
-        { vars := slots.map (fun name => (name, name + 2)) }
-      let wordParameters := parameters.map (fun name => name + 2)
-      let unallocatedBody := loopToWordProg context body
-      let (_, renamedParameters, renamedBody, allocation) ←
-        wordAllocateSsaFunctionWithClashTreeWithSpillsAndPreferences
-          wordParameters unallocatedBody
-      let config : RiscV.WordStackConfig :=
-        { locations := allocation.locations
-          scratch := 31
-          stackBase := 0
-          addressScratch := 29
-          handlerLabel := label }
-      let (stackBody, bitmaps) ←
-        RiscV.wordToStackFunctionWithParametersAndLocationBitmaps config
-          renamedParameters wordAllocatableRegisters.length config.scratch
-          allocation.nextSpill (some 1) bitmaps renamedBody
+  | function :: functions => do
+      let (compiled, bitmaps) ←
+        pipelineWordFunctionAllocatedWithSpillsAndBitmaps bitmaps function
       let (rest, bitmaps) ←
         pipelineWordFunctionsAllocatedWithSpillsAndBitmaps bitmaps functions
-      pure ((label, wordParameters, stackBody) :: rest, bitmaps)
+      pure (compiled :: rest, bitmaps)
+
+/-! The bitmap accumulator is threaded through function compilation in source
+    order.  This equation makes that sequencing explicit for callers that
+    split a declaration list into independently compiled chunks. -/
+theorem pipelineWordFunctionsAllocatedWithSpillsAndBitmaps_append [NeZero width]
+    (bitmaps : RiscV.WordStackBitmapState)
+    (first second : List (Nat × List Nat × LoopProg (RiscV.Word width))) :
+    pipelineWordFunctionsAllocatedWithSpillsAndBitmaps bitmaps (first ++ second) =
+      match pipelineWordFunctionsAllocatedWithSpillsAndBitmaps bitmaps first with
+      | none => none
+      | some (firstCode, middleBitmaps) =>
+          match pipelineWordFunctionsAllocatedWithSpillsAndBitmaps middleBitmaps second with
+          | none => none
+          | some (secondCode, finalBitmaps) =>
+              some (firstCode ++ secondCode, finalBitmaps) := by
+  induction first generalizing bitmaps with
+  | nil =>
+      cases hsecond : pipelineWordFunctionsAllocatedWithSpillsAndBitmaps bitmaps second <;>
+        simp [pipelineWordFunctionsAllocatedWithSpillsAndBitmaps, hsecond]
+  | cons function functions ih =>
+      cases hfunction : pipelineWordFunctionAllocatedWithSpillsAndBitmaps bitmaps function with
+      | none => simp [pipelineWordFunctionsAllocatedWithSpillsAndBitmaps, hfunction]
+      | some compiled =>
+          cases hrest : pipelineWordFunctionsAllocatedWithSpillsAndBitmaps compiled.2 functions with
+          | none =>
+              have htail := ih (bitmaps := compiled.2)
+              simp [pipelineWordFunctionsAllocatedWithSpillsAndBitmaps, hfunction, hrest, htail]
+          | some rest =>
+              cases hsecond : pipelineWordFunctionsAllocatedWithSpillsAndBitmaps rest.2 second <;>
+                simp [pipelineWordFunctionsAllocatedWithSpillsAndBitmaps, hfunction, hrest,
+                  hsecond, ih compiled.2]
 
 /-! Graph-coloured Word-to-Stack pipeline.
 

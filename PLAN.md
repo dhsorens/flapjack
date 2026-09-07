@@ -1399,6 +1399,8 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Expose state-threaded Word-to-Stack conditional composition, including
   condition materialization and branch-state threading.
 - [x] Expose state-threaded Word-to-Stack loop and MustTerminate composition.
+- [x] Expose source-order bitmap threading through the allocated Word-to-Stack
+  function pipeline, including a compositional append equation.
 - [x] Add abstract and bounded FFI loop-break simulation equations, with
   FFI-in-loop regressions.
 - [x] Expose the abstract StackLang FFI returned-callee continuation equation,
