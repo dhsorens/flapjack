@@ -107,6 +107,18 @@ def handlerStackMachineState : RiscV.WordStackMachineState 64 :=
   { zeroStackMachineState with
     registers := fun register => if register = 31 then 7 else 0 }
 
+def identityStackFfi : RiscV.StackMachineFfiHandler 64 :=
+  fun _ _ _ _ _ state => some state
+
+example :
+    evalStackProgFuelWithCodeAndFfi identityStackFfi 4
+      (stackMachineLookup []) zeroStackMachineState
+      (.seq (.const 2 7)
+        (.ffi "echo" 2 3 4 5 0)) =
+      some (.normal (RiscV.wordStackMachineWriteRegister
+        zeroStackMachineState 2 7)) := by
+  rfl
+
 example :
     Option.map (fun result =>
           match result with
