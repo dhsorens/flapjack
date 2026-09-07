@@ -578,6 +578,9 @@ definitions, pass ordering, examples, and proof obligations.
   at the call-entry boundary.
 - [x] Generalize Loop-to-Word tail-call dispatch to arbitrary argument and
   parameter lists with explicit Loop and Word callee binding witnesses.
+- [x] Generalize the Loop-to-Word exception-handler call boundary to arbitrary
+  argument and parameter lists, retaining explicit exception-register and
+  handler-body simulation obligations.
 - [x] Add the corresponding parameterized Word tail-call semantic contract.
 - [x] Generalize FrameMachine call equations from leaf callees to explicit
   evaluated callee-state witnesses, with compound return and handler tests.
