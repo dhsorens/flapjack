@@ -72,6 +72,8 @@ import Flapjack.RiscV.CorrectnessDirectSharedLoad
 import Flapjack.Test.DirectSharedLoadRelation
 import Flapjack.RiscV.CorrectnessDirectSharedStore
 import Flapjack.Test.DirectSharedStoreRelation
+import Flapjack.RiscV.CorrectnessDirectMove
+import Flapjack.Test.DirectMoveRelation
 
 /-!
 # Flapjack regression tests
