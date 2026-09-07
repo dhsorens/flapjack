@@ -1219,6 +1219,8 @@ definitions, pass ordering, examples, and proof obligations.
   length after encode, root movement, and decode.
 - [x] Prove that successful full bitmap collection preserves stack length
   through the subsequent heap scan loop.
+- [x] Prove the one-iteration pointer-free `MoveBitmap` transition, including
+  descriptor shifting, scan-pointer advancement, and loop termination.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
