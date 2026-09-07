@@ -1008,39 +1008,43 @@ def wordClashTree : WordProg α → List (List Nat × List Nat) → WordClashTre
   | .return _ values, _ => .delta [] values
   | .tick, _ => .delta [] []
   | .locValue destination source, _ => .delta [destination] [source]
-  | .call returns _ arguments none, _ =>
+  | .call returns _ arguments none, frames =>
       match returns with
       | none => .set arguments.eraseDups
-      | some (values, cutsets, _returnCode, _, _) =>
-          let live := cutsets.1 ++ cutsets.2
-          .seq (.set (wordClashTreeCallSet values live))
-            (.set (wordClashTreeCallSet arguments live))
+      | some (values, _, _returnCode, _, _) =>
+          let cutSet := wordClashTreeCallCutSet returns
+          let liveSet := wordClashTreeCallSet cutSet arguments
+          let returnTree :=
+            .seq (.set (wordClashTreeCallSet values cutSet))
+              (wordClashTree _returnCode frames)
+          .seq (.set liveSet) returnTree
   | .call returns _ arguments (some (exception, body, _, _)), frames =>
       let cutSet := wordClashTreeCallCutSet returns
       let liveSet := wordClashTreeCallSet cutSet arguments
       .branch (some liveSet)
         (match returns with
         | none => .set liveSet
-        | some (values, cutsets, _, _, _) =>
-            let live := cutsets.1 ++ cutsets.2
-            .seq (.set (wordClashTreeCallSet values live))
-              (.set liveSet))
+        | some (values, _, _returnCode, _, _) =>
+            .seq (.set (wordClashTreeCallSet values cutSet))
+              (wordClashTree _returnCode frames))
         (.seq (.set (wordClashTreeCallSet [exception] cutSet))
           (wordClashTree body frames))
   | .alloc destination (nonGc, gc), _ =>
-      .seq (.set (wordClashTreeCallSet nonGc gc))
-        (.delta [destination] (nonGc ++ gc))
+      .seq (.delta [] [destination])
+        (.set (wordClashTreeCallSet nonGc gc))
   | .storeConsts source bitmap codeLength dataLength _, _ =>
       .delta [source, bitmap, codeLength, dataLength]
-        [source, bitmap, codeLength, dataLength]
+        [codeLength, dataLength]
   | .opCurrHeap _ destination source, _ => .delta [destination] [source]
   | .install codeBuffer codeLength dataBuffer dataLength (nonGc, gc), _ =>
-      .seq (.set (wordClashTreeCallSet nonGc gc))
-        (.delta [codeBuffer] [codeLength, dataBuffer, dataLength])
+      .seq (.delta [] [dataLength, dataBuffer, codeLength, codeBuffer])
+        (.seq (.set (wordClashTreeCallSet nonGc gc))
+          (.delta [codeBuffer] []))
   | .codeBufferWrite address value, _ => .delta [] [address, value]
   | .dataBufferWrite address value, _ => .delta [] [address, value]
-  | .ffi _ configuration configurationLength array arrayLength _, _ =>
-      .delta [] [configuration, configurationLength, array, arrayLength]
+  | .ffi _ configuration configurationLength array arrayLength (nonGc, gc), _ =>
+      .seq (.delta [] [configuration, configurationLength, array, arrayLength])
+        (.set (wordClashTreeCallSet nonGc gc))
   | .shareInst operator name address, _ =>
       match operator with
       | .load | .load8 | .load16 | .load32 =>
