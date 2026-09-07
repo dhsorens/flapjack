@@ -28,6 +28,19 @@ example :
   simpa [wordMoveInstructionList, wordExpToInstructions,
     wordExpToInstruction, registerOfNat] using h
 
+example [NeZero 8] (state : State 8) :
+    let moves := [(5, 2), (9, 3)]
+    let final := executeInstructions state
+      (moves.flatMap (wordMoveInstructionList (width := 8)))
+    readRegister final 5 = readRegister state 2 ∧
+      readRegister final 9 = readRegister state 3 := by
+  dsimp
+  have h := executeWordMoves_preserves_sources state [(5, 2), (9, 3)]
+    (by decide) (by decide) (by decide) (by decide)
+  constructor
+  · simpa using h (5, 2) (by simp)
+  · simpa using h (9, 3) (by simp)
+
 example :
     wordStackMoveList
         { locations := [(0, .stack 2), (1, .register 5)],
