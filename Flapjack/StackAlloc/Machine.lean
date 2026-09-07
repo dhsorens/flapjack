@@ -175,6 +175,78 @@ theorem evalStackProgFuelWithCode_call_raise_handler [NeZero width]
           (state.registers register)) handlerCode := by
   simp [evalStackProgFuelWithCode, hcallee]
 
+abbrev StackMachineFfiHandler (width : Nat) :=
+  FunName → Word width → Word width → Word width → Word width →
+    WordStackMachineState width → Option (WordStackMachineState width)
+
+/-! FFI-aware control evaluation.  The ordinary instruction cases are
+    delegated to `evalStackProgFuelWithCode`; compound control forms recurse
+    here so an FFI action remains observable when nested in a sequence, branch,
+    loop, return continuation, or exception handler. -/
+def evalStackProgFuelWithCodeAndFfi [NeZero width]
+    (host : StackMachineFfiHandler width) :
+    Nat → (Nat → Option (StackProg Nat)) → WordStackMachineState width →
+      StackProg Nat → Option (StackMachineControl width)
+  | 0, _, _, _ => none
+  | fuel + 1, _, state, .ffi function configuration configurationLength array arrayLength _ =>
+      (host function (state.registers configuration)
+        (state.registers configurationLength) (state.registers array)
+        (state.registers arrayLength) state).map .normal
+  | fuel + 1, code, state, .seq first second =>
+      match evalStackProgFuelWithCodeAndFfi host fuel code state first with
+      | some (.normal state) =>
+          evalStackProgFuelWithCodeAndFfi host fuel code state second
+      | result => result
+  | fuel + 1, code, state, .ite operator condition right thenBranch elseBranch =>
+      if stackMachineCondition state operator condition right then
+        evalStackProgFuelWithCodeAndFfi host fuel code state thenBranch
+      else
+        evalStackProgFuelWithCodeAndFfi host fuel code state elseBranch
+  | fuel + 1, code, state, .loop body =>
+      match evalStackProgFuelWithCodeAndFfi host fuel code state body with
+      | some (.normal state) =>
+          evalStackProgFuelWithCodeAndFfi host fuel code state (.loop body)
+      | some (.continue state) =>
+          evalStackProgFuelWithCodeAndFfi host fuel code state (.loop body)
+      | some (.break state) => some (.normal state)
+      | result => result
+  | fuel + 1, code, state, .call returnHandler (.label target) handler =>
+      match code target with
+      | none => none
+      | some callee =>
+          match evalStackProgFuelWithCodeAndFfi host fuel code state callee with
+          | some (.returned state value) =>
+              match returnHandler with
+              | some (returnCode, _, _, _) =>
+                  evalStackProgFuelWithCodeAndFfi host fuel code state returnCode
+              | none => some (.returned state value)
+          | some (.raised state value) =>
+              match handler with
+              | some (handlerCode, exceptionRegister, _) =>
+                  evalStackProgFuelWithCodeAndFfi host fuel code
+                    (wordStackMachineWriteRegister state exceptionRegister value)
+                    handlerCode
+              | none => some (.raised state value)
+          | some (.halted state value) => some (.halted state value)
+          | _ => none
+  | fuel + 1, _, _, .call _ _ _ => none
+  | fuel + 1, code, state, program =>
+      evalStackProgFuelWithCode (fuel + 1) code state program
+
+theorem evalStackProgFuelWithCodeAndFfi_ffi [NeZero width]
+    (host : StackMachineFfiHandler width)
+    (fuel : Nat) (code : Nat → Option (StackProg Nat))
+    (state : WordStackMachineState width)
+    (function : FunName) (configuration configurationLength array arrayLength : Nat)
+    (returnAddress : Nat) :
+    evalStackProgFuelWithCodeAndFfi host (fuel + 1) code state
+        (.ffi function configuration configurationLength array arrayLength
+          returnAddress) =
+      (host function (state.registers configuration)
+        (state.registers configurationLength) (state.registers array)
+        (state.registers arrayLength) state).map .normal := by
+  rfl
+
 theorem evalStackGcMoveCode_immediate
     (config : StackGcConfig) (fuel : Nat)
     (state : WordStackMachineState 64)

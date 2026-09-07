@@ -1251,6 +1251,8 @@ definitions, pass ordering, examples, and proof obligations.
   image with a concrete service-table regression.
 - [x] Add explicit raised control outcomes and handler propagation to the
   executable StackLang machine evaluator.
+- [x] Add an FFI-aware StackLang evaluator and one-step host-transition
+  contract for nested control forms.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
