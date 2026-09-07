@@ -1,5 +1,6 @@
 import Flapjack.RiscV.WordToStack
 import Flapjack.RiscV.Backend
+import Flapjack.RiscV.ParallelMoveCorrectness
 
 namespace Flapjack.RiscV
 
@@ -18,6 +19,14 @@ example :
     wordMoveToInstructions (width := 8) [(1, 2), (2, 1)] =
       some [.addi 31 2 0, .addi 2 1 0, .addi 1 31 0] := by
   decide +kernel
+
+example :
+    wordMoveToInstructions (width := 8) [(5, 2), (9, 3)] =
+      some [.addi 5 2 0, .addi 9 3 0] := by
+  have h := wordMoveToInstructions_of_no_source_destination
+    (width := 8) [(5, 2), (9, 3)] (by decide) (by decide) (by decide)
+  simpa [wordMoveInstructionList, wordExpToInstructions,
+    wordExpToInstruction, registerOfNat] using h
 
 example :
     wordStackMoveList
