@@ -310,8 +310,112 @@ def wordLinearScanSortMovesSource : List WordMove → List WordMove
   | move :: moves =>
       wordLinearScanInsertMoveSource move
         (wordLinearScanSortMovesSource moves)
-termination_by moves => sizeOf moves
+  termination_by moves => sizeOf moves
+  decreasing_by all_goals decreasing_trivial
+
+def wordLinearScanBijectionNodes
+    (bijection : WordLinearScanBijectionState) : List Nat :=
+  bijection.toNode.map Prod.snd
+
+def wordLinearScanExtractColouring
+    (fromNode : NatInfoMap Nat) (registers : List Nat)
+    (colours : NatInfoMap Nat) : NatInfoMap Nat → NatInfoMap Nat
+  | colouring =>
+      match registers with
+      | [] => colouring
+      | register :: registers =>
+          let source :=
+            match lookupNatInfo register fromNode with
+            | some source => source
+            | none => 0
+          let colour :=
+            match lookupNatInfo register colours with
+            | some colour => colour
+            | none => 0
+          wordLinearScanExtractColouring fromNode registers colours
+            ((source, colour) :: colouring.filter (fun entry => entry.1 != source))
+
+def wordGetIntervalsCtAux : WordClashTree → Int → NatInfoMap Int →
+    NatInfoMap Int → List Nat →
+    Int × NatInfoMap Int × NatInfoMap Int × List Nat
+  | .delta writes reads, number, beginnings, endings, live =>
+      (number - 2,
+        wordIntervalAddIfLt writes number beginnings,
+        wordIntervalAddIfGt reads (number - 1)
+          (wordIntervalAddIfGt writes number endings),
+        wordListUnion reads (wordNumSetDelete writes live))
+  | .set names, number, beginnings, endings, live =>
+      (number - 1, beginnings,
+        wordIntervalAddIfGt names number endings,
+        wordListUnion names live)
+  | .branch branchLive thenBranch elseBranch, number, beginnings, endings, live =>
+      let (elseNumber, elseBeginnings, elseEndings, elseLive) :=
+        wordGetIntervalsCtAux elseBranch number beginnings endings live
+      let (thenNumber, thenBeginnings, thenEndings, thenLive) :=
+        wordGetIntervalsCtAux thenBranch elseNumber elseBeginnings elseEndings elseLive
+      match branchLive with
+      | none =>
+          (thenNumber, thenBeginnings, thenEndings,
+            wordListUnion thenLive elseLive)
+      | some names =>
+          (thenNumber - 1, thenBeginnings,
+            wordIntervalAddIfGt names thenNumber thenEndings,
+            wordListUnion names (wordListUnion thenLive elseLive))
+  | .seq first second, number, beginnings, endings, live =>
+      let (secondNumber, secondBeginnings, secondEndings, secondLive) :=
+        wordGetIntervalsCtAux second number beginnings endings live
+      wordGetIntervalsCtAux first secondNumber secondBeginnings secondEndings secondLive
+termination_by tree => sizeOf tree
 decreasing_by all_goals decreasing_trivial
+
+def wordGetIntervalsCt (tree : WordClashTree) :
+    Int × NatInfoMap Int × NatInfoMap Int :=
+  let (number, beginnings, endings, live) :=
+    wordGetIntervalsCtAux tree 0 [] [] []
+  (number - 1,
+    wordIntervalAddIfLt live number beginnings,
+    wordIntervalAddIfGt live number endings)
+
+structure WordLinearScanSourceAllocation where
+  bijection : WordLinearScanBijectionState
+  normalizedTree : WordClashTree
+  normalizedRegisters : List Nat
+  stackRegisters : List Nat
+  firstPass : WordLinearScanState
+  secondPass : WordLinearScanState
+  colouring : NatInfoMap Nat
+  deriving Repr
+
+/-! Composition of the source preprocessing and both linear-scan passes.  The
+result retains intermediate witnesses so later correctness layers can state
+their invariants without reconstructing the allocator run. -/
+def wordLinearScanAllocateSource (colours : Nat)
+    (forced : List (Nat × Nat)) (moves : List WordMove)
+    (tree : WordClashTree) :
+    Option WordLinearScanSourceAllocation := do
+  let bijection := wordLinearScanBijection tree
+  let normalizedTree := wordLinearScanApplyBijectionTree tree bijection
+  let normalizedForced :=
+    wordLinearScanApplyBijectionForced bijection forced
+  let normalizedMoves :=
+    wordLinearScanApplyBijectionMoves bijection moves
+  let (_, beginnings, endings) := wordGetIntervalsCt normalizedTree
+  let normalizedRegisters := wordLinearScanSortRegistersSource beginnings
+    (wordLinearScanBijectionNodes bijection)
+  let normalizedMoves := wordLinearScanSortMovesSource normalizedMoves
+  let normalizedMovePairs := normalizedMoves.map (fun move => (move.left, move.right))
+  let (firstPass, stackRegisters, secondPass) ← wordLinearScanTwoPass colours
+    normalizedForced normalizedMovePairs normalizedRegisters beginnings endings
+  let colouring := wordLinearScanExtractColouring bijection.fromNode
+    normalizedRegisters secondPass.colours []
+  pure
+    { bijection := bijection
+      normalizedTree := normalizedTree
+      normalizedRegisters := normalizedRegisters
+      stackRegisters := stackRegisters
+      firstPass := firstPass
+      secondPass := secondPass
+      colouring := colouring }
 
 /-! A direct executable port of `check_number_property`.  The property is
 passed as a Boolean predicate so this remains suitable for native evaluation

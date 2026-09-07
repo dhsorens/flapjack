@@ -506,6 +506,10 @@ definitions, pass ordering, examples, and proof obligations.
   filtering, stack extraction, and the two-pass runner.
 - [x] Port source-faithful interval-order register sorting and move-priority
   sorting before the linear-scan passes.
+- [x] Compose source normalization, interval preprocessing, two-pass allocation,
+  and inverse-colour extraction into a witness-carrying allocator result.
+- [x] Port CakeML's clash-tree interval pass with boundary live-set closure,
+  including `Delta`, `Set`, branch cut sets, and sequencing.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware
   RISC-V contracts before claiming general call-aware allocation correctness.
 - [x] Add a combined graph-allocation soundness contract exposing fixed tags,
