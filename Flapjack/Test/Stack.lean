@@ -14,7 +14,7 @@ example :
 
 example :
     stackHandlerSlots false = 3 ∧ stackHandlerSlots true = 5 := by
-  native_decide
+  decide
 
 example :
     stackArgs 2 4 9 =

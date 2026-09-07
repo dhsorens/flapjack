@@ -65,7 +65,7 @@ example :
     wordStackBitmapWordsAux, wordStackInitialBitmaps, wordStackJoin,
     wordStackOffset, wordStackBitsToNat, wordStackBitmapChunk,
     wordBitmapTestConfig]
-  native_decide
+  decide
 
 def wordBitmapHandlerProgram : WordProg Nat :=
   .call (some ([2], ([], []), .skip, 0, 0)) (some 7) [1]
@@ -78,7 +78,7 @@ example :
       (wordStackInitialBitmaps false) wordBitmapHandlerProgram).map
         (fun result => (result.2.data, result.2.length)) =
       some ([4, 28], 2) := by
-  native_decide
+  decide +kernel
 
 def wordBitmapBranchProgram : WordProg Nat :=
   .ite .equal 1 (.imm 0)
@@ -92,7 +92,7 @@ example :
       (wordStackInitialBitmaps false) wordBitmapBranchProgram).map
         (fun result => (result.2.data, result.2.length)) =
       some ([4, 28, 5, 7, 9], 5) := by
-  native_decide
+  decide +kernel
 
 example (compiled : StackProg Nat) (finalState : WordStackBitmapState)
     (hresult : wordToStackProgNatWithBitmaps
