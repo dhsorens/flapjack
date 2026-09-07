@@ -34,6 +34,7 @@ import Flapjack.RiscV.LinearScanPipeline
 import Flapjack.RiscV.AllocationModePipeline
 import Flapjack.RiscV.OracleAllocator
 import Flapjack.RiscV.AllocatorCorrectness
+import Flapjack.RiscV.CorrectnessColour
 import Flapjack.RiscV.AllocatorDriver
 import Flapjack.RiscV.WordToStack
 import Flapjack.RiscV.Backend
