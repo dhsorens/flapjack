@@ -1061,6 +1061,8 @@ definitions, pass ordering, examples, and proof obligations.
   omission of names absent from the current map.
 - [x] Prove the generated SSA `Raise` ABI sequence preserves the exception
   semantic result under the allocator's register and scratch invariants.
+- [x] Prove the generated one-result SSA `Return` ABI sequence preserves the
+  returned value under the allocator's register and scratch invariants.
 - [x] Marshal allocated Word call arguments into the even-numbered ABI
   registers before StackLang call-frame construction, for both handler-free
   and handler-aware calls.
