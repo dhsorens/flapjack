@@ -560,6 +560,61 @@ mutual
     termination_by fuel _ _ => fuel
 end
 
+/-! Call equations for the combined Word control evaluator.  The callee is
+    supplied through an evaluation witness, so these statements compose with
+    sequences, FFI actions, and nested calls without unfolding their bodies at
+    every caller. -/
+
+theorem evalWordCallWithHandlersAndFfi_return_of_eval [NeZero width]
+    (functions : List (Nat × List Nat × WordProg (Word width)))
+    (ffiHandler : FunName → Word width → Word width → Word width → Word width →
+      State width → Option (State width))
+    (fuel : Nat) (state calleeState bodyState : State width)
+    (target : Nat) (parameters arguments : List Nat)
+    (body : WordProg (Word width)) (values returnValues : List (Word width))
+    (hlookup : lookupWordFunction target functions = some (parameters, body))
+    (hread : readWordRegisters state arguments = some values)
+    (hbind : bindWordRegisters state parameters values = some calleeState)
+    (hbody : evalWordFunctionWithHandlersAndFfi functions ffiHandler fuel
+      calleeState body = some (.returned bodyState returnValues)) :
+    evalWordCallWithHandlersAndFfi functions ffiHandler (fuel + 1) state
+      none (some target) arguments none =
+      some (.returned { state with
+        memory := bodyState.memory
+        privilege := bodyState.privilege
+        mode := bodyState.mode } returnValues) := by
+  simp [evalWordCallWithHandlersAndFfi, hlookup, hread, hbind, hbody]
+
+theorem evalWordCallWithHandlersAndFfi_raise_handler_of_eval [NeZero width]
+    (functions : List (Nat × List Nat × WordProg (Word width)))
+    (ffiHandler : FunName → Word width → Word width → Word width → Word width →
+      State width → Option (State width))
+    (fuel : Nat) (state calleeState bodyState : State width)
+    (target : Nat) (parameters arguments : List Nat)
+    (body : WordProg (Word width)) (values : List (Word width))
+    (exceptionValue handlerName handlerLabel entryLabel : Nat)
+    (handlerBody : WordProg (Word width)) (handlerRegister : Fin 32)
+    (handlerResult : WordControlResult width)
+    (hlookup : lookupWordFunction target functions = some (parameters, body))
+    (hread : readWordRegisters state arguments = some values)
+    (hbind : bindWordRegisters state parameters values = some calleeState)
+    (hbody : evalWordFunctionWithHandlersAndFfi functions ffiHandler fuel
+      calleeState body = some (.raised bodyState exceptionValue))
+    (hhandlerRegister : registerOfNat handlerName = some handlerRegister)
+    (hhandler : evalWordFunctionWithHandlersAndFfi functions ffiHandler fuel
+      (writeRegister { state with
+        memory := bodyState.memory
+        privilege := bodyState.privilege
+        mode := bodyState.mode } handlerRegister
+        (BitVec.ofNat width exceptionValue)) handlerBody =
+        some handlerResult) :
+    evalWordCallWithHandlersAndFfi functions ffiHandler (fuel + 1) state
+      (some ([], ([], []), .skip, 0, 0)) (some target) arguments
+      (some (handlerName, handlerBody, handlerLabel, entryLabel)) =
+      some handlerResult := by
+  simp [evalWordCallWithHandlersAndFfi, hlookup, hread, hbind, hbody,
+    hhandlerRegister, hhandler]
+
 theorem evalWordFunctionWithHandlersAndFfi_ffi [NeZero width]
     (functions : List (Nat × List Nat × WordProg (Word width)))
     (ffiHandler : FunName → Word width → Word width → Word width → Word width →
