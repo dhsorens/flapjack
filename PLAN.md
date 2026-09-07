@@ -562,6 +562,8 @@ definitions, pass ordering, examples, and proof obligations.
   under explicit scratch non-aliasing hypotheses.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware
   RISC-V contracts before claiming general call-aware allocation correctness.
+- [x] Expose soundness of the entry-aware SSA spill allocator, including its
+  clash, special-location, and clash-tree checks.
 - [x] Compose the oracle, graph, and spill allocator outcomes behind one
   result-level correctness witness for downstream lowering.
 - [x] Expose renamed formal-parameter locations through the composed spill
