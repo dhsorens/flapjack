@@ -12,6 +12,7 @@ import Flapjack.Test.SpillCosts
 import Flapjack.Test.HeuristicDriver
 import Flapjack.Test.HeuristicPipeline
 import Flapjack.Test.LinearScan
+import Flapjack.Test.LinearScanSource
 import Flapjack.Test.LinearScanDriver
 import Flapjack.Test.AllocationModePipeline
 import Flapjack.Test.CorrectnessCondition
