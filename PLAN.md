@@ -448,6 +448,8 @@ definitions, pass ordering, examples, and proof obligations.
   temporaries; full allocator integration remains a separate item.
 - [x] Prove that colouring preserves the WordLang `break` and `continue`
   control labels through structured programs and call metadata.
+- [x] Port CakeML's `extract_labels` contract for return and exception handler
+  label pairs, including recursive call metadata and structured subprograms.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware
   RISC-V contracts before claiming general call-aware allocation correctness.
 - [x] Add a combined graph-allocation soundness contract exposing fixed tags,
