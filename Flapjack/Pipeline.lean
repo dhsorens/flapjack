@@ -499,6 +499,25 @@ def compileFlapjackRiscVViaAllocatedStackWithFullSsa [NeZero width]
     removeConfig 0 0
     (functions.map (fun (label, _, body) => (label, body)))
 
+/-! End-to-end graph-colouring entry point using the complete CakeML-style SSA
+    function program.  This is kept alongside the spill-backed full-SSA
+    wrapper so callers can compare the two allocation strategies after the
+    shared Word-to-Stack and StackRemove stages. -/
+def compileFlapjackRiscVViaGraphStackWithFullSsa [NeZero width]
+    [BEq (RiscV.Word width)]
+    [OfNat (RiscV.Word width) 0] [OfNat (RiscV.Word width) 1]
+    [Add (RiscV.Word width)] [Mul (RiscV.Word width)]
+    (architecture : RiscV.Architecture) (bytesInWord : RiscV.Word width)
+    (fromNat : Nat → RiscV.Word width) (services : List (FunName × Nat))
+    (removeConfig : StackRemoveConfig)
+    (declarations : List (Decl (RiscV.Word width))) :
+    Option (List (RiscV.Instruction width)) := do
+  let pipeline := compileFlapjack architecture bytesInWord fromNat declarations
+  let functions ← pipelineWordFunctionsAllocatedWithGraphAndFullSsa pipeline.loop
+  RiscV.compileStackProgramNatListWithRaiseStubToRiscV { services := services }
+    removeConfig 0 0
+    (functions.map (fun (label, _, body) => (label, body)))
+
 /-! Bitmap-carrying variant of the allocator-aware RISC-V entry point.  The
     returned bitmap table is part of the artifact because the later runtime
     initialization pass must place it in the bitmap buffer before execution. -/
