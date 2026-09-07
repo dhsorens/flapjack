@@ -446,6 +446,8 @@ definitions, pass ordering, examples, and proof obligations.
   renaming, clash/preferences, colouring, stack lowering, and RISC-V
   execution, including cycle-safe scheduling with the reserved x29/x31
   temporaries; full allocator integration remains a separate item.
+- [x] Prove that colouring preserves the WordLang `break` and `continue`
+  control labels through structured programs and call metadata.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware
   RISC-V contracts before claiming general call-aware allocation correctness.
 - [x] Add a combined graph-allocation soundness contract exposing fixed tags,
