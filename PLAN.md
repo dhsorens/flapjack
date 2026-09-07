@@ -524,6 +524,8 @@ definitions, pass ordering, examples, and proof obligations.
   SLL/SRL/SRA lowering.
 - [x] Extend the executable colouring simulation to immediate shifts and their
   SLLI/SRLI/SRAI lowering.
+- [x] Add coloring simulation for a non-cyclic singleton parallel move,
+  including the reserved-x31 side condition at both colored endpoints.
 - [x] Prove the reserved-x31 five-instruction rotate-right colouring boundary
   under explicit scratch non-aliasing hypotheses.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware
