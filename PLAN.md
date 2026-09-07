@@ -552,6 +552,8 @@ definitions, pass ordering, examples, and proof obligations.
   simulation for executable Word `ite` programs.
 - [x] Relate straight-line handler-aware Word evaluation to the executable
   state-only evaluator, preserving an explicit empty return carrier.
+- [x] Lift straight-line colouring simulation to handler-aware Word evaluation,
+  including preservation of the empty return carrier.
 - [x] Match CakeML's Simple/IRC distinction in graph allocation modes: modes
   0--1 omit move preferences, while modes 2--3 retain prioritized moves.
 - [x] Preserve SSA-renamed virtual names at the heuristic allocator's

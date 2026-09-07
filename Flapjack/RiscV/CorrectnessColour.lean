@@ -1555,4 +1555,98 @@ theorem evalWordFunction_wordVarStraightLine_eq_evalWordProg [NeZero width]
           | none => simp
           | some secondState => simp
 
+theorem wordVarStraightLine_applyColour
+    (colour : Nat → Nat) (valid : wordColourValid colour)
+    (injective : Function.Injective colour)
+    (colourNoScratch : ∀ name, name < 31 → colour name ≠ 31)
+    {program : WordProg (Word width)}
+    (hprogram : WordVarStraightLine width program) :
+    WordVarStraightLine width (wordApplyColour colour program) := by
+  induction hprogram with
+  | skip => simp [wordApplyColour]; exact .skip
+  | moveOne name sourceName hname hsource hname31 hsource31 hne =>
+      have hnameLT31 : name < 31 := by omega
+      have hsourceLT31 : sourceName < 31 := by omega
+      simpa [wordApplyColour] using
+        (.moveOne (colour name) (colour sourceName)
+          (valid name hname) (valid sourceName hsource)
+          (colourNoScratch name hnameLT31)
+          (colourNoScratch sourceName hsourceLT31)
+          (by intro h; apply hne; exact injective h))
+  | moveTwo destinationOne sourceOne destinationTwo sourceTwo
+      hdestinationOne hsourceOne hdestinationTwo hsourceTwo
+      hdestinationOne31 hsourceOne31 hdestinationTwo31 hsourceTwo31
+      hdestinations hsourceOneDestinationOne hsourceOneDestinationTwo
+      hsourceTwoDestinationOne hsourceTwoDestinationTwo =>
+      have hdestinationOneLT31 : destinationOne < 31 := by omega
+      have hsourceOneLT31 : sourceOne < 31 := by omega
+      have hdestinationTwoLT31 : destinationTwo < 31 := by omega
+      have hsourceTwoLT31 : sourceTwo < 31 := by omega
+      simpa [wordApplyColour] using
+        (.moveTwo (colour destinationOne) (colour sourceOne)
+          (colour destinationTwo) (colour sourceTwo)
+          (valid destinationOne hdestinationOne) (valid sourceOne hsourceOne)
+          (valid destinationTwo hdestinationTwo) (valid sourceTwo hsourceTwo)
+          (colourNoScratch destinationOne hdestinationOneLT31)
+          (colourNoScratch sourceOne hsourceOneLT31)
+          (colourNoScratch destinationTwo hdestinationTwoLT31)
+          (colourNoScratch sourceTwo hsourceTwoLT31)
+          (by intro h; apply hdestinations; exact injective h)
+          (by intro h; apply hsourceOneDestinationOne; exact injective h)
+          (by intro h; apply hsourceOneDestinationTwo; exact injective h)
+          (by intro h; apply hsourceTwoDestinationOne; exact injective h)
+          (by intro h; apply hsourceTwoDestinationTwo; exact injective h))
+  | assign name sourceName hname hsource =>
+      simpa [wordApplyColour, wordApplyColourExp] using
+        (.assign (colour name) (colour sourceName)
+          (valid name hname) (valid sourceName hsource))
+  | assignConst name value hname =>
+      simpa [wordApplyColour, wordApplyColourExp] using
+        (.assignConst (colour name) value (valid name hname))
+  | assignBinary operator name left right hname hleft hright =>
+      simpa [wordApplyColour, wordApplyColourExp] using
+        (.assignBinary operator (colour name) (colour left) (colour right)
+          (valid name hname) (valid left hleft) (valid right hright))
+  | assignImmediate operator name sourceName value hname hsource =>
+      simpa [wordApplyColour, wordApplyColourExp] using
+        (.assignImmediate operator (colour name) (colour sourceName) value
+          (valid name hname) (valid sourceName hsource))
+  | assignShift operator name left right hoperator hname hleft hright =>
+      simpa [wordApplyColour, wordApplyColourExp] using
+        (.assignShift operator (colour name) (colour left) (colour right)
+          hoperator (valid name hname) (valid left hleft) (valid right hright))
+  | assignShiftImmediate operator name left amount hoperator hname hleft =>
+      simpa [wordApplyColour, wordApplyColourExp] using
+        (.assignShiftImmediate operator (colour name) (colour left) amount
+          hoperator (valid name hname) (valid left hleft))
+  | @seq first second hfirst hsecond ihFirst ihSecond =>
+      simpa [wordApplyColour] using .seq ihFirst ihSecond
+
+theorem evalWordFunction_wordVarStraightLine_applyColour [NeZero width]
+    (colour : Nat → Nat) (valid : wordColourValid colour)
+    (injective : Function.Injective colour) (colourZero : colour 0 = 0)
+    (colourNoScratch : ∀ name, name < 31 → colour name ≠ 31)
+    (source target : State width)
+    (hrelation : WordColourStateRelation colour source target)
+    (program : WordProg (Word width))
+    (hprogram : WordVarStraightLine width program) :
+    ∃ source' target',
+      evalWordFunction source program = some (source', []) ∧
+      evalWordFunction target (wordApplyColour colour program) =
+        some (target', []) ∧
+      WordColourStateRelation colour source' target' := by
+  rcases evalWordProg_wordVarStraightLine_applyColour colour valid injective
+    colourZero colourNoScratch source target hrelation program hprogram with
+    ⟨source', target', hsource, htarget, hrelation'⟩
+  refine ⟨source', target', ?_, ?_, hrelation'⟩
+  · rw [evalWordFunction_wordVarStraightLine_eq_evalWordProg source program
+      hprogram, hsource]
+    rfl
+  · rw [evalWordFunction_wordVarStraightLine_eq_evalWordProg target
+      (wordApplyColour colour program) ?_]
+    · rw [htarget]
+      rfl
+    · exact wordVarStraightLine_applyColour colour valid injective
+        colourNoScratch hprogram
+
 end Flapjack.RiscV
