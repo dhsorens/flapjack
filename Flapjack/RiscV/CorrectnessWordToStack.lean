@@ -484,4 +484,35 @@ theorem evalStackProgFuelWithCodeAndFfi_wordToStackProgWord_ffi
   rw [hcompile]
   simpa using hstack
 
+/-! The stateful lowering keeps the bitmap accumulator threaded through a
+    handler body.  This equation exposes the generated handler call and the
+    final bitmap state together, which is the compiler-side premise needed by
+    a later frame-machine simulation theorem. -/
+
+theorem wordToStackProgNatWithBitmapBuilder_call_handler
+    [BEq Nat] (config : WordStackConfig)
+    (bitmapBuilder : List Nat → List Nat)
+    (registerCount bitmapRegister frameSlots wordBits : Nat)
+    (storeConstsStub : Option Nat) (state finalState : WordStackBitmapState)
+    (returns : Option (List Nat × (List Nat × List Nat) × WordProg Nat × Nat × Nat))
+    (target : Nat) (arguments : List Nat)
+    (exception handlerLabel entryLabel : Nat)
+    (body : WordProg Nat)
+    (argumentMoves returnCode handlerCode : StackProg Nat)
+    (hargs : wordStackMovesToPhysical config arguments 2 = some argumentMoves)
+    (hreturn : wordStackReturnCode config returns = some returnCode)
+    (hhandler : wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+      registerCount bitmapRegister frameSlots wordBits storeConstsStub state body =
+      some (handlerCode, finalState)) :
+    wordToStackProgNatWithBitmapBuilder config bitmapBuilder registerCount
+      bitmapRegister frameSlots wordBits storeConstsStub state
+      (.call returns (some target) arguments
+        (some (exception, body, handlerLabel, entryLabel))) =
+      some (wordStackJoin argumentMoves
+        (wordToStackCallWithHandler config.perf target arguments.length
+          config.frameOffset config.scratch returnCode handlerCode
+          config.returnLabel config.entryLabel config.handlerLabel exception),
+        finalState) := by
+  simp [wordToStackProgNatWithBitmapBuilder, hargs, hreturn, hhandler]
+
 end Flapjack.RiscV
