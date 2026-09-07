@@ -790,7 +790,7 @@ theorem compileWordAdd_sound [NeZero width] (state : State width) :
     evalWordProg state
         (.assign 1 (.op .add [.var 2, .var 3])) =
       some (executeInstructions state [.add 1 2 3]) := by
-  simp [evalWordProg, wordExpToInstructions, wordExpToInstruction, evalWordExp,
+  simp [evalWordProg, wordExpToInstructions, wordExpToInstruction, 
     executeInstructions, registerOfNat,
     execute, writeRegister, nextPc]
 
@@ -896,7 +896,7 @@ theorem compileWordRotateRight_immediate_sound [NeZero width] (state : State wid
     Nat.mod_lt _ (Nat.pos_of_ne_zero (NeZero.ne width))
   have complement_lt : (width - shiftAmount amount) % width < width :=
     Nat.mod_lt _ (Nat.pos_of_ne_zero (NeZero.ne width))
-  simp [evalWordProg, wordExpToInstructions, wordExpToInstruction,
+  simp [evalWordProg, wordExpToInstructions, 
     evalWordExp, rotateRight, registerOfNat, executeInstructions,
     execute, writeRegister, readRegister, nextPc,
     shiftAmount_ofNat_of_lt amount_lt,
@@ -907,21 +907,21 @@ theorem compileWordAdd_zeroState [NeZero width] :
     evalWordProg (zeroState width)
         (.assign 1 (.const (7 : Word width))) =
       some (executeInstructions (zeroState width) [.addi 1 0 7]) := by
-  simp [evalWordProg, wordExpToInstructions, wordExpToInstruction, evalWordExp,
+  simp [evalWordProg, wordExpToInstructions, wordExpToInstruction, 
     executeInstructions, registerOfNat,
-    execute, writeRegister, nextPc, ZeroRegister, zeroState, readRegister]
+    execute, writeRegister, nextPc, zeroState, readRegister]
 
 theorem compileWordLoadByte_sound [NeZero width] (state : State width) :
     evalWordProg state (.inst (.mem .load8 1 2)) =
       some (execute state (.loadByte 1 2)) := by
-  simp [evalWordProg, registerOfNat, execute, writeRegister, writeByte,
+  simp [evalWordProg, registerOfNat, execute, writeRegister, 
     readByte, nextPc]
 
 theorem compileWordStoreByte_sound [NeZero width] (state : State width) :
     evalWordProg state (.inst (.mem .store8 1 2)) =
       some (execute state (.storeByte 1 2)) := by
-  simp [evalWordProg, registerOfNat, execute, writeRegister, writeByte,
-    readByte, nextPc]
+  simp [evalWordProg, registerOfNat, execute, writeByte,
+    nextPc]
 
 theorem compileWordLoad16_sound [NeZero width] (state : State width) :
     evalWordProg state (.inst (.mem .load16 1 2)) =
@@ -950,9 +950,9 @@ theorem compileWordStore32_sound [NeZero width] (state : State width) :
 theorem compileWordStoreWord_sound [NeZero width] (state : State width) :
     evalWordProg state (.store (.var 2) 1) =
       some (execute state (.storeWord 1 2)) := by
-  simp [evalWordProg, evalWordShareInst, wordStoreToInstructions,
+  simp [evalWordProg, evalWordShareInst, 
     wordShareInstToInstructions,
-    wordInstToInstruction, evalWordExp, registerOfNat, executeInstructions,
+    wordInstToInstruction, registerOfNat, executeInstructions,
     execute,
     writeWordValue, writeByte, byteAddress, nextPc]
 
@@ -1101,7 +1101,7 @@ theorem wordArithToInstructions_longMul_alias [NeZero width] :
 theorem compileWordLongMul_sound [NeZero width] (state : State width) :
     evalWordProg state (.inst (.arith (.longMul 1 1 2 3))) =
       some (executeInstructions state [.mulHU 1 2 3, .mul 1 2 3]) := by
-  simp [evalWordProg, wordArithToInstructions, wordArithToInstruction,
+  simp [evalWordProg, wordArithToInstructions, 
     executeInstructions, registerOfNat]
 
 theorem wordFunctionToRiscV_longMul [NeZero width] :
@@ -1175,6 +1175,6 @@ example [NeZero width] :
 example [NeZero width] :
     wordInstToInstruction (width := width) (.arith (.longMul 1 1 2 3)) =
       none := by
-  simp [wordInstToInstruction, wordArithToInstruction, registerOfNat]
+  simp [wordInstToInstruction, wordArithToInstruction]
 
 end Flapjack.RiscV

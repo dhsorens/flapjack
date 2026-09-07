@@ -20,8 +20,8 @@ theorem executeInstructionsWithFfi_append
   | cons instruction first ih =>
       simp only [List.cons_append, executeInstructionsWithFfi]
       cases hstep : executeWithFfi host state instruction with
-      | none => simp [hstep]
-      | some nextState => simp [hstep, ih]
+      | none => simp []
+      | some nextState => simp [ih]
 
 theorem executeInstructionsWithFfi_wordFfi_abi
     [NeZero width] (host : WordFfiHost width) (state : State width)
@@ -164,7 +164,7 @@ theorem wordFfiToRiscV_execute_agreement
           configurationRegister configurationLengthRegister arrayRegister
           arrayLengthRegister none hservice_bounded hzero hsource hhost_none
       simp [wordFfiToRiscV, hservice, wordRegisterMoves, h10, h11, h12, h13,
-        hservice_bounded,
+        
         hconfiguration, hconfigurationLength, harray, harrayLength,
         evalWordFfi, hwordHandler, hexecuted]
   | some resultState =>
@@ -183,7 +183,7 @@ theorem wordFfiToRiscV_execute_agreement
         configurationRegister configurationLengthRegister arrayRegister
         arrayLengthRegister (some resultState) hservice_bounded hzero hsource hhost_some
       simp [wordFfiToRiscV, hservice, wordRegisterMoves, h10, h11, h12, h13,
-        hservice_bounded,
+        
         hconfiguration, hconfigurationLength, harray, harrayLength,
         evalWordFfi, hwordHandler, hexecuted]
 

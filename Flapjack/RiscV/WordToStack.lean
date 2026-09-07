@@ -1196,15 +1196,15 @@ theorem evalWordStackMachine_const_assignment [NeZero width]
       wordStackMachineValue config final destination =
         some (BitVec.ofNat width value) := by
   change lookupNatInfo destination config.locations = some destinationLocation at hdestination
-  simp [wordStackCompileExpNat, wordStackWritePhysicalNat, hdestination] at heval
+  simp [wordStackCompileExpNat, wordStackWritePhysicalNat] at heval
   cases destinationLocation <;>
     simp [evalWordStackMachine, wordStackMachineValue, wordStackLocation,
-      wordStackOffset, wordStackMachineWriteRegister, wordStackMachineWriteSlot,
+      wordStackOffset, wordStackMachineWriteRegister, 
       hdestination] at heval ⊢
   all_goals
     cases heval
-    simp [wordStackMachineValue, wordStackLocation, wordStackOffset,
-      wordStackMachineWriteRegister, wordStackMachineWriteSlot, hdestination]
+    simp [
+      wordStackMachineWriteRegister, wordStackMachineWriteSlot]
 
 theorem evalWordStackMachine_move_preserves_value [NeZero width]
     (config : WordStackConfig) (state final : WordStackMachineState width)
@@ -1219,18 +1219,18 @@ theorem evalWordStackMachine_move_preserves_value [NeZero width]
         wordStackMachineValue config state source := by
   change lookupNatInfo destination config.locations = some destinationLocation at hdestination
   change lookupNatInfo source config.locations = some sourceLocation at hsource
-  simp [wordStackMove, hdestination, hsource] at heval
+  simp [wordStackMove] at heval
   cases destinationLocation <;> cases sourceLocation <;>
     simp [evalWordStackMachine, wordStackMachineValue, wordStackLocation,
       wordStackOffset, wordStackMachineWriteRegister,
       wordStackMachineWriteSlot, hdestination, hsource,
-      hdestinationScratch, hsourceScratch] at heval ⊢
+      ] at heval ⊢
   all_goals
     cases heval
-    simp [wordStackMachineValue, wordStackLocation, wordStackOffset,
-      wordStackMachineWriteRegister, wordStackMachineWriteSlot,
+    simp [
+      
       wordStackMachineBinOp,
-      hdestination, hsource, hdestinationScratch, hsourceScratch]
+      ]
 
 theorem evalWordStackMachine_lookup_assignment [NeZero width]
     (config : WordStackConfig) (state final : WordStackMachineState width)
@@ -1249,15 +1249,15 @@ theorem evalWordStackMachine_lookup_assignment [NeZero width]
     cases hstore
     cases destinationLocation <;>
       simp [wordStackCompileExpNat, wordStackStoreNameNat,
-        wordStackWritePhysicalNat, hdestination] at heval
+        wordStackWritePhysicalNat] at heval
   all_goals
     simp [evalWordStackMachine, wordStackMachineValue, wordStackLocation,
       wordStackOffset, wordStackMachineWriteRegister,
-      wordStackMachineWriteSlot, hdestination] at heval ⊢
+      hdestination] at heval ⊢
   all_goals
     cases heval
-    simp [wordStackMachineValue, wordStackLocation, wordStackOffset,
-      wordStackMachineWriteRegister, wordStackMachineWriteSlot, hdestination]
+    simp [
+      wordStackMachineWriteRegister, wordStackMachineWriteSlot]
 
 theorem evalWordStackMachine_set_preserves_value [NeZero width]
     (config : WordStackConfig) (state final : WordStackMachineState width)
@@ -1281,7 +1281,7 @@ theorem evalWordStackMachine_set_preserves_value [NeZero width]
   all_goals
     cases heval
     simp [wordStackMachineValue, wordStackLocation, wordStackOffset,
-      wordStackMachineWriteRegister, wordStackMachineWriteSlot,
+      
       hsource] at hsourceValue
     simp [wordStackMachineWriteRegister, wordStackMachineWriteStore,
       hsourceValue]
@@ -1308,13 +1308,13 @@ theorem evalWordStackMachine_binary_assignment [NeZero width]
   cases destinationLocation <;> cases leftLocation <;> cases rightLocation <;>
     simp [wordStackCompileBinaryNat, wordStackAtomNat, wordStackWritePhysicalNat,
       wordStackReadRegister, evalWordStackMachine, wordStackJoin,
-      wordStackLocation, wordStackOffset, lookupNatInfo,
+      wordStackLocation, wordStackOffset, 
       hdestination, hleft, hright, wordStackBinaryLocationsSafe] at hsafe heval
   all_goals
     cases heval
     simp [wordStackMachineValue, wordStackLocation, wordStackOffset,
-      wordStackMachineWriteRegister, wordStackMachineWriteSlot,
-      wordStackMachineBinOp, hleft, hright] at hleftValue hrightValue
+      
+      hleft, hright] at hleftValue hrightValue
     simp [wordStackMachineValue, wordStackLocation, wordStackOffset,
       wordStackMachineWriteRegister, wordStackMachineWriteSlot,
       wordStackMachineBinOp, hdestination, hleftValue, hrightValue, hsafe]
@@ -1341,13 +1341,13 @@ theorem evalWordStackMachine_shift_assignment [NeZero width]
   cases destinationLocation <;> cases leftLocation <;> cases rightLocation <;>
     simp [wordStackCompileShiftNat, wordStackAtomNat, wordStackWritePhysicalNat,
       wordStackReadRegister, evalWordStackMachine, wordStackJoin,
-      wordStackLocation, wordStackOffset, lookupNatInfo,
+      wordStackLocation, wordStackOffset, 
       hdestination, hleft, hright, wordStackBinaryLocationsSafe] at hsafe heval
   all_goals
     cases heval
     simp [wordStackMachineValue, wordStackLocation, wordStackOffset,
-      wordStackMachineWriteRegister, wordStackMachineWriteSlot,
-      wordStackMachineShift, hleft, hright] at hleftValue hrightValue
+      
+      hleft, hright] at hleftValue hrightValue
     simp [wordStackMachineValue, wordStackLocation, wordStackOffset,
       wordStackMachineWriteRegister, wordStackMachineWriteSlot,
       wordStackMachineShift, hdestination, hleftValue, hrightValue, hsafe]
@@ -1372,16 +1372,16 @@ theorem evalWordStackMachine_load_assignment [NeZero width]
   cases destinationLocation <;> cases addressLocation <;>
     simp [wordStackCompileLoadNat, wordStackAtomNat, wordStackWritePhysicalNat,
       wordStackReadRegister, evalWordStackMachine, wordStackJoin,
-      wordStackLocation, wordStackOffset, lookupNatInfo,
-      hdestination, haddress, hscratch] at heval
+      wordStackLocation, wordStackOffset, 
+      hdestination, haddress] at heval
   all_goals
     cases heval
     simp [wordStackMachineValue, wordStackLocation, wordStackOffset,
-      wordStackMachineWriteRegister, wordStackMachineWriteSlot,
+      
       haddress] at haddressValue
     simp [wordStackMachineValue, wordStackLocation, wordStackOffset,
       wordStackMachineWriteRegister, wordStackMachineWriteSlot,
-      haddress, haddressValue, hdestination, hscratch]
+      haddressValue, hdestination]
 
 theorem evalWordStackMachine_load_const_assignment [NeZero width]
     (config : WordStackConfig) (state final : WordStackMachineState width)
@@ -1396,7 +1396,7 @@ theorem evalWordStackMachine_load_const_assignment [NeZero width]
   cases destinationLocation <;>
     simp [wordStackCompileLoadNat, wordStackAtomNat, wordStackWritePhysicalNat,
       evalWordStackMachine, wordStackJoin, wordStackLocation,
-      wordStackOffset, lookupNatInfo, hdestination] at heval
+      wordStackOffset, hdestination] at heval
   all_goals
     cases heval
     simp [wordStackMachineValue, wordStackLocation, wordStackOffset,
@@ -1427,15 +1427,15 @@ theorem evalWordStackMachine_store_assignment [NeZero width]
   cases sourceLocation <;> cases addressLocation <;>
     simp [wordStackCompileStoreNat, wordStackAtomNat, wordStackReadRegister,
       wordStackJoin, evalWordStackMachine, wordStackLocation, wordStackOffset,
-      lookupNatInfo, hsource, haddress, wordStackStoreLocationsSafe] at hsafe heval
+      hsource, haddress, wordStackStoreLocationsSafe] at hsafe heval
   all_goals
     cases heval
     simp [wordStackMachineValue, wordStackLocation, wordStackOffset,
-      wordStackMachineWriteRegister, wordStackMachineWriteSlot,
+      
       hsource, haddress] at hsourceValue haddressValue
-    simp [wordStackMachineValue, wordStackLocation, wordStackOffset,
-      wordStackMachineWriteRegister, wordStackMachineWriteSlot,
-      wordStackMachineWriteMemory, hsource, haddress, hsourceValue,
+    simp [
+      wordStackMachineWriteRegister, 
+      wordStackMachineWriteMemory, hsourceValue,
       haddressValue, hsafe, hsafe']
 
 def wordStackValue [NeZero width] (config : WordStackConfig)
@@ -1458,16 +1458,16 @@ theorem evalWordStackBasic_move_preserves_value [NeZero width]
       wordStackValue config state source := by
   change lookupNatInfo destination config.locations = some destinationLocation at hdestination
   change lookupNatInfo source config.locations = some sourceLocation at hsource
-  simp [wordStackMove, hdestination, hsource] at heval
+  simp [wordStackMove] at heval
   cases destinationLocation <;> cases sourceLocation <;>
     simp [evalWordStackBasic, wordStackValue, wordStackLocation,
       wordStackOffset, wordStackWriteRegister, wordStackWriteSlot,
-      hdestination, hsource, hdestination_scratch, hsource_scratch] at heval ⊢
+      hdestination, hsource] at heval ⊢
   all_goals
     cases heval
-    simp [wordStackValue, wordStackLocation, wordStackOffset,
-      wordStackWriteRegister, wordStackWriteSlot,
-      hdestination, hsource, hdestination_scratch, hsource_scratch]
+    simp [
+      
+      ]
 
 theorem evalWordStackBasic_move_to_physical_preserves_value [NeZero width]
     (config : WordStackConfig) (state final : WordStackState width)
@@ -1480,22 +1480,22 @@ theorem evalWordStackBasic_move_to_physical_preserves_value [NeZero width]
   cases sourceLocation with
   | register register =>
       by_cases hsame : register = destination
-      · simp [wordStackMoveToPhysical, wordStackLocation, lookupNatInfo,
+      · simp [wordStackMoveToPhysical, wordStackLocation, 
           hsource, hsame] at heval
         cases heval
-        simp [wordStackValue, wordStackLocation, wordStackWriteRegister,
+        simp [wordStackValue, wordStackLocation, 
           hsource, hsame]
-      · simp [wordStackMoveToPhysical, wordStackLocation, lookupNatInfo,
+      · simp [wordStackMoveToPhysical, wordStackLocation, 
           hsource, hsame] at heval
         cases heval
-        simp [evalWordStackBasic, wordStackValue, wordStackLocation,
-          wordStackWriteRegister, hsource, hsame]
+        simp [wordStackValue, wordStackLocation,
+          wordStackWriteRegister, hsource]
   | stack slot =>
-      simp [wordStackMoveToPhysical, wordStackLocation, lookupNatInfo,
+      simp [wordStackMoveToPhysical, wordStackLocation, 
         hsource] at heval
       cases heval
-      simp [evalWordStackBasic, wordStackValue, wordStackLocation,
-        wordStackOffset, wordStackWriteRegister, wordStackWriteSlot, hsource]
+      simp [wordStackValue, wordStackLocation,
+        wordStackOffset, wordStackWriteRegister, hsource]
 
 theorem evalWordStackMachine_ffi_move_preserves_value [NeZero width]
     (config : WordStackConfig) (state final : WordStackMachineState width)
@@ -1512,17 +1512,17 @@ theorem evalWordStackMachine_ffi_move_preserves_value [NeZero width]
         intro heq
         apply hdestination
         simp [heq]
-      simp [wordStackFfiMove, wordStackLocation, lookupNatInfo,
+      simp [wordStackFfiMove, wordStackLocation, 
         hsource, hregister] at heval
       cases heval
       simp [wordStackMachineValue, wordStackLocation,
         wordStackMachineWriteRegister, wordStackMachineBinOp, hsource,
-        hregister]
+        ]
   | stack slot =>
-      simp [wordStackFfiMove, wordStackLocation, lookupNatInfo,
+      simp [wordStackFfiMove, wordStackLocation, 
         hsource] at heval
       cases heval
-      simp [evalWordStackMachine, wordStackMachineValue,
+      simp [wordStackMachineValue,
         wordStackLocation, wordStackOffset, wordStackMachineWriteRegister,
         hsource]
 
@@ -1542,13 +1542,13 @@ theorem evalWordStackMachine_load_preserves_value [NeZero width]
   change lookupNatInfo address config.locations = some addressLocation at haddress
   cases destinationLocation <;> cases addressLocation <;>
     simp [wordStackMemoryInst, wordStackLoadInst, wordStackLocation,
-      wordStackOffset, lookupNatInfo, hdestination, haddress,
-      hscratch] at heval
+      wordStackOffset, hdestination, haddress,
+      ] at heval
   all_goals
     cases heval
-    simp [evalWordStackMachine, wordStackMachineValue, wordStackLocation,
+    simp [wordStackMachineValue, wordStackLocation,
       wordStackOffset, wordStackMachineWriteRegister,
-      wordStackMachineWriteSlot, hdestination, haddress, hscratch]
+      wordStackMachineWriteSlot, hdestination, haddress]
 
 theorem evalWordStackMachine_store_preserves_memory [NeZero width]
     (config : WordStackConfig) (state final : WordStackMachineState width)
@@ -1574,16 +1574,16 @@ theorem evalWordStackMachine_store_preserves_memory [NeZero width]
     exact heq.symm
   cases sourceLocation <;> cases addressLocation <;>
     simp [wordStackMemoryInst, wordStackStoreInst, wordStackLocation,
-      wordStackOffset, lookupNatInfo, hsource, haddress,
+      wordStackOffset, hsource, haddress,
       wordStackStoreLocationsSafe] at hsafe heval
   all_goals
     cases heval
     simp [wordStackMachineValue, wordStackLocation, wordStackOffset,
-      wordStackMachineWriteRegister, wordStackMachineWriteSlot,
+      
       hsource, haddress] at hsourceValue haddressValue
-    simp [wordStackMachineValue, wordStackLocation, wordStackOffset,
-      wordStackMachineWriteRegister, wordStackMachineWriteSlot,
-      wordStackMachineWriteMemory, hsource, haddress, hsourceValue,
+    simp [
+      wordStackMachineWriteRegister, 
+      wordStackMachineWriteMemory, hsourceValue,
       haddressValue, hsafe, hsafe']
 
 theorem evalWordStackMachine_shared_load_preserves_value [NeZero width]
@@ -1602,14 +1602,14 @@ theorem evalWordStackMachine_shared_load_preserves_value [NeZero width]
   change lookupNatInfo address config.locations = some addressLocation at haddress
   cases destinationLocation <;> cases addressLocation <;>
     simp [wordStackSharedMemoryInst, wordStackSharedLoadInst,
-      wordStackLocation, wordStackOffset, lookupNatInfo, hdestination,
-      haddress, hscratch] at heval
+      wordStackLocation, wordStackOffset, hdestination,
+      haddress] at heval
   all_goals
     cases heval
-    simp [evalWordStackMachine, wordStackMachineValue, wordStackLocation,
+    simp [wordStackMachineValue, wordStackLocation,
       wordStackOffset, wordStackMachineWriteRegister,
-      wordStackMachineWriteSlot, wordStackMachineWriteSharedMemory,
-      hdestination, haddress, hscratch]
+      wordStackMachineWriteSlot, 
+      hdestination, haddress]
 
 theorem evalWordStackMachine_shared_store_preserves_memory [NeZero width]
     (config : WordStackConfig) (state final : WordStackMachineState width)
@@ -1640,11 +1640,11 @@ theorem evalWordStackMachine_shared_store_preserves_memory [NeZero width]
   all_goals
     cases heval
     simp [wordStackMachineValue, wordStackLocation, wordStackOffset,
-      wordStackMachineWriteRegister, wordStackMachineWriteSlot,
-      wordStackMachineWriteSharedMemory, hsource, haddress] at hsourceValue haddressValue
-    simp [wordStackMachineValue, wordStackLocation, wordStackOffset,
-      wordStackMachineWriteRegister, wordStackMachineWriteSlot,
-      wordStackMachineWriteSharedMemory, hsource, haddress,
+      
+      hsource, haddress] at hsourceValue haddressValue
+    simp [
+      wordStackMachineWriteRegister, 
+      wordStackMachineWriteSharedMemory, 
       hsourceValue, haddressValue, hsafe, hsafe']
 
 theorem evalWordStackMachine_div_preserves_value [NeZero width]
@@ -1678,12 +1678,12 @@ theorem evalWordStackMachine_div_preserves_value [NeZero width]
     exact heq.symm
   cases destinationLocation <;> cases dividendLocation <;> cases divisorLocation <;>
     simp [wordStackDivInst, wordStackJoin, wordStackLocation, wordStackOffset,
-      lookupNatInfo, hdestination, hdividend, hdivisor,
+      hdestination, hdividend, hdivisor,
       wordStackDivLocationSafe] at hdestinationSafe hdividendSafe hdivisorSafe heval
   all_goals
     cases heval
     simp [wordStackMachineValue, wordStackLocation, wordStackOffset,
-      wordStackMachineWriteRegister, wordStackMachineWriteSlot,
+      
       hdividend, hdivisor] at hdividendValue hdivisorValue
     have hdivisorNonzero' : ¬divisorValue = (0#width) := by
       intro hz
@@ -1692,8 +1692,8 @@ theorem evalWordStackMachine_div_preserves_value [NeZero width]
     simp [wordStackMachineValue, wordStackLocation, wordStackOffset,
       wordStackMachineWriteRegister, wordStackMachineWriteSlot,
       hdestination, hdividendValue, hdivisorValue,
-      hdivisorNonzero', hdestinationSafe, hdividendSafe, hdivisorSafe,
-      hscratch, hscratch', BitVec.udiv_def]
+      hdivisorNonzero', hdividendSafe, hdivisorSafe,
+      hscratch, BitVec.udiv_def]
 
 def wordToStackProg [BEq α] [OfNat α 0] [OfNat α 1] [Add α] [Mul α]
     [Div α] [Sub α] [AndOp α] [OrOp α] [HXor α α α] [ShiftLeft α]
@@ -1937,7 +1937,7 @@ theorem wordStackBitmapState_alloc_length
         live bitmapBuilder).2.data.length := by
   by_cases hframes : frameSlots = 0
   · simp [wordStackAllocWithBitmapBuilder, wordStackBitmapWriteWithBuilder,
-      wordStackInsertBitmap, hframes, hstate]
+      hframes, hstate]
   · simp [wordStackAllocWithBitmapBuilder, wordStackBitmapWriteWithBuilder,
       wordStackInsertBitmap, hframes, hstate]
 
@@ -1980,7 +1980,7 @@ theorem wordToStackProgNatWithBitmapBuilder_preserves_length
               have hfirst : wordToStackProgNatWithBitmapBuilder config bitmapBuilder
                   registerCount bitmapRegister frameSlots wordBits storeConstsStub state first =
                   some (firstCode, firstState) := hfirstResult
-              simp [hfirst] at hresult
+              simp [] at hresult
               generalize hsecondResult : wordToStackProgNatWithBitmapBuilder config bitmapBuilder
                 registerCount bitmapRegister frameSlots wordBits storeConstsStub firstState second =
                 secondResult at hresult
@@ -1992,7 +1992,7 @@ theorem wordToStackProgNatWithBitmapBuilder_preserves_length
                       have hsecond : wordToStackProgNatWithBitmapBuilder config bitmapBuilder
                           registerCount bitmapRegister frameSlots wordBits storeConstsStub firstState second =
                           some (secondCode, secondFinalState) := hsecondResult
-                      simp [hsecond] at hresult
+                      simp [] at hresult
                       have hfirstState := wordToStackProgNatWithBitmapBuilder_preserves_length
                         config bitmapBuilder registerCount bitmapRegister frameSlots wordBits
                         storeConstsStub state first hstate firstCode firstState hfirst
@@ -2012,7 +2012,7 @@ theorem wordToStackProgNatWithBitmapBuilder_preserves_length
           | mk conditionPrelude conditionRest =>
               cases conditionRest with
               | mk conditionRegister rightOperand =>
-                  simp [hconditionResult] at hresult
+                  simp [] at hresult
                   generalize hthenResult : wordToStackProgNatWithBitmapBuilder config bitmapBuilder
                     registerCount bitmapRegister frameSlots wordBits storeConstsStub state thenBranch =
                     thenResult at hresult
@@ -2021,7 +2021,7 @@ theorem wordToStackProgNatWithBitmapBuilder_preserves_length
                   | some thenPair =>
                       cases thenPair with
                       | mk thenCode thenState =>
-                          simp [hthenResult] at hresult
+                          simp [] at hresult
                           generalize helseResult : wordToStackProgNatWithBitmapBuilder config bitmapBuilder
                             registerCount bitmapRegister frameSlots wordBits storeConstsStub thenState elseBranch =
                             elseResult at hresult
@@ -2060,13 +2060,13 @@ theorem wordToStackProgNatWithBitmapBuilder_preserves_length
   case call returns target arguments handler =>
       cases target with
       | none =>
-          simp [wordToStackProgNatWithBitmapBuilder, Option.bind] at hresult
+          simp [wordToStackProgNatWithBitmapBuilder] at hresult
           rcases hresult with ⟨_, _, rfl, rfl⟩
           exact hstate
       | some target =>
           cases handler with
           | none =>
-              simp [wordToStackProgNatWithBitmapBuilder, Option.bind] at hresult
+              simp [wordToStackProgNatWithBitmapBuilder] at hresult
               rcases hresult with ⟨_, _, rfl, rfl⟩
               exact hstate
           | some handlerData =>

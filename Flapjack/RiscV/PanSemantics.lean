@@ -63,10 +63,10 @@ theorem addCarryWords_riscv_formula [NeZero width]
   have ofNat_mod (n : Nat) :
       BitVec.ofNat width (n % 2 ^ width) = BitVec.ofNat width n := by
     apply BitVec.eq_of_toNat_eq
-    simp [BitVec.toNat_ofNat, Nat.mod_mod]
+    simp [BitVec.toNat_ofNat]
   by_cases hcarry : carry = 0#width
   · by_cases hsum : left.toNat + right.toNat < 2 ^ width
-    · simp [addCarryWords, hcarry, hsum, BitVec.add_def,
+    · simp [addCarryWords, hcarry, BitVec.add_def,
         BitVec.lt_def, BitVec.toNat_ofNat,
         Nat.mod_eq_of_lt hsum,
         show ¬ 2 ^ width ≤ left.toNat + right.toNat by omega,
@@ -97,7 +97,7 @@ theorem addCarryWords_riscv_formula [NeZero width]
           left.toNat + right.toNat - 2 ^ width < right.toNat := by
         omega
       have hsum_ge : 2 ^ width ≤ left.toNat + right.toNat := by omega
-      simp [addCarryWords, hcarry, hsum, hsum_mod, BitVec.add_def,
+      simp [addCarryWords, hcarry, BitVec.add_def,
         BitVec.lt_def, BitVec.toNat_ofNat, hsum_ofNat, hwrap_mod,
         hwrap_lt_right, hsum_ge]
   · have hcarry_pos : 0#width < carry := by
@@ -109,7 +109,7 @@ theorem addCarryWords_riscv_formula [NeZero width]
       omega
     by_cases hsum : left.toNat + right.toNat < 2 ^ width
     · by_cases hsum_plus : left.toNat + right.toNat + 1 < 2 ^ width
-      · simp [addCarryWords, hcarry, hcarry_pos, hsum, hsum_plus,
+      · simp [addCarryWords, hcarry, hcarry_pos, 
           BitVec.add_def, BitVec.lt_def, BitVec.toNat_ofNat,
           Nat.mod_eq_of_lt hsum, Nat.mod_eq_of_lt hsum_plus,
           show ¬ 2 ^ width ≤ left.toNat + right.toNat + 1 by omega,
@@ -123,7 +123,7 @@ theorem addCarryWords_riscv_formula [NeZero width]
           have hsum_plus_lt_two : left.toNat + right.toNat + 1 <
               2 ^ width + 2 ^ width := by omega
           omega
-        simp [addCarryWords, hcarry, hcarry_pos, hsum, hsum_plus,
+        simp [addCarryWords, hcarry, hcarry_pos, 
           hsum_plus_mod, BitVec.add_def, BitVec.lt_def,
           BitVec.toNat_ofNat, Nat.mod_eq_of_lt hsum, hone_mod,
           show ¬ left.toNat + right.toNat < right.toNat by omega,
@@ -152,9 +152,9 @@ theorem addCarryWords_riscv_formula [NeZero width]
       have hwrap_lt_right :
           left.toNat + right.toNat - 2 ^ width < right.toNat := by
         omega
-      simp [addCarryWords, hcarry, hcarry_pos, hsum, hsum_mod,
+      simp [addCarryWords, hcarry, hcarry_pos, hsum_mod,
         BitVec.add_def, BitVec.lt_def, BitVec.toNat_ofNat, htotal_ofNat,
-        hwrap_lt_right, hsum_ge, hone_mod,
+        hwrap_lt_right, hone_mod,
         show 2 ^ width ≤ left.toNat + right.toNat + 1 by omega]
 theorem panPrimitiveHandler_addCarry [NeZero width]
     (left right : Word width) :

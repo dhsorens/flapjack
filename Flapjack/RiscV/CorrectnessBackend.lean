@@ -101,7 +101,7 @@ theorem wordProgToRiscV_sound_of_straightLine [NeZero width]
               cases operator <;>
                 cases hd : registerOfNat destination <;>
                 cases ha : registerOfNat address <;>
-                simp [evalWordProg, executeInstructions, wordInstToInstruction,
+                simp [wordInstToInstruction,
                   hd, ha] at h
               all_goals
                 simp [evalWordProg, executeInstructions, hd, ha, h]
@@ -205,8 +205,8 @@ theorem executeInstructions_longMul_general [NeZero width] (state : State width)
     Ne.symm hdestination_distinct
   simp [executeInstructions, execute, writeRegister, readRegister,
     hdestinationLeft_nonzero, hdestinationRight_nonzero,
-    hdestination_distinct, hdestinationLeft_sourceLeft,
-    hdestinationLeft_sourceRight, hsourceLeft_destinationLeft,
-    hsourceRight_destinationLeft, hdestinationRight_destinationLeft]
+    hdestination_distinct, 
+    hsourceLeft_destinationLeft,
+    hsourceRight_destinationLeft]
 
 end Flapjack.RiscV
