@@ -276,6 +276,51 @@ example (state final : WordStackMachineState 8)
   · decide
   · exact heval
 
+example (config : WordStackConfig)
+    (state state1 state2 state3 final : WordStackMachineState 8)
+    (configuration configurationLength array arrayLength : Nat)
+    (configurationLocation configurationLengthLocation arrayLocation
+      arrayLengthLocation : WordLocation)
+    (hconfiguration : wordStackLocation config configuration =
+      some configurationLocation)
+    (hconfigurationLength : wordStackLocation config configurationLength =
+      some configurationLengthLocation)
+    (harray : wordStackLocation config array = some arrayLocation)
+    (harrayLength : wordStackLocation config arrayLength =
+      some arrayLengthLocation)
+    (hsafe : ∀ location, location ∈
+      [configurationLocation, configurationLengthLocation, arrayLocation,
+        arrayLengthLocation] →
+      ∀ destination, destination ∈ [10, 11, 12, 13] →
+        location ≠ .register destination)
+    (hevalConfiguration :
+      (wordStackFfiMove config configuration 10).bind
+        (evalWordStackMachine state) = some state1)
+    (hevalConfigurationLength :
+      (wordStackFfiMove config configurationLength 11).bind
+        (evalWordStackMachine state1) = some state2)
+    (hevalArray :
+      (wordStackFfiMove config array 12).bind
+        (evalWordStackMachine state2) = some state3)
+    (hevalArrayLength :
+      (wordStackFfiMove config arrayLength 13).bind
+        (evalWordStackMachine state3) = some final) :
+    some (final.registers 10) = wordStackMachineValue config state configuration ∧
+    some (final.registers 11) = wordStackMachineValue config state configurationLength ∧
+    some (final.registers 12) = wordStackMachineValue config state array ∧
+    some (final.registers 13) = wordStackMachineValue config state arrayLength := by
+  exact evalWordStackMachine_ffi_argument_moves
+    (config := config) (state := state) (state1 := state1)
+    (state2 := state2) (state3 := state3) (final := final)
+    (configuration := configuration) (configurationLength := configurationLength)
+    (array := array) (arrayLength := arrayLength)
+    (configurationLocation := configurationLocation)
+    (configurationLengthLocation := configurationLengthLocation)
+    (arrayLocation := arrayLocation)
+    (arrayLengthLocation := arrayLengthLocation)
+    hconfiguration hconfigurationLength harray harrayLength hsafe
+    hevalConfiguration hevalConfigurationLength hevalArray hevalArrayLength
+
 example :
     wordToStackProgNat
         { locations := [(0, .register 4)], scratch := 31, stackBase := 10 }

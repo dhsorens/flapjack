@@ -1377,6 +1377,8 @@ definitions, pass ordering, examples, and proof obligations.
   matching the bounded frame boundary.
 - [x] Prove that a Word-to-Stack FFI argument move preserves every unrelated
   mapped variable, extending the per-destination FFI move contract.
+- [x] Compose the four Word-to-Stack FFI argument moves into an ABI-register
+  simulation theorem, preserving the original mapped source values.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 

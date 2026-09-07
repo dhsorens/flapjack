@@ -1576,6 +1576,168 @@ theorem evalWordStackMachine_ffi_move_preserves_other_value [NeZero width]
           simp [wordStackMachineValue, wordStackLocation, wordStackOffset,
             wordStackMachineWriteRegister, hother]
 
+theorem evalWordStackMachine_ffi_move_preserves_register [NeZero width]
+    (config : WordStackConfig) (state final : WordStackMachineState width)
+    (source destination register : Nat) (sourceLocation : WordLocation)
+    (hsource : wordStackLocation config source = some sourceLocation)
+    (hdestination : destination ≠ register)
+    (heval : (wordStackFfiMove config source destination).bind
+      (evalWordStackMachine state) = some final) :
+      final.registers register = state.registers register := by
+  change lookupNatInfo source config.locations = some sourceLocation at hsource
+  cases sourceLocation with
+  | register sourceRegister =>
+      by_cases hsame : sourceRegister = destination
+      · simp [wordStackFfiMove, wordStackLocation, lookupNatInfo,
+          hsource, hsame] at heval
+        cases heval
+        rfl
+      · simp [wordStackFfiMove, wordStackLocation, lookupNatInfo,
+          hsource, hsame] at heval
+        cases heval
+        have hregister : register ≠ destination := by
+          intro heq
+          exact hdestination heq.symm
+        simp [wordStackMachineWriteRegister, wordStackMachineBinOp,
+          hregister]
+  | stack sourceSlot =>
+      simp [wordStackFfiMove, wordStackLocation, lookupNatInfo,
+        hsource] at heval
+      cases heval
+      have hregister : register ≠ destination := by
+        intro heq
+        apply hdestination
+        exact heq.symm
+      simp [wordStackMachineWriteRegister, hregister]
+
+theorem evalWordStackMachine_ffi_argument_moves [NeZero width]
+    (config : WordStackConfig)
+    (state state1 state2 state3 final : WordStackMachineState width)
+    (configuration configurationLength array arrayLength : Nat)
+    (configurationLocation configurationLengthLocation arrayLocation
+      arrayLengthLocation : WordLocation)
+    (hconfiguration : wordStackLocation config configuration =
+      some configurationLocation)
+    (hconfigurationLength : wordStackLocation config configurationLength =
+      some configurationLengthLocation)
+    (harray : wordStackLocation config array = some arrayLocation)
+    (harrayLength : wordStackLocation config arrayLength =
+      some arrayLengthLocation)
+    (hsafe : ∀ location, location ∈
+      [configurationLocation, configurationLengthLocation, arrayLocation,
+        arrayLengthLocation] →
+      ∀ destination, destination ∈ [10, 11, 12, 13] →
+        location ≠ .register destination)
+    (hevalConfiguration :
+      (wordStackFfiMove config configuration 10).bind
+        (evalWordStackMachine state) = some state1)
+    (hevalConfigurationLength :
+      (wordStackFfiMove config configurationLength 11).bind
+        (evalWordStackMachine state1) = some state2)
+    (hevalArray :
+      (wordStackFfiMove config array 12).bind
+        (evalWordStackMachine state2) = some state3)
+    (hevalArrayLength :
+      (wordStackFfiMove config arrayLength 13).bind
+        (evalWordStackMachine state3) = some final) :
+    some (final.registers 10) = wordStackMachineValue config state configuration ∧
+    some (final.registers 11) = wordStackMachineValue config state configurationLength ∧
+    some (final.registers 12) = wordStackMachineValue config state array ∧
+    some (final.registers 13) = wordStackMachineValue config state arrayLength := by
+  have hconfiguration10 := hsafe configurationLocation (by simp) 10 (by simp)
+  have hconfigurationLength10 :=
+    hsafe configurationLengthLocation (by simp) 10 (by simp)
+  have hconfigurationLength11 :=
+    hsafe configurationLengthLocation (by simp) 11 (by simp)
+  have harray10 := hsafe arrayLocation (by simp) 10 (by simp)
+  have harray11 := hsafe arrayLocation (by simp) 11 (by simp)
+  have harray12 := hsafe arrayLocation (by simp) 12 (by simp)
+  have harrayLength10 := hsafe arrayLengthLocation (by simp) 10 (by simp)
+  have harrayLength11 := hsafe arrayLengthLocation (by simp) 11 (by simp)
+  have harrayLength12 := hsafe arrayLengthLocation (by simp) 12 (by simp)
+  have harrayLength13 := hsafe arrayLengthLocation (by simp) 13 (by simp)
+  have hconfigurationValue := evalWordStackMachine_ffi_move_preserves_value
+    config state state1 configuration 10 configurationLocation
+    hconfiguration hconfiguration10 hevalConfiguration
+  have hconfigurationLengthValue :=
+    evalWordStackMachine_ffi_move_preserves_other_value config state state1
+      configuration 10 configurationLength configurationLocation
+      configurationLengthLocation hconfiguration hconfigurationLength
+      hconfiguration10 hconfigurationLength10 hevalConfiguration
+  have harrayValue1 := evalWordStackMachine_ffi_move_preserves_other_value
+    config state state1 configuration 10 array configurationLocation arrayLocation
+    hconfiguration harray hconfiguration10 harray10 hevalConfiguration
+  have harrayValue2 := evalWordStackMachine_ffi_move_preserves_other_value
+    config state1 state2 configurationLength 11 array
+      configurationLengthLocation arrayLocation hconfigurationLength harray
+      hconfigurationLength11 harray11 hevalConfigurationLength
+  have harrayLengthValue1 := evalWordStackMachine_ffi_move_preserves_other_value
+    config state state1 configuration 10 arrayLength configurationLocation
+      arrayLengthLocation hconfiguration harrayLength hconfiguration10
+      harrayLength10 hevalConfiguration
+  have harrayLengthValue2 := evalWordStackMachine_ffi_move_preserves_other_value
+    config state1 state2 configurationLength 11 arrayLength
+      configurationLengthLocation arrayLengthLocation hconfigurationLength
+      harrayLength hconfigurationLength11 harrayLength11
+      hevalConfigurationLength
+  have harrayLengthValue3 := evalWordStackMachine_ffi_move_preserves_other_value
+    config state2 state3 array 12 arrayLength arrayLocation arrayLengthLocation
+      harray harrayLength harray12 harrayLength12 hevalArray
+  have hconfigurationLengthRegister :=
+    evalWordStackMachine_ffi_move_preserves_value config state1 state2
+      configurationLength 11 configurationLengthLocation hconfigurationLength
+      hconfigurationLength11 hevalConfigurationLength
+  have harrayRegister := evalWordStackMachine_ffi_move_preserves_value
+    config state2 state3 array 12 arrayLocation harray harray12 hevalArray
+  have harrayLengthRegister := evalWordStackMachine_ffi_move_preserves_value
+    config state3 final arrayLength 13 arrayLengthLocation harrayLength
+      harrayLength13 hevalArrayLength
+  have h10_2 := evalWordStackMachine_ffi_move_preserves_register config state1
+    state2 configurationLength 11 10 configurationLengthLocation
+    hconfigurationLength (by decide) hevalConfigurationLength
+  have h10_3 := evalWordStackMachine_ffi_move_preserves_register config state2
+    state3 array 12 10 arrayLocation harray (by decide) hevalArray
+  have h10_4 := evalWordStackMachine_ffi_move_preserves_register config state3
+    final arrayLength 13 10 arrayLengthLocation harrayLength (by decide)
+    hevalArrayLength
+  have h11_3 := evalWordStackMachine_ffi_move_preserves_register config state2
+    state3 array 12 11 arrayLocation harray (by decide) hevalArray
+  have h11_4 := evalWordStackMachine_ffi_move_preserves_register config state3
+    final arrayLength 13 11 arrayLengthLocation harrayLength (by decide)
+    hevalArrayLength
+  have h12_4 := evalWordStackMachine_ffi_move_preserves_register config state3
+    final arrayLength 13 12 arrayLengthLocation harrayLength (by decide)
+    hevalArrayLength
+  constructor
+  · calc
+      some (final.registers 10) = some (state3.registers 10) := congrArg some h10_4
+      _ = some (state2.registers 10) := congrArg some h10_3
+      _ = some (state1.registers 10) := congrArg some h10_2
+      _ = wordStackMachineValue config state configuration := hconfigurationValue
+  · constructor
+    · calc
+        some (final.registers 11) = some (state3.registers 11) := congrArg some h11_4
+        _ = some (state2.registers 11) := congrArg some h11_3
+        _ = wordStackMachineValue config state1 configurationLength :=
+          hconfigurationLengthRegister
+        _ = wordStackMachineValue config state configurationLength :=
+          hconfigurationLengthValue
+    · constructor
+      · calc
+          some (final.registers 12) = some (state3.registers 12) := congrArg some h12_4
+          _ = wordStackMachineValue config state2 array := harrayRegister
+          _ = wordStackMachineValue config state1 array := harrayValue2
+          _ = wordStackMachineValue config state array := harrayValue1
+      · calc
+          some (final.registers 13) = wordStackMachineValue config state3 arrayLength :=
+            harrayLengthRegister
+          _ = wordStackMachineValue config state2 arrayLength :=
+            harrayLengthValue3
+          _ = wordStackMachineValue config state1 arrayLength :=
+            harrayLengthValue2
+          _ = wordStackMachineValue config state arrayLength :=
+            harrayLengthValue1
+
 theorem evalWordStackMachine_load_preserves_value [NeZero width]
     (config : WordStackConfig) (state final : WordStackMachineState width)
     (destination address : Nat)
