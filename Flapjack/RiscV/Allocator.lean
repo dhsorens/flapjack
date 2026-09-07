@@ -590,10 +590,14 @@ def wordSsaReconcileTo (source target : WordSsaState) : List Nat →
     WordProg α
   | [] => .skip
   | name :: names =>
-      let move := if wordSsaRead source name = wordSsaRead target name then
-        (.skip : WordProg α)
-      else
-        .assign (wordSsaRead target name) (.var (wordSsaRead source name))
+      let move := match lookupNatInfo name source.current,
+          lookupNatInfo name target.current with
+        | some sourceName, some targetName =>
+            if sourceName = targetName then
+              (.skip : WordProg α)
+            else
+              .move 1 [(targetName, sourceName)]
+        | _, _ => .skip
       wordSsaSeq move (wordSsaReconcileTo source target names)
 termination_by names => sizeOf names
 decreasing_by all_goals decreasing_trivial

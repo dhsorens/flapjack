@@ -1057,6 +1057,8 @@ definitions, pass ordering, examples, and proof obligations.
   marshalling and fresh result restoration.
 - [x] Match CakeML's two-pass SSA branch reconciliation, including prioritized
   merge moves and zero-register initialization for one-sided names.
+- [x] Match CakeML's SSA cut-set reconciliation with priority-1 moves and
+  omission of names absent from the current map.
 - [x] Marshal allocated Word call arguments into the even-numbered ABI
   registers before StackLang call-frame construction, for both handler-free
   and handler-aware calls.
