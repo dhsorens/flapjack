@@ -909,6 +909,52 @@ theorem wordToStackProgNatWithBitmapBuilder_seq
       some (.seq firstCode secondCode, finalState) := by
   simp [wordToStackProgNatWithBitmapBuilder, hfirst, hsecond]
 
+theorem evalStackProgFuelWithCodeAndFfi_wordToStackProgNatWithBitmapBuilder_seq
+    [BEq Nat] [NeZero width] (host : StackMachineFfiHandler width)
+    (fuel : Nat) (code : Nat → Option (StackProg Nat))
+    (config : WordStackConfig)
+    (bitmapBuilder : List Nat → List Nat)
+    (registerCount bitmapRegister frameSlots wordBits : Nat)
+    (storeConstsStub : Option Nat)
+    (state state1 finalState : WordStackBitmapState)
+    (machineState middle : WordStackMachineState width)
+    (first second : WordProg Nat)
+    (firstCode secondCode : StackProg Nat)
+    (result : StackMachineControl width)
+    (hfirst : wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+      registerCount bitmapRegister frameSlots wordBits storeConstsStub state first =
+      some (firstCode, state1))
+    (hsecond : wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+      registerCount bitmapRegister frameSlots wordBits storeConstsStub state1 second =
+      some (secondCode, finalState))
+    (hevalFirst : evalStackProgFuelWithCodeAndFfi host fuel code machineState
+      firstCode = some (.normal middle))
+    (hevalSecond : evalStackProgFuelWithCodeAndFfi host fuel code middle
+      secondCode = some result) :
+    (wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+      registerCount bitmapRegister frameSlots wordBits storeConstsStub state
+      (.seq first second)).bind
+        (fun compiled =>
+          (evalStackProgFuelWithCodeAndFfi host (fuel + 1) code machineState
+            compiled.1).map (fun control => (control, compiled.2))) =
+      some (result, finalState) := by
+  have hcompile := wordToStackProgNatWithBitmapBuilder_seq
+    (config := config) (bitmapBuilder := bitmapBuilder)
+    (registerCount := registerCount) (bitmapRegister := bitmapRegister)
+    (frameSlots := frameSlots) (wordBits := wordBits)
+    (storeConstsStub := storeConstsStub) (state := state)
+    (state1 := state1) (finalState := finalState)
+    (first := first) (second := second)
+    (firstCode := firstCode) (secondCode := secondCode)
+    (hfirst := hfirst) (hsecond := hsecond)
+  rw [hcompile]
+  simp only [Option.bind_some]
+  have hseq := evalStackProgFuelWithCodeAndFfi_seq_normal_result
+    (host := host) (fuel := fuel) (code := code) (state := machineState)
+    (middle := middle) (first := firstCode) (second := secondCode)
+    (result := some result) hevalFirst hevalSecond
+  simp [hseq]
+
 /-! Conditional compilation threads the bitmap state through the two branch
     compilations in the same order as the executable compiler.  The explicit
     condition-prelude witness keeps this equation compositional for spilled
