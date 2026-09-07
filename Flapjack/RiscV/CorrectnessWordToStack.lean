@@ -987,6 +987,142 @@ theorem wordToStackProgNatWithBitmapBuilder_ite
         finalState) := by
   simp [wordToStackProgNatWithBitmapBuilder, hcondition, hthen, helse]
 
+theorem evalStackProgFuelWithCodeAndFfi_wordToStackProgNatWithBitmapBuilder_ite_true
+    [BEq Nat] [NeZero width] (host : StackMachineFfiHandler width)
+    (fuel : Nat) (code : Nat → Option (StackProg Nat))
+    (config : WordStackConfig)
+    (bitmapBuilder : List Nat → List Nat)
+    (registerCount bitmapRegister frameSlots wordBits : Nat)
+    (storeConstsStub : Option Nat)
+    (state state1 finalState : WordStackBitmapState)
+    (machineState conditionState : WordStackMachineState width)
+    (operator : Cmp) (condition : Nat) (right : WordRegImm Nat)
+    (thenBranch elseBranch : WordProg Nat)
+    (conditionPrelude : StackProg Nat) (conditionRegister : Nat)
+    (rightOperand : WordRegImm Nat)
+    (thenCode elseCode : StackProg Nat)
+    (result : StackMachineControl width)
+    (hcondition : wordStackConditionOperands config condition right =
+      some (conditionPrelude, conditionRegister, rightOperand))
+    (hthen : wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+      registerCount bitmapRegister frameSlots wordBits storeConstsStub state
+      thenBranch = some (thenCode, state1))
+    (helse : wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+      registerCount bitmapRegister frameSlots wordBits storeConstsStub state1
+      elseBranch = some (elseCode, finalState))
+    (hpreludeNe : conditionPrelude ≠ .skip)
+    (hevalPrelude : evalStackProgFuelWithCodeAndFfi host (fuel + 1) code
+      machineState conditionPrelude = some (.normal conditionState))
+    (hconditionTrue : stackMachineCondition conditionState operator
+      conditionRegister rightOperand = true)
+    (hevalThen : evalStackProgFuelWithCodeAndFfi host fuel code conditionState
+      thenCode = some result) :
+    (wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+      registerCount bitmapRegister frameSlots wordBits storeConstsStub state
+      (.ite operator condition right thenBranch elseBranch)).bind
+        (fun compiled =>
+          (evalStackProgFuelWithCodeAndFfi host (fuel + 2) code machineState
+            compiled.1).map (fun control => (control, compiled.2))) =
+      some (result, finalState) := by
+  have hcompile := wordToStackProgNatWithBitmapBuilder_ite
+    (config := config) (bitmapBuilder := bitmapBuilder)
+    (registerCount := registerCount) (bitmapRegister := bitmapRegister)
+    (frameSlots := frameSlots) (wordBits := wordBits)
+    (storeConstsStub := storeConstsStub) (state := state)
+    (state1 := state1) (finalState := finalState)
+    (operator := operator) (condition := condition) (right := right)
+    (thenBranch := thenBranch) (elseBranch := elseBranch)
+    (conditionPrelude := conditionPrelude)
+    (conditionRegister := conditionRegister) (rightOperand := rightOperand)
+    (thenCode := thenCode) (elseCode := elseCode)
+    (hcondition := hcondition) (hthen := hthen) (helse := helse)
+  rw [hcompile]
+  simp only [Option.bind_some]
+  have hite : evalStackProgFuelWithCodeAndFfi host (fuel + 1) code
+      conditionState (.ite operator conditionRegister rightOperand thenCode elseCode) =
+      some result := by
+    simp [evalStackProgFuelWithCodeAndFfi, hconditionTrue, hevalThen]
+  have hiteNe :
+      (.ite operator conditionRegister rightOperand thenCode elseCode : StackProg Nat) ≠
+        .skip := by
+    simp
+  rw [wordStackJoin_eq_seq_of_ne_skip conditionPrelude _ hpreludeNe hiteNe]
+  have hseq := evalStackProgFuelWithCodeAndFfi_seq_normal_result
+    (host := host) (fuel := fuel + 1) (code := code)
+    (state := machineState) (middle := conditionState)
+    (first := conditionPrelude)
+    (second := .ite operator conditionRegister rightOperand thenCode elseCode)
+    (result := some result) hevalPrelude hite
+  simp [hseq]
+
+theorem evalStackProgFuelWithCodeAndFfi_wordToStackProgNatWithBitmapBuilder_ite_false
+    [BEq Nat] [NeZero width] (host : StackMachineFfiHandler width)
+    (fuel : Nat) (code : Nat → Option (StackProg Nat))
+    (config : WordStackConfig)
+    (bitmapBuilder : List Nat → List Nat)
+    (registerCount bitmapRegister frameSlots wordBits : Nat)
+    (storeConstsStub : Option Nat)
+    (state state1 finalState : WordStackBitmapState)
+    (machineState conditionState : WordStackMachineState width)
+    (operator : Cmp) (condition : Nat) (right : WordRegImm Nat)
+    (thenBranch elseBranch : WordProg Nat)
+    (conditionPrelude : StackProg Nat) (conditionRegister : Nat)
+    (rightOperand : WordRegImm Nat)
+    (thenCode elseCode : StackProg Nat)
+    (result : StackMachineControl width)
+    (hcondition : wordStackConditionOperands config condition right =
+      some (conditionPrelude, conditionRegister, rightOperand))
+    (hthen : wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+      registerCount bitmapRegister frameSlots wordBits storeConstsStub state
+      thenBranch = some (thenCode, state1))
+    (helse : wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+      registerCount bitmapRegister frameSlots wordBits storeConstsStub state1
+      elseBranch = some (elseCode, finalState))
+    (hpreludeNe : conditionPrelude ≠ .skip)
+    (hevalPrelude : evalStackProgFuelWithCodeAndFfi host (fuel + 1) code
+      machineState conditionPrelude = some (.normal conditionState))
+    (hconditionFalse : stackMachineCondition conditionState operator
+      conditionRegister rightOperand = false)
+    (hevalElse : evalStackProgFuelWithCodeAndFfi host fuel code conditionState
+      elseCode = some result) :
+    (wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+      registerCount bitmapRegister frameSlots wordBits storeConstsStub state
+      (.ite operator condition right thenBranch elseBranch)).bind
+        (fun compiled =>
+          (evalStackProgFuelWithCodeAndFfi host (fuel + 2) code machineState
+            compiled.1).map (fun control => (control, compiled.2))) =
+      some (result, finalState) := by
+  have hcompile := wordToStackProgNatWithBitmapBuilder_ite
+    (config := config) (bitmapBuilder := bitmapBuilder)
+    (registerCount := registerCount) (bitmapRegister := bitmapRegister)
+    (frameSlots := frameSlots) (wordBits := wordBits)
+    (storeConstsStub := storeConstsStub) (state := state)
+    (state1 := state1) (finalState := finalState)
+    (operator := operator) (condition := condition) (right := right)
+    (thenBranch := thenBranch) (elseBranch := elseBranch)
+    (conditionPrelude := conditionPrelude)
+    (conditionRegister := conditionRegister) (rightOperand := rightOperand)
+    (thenCode := thenCode) (elseCode := elseCode)
+    (hcondition := hcondition) (hthen := hthen) (helse := helse)
+  rw [hcompile]
+  simp only [Option.bind_some]
+  have hite : evalStackProgFuelWithCodeAndFfi host (fuel + 1) code
+      conditionState (.ite operator conditionRegister rightOperand thenCode elseCode) =
+      some result := by
+    simp [evalStackProgFuelWithCodeAndFfi, hconditionFalse, hevalElse]
+  have hiteNe :
+      (.ite operator conditionRegister rightOperand thenCode elseCode : StackProg Nat) ≠
+        .skip := by
+    simp
+  rw [wordStackJoin_eq_seq_of_ne_skip conditionPrelude _ hpreludeNe hiteNe]
+  have hseq := evalStackProgFuelWithCodeAndFfi_seq_normal_result
+    (host := host) (fuel := fuel + 1) (code := code)
+    (state := machineState) (middle := conditionState)
+    (first := conditionPrelude)
+    (second := .ite operator conditionRegister rightOperand thenCode elseCode)
+    (result := some result) hevalPrelude hite
+  simp [hseq]
+
 /-! Loops compile their body once, threading the body's bitmap state to the
     surrounding continuation.  `MustTerminate` is the corresponding
     structural wrapper and preserves the body compiler result unchanged. -/
