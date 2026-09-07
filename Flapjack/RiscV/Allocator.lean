@@ -710,9 +710,17 @@ def wordSsaRenameProgramWithLoops (frames : List WordSsaLoopFrame)
               returnLabel, entryLabel)) target abiArguments
               (some (2, exceptionHandler, handlerLabel, handlerEntryLabel)))))
     | .alloc destination cutsets =>
-        let cutsets := wordSsaReadCutsets state cutsets
-        let (state, destination) := wordSsaFresh state destination
-        (state, .alloc destination cutsets)
+        let names := (cutsets.1 ++ cutsets.2).eraseDups
+        let (stackState, stackNext, stackMove) :=
+          wordSsaListNextVarRenameMove state (state.next + 2) names
+        let stackCutsets := wordSsaReadCutsets stackState cutsets
+        let destination := wordSsaRead stackState destination
+        let cutState := wordSsaRestrict stackState names
+        let (state, _, restoreMove) :=
+          wordSsaListNextVarRenameMove cutState (stackNext + 2) names
+        (state, wordSsaSeq stackMove
+          (wordSsaSeq (.move 0 [(2, destination)])
+            (wordSsaSeq (.alloc 2 stackCutsets) restoreMove)))
     | .storeConsts source bitmap codeLength dataLength constants =>
         (state, .storeConsts (wordSsaRead state source)
           (wordSsaRead state bitmap) (wordSsaRead state codeLength)

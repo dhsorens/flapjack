@@ -167,6 +167,20 @@ example :
 example :
     wordSsaRenameProgram
         ({ current := [(1, 100)], next := 200 } : WordSsaState)
+      ((.alloc 3 ([1], []) : WordProg Nat)) =
+      ({ current := [(1, 208)], next := 212 },
+        .seq (.move 0 [(202, 100)])
+          (.seq (.move 0 [(2, 3)])
+            (.seq (.alloc 2 ([202], []))
+              (.move 0 [(208, 202)])))) := by
+  simp [wordSsaRenameProgram, wordSsaRenameProgramWithLoops,
+    wordSsaListNextVarRenameMove, wordSsaReadCutsets, wordSsaRestrict,
+    wordSsaFreshList, wordSsaFresh, wordSsaRead, wordSsaSeq,
+    List.eraseDups, List.eraseDupsBy, List.eraseDupsBy.loop, lookupNatInfo]
+
+example :
+    wordSsaRenameProgram
+        ({ current := [(1, 100)], next := 200 } : WordSsaState)
         ((.move 7 [(2, 1), (3, 2)]) : WordProg Nat) =
         ({ current := [(3, 204), (2, 200), (1, 100)], next := 208 },
         .move 7 [(200, 100), (204, 2)]) := by
