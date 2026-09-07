@@ -528,6 +528,9 @@ definitions, pass ordering, examples, and proof obligations.
   including the reserved-x31 side condition at both colored endpoints.
 - [x] Integrate the singleton move case into the reusable straight-line
   coloring simulation induction under an explicit no-x31 coloring invariant.
+- [x] Prove two-entry non-cyclic parallel-move coloring simulation by composing
+  singleton move correspondence with the executable instruction-sequence
+  evaluator.
 - [x] Prove the reserved-x31 five-instruction rotate-right colouring boundary
   under explicit scratch non-aliasing hypotheses.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware
