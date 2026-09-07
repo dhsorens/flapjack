@@ -1493,6 +1493,14 @@ definitions, pass ordering, examples, and proof obligations.
   compiler entry point, with a spill-aware source-location regression.
 - [x] Expose the state-threaded handler-call equation for the Word-to-Stack
   compiler, retaining the generated call shape and bitmap state.
+- [x] Compose state-threaded handler-call lowering with bounded StackLang
+  execution, retaining the bitmap state after argument moves and call code.
+- [x] Expose the matching state-threaded no-handler call lowering equation,
+  including return destinations and the unchanged bitmap state.
+- [x] Compose state-threaded no-handler call lowering with bounded StackLang
+  execution under explicit argument-move and return-call premises.
+- [x] Cover zero-return direct calls, including their raw StackLang call code,
+  in the state-threaded lowering and execution equations.
 - [x] Expose the state-threaded Word-to-Stack FFI equation, retaining the
   bitmap accumulator across ABI argument lowering.
 - [x] Compose state-threaded Word-to-Stack FFI lowering with bounded
