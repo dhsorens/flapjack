@@ -5287,4 +5287,75 @@ theorem evalStackFrameFuel_stackGcMoveLoop_iterate_with_state_relation
     stepFuel iterations state step hcondition hbody hfinal
   exact ⟨heval, hrelation⟩
 
+theorem evalStackFrameFuel_stackGcMoveLoop_iterate_with_machine_nat_composition
+    [NeZero width] (config : StackGcConfig)
+    (fuel stepFuel natFuel iterations : Nat)
+    (state : StackFrameMachineState width)
+    (step : StackFrameMachineState width → StackFrameMachineState width)
+    (oldBase : Nat) (domain : Nat → Bool)
+    (scans indices destinations : Nat → Nat)
+    (memories : Nat → Nat → Nat) (conditions : Nat → Bool)
+    (hinitial : stackGcMachineNatMoveLoopRelation
+      state (scans 0) (indices 0) (destinations 0) (memories 0))
+    (hcondition : ∀ current, current < iterations →
+      stackMachineCondition
+        (stackFrameIterate step current state).machine .notEqual 3 (.reg 8) = true)
+    (hbody : ∀ current extra, current < iterations →
+      evalStackFrameFuel (extra + stepFuel)
+        (stackFrameIterate step current state)
+        (stackSeq [
+          .inst (.mem .load 7 8),
+          .ite .test 7 (.imm 4)
+            (stackSeq [
+              stackGcShiftImmediate config .lsr 7
+                (config.wordBits - config.lenSize),
+              stackGcAddBytes config 8,
+              stackGcMoveListCode config])
+            (stackSeq [
+              stackGcShiftImmediate config .lsr 7
+                (config.wordBits - config.lenSize),
+              stackGcAddOne config 7,
+              stackGcShiftImmediate config .lsl 7 config.wordShift,
+              stackGcAdd 8 7])]) =
+        some (.normal (stackFrameIterate step (current + 1) state)))
+    (hfinal :
+      stackMachineCondition
+        (stackFrameIterate step iterations state).machine .notEqual 3 (.reg 8) = false)
+    (hstep : ∀ current, current < iterations →
+      stackGcMachineNatMoveLoopRelation
+        (stackFrameIterate step current state)
+        (scans current) (indices current) (destinations current)
+        (memories current) →
+      stackGcMachineNatMoveLoopRelation
+        (stackFrameIterate step (current + 1) state)
+        (scans (current + 1)) (indices (current + 1))
+        (destinations (current + 1)) (memories (current + 1)))
+    (hnatstep : ∀ current remaining, current < iterations →
+      stackGcNatMoveLoop config (remaining + 1)
+        (scans current) (indices current) (destinations current) oldBase
+        (memories current) domain (conditions current) =
+      stackGcNatMoveLoop config remaining
+        (scans (current + 1)) (indices (current + 1))
+        (destinations (current + 1)) oldBase
+        (memories (current + 1)) domain (conditions (current + 1))) :
+    evalStackFrameFuel (fuel + iterations + stepFuel + 3) state
+        (stackGcMoveLoopCode config) =
+      some (.normal (stackFrameIterate step iterations state)) ∧
+      stackGcNatMoveLoop config (natFuel + iterations)
+        (scans 0) (indices 0) (destinations 0) oldBase
+        (memories 0) domain (conditions 0) =
+      stackGcNatMoveLoop config natFuel
+        (scans iterations) (indices iterations) (destinations iterations)
+        oldBase (memories iterations) domain (conditions iterations) ∧
+      stackGcMachineNatMoveLoopRelation
+        (stackFrameIterate step iterations state)
+        (scans iterations) (indices iterations) (destinations iterations)
+        (memories iterations) := by
+  have hmachine := evalStackFrameFuel_stackGcMoveLoop_iterate_with_state_relation
+    config fuel stepFuel iterations state step scans indices destinations memories
+    hinitial hcondition hbody hfinal hstep
+  have hnat := stackGcNatMoveLoop_iterate_of_step config natFuel iterations oldBase
+    domain scans indices destinations memories conditions hnatstep
+  exact ⟨hmachine.1, hnat, hmachine.2⟩
+
 end Flapjack.RiscV
