@@ -301,6 +301,33 @@ theorem evalCrepFullCall_caught_handler [BEq α] [OfNat α 0] [OfNat α 1]
   simp [evalCrepFullCall, hvalues, hlookup, hassign, hcallee, hcaught,
     hhandler]
 
+theorem evalCrepFullCall_uncaught [BEq α] [OfNat α 0] [OfNat α 1]
+    [Add α] [Mul α] [Sub α] [AndOp α] [OrOp α] [HXor α α α]
+    [ShiftLeft α] [ShiftRight α] [LT α]
+    [DecidableRel (fun left right : α => left < right)]
+    (functions : List (CompiledFunction α))
+    (primitive : CrepPrimitiveHandler α) (ffi : CrepFfiHandler α)
+    (sharedMem : CrepSharedMemHandler α)
+    (baseAddress topAddress : α) (fuel : Nat)
+    (caller : CrepState α) (function : FunName)
+    (arguments : List (CrepExp α)) (values : List α)
+    (parameters : List Nat) (body : CrepProg α)
+    (calleeLocals : Nat → Option α) (callee : CrepState α)
+    (exception : α)
+    (hvalues : evalCrepFullExps caller.locals caller.memory
+      baseAddress topAddress arguments = some values)
+    (hlookup : lookupCompiledFunction function functions = some (parameters, body))
+    (hassign : assignCrepValues (fun _ => none) parameters values =
+      some calleeLocals)
+    (hcallee : evalCrepFullProg functions primitive ffi sharedMem
+      baseAddress topAddress fuel
+      { locals := calleeLocals, memory := caller.memory } body =
+      some (.raised callee exception)) :
+    evalCrepFullCall functions primitive ffi sharedMem baseAddress topAddress
+      (fuel + 1) caller none function arguments =
+      some (.raised { caller with memory := callee.memory } exception) := by
+  simp [evalCrepFullCall, hvalues, hlookup, hassign, hcallee]
+
 def evalCrepFullResult
     [BEq α] [OfNat α 0] [OfNat α 1] [Add α] [Mul α]
     [Sub α] [AndOp α] [OrOp α] [HXor α α α] [ShiftLeft α] [ShiftRight α]
