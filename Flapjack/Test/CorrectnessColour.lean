@@ -319,4 +319,30 @@ example [NeZero width] (state : State width) :
   · exact .assign 3 1 (by omega) (by omega)
   · exact .assign 4 1 (by omega) (by omega)
 
+example [NeZero width] (state : State width) :
+    evalWordFunction state
+        (.seq (.assign 3 (.var 1)) (.assign 4 (.var 3))) =
+      (evalWordProg state
+        (.seq (.assign 3 (.var 1)) (.assign 4 (.var 3)))).map
+          (fun state => (state, [])) := by
+  exact evalWordFunction_wordVarStraightLine_eq_evalWordProg state _
+    (.seq (.assign 3 1 (by omega) (by omega))
+      (.assign 4 3 (by omega) (by omega)))
+
+example [NeZero width] (state : State width) :
+    ∃ source' target',
+      evalWordFunction state
+          (.seq (.assign 3 (.var 1)) (.assign 4 (.var 3))) =
+        some (source', []) ∧
+      evalWordFunction (testTargetState state)
+          (wordApplyColour testColour
+            (.seq (.assign 3 (.var 1)) (.assign 4 (.var 3)))) =
+        some (target', []) ∧
+      testRelation source' target' := by
+  apply evalWordFunction_wordVarStraightLine_applyColour testColour
+    testColourValidFn testColour_injective testColour_zero testColour_noScratch
+    state (testTargetState state) (testRelation_target state)
+  exact .seq (.assign 3 1 (by omega) (by omega))
+    (.assign 4 3 (by omega) (by omega))
+
 end Flapjack.RiscV
