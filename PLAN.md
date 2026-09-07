@@ -1191,6 +1191,8 @@ definitions, pass ordering, examples, and proof obligations.
   stack suffix, using root-list length preservation.
 - [x] Prove exact bitmap reconstruction partition lengths for emitted values
   and the untouched source remainder.
+- [x] Prove that successful fuel-bounded bitmap decoding preserves stack
+  length, including the public decoder wrapper.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
