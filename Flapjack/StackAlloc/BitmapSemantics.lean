@@ -318,6 +318,57 @@ theorem stackGcNatFilterBitmap_length_rest
                       cases hrest
                       exact Nat.le_trans hlen (Nat.le_succ _)
 
+theorem stackGcNatFilterBitmap_length_partition
+    (bits : List Bool) (values selected rest : List StackGcNatValue)
+    (hresult : stackGcNatFilterBitmap bits values = some (selected, rest)) :
+    selected.length + rest.length + bits.count false = values.length := by
+  induction bits generalizing values selected rest with
+  | nil =>
+      have hpair : ([], values) = (selected, rest) := by
+        simpa [stackGcNatFilterBitmap] using hresult
+      cases hpair
+      simp
+  | cons bit bits ih =>
+      cases values with
+      | nil =>
+          simp [stackGcNatFilterBitmap] at hresult
+      | cons value values =>
+          cases bit with
+          | false =>
+              have hrecursive :
+                  stackGcNatFilterBitmap bits values = some (selected, rest) := by
+                simpa [stackGcNatFilterBitmap] using hresult
+              have hlength := ih values selected rest hrecursive
+              have hcount :
+                  (false :: bits).count false = bits.count false + 1 := by
+                simp
+              rw [hcount]
+              simp only [List.length_cons]
+              omega
+          | true =>
+              cases hrecursive : stackGcNatFilterBitmap bits values with
+              | none =>
+                  simp [stackGcNatFilterBitmap, hrecursive] at hresult
+              | some pair =>
+                  cases pair with
+                  | mk selectedNext restNext =>
+                      have htuple :
+                          (value :: selectedNext, restNext) = (selected, rest) := by
+                        simpa [stackGcNatFilterBitmap, hrecursive] using hresult
+                      have hlength := ih values selectedNext restNext hrecursive
+                      have hselected : value :: selectedNext = selected :=
+                        congrArg Prod.fst htuple
+                      have hrest : restNext = rest :=
+                        congrArg Prod.snd htuple
+                      cases hselected
+                      cases hrest
+                      have hcount :
+                          (true :: bits).count false = bits.count false := by
+                        simp
+                      rw [hcount]
+                      simp only [List.length_cons]
+                      omega
+
 theorem stackGcNatMapBitmap_length_remainders
     (bits : List Bool) (moved values mapped restMoved restValues : List StackGcNatValue)
     (hresult : stackGcNatMapBitmap bits moved values =
@@ -553,6 +604,44 @@ theorem stackGcNatMapBitmap_length_partition
                               cases hvalues
                               exact ⟨by simp [hlength.1], by
                                 simpa [hlength.2, Nat.add_assoc, Nat.add_comm]⟩
+
+theorem stackGcNatMoveBitmap_values_length
+    (config : StackGcConfig) (bitmaps : List Nat)
+    (descriptor : StackGcNatValue) (stack : List StackGcNatValue)
+    (index destination oldBase : Nat) (memory : Nat → Nat)
+    (domain : Nat → Bool) (result : StackGcBitmapMoveResult)
+    (hresult :
+      stackGcNatMoveBitmap config bitmaps descriptor stack index destination oldBase
+        memory domain = some result) :
+    ∃ bits, stackGcNatFullReadBitmap config bitmaps descriptor = some bits ∧
+      result.values.length = bits.length := by
+  unfold stackGcNatMoveBitmap at hresult
+  cases hfull : stackGcNatFullReadBitmap config bitmaps descriptor with
+  | none =>
+      simp [hfull] at hresult
+  | some bits =>
+      cases hfilter : stackGcNatFilterBitmap bits stack with
+      | none =>
+          simp [hfull, hfilter] at hresult
+      | some pair =>
+          cases pair with
+          | mk selected remainder =>
+              let moved := stackGcNatMoveValueRoots config selected index destination
+                oldBase memory domain
+              cases hmap : stackGcNatMapBitmap bits moved.values stack with
+              | none =>
+                  simp [hfull, hfilter, moved, hmap] at hresult
+              | some pair =>
+                  cases pair with
+                  | mk values restPair =>
+                      cases restPair with
+                      | mk restMoved restValues =>
+                          have hpartition :=
+                            stackGcNatMapBitmap_length_partition bits moved.values stack
+                              values restMoved restValues hmap
+                          simp [hfull, hfilter, moved, hmap] at hresult
+                          cases hresult
+                          exact ⟨bits, rfl, hpartition.1⟩
 
 theorem stackGcNatDecodeStackFuel_length
     (config : StackGcConfig) (bitmaps : List Nat) (fuel : Nat)
