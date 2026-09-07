@@ -1362,7 +1362,7 @@ theorem evalWordStackMachine_load_assignment [NeZero width]
     (haddress : wordStackLocation config address = some addressLocation)
     (haddressValue : wordStackMachineValue config state address =
       some addressValue)
-    (hscratch : config.scratch ≠ config.addressScratch)
+    (_hscratch : config.scratch ≠ config.addressScratch)
     (heval : (wordStackCompileLoadNat config destination (.var address)).bind
       (evalWordStackMachine state) = some final) :
       wordStackMachineValue config final destination =
@@ -1545,7 +1545,7 @@ theorem evalWordStackMachine_ffi_move_preserves_other_value [NeZero width]
         intro heq
         apply hsource_destination
         simp [heq]
-      simp [wordStackFfiMove, wordStackLocation, lookupNatInfo,
+      simp [wordStackFfiMove, wordStackLocation, 
         hsource, hsourceRegister] at heval
       cases heval
       cases otherLocation with
@@ -1561,7 +1561,7 @@ theorem evalWordStackMachine_ffi_move_preserves_other_value [NeZero width]
           simp [wordStackMachineValue, wordStackLocation,
             wordStackMachineWriteRegister, wordStackMachineBinOp, hother]
   | stack sourceSlot =>
-      simp [wordStackFfiMove, wordStackLocation, lookupNatInfo,
+      simp [wordStackFfiMove, wordStackLocation, 
         hsource] at heval
       cases heval
       cases otherLocation with
@@ -1745,7 +1745,7 @@ theorem evalWordStackMachine_load_preserves_value [NeZero width]
     (hdestination : wordStackLocation config destination =
       some destinationLocation)
     (haddress : wordStackLocation config address = some addressLocation)
-    (hscratch : config.scratch ≠ config.addressScratch)
+    (_hscratch : config.scratch ≠ config.addressScratch)
     (heval : (wordStackMemoryInst config .load destination address).bind
       (evalWordStackMachine state) = some final) :
       wordStackMachineValue config final destination =

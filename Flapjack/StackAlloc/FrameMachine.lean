@@ -809,8 +809,8 @@ theorem evalStackFrameFuel_stackGcMoveCopyPrefix [NeZero width]
     (state : StackFrameMachineState width)
     (hscratch0 : config.immediateScratch ≠ 0)
     (hscratch1 : config.immediateScratch ≠ 1)
-    (hscratch2 : config.immediateScratch ≠ 2)
-    (hscratch6 : config.immediateScratch ≠ 6) :
+    (_hscratch2 : config.immediateScratch ≠ 2)
+    (_hscratch6 : config.immediateScratch ≠ 6) :
     evalStackFrameFuel (fuel + 20) state
         (stackGcMoveCopyPrefix config) =
       some (.normal (stackGcMoveCopyPrefixState config state)) := by
