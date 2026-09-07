@@ -572,6 +572,43 @@ theorem wordToStackProgNatWithBitmapBuilder_ite
         finalState) := by
   simp [wordToStackProgNatWithBitmapBuilder, hcondition, hthen, helse]
 
+/-! Loops compile their body once, threading the body's bitmap state to the
+    surrounding continuation.  `MustTerminate` is the corresponding
+    structural wrapper and preserves the body compiler result unchanged. -/
+
+theorem wordToStackProgNatWithBitmapBuilder_loop
+    [BEq Nat] (config : WordStackConfig)
+    (bitmapBuilder : List Nat → List Nat)
+    (registerCount bitmapRegister frameSlots wordBits : Nat)
+    (storeConstsStub : Option Nat)
+    (state finalState : WordStackBitmapState)
+    (liveIn liveOut : List Nat) (body : WordProg Nat)
+    (bodyCode : StackProg Nat)
+    (hbody : wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+      registerCount bitmapRegister frameSlots wordBits storeConstsStub state body =
+      some (bodyCode, finalState)) :
+    wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+      registerCount bitmapRegister frameSlots wordBits storeConstsStub state
+      (.loop liveIn body liveOut) =
+      some (.loop bodyCode, finalState) := by
+  simp [wordToStackProgNatWithBitmapBuilder, hbody]
+
+theorem wordToStackProgNatWithBitmapBuilder_mustTerminate
+    [BEq Nat] (config : WordStackConfig)
+    (bitmapBuilder : List Nat → List Nat)
+    (registerCount bitmapRegister frameSlots wordBits : Nat)
+    (storeConstsStub : Option Nat)
+    (state finalState : WordStackBitmapState)
+    (body : WordProg Nat) (bodyCode : StackProg Nat)
+    (hbody : wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+      registerCount bitmapRegister frameSlots wordBits storeConstsStub state body =
+      some (bodyCode, finalState)) :
+    wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+      registerCount bitmapRegister frameSlots wordBits storeConstsStub state
+      (.mustTerminate body) =
+      some (bodyCode, finalState) := by
+  simpa [wordToStackProgNatWithBitmapBuilder] using hbody
+
 /-! The state-threaded compiler has no special bitmap effect for an FFI
     instruction.  Its lowering equation therefore returns the original
     accumulator while exposing the same four-move ABI prefix as the

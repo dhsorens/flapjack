@@ -1398,6 +1398,7 @@ definitions, pass ordering, examples, and proof obligations.
   an allocating prefix followed by an FFI lowering.
 - [x] Expose state-threaded Word-to-Stack conditional composition, including
   condition materialization and branch-state threading.
+- [x] Expose state-threaded Word-to-Stack loop and MustTerminate composition.
 - [x] Add abstract and bounded FFI loop-break simulation equations, with
   FFI-in-loop regressions.
 - [x] Expose the abstract StackLang FFI returned-callee continuation equation,

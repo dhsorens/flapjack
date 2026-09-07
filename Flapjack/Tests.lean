@@ -28,6 +28,7 @@ import Flapjack.Test.WordToStack.StatefulFfi
 import Flapjack.Test.WordToStack.StatefulFfiCorrectness
 import Flapjack.Test.WordToStack.StatefulSequence
 import Flapjack.Test.WordToStack.StatefulIte
+import Flapjack.Test.WordToStack.StatefulLoop
 
 /-!
 # Flapjack regression tests
