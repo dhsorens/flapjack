@@ -194,7 +194,8 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Add fuel-bounded conditional and sequencing semantics for Pancake and
   Crepe and prove preservation for a constant conditional program.
 - [x] Port the RISC-V low-word multiplication path for HOL `CrepOp.mul` and
-  `LoopArith.longMul`, with intermediate and end-to-end tests.
+  `LoopArith.longMul`, with intermediate and end-to-end tests, and prove the
+  emitted `MULHU`/`MUL` pair computes the high and low product words.
 - [x] Port RISC-V register shifts (`SLL`, `SRL`, and `SRA`) with masked shift
   amounts, plus the HOL scratch-register lowering for `ROR`.
 - [x] Extend Pancake/Crepe executable expression semantics with `PanOp.mul` and

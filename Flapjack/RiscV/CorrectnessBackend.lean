@@ -164,4 +164,20 @@ theorem wordProgToRiscV_sound_of_straightLine [NeZero width]
           subst code
           simp [evalWordProg, evalWordShareInst, h]
 
+/-!
+The RISC-V expansion of `LongMul` writes the high word first and the low
+word second.  The two source registers are deliberately below the output
+registers in this theorem, matching the normalized backend fragment and
+making the non-clobbering condition explicit in the execution result.
+-/
+theorem executeInstructions_longMul_result [NeZero width] (state : State width) :
+    (readRegister (executeInstructions state
+      [.mulHU 5 2 3, .mul 6 2 3]) 5,
+      readRegister (executeInstructions state
+        [.mulHU 5 2 3, .mul 6 2 3]) 6) =
+      (BitVec.ofNat width
+        ((readRegister state 2).toNat * (readRegister state 3).toNat / 2 ^ width),
+       readRegister state 2 * readRegister state 3) := by
+  simp [executeInstructions, execute, writeRegister, readRegister]
+
 end Flapjack.RiscV
