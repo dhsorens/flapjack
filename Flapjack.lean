@@ -69,6 +69,7 @@ import Flapjack.StackAlloc.BitmapSemantics
 import Flapjack.StackRemove
 import Flapjack.Lab
 import Flapjack.RiscV.Lab
+import Flapjack.RiscV.CorrectnessPipelineFfi
 
 /-!
 # Flapjack in Lean
