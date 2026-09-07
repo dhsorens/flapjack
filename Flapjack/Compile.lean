@@ -275,4 +275,28 @@ theorem compileProg_extCall_of_compiled [BEq α] [OfNat α 0] [Add α]
   simp [compileProg, hconfiguration, hconfigurationLength, harray, harrayLength,
     nestedDecs]
 
+theorem compileProg_call_handler_of_compiled [BEq α] [OfNat α 0] [Add α]
+    (context : CompileContext α) (function : FunName)
+    (arguments : List (Exp α)) (returnShape : Shape)
+    (exception handlerVar : VarName) (exceptionCode : α)
+    (handlerProgram : Prog α) (handlerNames : List Nat)
+    (compiledArguments : List (CrepExp α))
+    (hfunction : lookupInfo function context.functions =
+      some ([], returnShape))
+    (hexception : lookupInfo exception context.exceptions = some exceptionCode)
+    (hhandler : ∃ shape,
+      lookupInfo handlerVar context.vars = some (shape, handlerNames))
+    (harguments : compileArgs context arguments = compiledArguments) :
+    compileProg context
+        (.call (some (none, some (exception, handlerVar, handlerProgram)))
+          function arguments) =
+      .call (some (allocatedNames context returnShape,
+        some (exceptionCode,
+          .seq (assignRet context.bytesInWord handlerNames)
+            (compileProg context handlerProgram))))
+        function compiledArguments := by
+  rcases hhandler with ⟨shape, hhandler⟩
+  simp [compileProg, hfunction, hexception, hhandler, harguments,
+    functionReturnNames, allocatedNames]
+
 end Flapjack
