@@ -514,6 +514,8 @@ definitions, pass ordering, examples, and proof obligations.
   apply it to the low/high physical-register partitions.
 - [x] Prove the executable register-colouring correspondence for straight-line
   Word programs built from variable assignments and sequencing.
+- [x] Extend the executable colouring simulation to constant assignments and
+  immediate register materialization.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware
   RISC-V contracts before claiming general call-aware allocation correctness.
 - [x] Add a combined graph-allocation soundness contract exposing fixed tags,

@@ -156,13 +156,53 @@ theorem evalWordProg_assignVar_applyColour
       registerOfNat, valid name hname, valid sourceName hsource,
       executeInstructions]
   exact ⟨_, _, hsourceEval, htargetEval,
-    wordColourStateRelation_executeAddi colour valid injective colourZero
+      wordColourStateRelation_executeAddi colour valid injective colourZero
       source target hrelation name sourceName hname hsource⟩
+
+theorem evalWordProg_assignConst_applyColour
+    (colour : Nat → Nat) (valid : wordColourValid colour)
+    (injective : Function.Injective colour) (colourZero : colour 0 = 0)
+    (source target : State width) [NeZero width]
+    (hrelation : WordColourStateRelation colour source target)
+    (name : Nat) (value : Word width) (hname : name < 32) :
+    ∃ source' target',
+      evalWordProg source (.assign name (.const value)) = some source' ∧
+      evalWordProg target
+          (wordApplyColour colour (.assign name (.const value))) = some target' ∧
+      WordColourStateRelation colour source' target' := by
+  have hnext := wordColourStateRelation_nextPc colour valid source target hrelation
+  have hread : readRegister source 0 = readRegister target 0 := by
+    simpa [colourZero] using
+      hrelation.register 0 (by omega) (by simpa [colourZero])
+  have hvalue :
+      readRegister source 0 + value = readRegister target 0 + value := by
+    rw [hread]
+  have hsourceEval :
+      evalWordProg source (.assign name (.const value)) =
+        some (execute source (.addi ⟨name, hname⟩ 0 value)) := by
+    simp [evalWordProg, wordExpToInstructions, wordExpToInstruction,
+      registerOfNat, hname, executeInstructions]
+  have htargetEval :
+      evalWordProg target
+          (wordApplyColour colour (.assign name (.const value))) =
+        some (execute target
+          (.addi ⟨colour name, valid name hname⟩ 0 value)) := by
+    simp [wordApplyColour, wordApplyColourExp, evalWordProg,
+      wordExpToInstructions, wordExpToInstruction, registerOfNat,
+      valid name hname, executeInstructions]
+  have hstate := wordColourStateRelation_writeRegister colour valid
+    injective colourZero {source with pc := nextPc source}
+    {target with pc := nextPc target} hnext name hname
+    (readRegister source 0 + value) (readRegister target 0 + value) hvalue
+  exact ⟨_, _, hsourceEval, htargetEval, by
+    simpa [execute, colourZero] using hstate⟩
 
 inductive WordVarStraightLine (width : Nat) : WordProg (Word width) → Prop where
   | skip : WordVarStraightLine width .skip
   | assign (name source : Nat) (hname : name < 32) (hsource : source < 32) :
       WordVarStraightLine width (.assign name (.var source))
+  | assignConst (name : Nat) (value : Word width) (hname : name < 32) :
+      WordVarStraightLine width (.assign name (.const value))
   | seq {first second : WordProg (Word width)} :
       WordVarStraightLine width first → WordVarStraightLine width second →
       WordVarStraightLine width (.seq first second)
@@ -184,6 +224,9 @@ theorem evalWordProg_wordVarStraightLine_applyColour
   | assign name sourceName hname hsource =>
       exact evalWordProg_assignVar_applyColour colour valid injective colourZero
         source target hrelation name sourceName hname hsource
+  | assignConst name value hname =>
+      exact evalWordProg_assignConst_applyColour colour valid injective colourZero
+        source target hrelation name value hname
   | @seq first second hfirst hsecond ihFirst ihSecond =>
       rcases ihFirst source target hrelation with
         ⟨firstSource, firstTarget, hfirstSource, hfirstTarget, hfirstRelation⟩
