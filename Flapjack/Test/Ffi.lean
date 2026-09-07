@@ -117,6 +117,26 @@ example :
       ffiAbiState, writeRegister, readRegister, registerOfNat]
 
 example :
+    evalWordFunctionWithCallsAndFfi [] ffiWordHandler 2 ffiAbiState
+        (.ite .equal 2 (.imm (10 : Word 64))
+          (.ffi "sum" 2 3 4 5 ([], [])) .skip) =
+      some (writeRegister ffiAbiState 6 33, []) := by
+  apply evalWordFunctionWithCallsAndFfi_ite_true
+  · native_decide
+  · simp [evalWordFunctionWithCallsAndFfi, evalWordFfi, ffiWordHandler,
+      ffiAbiState, writeRegister, readRegister, registerOfNat]
+
+example :
+    evalWordFunctionWithCallsAndFfi [] ffiWordHandler 2 ffiAbiState
+        (.ite .notEqual 2 (.imm (10 : Word 64))
+          .skip (.return 0 [2])) =
+      some (ffiAbiState, [10]) := by
+  apply evalWordFunctionWithCallsAndFfi_ite_false
+  · native_decide
+  · simp [evalWordFunctionWithCallsAndFfi, evalWordFunction,
+      ffiAbiState, writeRegister, readRegister, registerOfNat]
+
+example :
     wordFunctionToRiscVWithCallsAndFfiAndLoops
       ({ targets := [], services := [("sum", 7)] } : WordCallFfiContext 64)
       (.loop [] (.seq (.ffi "sum" 2 3 4 5 ([], [])) (.break 0)) []) =

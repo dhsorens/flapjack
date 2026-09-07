@@ -1361,6 +1361,8 @@ definitions, pass ordering, examples, and proof obligations.
   the call-aware Word compiler.
 - [x] Expose the fuel-bounded normal-path sequence equation for the
   call-aware Word FFI evaluator, with a concrete FFI-then-return regression.
+- [x] Expose true- and false-branch equations for the fuel-bounded FFI-aware
+  Word conditional evaluator, with branch-selected FFI and return tests.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 

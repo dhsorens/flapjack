@@ -244,6 +244,36 @@ theorem evalWordFunctionWithCallsAndFfi_seq_normal [NeZero width]
       (.seq first second) = some (final, values) := by
   simp [evalWordFunctionWithCallsAndFfi, hfirst, hsecond]
 
+theorem evalWordFunctionWithCallsAndFfi_ite_true [NeZero width]
+    (functions : List (Nat × List Nat × WordProg (Word width)))
+    (handler : FunName → Word width → Word width → Word width → Word width →
+      State width → Option (State width))
+    (fuel : Nat) (state : State width) (operator : Cmp)
+    (condition : Nat) (rightValue : WordRegImm (Word width))
+    (thenBranch elseBranch : WordProg (Word width))
+    (result : State width × List (Word width))
+    (hcondition : evalWordCondition state operator condition rightValue = some true)
+    (hthen : evalWordFunctionWithCallsAndFfi functions handler fuel state thenBranch =
+      some result) :
+    evalWordFunctionWithCallsAndFfi functions handler (fuel + 1) state
+      (.ite operator condition rightValue thenBranch elseBranch) = some result := by
+  simp [evalWordFunctionWithCallsAndFfi, hcondition, hthen]
+
+theorem evalWordFunctionWithCallsAndFfi_ite_false [NeZero width]
+    (functions : List (Nat × List Nat × WordProg (Word width)))
+    (handler : FunName → Word width → Word width → Word width → Word width →
+      State width → Option (State width))
+    (fuel : Nat) (state : State width) (operator : Cmp)
+    (condition : Nat) (rightValue : WordRegImm (Word width))
+    (thenBranch elseBranch : WordProg (Word width))
+    (result : State width × List (Word width))
+    (hcondition : evalWordCondition state operator condition rightValue = some false)
+    ( helse : evalWordFunctionWithCallsAndFfi functions handler fuel state elseBranch =
+      some result) :
+    evalWordFunctionWithCallsAndFfi functions handler (fuel + 1) state
+      (.ite operator condition rightValue thenBranch elseBranch) = some result := by
+  simp [evalWordFunctionWithCallsAndFfi, hcondition, helse]
+
 theorem wordFunctionToRiscVWithCallsAndFfi_ffi [NeZero width] :
     wordFunctionToRiscVWithCallsAndFfi
       ({ targets := [], services := [("sum", 7)] } : WordCallFfiContext width)
