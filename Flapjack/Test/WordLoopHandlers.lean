@@ -24,10 +24,10 @@ example :
             (.break 0)) []) =
       some (RiscV.WordLoopControlResult.normal
         (RiscV.writeRegister wordLoopHandlerTestState 7 (BitVec.ofNat 64 9))) := by
-  have h2 : RiscV.registerOfNat 2 = some (2 : Fin 32) := by native_decide
-  have h3 : RiscV.registerOfNat 3 = some (3 : Fin 32) := by native_decide
-  have h4 : RiscV.registerOfNat 4 = some (4 : Fin 32) := by native_decide
-  have h5 : RiscV.registerOfNat 5 = some (5 : Fin 32) := by native_decide
+  have h2 : RiscV.registerOfNat 2 = some (2 : Fin 32) := by decide
+  have h3 : RiscV.registerOfNat 3 = some (3 : Fin 32) := by decide
+  have h4 : RiscV.registerOfNat 4 = some (4 : Fin 32) := by decide
+  have h5 : RiscV.registerOfNat 5 = some (5 : Fin 32) := by decide
   simp [RiscV.evalWordLoopProgWithHandlersAndFfi,
     RiscV.evalWordLoopRepeatWithHandlersAndFfi, wordLoopHandlerTestFfi,
     h2, h3, h4, h5]
