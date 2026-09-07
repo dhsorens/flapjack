@@ -112,19 +112,17 @@ example :
     wordCheckColour (fun _ => 0) [1, 2] = none := by
   decide
 
-example :
+#guard
     wordClashTreeCheck id
         (wordClashTree
           (.seq (.assign 0 (.var 1)) (.assign 2 (.var 1)) : WordProg Nat) []) [] [] =
-      some ([1], [1]) := by
-  native_decide
+      some ([1], [1])
 
-example :
+#guard
     wordClashTreeCheck (fun _ => 0)
         (wordClashTree
           (.seq (.assign 0 (.var 1)) (.assign 2 (.var 1)) : WordProg Nat) []) [] [] =
-      none := by
-  native_decide
+      none
 
 example :
     ([1] : List Nat).Nodup := by

@@ -12,10 +12,9 @@ example :
       (.delta [3] [2]) [] [(3, 3)] = false := by
   decide +kernel
 
-example :
+#guard
     (wordAllocateFunctionWithOracle [2]
-      (.assign 4 (.var 2) : WordProg Nat) 13 26 []).isSome = true := by
-  native_decide
+      (.assign 4 (.var 2) : WordProg Nat) 13 26 []).isSome = true
 
 example (parameters : List Nat) (program : WordProg α)
     (colours stackStart : Nat) (oracle : NatInfoMap Nat)
