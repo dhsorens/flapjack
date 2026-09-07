@@ -94,7 +94,7 @@ example [NeZero width] (state : Flapjack.RiscV.State width)
         (.assign 1 (.const (7 : Flapjack.RiscV.Word width))) =
       some (Flapjack.RiscV.execute state (.addi 1 0 7)) := by
   simp [Flapjack.RiscV.evalWordProg, Flapjack.RiscV.wordExpToInstructions,
-    Flapjack.RiscV.wordExpToInstruction, Flapjack.RiscV.evalWordExp,
+    Flapjack.RiscV.wordExpToInstruction, 
     Flapjack.RiscV.registerOfNat, Flapjack.RiscV.executeInstructions,
     Flapjack.RiscV.execute,
     Flapjack.RiscV.writeRegister, Flapjack.RiscV.nextPc, zero]
@@ -283,7 +283,7 @@ example [NeZero width] :
           (.return 0 [3])) : WordProg (RiscV.Word width)) =
       some ([.branchNe 1 2 (BitVec.ofNat width 12),
         .addi 3 0 1, .branchEq 0 0 (BitVec.ofNat width 8), .addi 3 0 2], [3]) := by
-  simp [RiscV.wordFunctionToRiscV, RiscV.wordProgToRiscV,
+  simp [RiscV.wordFunctionToRiscV, 
     RiscV.wordExpToInstruction, RiscV.registerOfNat]
 
 example [NeZero width] :
@@ -310,7 +310,7 @@ example [NeZero width] :
       some ([.branchNe 1 2 (BitVec.ofNat width 12),
         .addi 3 0 1, .branchEq 0 0 (BitVec.ofNat width 8),
         .addi 3 0 2], [3]) := by
-  simp [RiscV.wordFunctionToRiscV, RiscV.wordProgToRiscV,
+  simp [RiscV.wordFunctionToRiscV, 
     RiscV.wordExpToInstruction, RiscV.registerOfNat]
 
 example [NeZero width] :
@@ -322,7 +322,7 @@ example [NeZero width] :
       some ([.branchNe 1 2 (BitVec.ofNat width 12),
         .addi 3 0 1, .branchEq 0 0 (BitVec.ofNat width 8),
         .addi 3 0 2, .addi 0 0 0], [3]) := by
-  simp [RiscV.wordFunctionToRiscV, RiscV.wordProgToRiscV,
+  simp [RiscV.wordFunctionToRiscV, 
     RiscV.wordExpToInstruction, RiscV.registerOfNat]
 
 example :
@@ -369,7 +369,7 @@ example :
         (.nField "right" (.nStruct "pair" [("right", .const 7), ("left", .const 3)])) =
       .rField 1 (.rStruct [.const 3, .const 7]) := by
   simp [structCompileExp, structCompileExp.structCompileFields,
-    structCompileExp.structCompileExps, structOldExpShape, structFindFieldIndex,
+    structOldExpShape, structFindFieldIndex,
     structSelectFields, lookupInfo]
 
 end Flapjack

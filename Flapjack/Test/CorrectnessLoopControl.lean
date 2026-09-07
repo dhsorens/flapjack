@@ -66,25 +66,25 @@ theorem loopFfi_break_control_simulation :
                 RiscV.evalWordLoopProgWithHandlersAndFfi,
                 loopFfiSimulationWordHandler, registerOfNat, wordFindVar,
                 lookupNatInfo, loopFfiSimulationWordState, writeRegister,
-                readRegister] at hword
+                ] at hword
           | raised wordState exception =>
               simp [loopToWordProg,
                 RiscV.evalWordLoopProgWithHandlersAndFfi,
                 loopFfiSimulationWordHandler, registerOfNat, wordFindVar,
                 lookupNatInfo, loopFfiSimulationWordState, writeRegister,
-                readRegister] at hword
+                ] at hword
           | broke wordState label =>
               simp [loopToWordProg,
                 RiscV.evalWordLoopProgWithHandlersAndFfi,
                 loopFfiSimulationWordHandler, registerOfNat, wordFindVar,
                 lookupNatInfo, loopFfiSimulationWordState, writeRegister,
-                readRegister] at hword
+                ] at hword
           | continued wordState label =>
               simp [loopToWordProg,
                 RiscV.evalWordLoopProgWithHandlersAndFfi,
                 loopFfiSimulationWordHandler, registerOfNat, wordFindVar,
                 lookupNatInfo, loopFfiSimulationWordState, writeRegister,
-                readRegister] at hword
+                ] at hword
       | returned loopState values =>
           simp [evalLoopProgWithPrimitiveCallsAndFfi,
             loopFfiSimulationLoopHandler, loopFfiSimulationLoopState] at hloop
@@ -102,7 +102,7 @@ theorem loopFfi_break_control_simulation :
       cases secondResult <;> cases secondWordResult <;>
         simp [evalLoopProgWithPrimitiveCallsAndFfi, evalLoopProg,
           loopToWordProg, RiscV.evalWordLoopProgWithHandlersAndFfi,
-          loopFfiSimulationWordState] at hloop hword ⊢ <;>
+          ] at hloop hword ⊢ <;>
         rcases hloop with ⟨rfl, rfl⟩ <;>
         rcases hword with ⟨rfl, rfl⟩ <;>
         exact ⟨rfl, hlocals⟩)
@@ -112,6 +112,6 @@ theorem loopFfi_break_control_simulation :
     (hword := by
       simp [loopToWordProg, RiscV.evalWordLoopProgWithHandlersAndFfi,
         loopFfiSimulationWordHandler, registerOfNat, wordFindVar,
-        lookupNatInfo, writeRegister, readRegister])
+        lookupNatInfo])
 
 end Flapjack

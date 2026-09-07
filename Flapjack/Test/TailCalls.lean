@@ -32,8 +32,8 @@ theorem tailCallArgumentMoves :
               move.2 = WordLocation.register 29) = false := by
     decide
   simp [wordStackMovesToPhysical, wordStackPhysicalMovesTo,
-    tailCallTestConfig, wordStackLocation, lookupNatInfo, hdest, hnodup,
-    hremove, hreserved, wordStackLocationMove,
+    tailCallTestConfig, wordStackLocation, lookupNatInfo, hnodup,
+    wordStackLocationMove,
     wordStackLocationMoveReady, wordStackLocationMoveRemoveDestination,
     wordStackLocationMoveDestinations,
     wordStackParallelLocationMove, wordStackParallelLocationMoveAux,

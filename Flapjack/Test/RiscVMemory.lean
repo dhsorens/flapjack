@@ -80,7 +80,7 @@ example :
   simp [evalPanRiscVFlatResult, evalPanRiscVFlatProg, evalPanRiscVFlatExp,
     panRiscVStoreByte, panRiscVReadByte, panRiscVGetByte, panRiscVSetByte,
     panRiscVByteAlign, panRiscVByteIndex, riscvFlatTestDomain,
-    riscvFlatZeroMemory, updatePanValueMap, byteAddress, aligned]
+    riscvFlatZeroMemory, updatePanValueMap]
 
 example :
     evalPanRiscVFlatResult [] (BitVec.ofNat 64 0) (BitVec.ofNat 64 100)

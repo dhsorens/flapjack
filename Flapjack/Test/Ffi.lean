@@ -43,7 +43,7 @@ example :
           { name := .extCall "echo", configuration := [1], bytes := [2],
             outcome := .diverged }
     | .returned _ _ => False := by
-  simp [callFfi, identityFfiState, finalFfiOracle]
+  simp [callFfi, finalFfiOracle]
 
 example :
     match callFfi identityFfiState (.extCall "") [1] [2, 3] with
@@ -162,13 +162,13 @@ example :
           .addi 14 0 7, .ecall, .jalr 0 1 0], [6])] := by
   simp [linkWordFunctionsWithFfi, wordFunctionTargetSignaturesWithCalls,
     wordFunctionTargetSignaturesAux, wordFunctionReturnNamesWithCalls,
-    lookupWordFunctionBody, compileLinkedWordFunctionWithFfi,
+    compileLinkedWordFunctionWithFfi,
     wordFunctionToRiscVWithCallsAndFfiAndLoops,
     wordFunctionToRiscVWithCallsAndFfiAndLoopsAux,
-    wordControlInstructions, resolveWordLoopBody, resolveWordLoopBodyAux,
+    wordControlInstructions, 
     wordFunctionToRiscVWithCallsAndFfi, wordFfiToRiscV,
     lookupWordFfiService, wordRegisterMoves, wordFunctionToRiscVWithCalls,
-    wordFunctionReturnNames, registerOfNat, linkRiscVFunctions,
+    registerOfNat, linkRiscVFunctions,
     linkRiscVFunctionsAt]
 
 def combinedFfiHost : FunName → Word 64 → Word 64 → Word 64 → Word 64 →

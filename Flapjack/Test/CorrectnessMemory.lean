@@ -45,7 +45,7 @@ theorem memoryCorrectness_noalias :
   · by_cases hname_two : name = 2
     · exact (hname hname_two).elim
     · simp [memoryCorrectnessContext, wordFindVar, lookupNatInfo,
-        hname_one, hname_two, Ne.symm hname_one, Ne.symm hname_two] at hfind
+        hname_two, Ne.symm hname_one, Ne.symm hname_two] at hfind
 
 example :
     ∀ resultState,
@@ -94,7 +94,7 @@ example :
       · by_cases hname_two : name = 2
         · exact (hname hname_two).elim
         · simp [memoryCorrectnessContext, wordFindVar, lookupNatInfo,
-            hname_one, hname_two, Ne.symm hname_one, Ne.symm hname_two] at hfind
+            hname_two, Ne.symm hname_one, Ne.symm hname_two] at hfind
           )
 
 example :
@@ -177,7 +177,7 @@ example :
     (hword := by
       simp [loopToWordProg, RiscV.evalWordLoopProg,
         RiscV.evalWordLoopRepeat, RiscV.evalWordProg, RiscV.execute,
-        RiscV.writeRegister, RiscV.nextPc, RiscV.readRegister])
+        RiscV.writeRegister, RiscV.nextPc])
 
 example :
     ∀ resultState,

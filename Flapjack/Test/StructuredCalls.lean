@@ -25,7 +25,7 @@ example :
     evalPanFlatProgWithPrimitiveAndFfi, evalPanFlatProgFuelWithPrimitiveAndFfi,
     evalPanFlatCallWithPrimitiveAndFfi, evalPanFlatExps,
     evalPanFlatExp, evalPanFlatExp.evalPanFlatExps, flatCallTestFunctions,
-    flatNoFfi, bindPanValueParameters, assignPanValueCallResult,
+    bindPanValueParameters, assignPanValueCallResult,
     updatePanValueMap, lookupPanFunction]
 
 def flatFailFunctions : List (FunName × List VarName × Prog Nat) :=
@@ -42,7 +42,7 @@ example :
   simp [evalPanFlatProgWithCallsAndFfi,
     evalPanFlatProgWithPrimitiveAndFfi, evalPanFlatProgFuelWithPrimitiveAndFfi,
     evalPanFlatCallWithPrimitiveAndFfi, evalPanFlatExp, evalPanFlatExps,
-    evalPanFlatExp.evalPanFlatExps, flatFailFunctions, flatNoFfi,
+    evalPanFlatExp.evalPanFlatExps, flatFailFunctions, 
     bindPanValueParameters, updatePanValueMap, lookupPanFunction]
 
 example :
@@ -57,7 +57,7 @@ example :
   simp [evalPanFlatProgWithCallsAndFfi,
     evalPanFlatProgWithPrimitiveAndFfi, evalPanFlatProgFuelWithPrimitiveAndFfi,
     evalPanFlatCallWithPrimitiveAndFfi, evalPanFlatExp, evalPanFlatExps,
-    evalPanFlatExp.evalPanFlatExps, flatCallTestFunctions, flatNoFfi,
+    evalPanFlatExp.evalPanFlatExps, flatCallTestFunctions, 
     bindPanValueParameters, assignPanValueCallResult, updatePanValueMap,
     restorePanFlatControlLocal, restorePanValueLocal,
     lookupPanFunction, panValueShape, panShapeMatches]
@@ -72,7 +72,7 @@ example :
         | _ => none) = some (some (.word 7)) := by
   simp [evalPanValueProgWithCallsAndFfi, evalPanValueCallWithCallsAndFfi,
     evalPanValueExp, evalPanValueExps, evalPanValueExp.evalPanValueExps,
-    structuredCallTestFunctions, structuredNoFfi, bindPanValueParameters,
+    structuredCallTestFunctions, bindPanValueParameters,
     assignPanValueCallResult, updatePanValueMap, lookupPanFunction]
 
 example :
@@ -86,7 +86,7 @@ example :
         | _ => none) = some (some 9) := by
   simp [evalPanValueProgWithCallsAndFfi, evalPanValueCallWithCallsAndFfi,
     evalPanValueExp, evalPanValueExps, evalPanValueExp.evalPanValueExps,
-    structuredNoFfi, bindPanValueParameters, assignPanValueCallResult,
+    bindPanValueParameters, assignPanValueCallResult,
     updatePanValueMap, lookupPanFunction]
 
 end Flapjack

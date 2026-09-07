@@ -124,15 +124,15 @@ example : loopLocalsMappedToRiscV ({ vars := [] } : WordContext)
       intro calleeLoop calleeWord loopResult wordResult hzero hloop hword
       change calleeWord.registers 0 = 0 at hzero
       simp [handlerCallBody, loopToWordProg, wordCompileExp,
-        wordFindVar, lookupNatInfo, lookupLoopFunction, RiscV.lookupWordFunction,
-        evalLoopProgWithCallsAndFfi, evalLoopCallWithCallsAndFfi, evalLoopProg,
-        evalLoopExp, loopReadLocals, loopBindParameters, updateLoopLocal,
+        wordFindVar, lookupNatInfo, 
+        evalLoopProgWithCallsAndFfi, evalLoopProg,
+        evalLoopExp, updateLoopLocal,
         RiscV.evalWordFunctionWithHandlersAndFfi, RiscV.evalWordFunction,
-        RiscV.evalWordProg, RiscV.wordExpToInstructions,
-        RiscV.wordExpToInstruction, RiscV.wordInstToInstruction,
+        RiscV.wordExpToInstructions,
+        RiscV.wordExpToInstruction, 
         RiscV.executeInstructions, RiscV.execute, RiscV.nextPc,
         RiscV.registerOfNat, RiscV.readRegister, RiscV.writeRegister, hzero,
-        loopCallBodyResultCompatible] at hloop hword
+        ] at hloop hword
       cases hloop
       cases hword
       simp [loopCallBodyResultCompatible])
@@ -143,17 +143,17 @@ example : loopLocalsMappedToRiscV ({ vars := [] } : WordContext)
   · simp [evalLoopCallWithCallsAndFfi, evalLoopProgWithCallsAndFfi,
       evalLoopProg, evalLoopExp, loopReadLocals, loopBindParameters,
       lookupLoopFunction, handlerCallBody, handlerCallLoopState,
-      handlerCallFinalLoop, handlerCallLoopHandler, updateLoopLocal]
+      handlerCallFinalLoop, updateLoopLocal]
   · simp [RiscV.evalWordCallWithHandlersAndFfi, RiscV.lookupWordFunction,
       RiscV.readWordRegisters, RiscV.bindWordRegisters,
       RiscV.clearWordRegisters, handlerCallBody,
       handlerCallWordState, handlerCallFinalWord, loopToWordProg,
       wordCompileExp, wordFindVar, lookupNatInfo,
       RiscV.evalWordFunctionWithHandlersAndFfi, RiscV.evalWordFunction,
-      RiscV.evalWordProg, RiscV.wordExpToInstructions,
-      RiscV.wordExpToInstruction, RiscV.wordInstToInstruction,
+      RiscV.wordExpToInstructions,
+      RiscV.wordExpToInstruction, 
       RiscV.executeInstructions, RiscV.execute, RiscV.nextPc,
       RiscV.registerOfNat, RiscV.readRegister, RiscV.writeRegister,
-      handlerCallWordHandler]
+      ]
 
 end Flapjack

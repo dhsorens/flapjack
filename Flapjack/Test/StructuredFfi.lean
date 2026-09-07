@@ -17,7 +17,7 @@ example :
         | _ => none) = some (some (.word 7)) := by
   simp [evalPanFlatProgWithCallsAndFfi,
     evalPanFlatProgWithPrimitiveAndFfi, evalPanFlatProgFuelWithPrimitiveAndFfi,
-    evalPanFlatExp, evalPanFlatExps, evalPanFlatExp.evalPanFlatExps,
+    evalPanFlatExp, 
     flatTestFfi, updatePanValueMap]
 
 example :
@@ -29,7 +29,7 @@ example :
         | _ => false) = some true := by
   simp [evalPanFlatProgWithCallsAndFfi,
     evalPanFlatProgWithPrimitiveAndFfi, evalPanFlatProgFuelWithPrimitiveAndFfi,
-    evalPanFlatExp, flatNoFfi]
+    evalPanFlatExp]
 
 def structuredTestFfi : PanValueFfiHandler Nat :=
   fun function configuration _ array _ locals =>
@@ -45,7 +45,7 @@ example :
         | .normal locals _ _ => locals "out"
         | _ => none) = some (some (.word 7)) := by
   simp [evalPanValueProgWithCallsAndFfi, evalPanValueExtCall,
-    evalPanValueExp, evalPanValueExps, evalPanValueExp.evalPanValueExps,
+    evalPanValueExp, 
     structuredTestFfi, updatePanValueMap]
 
 example :
@@ -57,8 +57,8 @@ example :
         | .returned _ _ _ [PanValue.word value] => some value
         | _ => none) = some (some 9) := by
   simp [evalPanValueProgWithCallsAndFfi, evalPanValueExp, isWfShape,
-    isWfShape.isWfShapeList, evalPanValueExps,
-    evalPanValueExp.evalPanValueExps, structuredNoFfi, updatePanValueMap,
+    
+    updatePanValueMap,
     updatePanValueMemory, panValueShape, panShapeMatches]
 
 example :
@@ -68,7 +68,7 @@ example :
       (fun result => match result with
         | .normal _ _ _ => true
         | _ => false) = some true := by
-  simp [evalPanValueProgWithCallsAndFfi, evalPanValueExp, structuredNoFfi]
+  simp [evalPanValueProgWithCallsAndFfi, evalPanValueExp]
 
 example :
     (evalPanValueProgWithCallsAndFfi (α := Nat) [] [] structuredNoFfi
@@ -80,7 +80,7 @@ example :
             (locals "scoped", value)
         | _ => (none, 0)) = some (none, 9) := by
   simp [evalPanValueProgWithCallsAndFfi, evalPanValueExp,
-    structuredNoFfi, updatePanValueMap, restorePanValueLocal,
+    updatePanValueMap, restorePanValueLocal,
     restorePanValueControlLocal, panValueShape, panShapeMatches]
 
 end Flapjack

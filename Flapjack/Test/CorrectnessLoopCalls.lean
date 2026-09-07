@@ -70,11 +70,11 @@ theorem loopCallControl_break_simulation :
       simp [evalLoopCallWithPrimitiveCallsAndFfi,
         evalLoopProgWithPrimitiveCallsAndFfi, evalLoopProg,
         lookupLoopFunction, loopCallControlLoopState, loopReadLocals,
-        loopBindParameters, updateLoopLocal])
+        loopBindParameters])
     (hword := by
       simp [RiscV.evalWordLoopCallWithHandlersAndFfi,
         RiscV.evalWordLoopProgWithHandlersAndFfi, RiscV.lookupWordFunction,
-        loopToWordProg, loopCallControlWordState, writeRegister,
+        loopCallControlWordState, writeRegister,
         readRegister, RiscV.readWordRegisters, RiscV.bindWordRegisters,
         RiscV.clearWordRegisters, registerOfNat, wordFindVar, lookupNatInfo])
 
@@ -173,7 +173,7 @@ theorem loopCallFfi_simulation :
     (hlocals := loopCallControl_mapped_locals)
     (hloop := by
       simp [evalLoopCallWithPrimitiveCallsAndFfi,
-        evalLoopProgWithPrimitiveCallsAndFfi, evalLoopProg,
+        evalLoopProgWithPrimitiveCallsAndFfi, 
         lookupLoopFunction, loopCallFfiBody, loopCallControlLoopState,
         loopReadLocals, loopBindParameters, updateLoopLocal])
     (hword := by

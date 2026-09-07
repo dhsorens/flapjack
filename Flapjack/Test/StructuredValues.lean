@@ -22,30 +22,30 @@ example :
       (.comb [.one, .one]) =
       some (.rStruct [.word 3, .word 5]) := by
   simp [panFlatLoad, panFlatLoadFuel, panFlatLoadFuel.panFlatLoadListFuel,
-    panFlatLoadFuel.panFlatLoadFieldsFuel, flatPairDomain, flatPairMemory,
+    flatPairDomain, flatPairMemory,
     panFlatReadWord, panOffset, panStructContextFuel, panShapeFieldsFuel,
     panShapeFuel, panShapeFuel.panShapeListFuel, shapeSizeWithContext,
-    isWfShape, isWfShape.isWfShapeList, lookupInfo, structuredValueTestContext]
+    isWfShape, isWfShape.isWfShapeList, structuredValueTestContext]
 
 example :
     panFlatLoad structuredValueTestContext flatPairDomain flatPairMemory 1 10
       (.named "Pair") =
       some (.nStruct "Pair" [("left", .word 3), ("right", .word 5)]) := by
-  simp [panFlatLoad, panFlatLoadFuel, panFlatLoadFuel.panFlatLoadListFuel,
+  simp [panFlatLoad, panFlatLoadFuel, 
     panFlatLoadFuel.panFlatLoadFieldsFuel, flatPairDomain, flatPairMemory,
     panFlatReadWord, panOffset, panStructContextFuel, panShapeFieldsFuel,
-    panShapeFuel, panShapeFuel.panShapeListFuel, shapeSizeWithContext,
-    isWfShape, isWfShape.isWfShapeList, lookupInfo, structuredValueTestContext]
+    panShapeFuel, shapeSizeWithContext,
+    isWfShape, lookupInfo, structuredValueTestContext]
 
 example :
     panFlatLoad structuredValueTestContext
       (fun address => address == 10) flatPairMemory 1 10
       (.comb [.one, .one]) = none := by
   simp [panFlatLoad, panFlatLoadFuel, panFlatLoadFuel.panFlatLoadListFuel,
-    panFlatLoadFuel.panFlatLoadFieldsFuel, flatPairMemory, panFlatReadWord,
-    panOffset, panStructContextFuel, panShapeFieldsFuel, panShapeFuel,
+    flatPairMemory, panFlatReadWord,
+    panOffset, panShapeFuel,
     panShapeFuel.panShapeListFuel, shapeSizeWithContext, isWfShape,
-    isWfShape.isWfShapeList, lookupInfo]
+    isWfShape.isWfShapeList]
 
 example :
     (panFlatStore flatPairDomain (fun _ => none) 1 10
@@ -57,10 +57,10 @@ example :
     panValueFuel, panValueFuel.panValueListFuel, panValueWordsFuel,
     panValueWordsFuel.panValueWordsListFuel,
     panOffset, panFlatLoad, panFlatLoadFuel,
-    panFlatLoadFuel.panFlatLoadListFuel, panFlatLoadFuel.panFlatLoadFieldsFuel,
-    flatPairDomain, panFlatReadWord, panStructContextFuel, panShapeFieldsFuel,
+    panFlatLoadFuel.panFlatLoadListFuel, 
+    flatPairDomain, panFlatReadWord, 
     panShapeFuel, panShapeFuel.panShapeListFuel, shapeSizeWithContext,
-    isWfShape, isWfShape.isWfShapeList, lookupInfo, updatePanValueMap]
+    isWfShape, isWfShape.isWfShapeList, updatePanValueMap]
 
 example :
     (evalPanFlatProg (α := Nat) structuredValueTestContext 0 100 1
@@ -71,15 +71,15 @@ example :
       (fun result => result.2.2.2) =
       some [PanValue.rStruct [.word 3, .word 5]] := by
   simp [evalPanFlatProg, evalPanFlatProgWithPrimitive, evalPanFlatExp,
-    evalPanFlatExp.evalPanFlatExps, evalPanFlatExps, panFlatStore,
+    evalPanFlatExp.evalPanFlatExps, panFlatStore,
     panFlatStoreWords, panFlatStoreWord, panValueWords, panValueWordsFuel,
     panValueFuel, panValueFuel.panValueListFuel, panValueWordsFuel,
     panValueWordsFuel.panValueWordsListFuel, panOffset, panFlatLoad,
     panFlatLoadFuel, panFlatLoadFuel.panFlatLoadListFuel,
-    panFlatLoadFuel.panFlatLoadFieldsFuel, flatPairDomain, panFlatReadWord,
-    panStructContextFuel, panShapeFieldsFuel, panShapeFuel,
+    flatPairDomain, panFlatReadWord,
+    panShapeFuel,
     panShapeFuel.panShapeListFuel, shapeSizeWithContext, isWfShape,
-    isWfShape.isWfShapeList, lookupInfo, updatePanValueMap]
+    isWfShape.isWfShapeList, updatePanValueMap]
 
 example :
     evalPanValueExp (α := Nat) structuredValueTestContext
@@ -87,10 +87,10 @@ example :
       (.nField "right"
         (.nStruct "Pair" [("left", .const 3), ("right", .const 5)])) =
       some (.word 5) := by
-  simp [evalPanValueExp, evalPanValueExp.evalPanValueExps,
+  simp [evalPanValueExp, 
     evalPanValueExp.evalPanValueFields, structuredValueTestContext,
     panValueFieldsHaveShapes, panValueShape, panShapeMatches,
-    panShapeMatches.panShapeListMatches, lookupInfo, lookupPanValueField]
+    lookupInfo, lookupPanValueField]
 
 example :
     evalPanValueExp (α := Nat) structuredValueTestContext
@@ -100,7 +100,7 @@ example :
   simp [evalPanValueExp, evalPanValueExp.evalPanValueFields,
     evalPanValueExp.evalPanValueExps, structuredValueTestContext,
     panValueFieldsHaveShapes, panValueShape, panShapeMatches,
-    panShapeMatches.panShapeListMatches, lookupInfo]
+    lookupInfo]
 
 example :
     evalPanValueExp (α := Nat) []

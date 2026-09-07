@@ -57,8 +57,8 @@ example :
           (.seq (.const 28 2) (.storeConsts 1 2 none)),
           { data := [4, 28, 5, 7, 9], length := 5 }) := by
   simp [wordToStackProgNatWithBitmaps, wordToStackProgNatWithBitmapBuilder,
-    wordStackAllocWithBitmaps, wordStackAllocWithBitmapBuilder,
-    wordStackStoreConstsWithBitmaps, wordStackBitmapWrite,
+    wordStackAllocWithBitmapBuilder,
+    wordStackStoreConstsWithBitmaps, 
     wordStackBitmapWriteWithBuilder,
     wordStackInsertBitmap, wordStackLiveBitmap, wordStackConstBitmapWords,
     wordStackConstBitmapWordsAux, wordStackBitmapWords,
