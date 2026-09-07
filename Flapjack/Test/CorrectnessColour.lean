@@ -27,6 +27,15 @@ theorem testColour_injective : Function.Injective testColour := by
 theorem testColour_zero : testColour 0 = 0 := by
   simp [testColour]
 
+theorem testColour_noScratch : ∀ name, name < 31 → testColour name ≠ 31 := by
+  intro name hname
+  by_cases hone : name = 1
+  · simp [testColour, hone]
+  · by_cases htwo : name = 2
+    · simp [testColour, htwo]
+    · have hnot : name ≠ 31 := by omega
+      simpa [testColour, hone, htwo] using hnot
+
 def testRelation [NeZero width] (source target : State width) : Prop :=
   WordColourStateRelation testColour source target
 
@@ -77,6 +86,18 @@ example [NeZero width] (state : State width) :
 
 example [NeZero width] (state : State width) :
     ∃ source' target',
+      evalWordProg state (.move 1 [(3, 4)]) = some source' ∧
+      evalWordProg (testTargetState state)
+          (wordApplyColour testColour (.move 1 [(3, 4)])) = some target' ∧
+      testRelation source' target' := by
+  apply evalWordProg_wordVarStraightLine_applyColour testColour
+    testColourValidFn testColour_injective testColour_zero testColour_noScratch
+    state (testTargetState state)
+  · exact testRelation_target state
+  · exact .moveOne 3 4 (by omega) (by omega) (by decide) (by decide) (by decide)
+
+example [NeZero width] (state : State width) :
+    ∃ source' target',
       evalWordProg state
           (.seq (.assign 1 (.var 2)) (.assign 2 (.var 1))) = some source' ∧
       evalWordProg (testTargetState state)
@@ -84,7 +105,8 @@ example [NeZero width] (state : State width) :
             (.seq (.assign 1 (.var 2)) (.assign 2 (.var 1)))) = some target' ∧
       testRelation source' target' := by
   apply evalWordProg_wordVarStraightLine_applyColour testColour
-    testColourValidFn testColour_injective testColour_zero state (testTargetState state)
+    testColourValidFn testColour_injective testColour_zero testColour_noScratch
+    state (testTargetState state)
   · exact testRelation_target state
   · exact .seq (.assign 1 2 (by omega) (by omega))
       (.assign 2 1 (by omega) (by omega))
@@ -98,7 +120,8 @@ example [NeZero width] (state : State width) (value : Word width) :
             (.seq (.assign 1 (.const value)) (.assign 2 (.var 1)))) = some target' ∧
       testRelation source' target' := by
   apply evalWordProg_wordVarStraightLine_applyColour testColour
-    testColourValidFn testColour_injective testColour_zero state (testTargetState state)
+    testColourValidFn testColour_injective testColour_zero testColour_noScratch
+    state (testTargetState state)
   · exact testRelation_target state
   · exact .seq (.assignConst 1 value (by omega))
       (.assign 2 1 (by omega) (by omega))
@@ -112,7 +135,8 @@ example [NeZero width] (state : State width) :
             (.assign 3 (.op .add [.var 1, .var 2]))) = some target' ∧
       testRelation source' target' := by
   apply evalWordProg_wordVarStraightLine_applyColour testColour
-    testColourValidFn testColour_injective testColour_zero state (testTargetState state)
+    testColourValidFn testColour_injective testColour_zero testColour_noScratch
+    state (testTargetState state)
   · exact testRelation_target state
   · exact .assignBinary .add 3 1 2 (by omega) (by omega) (by omega)
 
@@ -125,7 +149,8 @@ example [NeZero width] (state : State width) (value : Word width) :
             (.assign 3 (.op .and [.var 1, .const value]))) = some target' ∧
       testRelation source' target' := by
   apply evalWordProg_wordVarStraightLine_applyColour testColour
-    testColourValidFn testColour_injective testColour_zero state (testTargetState state)
+    testColourValidFn testColour_injective testColour_zero testColour_noScratch
+    state (testTargetState state)
   · exact testRelation_target state
   · exact .assignImmediate .and 3 1 value (by omega) (by omega)
 
@@ -138,7 +163,8 @@ example [NeZero width] (state : State width) :
             (.assign 3 (.shift .asr (.var 1) (.var 2)))) = some target' ∧
       testRelation source' target' := by
   apply evalWordProg_wordVarStraightLine_applyColour testColour
-    testColourValidFn testColour_injective testColour_zero state (testTargetState state)
+    testColourValidFn testColour_injective testColour_zero testColour_noScratch
+    state (testTargetState state)
   · exact testRelation_target state
   · exact .assignShift .asr 3 1 2 (by decide) (by omega) (by omega) (by omega)
 
@@ -151,7 +177,8 @@ example [NeZero width] (state : State width) (amount : Word width) :
             (.assign 3 (.shift .lsr (.var 1) (.const amount)))) = some target' ∧
       testRelation source' target' := by
   apply evalWordProg_wordVarStraightLine_applyColour testColour
-    testColourValidFn testColour_injective testColour_zero state (testTargetState state)
+    testColourValidFn testColour_injective testColour_zero testColour_noScratch
+    state (testTargetState state)
   · exact testRelation_target state
   · exact .assignShiftImmediate .lsr 3 1 amount (by decide) (by omega) (by omega)
 
