@@ -466,6 +466,8 @@ definitions, pass ordering, examples, and proof obligations.
   before applying total colours.
 - [x] Compose oracle acceptance with the SSA, stack-only, forced-clash, and
   graph-colouring fallback at the function-level allocation boundary.
+- [x] Expose the spill-aware clash-tree allocator as the final checked fallback
+  and preserve its special-location and spill-tree witnesses.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware
   RISC-V contracts before claiming general call-aware allocation correctness.
 - [x] Add a combined graph-allocation soundness contract exposing fixed tags,
