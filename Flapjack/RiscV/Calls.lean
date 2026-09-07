@@ -294,4 +294,16 @@ theorem evalWordCall_return_general [NeZero width]
     assignWordRegisters, clearWordRegisters, evalWordFunction,
     registerOfNat, writeRegister, readRegister]
 
+theorem evalWordTailCall_return_general [NeZero width]
+    (value : Word width) :
+    (evalWordFunctionWithCalls
+      [(7, [2], (.return 0 [2] : WordProg (Word width)))] 10
+      (writeRegister (zeroState width) 2 value)
+      (.call none (some 7) [2] none)).map
+        (fun result => result.2) = some [value] := by
+  simp [evalWordFunctionWithCalls, evalWordCall,
+    lookupWordFunction, readWordRegisters, bindWordRegisters,
+    clearWordRegisters, evalWordFunction, registerOfNat,
+    writeRegister, readRegister]
+
 end Flapjack.RiscV
