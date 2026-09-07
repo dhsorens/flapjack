@@ -1198,6 +1198,10 @@ theorem evalWordProg_moveOne_applyColour [NeZero width]
 
 inductive WordVarStraightLine (width : Nat) : WordProg (Word width) → Prop where
   | skip : WordVarStraightLine width .skip
+  | moveOne (name source : Nat) (hname : name < 32) (hsource : source < 32)
+      (hname31 : name ≠ 31) (hsource31 : source ≠ 31)
+      (hne : name ≠ source) :
+      WordVarStraightLine width (.move 1 [(name, source)])
   | assign (name source : Nat) (hname : name < 32) (hsource : source < 32) :
       WordVarStraightLine width (.assign name (.var source))
   | assignConst (name : Nat) (value : Word width) (hname : name < 32) :
@@ -1221,6 +1225,7 @@ inductive WordVarStraightLine (width : Nat) : WordProg (Word width) → Prop whe
 theorem evalWordProg_wordVarStraightLine_applyColour
     (colour : Nat → Nat) (valid : wordColourValid colour)
     (injective : Function.Injective colour) (colourZero : colour 0 = 0)
+    (colourNoScratch : ∀ name, name < 31 → colour name ≠ 31)
     (source target : State width) [NeZero width]
     (hrelation : WordColourStateRelation colour source target)
     (program : WordProg (Word width))
@@ -1232,6 +1237,12 @@ theorem evalWordProg_wordVarStraightLine_applyColour
   | skip =>
       exact ⟨source, target, by simp [evalWordProg],
         by simp [evalWordProg, wordApplyColour], hrelation⟩
+  | moveOne name sourceName hname hsource hname31 hsource31 hne =>
+      have hnameLT31 : name < 31 := by omega
+      have hsourceLT31 : sourceName < 31 := by omega
+      exact evalWordProg_moveOne_applyColour colour valid injective colourZero
+        source target hrelation name sourceName hname hsource hname31 hsource31
+        (colourNoScratch name hnameLT31) (colourNoScratch sourceName hsourceLT31) hne
   | assign name sourceName hname hsource =>
       exact evalWordProg_assignVar_applyColour colour valid injective colourZero
         source target hrelation name sourceName hname hsource
