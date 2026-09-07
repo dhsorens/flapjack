@@ -107,6 +107,57 @@ theorem wordAllocateGraphFunctionWithStackOnlyRenamed_sound
   rcases hchecks with ⟨⟨hfixed, hedges⟩, htree⟩
   exact ⟨hfixed, hedges, htree⟩
 
+/-! The full-SSA entry variant has the same graph witness, but its clash tree
+    starts with the explicit fresh-parameter setup.  Keep this theorem next to
+    the ordinary graph contract so downstream callers can use either function
+    boundary without unfolding the allocator. -/
+
+theorem wordAllocateGraphFunctionWithEntryRenamed_sound
+    (parameters : List Nat) (program : WordProg α)
+    (fixedSources : List Nat) (colours stackStart : Nat)
+    (state : WordSsaState) (renamedParameters : List Nat)
+    (allocation : WordGraphAllocation) (renamedProgram : WordProg α)
+    (halloc : wordAllocateGraphFunctionWithEntryRenamed parameters program
+      fixedSources colours stackStart =
+      some (state, renamedParameters, allocation, renamedProgram)) :
+    wordGraphTagsAreFixed allocation.graph = true ∧
+      wordGraphColouringRespectsEdges allocation.graph = true ∧
+      (wordClashTreeCheck (wordGraphColouringAt allocation.colouring)
+        (WordClashTree.seq
+          (.set (wordSsaRenameFunctionWithEntry parameters program).2.fst)
+          (wordClashTree (wordSsaRenameFunctionWithEntry parameters program).2.snd []))
+        [] []).isSome = true := by
+  simp [wordAllocateGraphFunctionWithEntryRenamed] at halloc
+  rcases halloc with ⟨allocation', hgraph, rfl, rfl, rfl, rfl⟩
+  simp [wordAllocateGraph] at hgraph
+  rcases hgraph with ⟨hchecks, heq⟩
+  cases heq
+  rcases hchecks with ⟨⟨hfixed, hedges⟩, htree⟩
+  exact ⟨hfixed, hedges, htree⟩
+
+theorem wordAllocateGraphFunctionWithEntryRenamed_maps_parameters
+    (parameters : List Nat) (program : WordProg α)
+    (fixedSources : List Nat) (colours stackStart : Nat)
+    (state : WordSsaState) (renamedParameters : List Nat)
+    (allocation : WordGraphAllocation) (renamedProgram : WordProg α)
+    (halloc : wordAllocateGraphFunctionWithEntryRenamed parameters program
+      fixedSources colours stackStart =
+      some (state, renamedParameters, allocation, renamedProgram)) :
+    ∀ name, name ∈ renamedParameters →
+      ∃ node, lookupNatInfo name allocation.bijection.toNode = some node := by
+  simp [wordAllocateGraphFunctionWithEntryRenamed] at halloc
+  rcases halloc with ⟨allocation', hgraph, rfl, rfl, rfl, rfl⟩
+  simp [wordAllocateGraph] at hgraph
+  rcases hgraph with ⟨_, rfl⟩
+  intro name hname
+  have hnode := wordListRemap_lookup_of_mem
+    (wordSsaRenameFunctionWithEntry parameters program).2.fst
+    (wordClashTreeBijection
+      (wordClashTree (wordSsaRenameFunctionWithEntry parameters program).2.snd [])
+      { toNode := [], fromNode := [], next := 0 }) name hname
+  simpa [wordInitRegAlloc, wordMkBijection,
+    wordAllocateGraphFunctionWithEntryRenamed, wordClashTreeBijection] using hnode
+
 theorem wordAllocateSsaFunctionWithClashTreeWithSpillsAndPreferences_sound
     (parameters : List Nat) (program : WordProg α)
     (state : WordSsaState) (renamedParameters : List Nat)

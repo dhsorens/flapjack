@@ -575,6 +575,8 @@ definitions, pass ordering, examples, and proof obligations.
   Word program returned to allocation clients.
 - [x] Compose the full-SSA entry sequence with the graph allocator, retaining
   fixed ABI source names and returning the coloured entry-inclusive program.
+- [x] Expose full-SSA graph allocation soundness and formal-parameter coverage
+  contracts for the renamed entry-inclusive program.
 - [x] Compose the full-SSA entry sequence with the clash-tree spill allocator,
   retaining entry moves in its locations, preferences, and returned program.
 - [x] Pin full-SSA ABI source names to their architectural registers in the
