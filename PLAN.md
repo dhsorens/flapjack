@@ -470,6 +470,8 @@ definitions, pass ordering, examples, and proof obligations.
   and preserve its special-location and spill-tree witnesses.
 - [x] Port CakeML's five-counter Word heuristic summary and preserve explicit
   move priorities at the graph-allocation boundary.
+- [x] Port CakeML spill-cost weighting, move canonicalization, and odd/even
+  heuristic worklist selection.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware
   RISC-V contracts before claiming general call-aware allocation correctness.
 - [x] Add a combined graph-allocation soundness contract exposing fixed tags,
