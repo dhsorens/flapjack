@@ -120,6 +120,33 @@ example :
   rfl
 
 example :
+    evalStackProgFuelWithCodeAndFfi identityStackFfi 5
+      (stackMachineLookup []) zeroStackMachineState
+      (.seq (.ffi "echo" 2 3 4 5 0) (.const 6 9)) =
+      some (.normal (RiscV.wordStackMachineWriteRegister
+        zeroStackMachineState 6 9)) := by
+  apply RiscV.evalStackProgFuelWithCodeAndFfi_seq_normal
+    (middle := zeroStackMachineState)
+    (result := .normal (RiscV.wordStackMachineWriteRegister
+      zeroStackMachineState 6 9))
+  · rfl
+  · rfl
+
+example :
+    evalStackProgFuelWithCodeAndFfi identityStackFfi 20
+      (stackMachineLookup [(0, (.raise 31 : StackProg Nat))])
+      handlerStackMachineState
+      (.call (some (.skip, 0, 0, 0)) (.label 0)
+        (some ((.return 3 : StackProg Nat), 3, 0))) =
+      evalStackProgFuelWithCodeAndFfi identityStackFfi 19
+        (stackMachineLookup [(0, (.raise 31 : StackProg Nat))])
+        (RiscV.wordStackMachineWriteRegister handlerStackMachineState 3
+          (handlerStackMachineState.registers 31))
+        (.return 3 : StackProg Nat) := by
+  apply RiscV.evalStackProgFuelWithCodeAndFfi_call_raise_handler
+  rfl
+
+example :
     Option.map (fun result =>
           match result with
           | .returned state value => (state.registers 3, value)

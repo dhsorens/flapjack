@@ -1365,6 +1365,8 @@ definitions, pass ordering, examples, and proof obligations.
   Word conditional evaluator, with branch-selected FFI and return tests.
 - [x] Expose the early-return sequence equation for the fuel-bounded FFI-aware
   Word evaluator, including a regression that skips a later FFI operation.
+- [x] Add compositional StackLang FFI normal-sequence and raised-handler
+  equations, with machine-level regressions.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
