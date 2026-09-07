@@ -368,6 +368,82 @@ def evalStackFrameFuel [NeZero width]
     (program : StackProg Nat) : Option (StackFrameMachineControl width) :=
   evalStackFrameFuelWithCode fuel (fun _ => none) state program
 
+abbrev StackFrameMachineFfiHandler (width : Nat) :=
+  FunName → Word width → Word width → Word width → Word width →
+    StackFrameMachineState width → Option (StackFrameMachineState width)
+
+/-! FFI-aware evaluation at the bounded frame boundary.  As with the abstract
+    stack evaluator, compound forms recurse through this definition so host
+    transitions are preserved through sequences, loops, calls, and handlers.
+    All frame and memory operations remain delegated to the bounded evaluator
+    above. -/
+def evalStackFrameFuelWithCodeAndFfi [NeZero width]
+    (host : StackFrameMachineFfiHandler width) :
+    Nat → (Nat → Option (StackProg Nat)) → StackFrameMachineState width →
+      StackProg Nat → Option (StackFrameMachineControl width)
+  | 0, _, _, _ => none
+  | fuel + 1, _, state, .ffi function configuration configurationLength array
+      arrayLength _ =>
+      (host function (state.machine.registers configuration)
+        (state.machine.registers configurationLength)
+        (state.machine.registers array)
+        (state.machine.registers arrayLength) state).map .normal
+  | fuel + 1, code, state, .seq first second =>
+      match evalStackFrameFuelWithCodeAndFfi host fuel code state first with
+      | some (.normal state) =>
+          evalStackFrameFuelWithCodeAndFfi host fuel code state second
+      | result => result
+  | fuel + 1, code, state, .ite operator condition right thenBranch elseBranch =>
+      if stackMachineCondition state.machine operator condition right then
+        evalStackFrameFuelWithCodeAndFfi host fuel code state thenBranch
+      else
+        evalStackFrameFuelWithCodeAndFfi host fuel code state elseBranch
+  | fuel + 1, code, state, .loop body =>
+      match evalStackFrameFuelWithCodeAndFfi host fuel code state body with
+      | some (.normal state) =>
+          evalStackFrameFuelWithCodeAndFfi host fuel code state (.loop body)
+      | some (.continue state) =>
+          evalStackFrameFuelWithCodeAndFfi host fuel code state (.loop body)
+      | some (.break state) => some (.normal state)
+      | result => result
+  | fuel + 1, code, state, .call returnHandler (.label target) handler =>
+      match code target with
+      | none => none
+      | some callee =>
+          match evalStackFrameFuelWithCodeAndFfi host fuel code state callee with
+          | some (.returned state value) =>
+              match returnHandler with
+              | some (returnCode, _, _, _) =>
+                  evalStackFrameFuelWithCodeAndFfi host fuel code state returnCode
+              | none => some (.returned state value)
+          | some (.raised state value) =>
+              match handler with
+              | some (handlerCode, exceptionRegister, _) =>
+                  evalStackFrameFuelWithCodeAndFfi host fuel code
+                    (stackFrameWriteRegister state exceptionRegister value)
+                    handlerCode
+              | none => some (.raised state value)
+          | some (.halted state value) => some (.halted state value)
+          | _ => none
+  | fuel + 1, _, _, .call _ _ _ => none
+  | fuel + 1, code, state, program =>
+      evalStackFrameFuelWithCode fuel code state program
+
+theorem evalStackFrameFuelWithCodeAndFfi_ffi [NeZero width]
+    (host : StackFrameMachineFfiHandler width)
+    (fuel : Nat) (code : Nat → Option (StackProg Nat))
+    (state : StackFrameMachineState width)
+    (function : FunName) (configuration configurationLength array arrayLength : Nat)
+    (returnAddress : Nat) :
+    evalStackFrameFuelWithCodeAndFfi host (fuel + 1) code state
+        (.ffi function configuration configurationLength array arrayLength
+          returnAddress) =
+      (host function (state.machine.registers configuration)
+        (state.machine.registers configurationLength)
+        (state.machine.registers array)
+        (state.machine.registers arrayLength) state).map .normal := by
+  rfl
+
 theorem evalStackFrameFuel_seq_normal [NeZero width]
     (fuel : Nat) (state state' : StackFrameMachineState width)
     (first second : StackProg Nat)

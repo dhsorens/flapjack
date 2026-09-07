@@ -1253,6 +1253,8 @@ definitions, pass ordering, examples, and proof obligations.
   executable StackLang machine evaluator.
 - [x] Add an FFI-aware StackLang evaluator and one-step host-transition
   contract for nested control forms.
+- [x] Add the corresponding FFI-aware bounded frame evaluator, preserving
+  stack-frame checks and host transitions through calls and returns.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
