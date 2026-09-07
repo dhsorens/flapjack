@@ -15,9 +15,8 @@ example :
       [(0, [], (.skip : LoopProg (RiscV.Word 64))) ]).isSome = true := by
   decide +kernel
 
-example :
+#guard
     (pipelineWordFunctionsAllocatedWithHeuristics 1
-      [(0, [0], (.assign 1 (.var 0) : LoopProg (RiscV.Word 64))) ]).isSome = true := by
-  native_decide
+      [(0, [0], (.assign 1 (.var 0) : LoopProg (RiscV.Word 64))) ]).isSome = true
 
 end Flapjack
