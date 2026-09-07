@@ -15,6 +15,14 @@ def linearScanSecondColour :
       (lookupNatInfo 3 second.colours == some 2)
   | _ => false
 
+def linearScanSourceAllocationShape : Option WordLinearScanSourceAllocation → Bool
+  | some allocation =>
+      allocation.normalizedRegisters == [3, 1] &&
+        allocation.stackRegisters == [3] &&
+        lookupNatInfo 5 allocation.colouring == some 0 &&
+        lookupNatInfo 7 allocation.colouring == some 2
+  | _ => false
+
 example :
     wordFixDomination (.reads [1, 2]) =
       .seq (.writes [1, 2]) (.reads [1, 2]) := by
@@ -96,6 +104,12 @@ example :
        { priority := 1, left := 3, right := 4 }] =
       [{ priority := 1, left := 3, right := 4 },
        { priority := 3, left := 1, right := 2 }] := by
+  native_decide
+
+example :
+    linearScanSourceAllocationShape
+      (wordLinearScanAllocateSource 2 [] []
+        (.delta [5] [7] : WordClashTree)) = true := by
   native_decide
 
 end Flapjack
