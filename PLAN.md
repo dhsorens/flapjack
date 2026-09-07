@@ -461,6 +461,9 @@ definitions, pass ordering, examples, and proof obligations.
   including parameter coverage, special-location safety, and clash-tree checks.
 - [x] Extend the preference-aware SSA success witnesses from formal parameters
   to every renamed program variable.
+- [x] Port the CakeML oracle-colouring acceptance boundary for function-level
+  Word allocation, checking the clash tree, forced clashes, and stack colours
+  before applying total colours.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware
   RISC-V contracts before claiming general call-aware allocation correctness.
 - [x] Add a combined graph-allocation soundness contract exposing fixed tags,
