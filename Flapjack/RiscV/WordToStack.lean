@@ -1830,10 +1830,9 @@ decreasing_by all_goals decreasing_trivial
 
     The ordinary compiler above intentionally has no bitmap accumulator and
     therefore leaves Alloc and StoreConsts unavailable.  This variant
-    follows CakeML's comp state threading for those constructors and for
-    structured sequencing.  Other leaves use the existing lowering above;
-    call-handler lowering will be migrated to this same state thread with
-    the remaining handler/FFI pass. -/
+    follows CakeML's comp state threading for those constructors, structured
+    sequencing, and handler bodies.  Other leaves use the existing lowering
+    above. -/
 def wordToStackProgNatWithBitmapBuilder [BEq Nat]
     (config : WordStackConfig) (bitmapBuilder : List Nat → List Nat)
     (registerCount bitmapRegister frameSlots wordBits : Nat)
@@ -1855,6 +1854,17 @@ def wordToStackProgNatWithBitmapBuilder [BEq Nat]
   | .mustTerminate body =>
       wordToStackProgNatWithBitmapBuilder config bitmapBuilder registerCount bitmapRegister frameSlots
         wordBits storeConstsStub state body
+  | .call returns (some target) arguments
+      (some (exception, body, handlerLabel, entryLabel)) => do
+      let argumentMoves ← wordStackMovesToPhysical config arguments 2
+      let returnCode ← wordStackReturnCode config returns
+      let destinations := returns.map (fun result => result.1) |>.getD []
+      let (handlerCode, state) ← wordToStackProgNatWithBitmapBuilder config
+        bitmapBuilder registerCount bitmapRegister frameSlots wordBits storeConstsStub state body
+      let callCode := wordToStackCallWithHandler config.perf target arguments.length
+        config.frameOffset config.scratch returnCode handlerCode
+        config.returnLabel config.entryLabel config.handlerLabel exception
+      pure (wordStackJoin argumentMoves callCode, state)
   | .alloc _ (_, live) =>
       let (program, state) := wordStackAllocWithBitmapBuilder config bitmapRegister
         frameSlots state live bitmapBuilder

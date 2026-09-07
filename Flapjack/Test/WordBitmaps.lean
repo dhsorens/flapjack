@@ -67,4 +67,17 @@ example :
     wordBitmapTestConfig]
   native_decide
 
+def wordBitmapHandlerProgram : WordProg Nat :=
+  .call (some ([2], ([], []), .skip, 0, 0)) (some 7) [1]
+    (some (9, .alloc 0 ([], [2]), 3, 4))
+
+example :
+    (wordToStackProgNatWithBitmaps
+      { wordBitmapTestConfig with locations := [(1, .register 2), (2, .register 3)] }
+      1 30 3 8 none
+      (wordStackInitialBitmaps false) wordBitmapHandlerProgram).map
+        (fun result => (result.2.data, result.2.length)) =
+      some ([4, 28], 2) := by
+  native_decide
+
 end Flapjack
