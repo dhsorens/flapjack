@@ -105,6 +105,18 @@ example :
   native_decide
 
 example :
+    evalWordFunctionWithCallsAndFfi [] ffiWordHandler 2 ffiAbiState
+        (.seq (.ffi "sum" 2 3 4 5 ([], [])) (.return 0 [6])) =
+      some (writeRegister ffiAbiState 6 33, [33]) := by
+  apply evalWordFunctionWithCallsAndFfi_seq_normal
+    (middle := writeRegister ffiAbiState 6 33)
+    (final := writeRegister ffiAbiState 6 33)
+  · simp [evalWordFunctionWithCallsAndFfi, evalWordFfi, ffiWordHandler,
+      ffiAbiState, writeRegister, readRegister, registerOfNat]
+  · simp [evalWordFunctionWithCallsAndFfi, evalWordFunction,
+      ffiAbiState, writeRegister, readRegister, registerOfNat]
+
+example :
     wordFunctionToRiscVWithCallsAndFfiAndLoops
       ({ targets := [], services := [("sum", 7)] } : WordCallFfiContext 64)
       (.loop [] (.seq (.ffi "sum" 2 3 4 5 ([], [])) (.break 0)) []) =
