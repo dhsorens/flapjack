@@ -578,6 +578,8 @@ definitions, pass ordering, examples, and proof obligations.
   for downstream execution and correctness clients.
 - [x] Prove concrete machine execution of the linked full-SSA artifact for a
   constant-return `main`, including the linked raise-stub image.
+- [x] Exercise full-SSA FFI lowering through the linked RISC-V host boundary,
+  and prove source-level FFI results agree with generated machine execution.
 - [x] Route the spill-aware RISC-V pipeline through the implemented
   clash-tree/preference allocator and retain its allocation witness at the
   Word-to-Stack boundary.
