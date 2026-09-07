@@ -18,6 +18,7 @@ import Flapjack.Test.AllocationModePipeline
 import Flapjack.Test.CorrectnessCondition
 import Flapjack.Test.CorrectnessCode
 import Flapjack.Test.CorrectnessConditional
+import Flapjack.Test.CorrectnessColour
 
 /-!
 # Flapjack regression tests

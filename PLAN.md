@@ -512,6 +512,8 @@ definitions, pass ordering, examples, and proof obligations.
   including `Delta`, `Set`, branch cut sets, and sequencing.
 - [x] Port the source register-colour exchange between linear-scan passes and
   apply it to the low/high physical-register partitions.
+- [x] Prove the executable register-colouring correspondence for straight-line
+  Word programs built from variable assignments and sequencing.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware
   RISC-V contracts before claiming general call-aware allocation correctness.
 - [x] Add a combined graph-allocation soundness contract exposing fixed tags,
