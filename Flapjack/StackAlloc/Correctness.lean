@@ -356,7 +356,7 @@ theorem stackGcNatMemcpy_nextAddress
   | zero => simp [stackGcNatMemcpy]
   | succ words ih =>
       simp [stackGcNatMemcpy, ih, Nat.succ_mul, Nat.add_comm,
-        Nat.add_left_comm, Nat.add_assoc]
+        Nat.add_assoc]
 
 theorem stackGcNatMemcpy_memory_domain_irrel
     (config : StackGcConfig) (words source destination : Nat)
@@ -615,7 +615,7 @@ theorem stackGcNatMoveList_copy_one
     apply hnonforward
     simp [stackGcNatIsForwardingPointer, headerAddress, h]
   simp [stackGcNatMoveList, stackGcNatMove, stackGcNatIsForwardingPointer,
-    hvalue, hnonforward', hloaded, headerAddress, length, copied]
+    hvalue, hnonforward', hloaded, headerAddress]
 
 theorem stackGcNatMoveList_append
     (config : StackGcConfig) (length length' address index destination oldBase : Nat)
@@ -648,7 +648,7 @@ theorem stackGcNatMoveList_nextScan
       simp [stackGcNatMoveList]
   | succ length ih =>
       simp [stackGcNatMoveList, ih, Nat.succ_mul, Nat.add_assoc,
-        Nat.add_comm, Nat.add_left_comm]
+        Nat.add_comm]
 
 theorem stackGcNatMoveList_condition_of_domain
     (config : StackGcConfig) (length address index destination oldBase : Nat)

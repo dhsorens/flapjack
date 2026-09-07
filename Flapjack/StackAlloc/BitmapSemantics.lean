@@ -282,7 +282,7 @@ example :
 
 @[simp] theorem stackGcNatGetBits_zero :
     stackGcNatGetBits 0 = [] := by
-  simp [stackGcNatGetBits, stackGcNatBitLength]
+  simp [stackGcNatGetBits]
 
 @[simp] theorem stackGcNatReadBitmap_nil (config : StackGcConfig) :
     stackGcNatReadBitmap config [] = none := by

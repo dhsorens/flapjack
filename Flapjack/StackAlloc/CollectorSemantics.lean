@@ -99,7 +99,7 @@ theorem stackFrameMemcpyStep_register_zero [NeZero width]
   simp [stackFrameMemcpyStep, stackFrameWriteRegister,
     wordStackMachineWriteRegister, wordStackMachineWriteMemory,
     wordStackMachineBinOp, hcount, hsubtract, hscratch0',
-    hscratch1, hscratch2, hscratch3]
+    ]
 
 theorem stackFrameMemcpyStep_register_zero_eq [NeZero width]
     (config : StackGcConfig) (state : StackFrameMachineState width)
@@ -109,7 +109,7 @@ theorem stackFrameMemcpyStep_register_zero_eq [NeZero width]
         (BitVec.ofNat width 1) := by
   simp [stackFrameMemcpyStep, stackFrameWriteRegister,
     wordStackMachineWriteRegister, wordStackMachineWriteMemory,
-    wordStackMachineBinOp, hscratch0, Ne.symm hscratch0]
+    wordStackMachineBinOp, Ne.symm hscratch0]
 
 theorem stackFrameMemcpyStep_register_one [NeZero width]
     (config : StackGcConfig) (state : StackFrameMachineState width)
@@ -118,7 +118,7 @@ theorem stackFrameMemcpyStep_register_one [NeZero width]
       state.machine.memory (state.machine.registers 2) := by
   simp [stackFrameMemcpyStep, stackFrameWriteRegister,
     wordStackMachineWriteRegister, wordStackMachineWriteMemory,
-    wordStackMachineBinOp, hscratch1, Ne.symm hscratch1]
+    wordStackMachineBinOp, Ne.symm hscratch1]
 
 theorem stackFrameMemcpyStep_register_source [NeZero width]
     (config : StackGcConfig) (state : StackFrameMachineState width)
@@ -128,7 +128,7 @@ theorem stackFrameMemcpyStep_register_source [NeZero width]
         (BitVec.ofNat width config.bytesInWord) := by
   simp [stackFrameMemcpyStep, stackFrameWriteRegister,
     wordStackMachineWriteRegister, wordStackMachineWriteMemory,
-    wordStackMachineBinOp, hscratch2, Ne.symm hscratch2]
+    wordStackMachineBinOp, Ne.symm hscratch2]
 
 theorem stackFrameMemcpyStep_register_destination [NeZero width]
     (config : StackGcConfig) (state : StackFrameMachineState width)
@@ -138,7 +138,7 @@ theorem stackFrameMemcpyStep_register_destination [NeZero width]
         (BitVec.ofNat width config.bytesInWord) := by
   simp [stackFrameMemcpyStep, stackFrameWriteRegister,
     wordStackMachineWriteRegister, wordStackMachineWriteMemory,
-    wordStackMachineBinOp, hscratch3, Ne.symm hscratch3]
+    wordStackMachineBinOp, Ne.symm hscratch3]
 
 theorem stackFrameWriteRegister_memory [NeZero width]
     (state : StackFrameMachineState width) (register : Nat)
@@ -175,7 +175,7 @@ theorem stackFrameMemcpyStep_memory [NeZero width]
       wordStackMachineBinOp, haddress]
   · simp [stackFrameMemcpyStep, stackFrameWriteRegister,
       wordStackMachineWriteRegister, wordStackMachineWriteMemory,
-      wordStackMachineBinOp, haddress, Ne.symm haddress]
+      wordStackMachineBinOp, haddress]
 
 theorem stackFrameMemcpyStep_memory_function [NeZero width]
     (config : StackGcConfig) (state : StackFrameMachineState width) :
@@ -546,7 +546,7 @@ theorem stackFrameMemcpyIter_register_source [NeZero width]
         (stackFrameMemcpyStep config state)).machine.registers 2 = _
       rw [ih]
       rw [stackFrameMemcpyStep_register_source config state hscratch2]
-      simp only [wordStackMachineBinOp, Nat.succ_mul, Nat.one_mul,
+      simp only [wordStackMachineBinOp, Nat.succ_mul, 
         BitVec.ofNat_add]
       rw [BitVec.add_assoc]
       congr 1
@@ -566,7 +566,7 @@ theorem stackFrameMemcpyIter_register_destination [NeZero width]
         (stackFrameMemcpyStep config state)).machine.registers 3 = _
       rw [ih]
       rw [stackFrameMemcpyStep_register_destination config state hscratch3]
-      simp only [wordStackMachineBinOp, Nat.succ_mul, Nat.one_mul,
+      simp only [wordStackMachineBinOp, Nat.succ_mul, 
         BitVec.ofNat_add]
       rw [BitVec.add_assoc]
       congr 1
@@ -627,7 +627,7 @@ theorem stackFrameMemcpyIter_register_source_toNat [NeZero width]
       ((state.machine.registers 2).toNat + words * config.bytesInWord) % 2 ^ width := by
   rw [stackFrameMemcpyIter_register_source config words state hscratch2]
   simp [wordStackMachineBinOp, BitVec.toNat_add, BitVec.toNat_ofNat,
-    Nat.add_mod, Nat.mod_mod]
+    Nat.add_mod]
 
 theorem stackFrameMemcpyIter_register_destination_toNat [NeZero width]
     (config : StackGcConfig) (words : Nat)
@@ -637,7 +637,7 @@ theorem stackFrameMemcpyIter_register_destination_toNat [NeZero width]
       ((state.machine.registers 3).toNat + words * config.bytesInWord) % 2 ^ width := by
   rw [stackFrameMemcpyIter_register_destination config words state hscratch3]
   simp [wordStackMachineBinOp, BitVec.toNat_add, BitVec.toNat_ofNat,
-    Nat.add_mod, Nat.mod_mod]
+    Nat.add_mod]
 
 theorem stackFrameMemcpyMemory_update_toNat [NeZero width]
     (source destination : Word width) (memory : Nat → Nat) :
@@ -850,15 +850,15 @@ theorem evalStackFrameFuel_stackGcMoveList_immediate_one [NeZero width]
   have hvalue' : afterCount.machine.registers 5 &&&
       BitVec.ofNat width 1 = 0 := by
     simp [afterCount, afterLoad, stackFrameWriteRegister,
-      wordStackMachineWriteRegister, hscratch5, Ne.symm hscratch5]
+      wordStackMachineWriteRegister, Ne.symm hscratch5]
     exact hvalue
   have hsub : evalStackFrameFuel (fuel + 15) afterLoad
       (stackGcSubOne config 7) = some (.normal afterCount) := by
-    simp [stackGcSubOne, stackGcSubImmediate, stackGcAddImmediate,
+    simp [stackGcSubOne, stackGcSubImmediate, 
       stackGcConst, stackGcSub, stackSeq, evalStackFrameFuel,
       evalStackFrameFuelWithCode, stackFrameBasic, stackFrameWriteRegister,
       wordStackMachineWriteRegister, wordStackMachineBinOp, afterCount,
-      afterLoad, hscratch7, Ne.symm hscratch7]
+      afterLoad, Ne.symm hscratch7]
   have hmove := evalStackFrameGcMoveCode_immediate config (fuel + 12)
     afterCount hvalue'
   have hdomain' : afterCount.memoryDomain
@@ -874,7 +874,7 @@ theorem evalStackFrameFuel_stackGcMoveList_immediate_one [NeZero width]
       stackSeq, evalStackFrameFuel, evalStackFrameFuelWithCode, stackFrameBasic,
       stackFrameWriteRegister,
       wordStackMachineWriteRegister, wordStackMachineBinOp, afterFinal,
-      afterScratch, afterStore, hscratch8, Ne.symm hscratch8]
+      afterScratch, afterStore, Ne.symm hscratch8]
   have hload := evalStackFrameFuel_memLoad (fuel + 16) state 5 8 hdomain
   have hbody : evalStackFrameFuel (fuel + 17) state
       (stackSeq [
@@ -931,7 +931,7 @@ theorem evalStackFrameFuel_stackGcMoveList_immediate_one [NeZero width]
       afterCount, afterLoad, stackFrameWriteRegister,
       wordStackMachineWriteRegister, wordStackMachineWriteMemory,
       wordStackMachineBinOp, hone,
-      hscratch7, hscratch8, Ne.symm hscratch7, Ne.symm hscratch8]
+      Ne.symm hscratch7, Ne.symm hscratch8]
   have hite : evalStackFrameFuel (fuel + 18) state
       (.ite .notEqual 7 (.imm 0)
         (stackSeq [
@@ -1022,15 +1022,15 @@ theorem evalStackFrameFuel_stackGcMoveList_immediate_body [NeZero width]
   have hvalue' : afterCount.machine.registers 5 &&&
       BitVec.ofNat width 1 = 0 := by
     simp [afterCount, afterLoad, stackFrameWriteRegister,
-      wordStackMachineWriteRegister, hscratch5, Ne.symm hscratch5]
+      wordStackMachineWriteRegister, Ne.symm hscratch5]
     exact hvalue
   have hsub : evalStackFrameFuel (fuel + 15) afterLoad
       (stackGcSubOne config 7) = some (.normal afterCount) := by
-    simp [stackGcSubOne, stackGcSubImmediate, stackGcAddImmediate,
+    simp [stackGcSubOne, stackGcSubImmediate, 
       stackGcConst, stackGcSub, stackSeq, evalStackFrameFuel,
       evalStackFrameFuelWithCode, stackFrameBasic, stackFrameWriteRegister,
       wordStackMachineWriteRegister, wordStackMachineBinOp, afterCount,
-      afterLoad, hscratch7, Ne.symm hscratch7]
+      afterLoad, Ne.symm hscratch7]
   have hmove := evalStackFrameGcMoveCode_immediate config (fuel + 12)
     afterCount hvalue'
   have hdomain' : afterCount.memoryDomain
@@ -1046,7 +1046,7 @@ theorem evalStackFrameFuel_stackGcMoveList_immediate_body [NeZero width]
       stackSeq, evalStackFrameFuel, evalStackFrameFuelWithCode, stackFrameBasic,
       stackFrameWriteRegister,
       wordStackMachineWriteRegister, wordStackMachineBinOp, afterFinal,
-      afterScratch, afterStore, hscratch8, Ne.symm hscratch8]
+      afterScratch, afterStore, Ne.symm hscratch8]
   have hload := evalStackFrameFuel_memLoad (fuel + 16) state 5 8 hdomain
   have hbody : evalStackFrameFuel (fuel + 17) state
       (stackSeq [
@@ -1155,7 +1155,7 @@ theorem evalStackFrameFuel_stackGcMoveList_immediate_one_matches_nat
   simp [stackFrameNormalRegisterNat, heval,
     stackGcMoveListImmediateState, stackFrameWriteRegister,
     wordStackMachineWriteRegister, wordStackMachineWriteMemory,
-    wordStackMachineBinOp, haddress, hmemory', hnat, hscratch5,
+    wordStackMachineBinOp, haddress, hmemory', 
     Ne.symm hscratch5]
 
 theorem evalStackFrameFuel_stackGcMoveList_immediate_one_scan_matches_nat
@@ -1186,9 +1186,9 @@ theorem evalStackFrameFuel_stackGcMoveList_immediate_one_scan_matches_nat
   simp [stackFrameNormalRegisterNat, heval,
     stackGcMoveListImmediateState, stackFrameWriteRegister,
     wordStackMachineWriteRegister, wordStackMachineWriteMemory,
-    wordStackMachineBinOp, haddress, hbytes, hbound,
+    wordStackMachineBinOp, haddress, 
     BitVec.toNat_add, BitVec.toNat_ofNat, Nat.mod_eq_of_lt hbound,
-    hscratch8, Ne.symm hscratch8]
+    Ne.symm hscratch8]
 
 theorem evalStackFrameFuel_stackGcMoveList_immediate_one_count_matches_nat
     [NeZero width] (config : StackGcConfig) (fuel : Nat)
@@ -1211,7 +1211,7 @@ theorem evalStackFrameFuel_stackGcMoveList_immediate_one_count_matches_nat
   simp [stackFrameNormalRegisterNat, heval,
     stackGcMoveListImmediateState, stackFrameWriteRegister,
     wordStackMachineWriteRegister, wordStackMachineWriteMemory,
-    wordStackMachineBinOp, hone, haddress, hscratch7, Ne.symm hscratch7]
+    wordStackMachineBinOp, hone, haddress, Ne.symm hscratch7]
 
 theorem evalStackFrameFuel_stackGcMoveList_immediate_one_memory_matches_nat
     [NeZero width] (config : StackGcConfig) (fuel : Nat)
@@ -1255,8 +1255,8 @@ theorem evalStackFrameFuel_stackGcMoveList_immediate_one_memory_matches_nat
   simp [stackFrameNormalMemoryNat, heval,
     stackGcMoveListImmediateState, stackFrameWriteRegister,
     wordStackMachineWriteRegister, wordStackMachineWriteMemory,
-    wordStackMachineBinOp, haddress, hmemWord, hscratch5, hscratch8,
-    hscratch5', Ne.symm hscratch5, Ne.symm hscratch8,
+    wordStackMachineBinOp, haddress, hmemWord, 
+    hscratch5', Ne.symm hscratch8,
     Nat.mod_eq_of_lt hmemoryBound]
 
 theorem evalStackFrameFuel_stackGcMoveList_immediate_one_memory_relation
@@ -1294,7 +1294,7 @@ theorem evalStackFrameFuel_stackGcMoveList_immediate_one_memory_relation
     simp [stackFrameNormalMemoryNat, stackGcMoveListImmediateState,
       stackFrameWriteRegister, wordStackMachineWriteRegister,
       wordStackMachineWriteMemory, wordStackMachineBinOp, haddress,
-      hmemoryAddress, hscratch5, hscratch8, Ne.symm hscratch5,
+      hmemoryAddress, Ne.symm hscratch5,
       Ne.symm hscratch8]
   · have htargetWord : BitVec.ofNat width target ≠
         state.machine.registers 8 := by
@@ -1314,8 +1314,8 @@ theorem evalStackFrameFuel_stackGcMoveList_immediate_one_memory_relation
     simp [stackFrameNormalMemoryNat, stackGcMoveListImmediateState,
       stackFrameWriteRegister, wordStackMachineWriteRegister,
       wordStackMachineWriteMemory, wordStackMachineBinOp, haddress,
-      htargetWord, htargetOfNat, htargetAddress, hmemory target htarget,
-      hscratch5, hscratch8, Ne.symm hscratch5, Ne.symm hscratch8]
+      htargetOfNat, htargetAddress, hmemory target htarget,
+      Ne.symm hscratch5, Ne.symm hscratch8]
 
 theorem evalStackFrameFuel_stackGcMoveList_forwarding_one [NeZero width]
     (config : StackGcConfig) (fuel : Nat)
@@ -1359,10 +1359,10 @@ theorem evalStackFrameFuel_stackGcMoveList_forwarding_one [NeZero width]
   have hsub : evalStackFrameFuel (fuel + 36) afterLoad
       (stackGcSubOne config 7) = some (.normal afterCount) := by
     simp [afterCount, afterLoad, stackGcMoveListAfterCount,
-      stackGcSubOne, stackGcSubImmediate, stackGcAddImmediate,
+      stackGcSubOne, stackGcSubImmediate, 
       stackGcConst, stackGcSub, stackSeq, evalStackFrameFuel,
       evalStackFrameFuelWithCode, stackFrameBasic, stackFrameWriteRegister,
-      wordStackMachineWriteRegister, wordStackMachineBinOp, hscratch7,
+      wordStackMachineWriteRegister, wordStackMachineBinOp, 
       Ne.symm hscratch7]
   have hodd' : afterCount.machine.registers 5 &&&
       BitVec.ofNat width 1 ≠ 0 := by
@@ -1378,7 +1378,7 @@ theorem evalStackFrameFuel_stackGcMoveList_forwarding_one [NeZero width]
       stackSeq, evalStackFrameFuel, evalStackFrameFuelWithCode, stackFrameBasic,
       stackFrameWriteRegister, wordStackMachineWriteRegister,
       wordStackMachineBinOp, afterFinal, afterScratch, afterStore,
-      hscratch8, Ne.symm hscratch8]
+      Ne.symm hscratch8]
   have hload := evalStackFrameFuel_memLoad (fuel + 37) state 5 8 hdomain
   have hbody : evalStackFrameFuel (fuel + 38) state
       (stackSeq [
@@ -1430,11 +1430,11 @@ theorem evalStackFrameFuel_stackGcMoveList_forwarding_one [NeZero width]
   have hcondition' :
       stackMachineCondition afterFinal.machine .notEqual 7 (.imm 0) = false := by
     simp [stackMachineCondition, afterFinal, afterScratch, afterStore,
-      afterMove, afterCount, stackGcMoveListAfterCount, afterLoad,
+      afterMove, afterCount, stackGcMoveListAfterCount, 
       stackGcMoveForwardingState, stackGcMoveForwardingSuffixState,
       stackGcMoveAddressState, stackFrameWriteRegister,
       wordStackMachineWriteRegister, wordStackMachineWriteMemory,
-      wordStackMachineBinOp, hone, hscratch7, hscratch8,
+      wordStackMachineBinOp, hone, 
       Ne.symm hscratch7, Ne.symm hscratch8]
   have hite : evalStackFrameFuel (fuel + 39) state
       (.ite .notEqual 7 (.imm 0)
@@ -1551,7 +1551,7 @@ theorem evalStackFrameFuel_stackGcMoveList_forwarding_one_matches_nat
       wordStackMachineWriteRegister, wordStackMachineBinOp,
       wordStackMachineShift, stackGcMachineForwardingValue,
       stackGcMachineMoveAddress,
-      hscratch0, hscratch1, hscratch5, Ne.symm hscratch0,
+      Ne.symm hscratch0,
       Ne.symm hscratch1, Ne.symm hscratch5]
   have hfinal5 :
       (stackGcMoveListForwardingState config state).machine.registers 5 =
@@ -1559,10 +1559,10 @@ theorem evalStackFrameFuel_stackGcMoveList_forwarding_one_matches_nat
           (stackGcMoveListAfterCount config state)).machine.registers 5 := by
     simp [stackGcMoveListForwardingState, stackFrameWriteRegister,
       wordStackMachineWriteRegister, wordStackMachineWriteMemory,
-      hscratch5, hscratch8, Ne.symm hscratch5, Ne.symm hscratch8]
+      Ne.symm hscratch5, Ne.symm hscratch8]
   rw [hnat]
   rw [heval]
-  simp only [stackFrameNormalRegisterNat, if_pos rfl]
+  simp only [stackFrameNormalRegisterNat]
   congr 1
   rw [hfinal5, hafterMove5, hforwardValue]
   simp
@@ -1614,10 +1614,10 @@ theorem evalStackFrameFuel_stackGcMoveList_forwarding_body [NeZero width]
   have hsub : evalStackFrameFuel (fuel + 36) afterLoad
       (stackGcSubOne config 7) = some (.normal afterCount) := by
     simp [afterCount, afterLoad, stackGcMoveListAfterCount,
-      stackGcSubOne, stackGcSubImmediate, stackGcAddImmediate,
+      stackGcSubOne, stackGcSubImmediate, 
       stackGcConst, stackGcSub, stackSeq, evalStackFrameFuel,
       evalStackFrameFuelWithCode, stackFrameBasic, stackFrameWriteRegister,
-      wordStackMachineWriteRegister, wordStackMachineBinOp, hscratch7,
+      wordStackMachineWriteRegister, wordStackMachineBinOp, 
       Ne.symm hscratch7]
   have hodd' : afterCount.machine.registers 5 &&&
       BitVec.ofNat width 1 ≠ 0 := by
@@ -1633,7 +1633,7 @@ theorem evalStackFrameFuel_stackGcMoveList_forwarding_body [NeZero width]
       stackSeq, evalStackFrameFuel, evalStackFrameFuelWithCode, stackFrameBasic,
       stackFrameWriteRegister, wordStackMachineWriteRegister,
       wordStackMachineBinOp, afterFinal, afterScratch, afterStore,
-      hscratch8, Ne.symm hscratch8]
+      Ne.symm hscratch8]
   have hload := evalStackFrameFuel_memLoad (fuel + 37) state 5 8 hdomain
   have hbody : evalStackFrameFuel (fuel + 38) state
       (stackSeq [
@@ -1765,7 +1765,7 @@ theorem evalStackFrameFuel_stackGcMoveList_forwarding_body_with_nat_relation
       stackGcMoveAddressState, stackFrameWriteRegister,
       wordStackMachineWriteRegister, wordStackMachineBinOp,
       wordStackMachineShift, stackGcMachineForwardingValue,
-      stackGcMachineMoveAddress, hscratch0, hscratch1, hscratch5,
+      stackGcMachineMoveAddress, 
       Ne.symm hscratch0, Ne.symm hscratch1, Ne.symm hscratch5]
   have hfinal5 :
       (stackGcMoveListForwardingState config state).machine.registers 5 =
@@ -1773,7 +1773,7 @@ theorem evalStackFrameFuel_stackGcMoveList_forwarding_body_with_nat_relation
           (stackGcMoveListAfterCount config state)).machine.registers 5 := by
     simp [stackGcMoveListForwardingState, stackFrameWriteRegister,
       wordStackMachineWriteRegister, wordStackMachineWriteMemory,
-      hscratch5, hscratch8, Ne.symm hscratch5, Ne.symm hscratch8]
+      Ne.symm hscratch5, Ne.symm hscratch8]
   have hafterMove8 :
       (stackGcMoveForwardingState config
         (stackGcMoveListAfterCount config state)).machine.registers 8 =
@@ -1781,19 +1781,19 @@ theorem evalStackFrameFuel_stackGcMoveList_forwarding_body_with_nat_relation
     simp [stackGcMoveForwardingState, stackGcMoveForwardingSuffixState,
       stackGcMoveAddressState, stackGcMoveListAfterCount,
       stackFrameWriteRegister, wordStackMachineWriteRegister,
-      wordStackMachineBinOp, wordStackMachineShift, hscratch0,
-      hscratch1, hscratch5, hscratch7, hscratch8,
+      wordStackMachineBinOp, wordStackMachineShift, 
+      
       Ne.symm hscratch0, Ne.symm hscratch1, Ne.symm hscratch5,
-      Ne.symm hscratch7, Ne.symm hscratch8]
+      Ne.symm hscratch8]
   have hfinalMemory :
       (stackGcMoveListForwardingState config state).machine.memory
           (BitVec.ofNat width scan) =
         (stackGcMoveListForwardingState config state).machine.registers 5 := by
     simp [stackGcMoveListForwardingState, stackFrameWriteRegister,
       wordStackMachineWriteRegister, wordStackMachineWriteMemory,
-      haddress, hafterMove8, hscratch0, hscratch1, hscratch5,
-      hscratch7, hscratch8, Ne.symm hscratch0, Ne.symm hscratch1,
-      Ne.symm hscratch5, Ne.symm hscratch7, Ne.symm hscratch8]
+      haddress, hafterMove8, 
+      
+      Ne.symm hscratch5, Ne.symm hscratch8]
   have hfinalValue :
       ((stackGcMoveListForwardingState config state).machine.memory
         (BitVec.ofNat width scan)).toNat =
@@ -1806,10 +1806,10 @@ theorem evalStackFrameFuel_stackGcMoveList_forwarding_body_with_nat_relation
     have hbytes : config.bytesInWord < 2 ^ width := by omega
     simp [stackGcMoveListForwardingState, stackFrameWriteRegister,
       wordStackMachineWriteRegister, wordStackMachineWriteMemory,
-      wordStackMachineBinOp, haddress, hafterMove8, hbytes, hnextBound,
+      wordStackMachineBinOp, haddress, hafterMove8, 
       BitVec.toNat_add, BitVec.toNat_ofNat,
-      Nat.mod_eq_of_lt hnextBound, hscratch5, hscratch8,
-      Ne.symm hscratch5, Ne.symm hscratch8]
+      Nat.mod_eq_of_lt hnextBound, 
+      Ne.symm hscratch8]
   have hmemoryOut : ∀ target, target < 2 ^ width →
       ((stackGcMoveListForwardingState config state).machine.memory
         (BitVec.ofNat width target)).toNat =
@@ -1821,7 +1821,7 @@ theorem evalStackFrameFuel_stackGcMoveList_forwarding_body_with_nat_relation
     intro target htarget
     by_cases htargetAddress : target = scan
     · subst target
-      simp only [if_pos rfl]
+      simp only []
       exact hfinalValue
     · have htargetWord : BitVec.ofNat width target ≠
           state.machine.registers 8 := by
@@ -1842,10 +1842,10 @@ theorem evalStackFrameFuel_stackGcMoveList_forwarding_body_with_nat_relation
         stackGcMoveForwardingSuffixState, stackGcMoveAddressState,
         stackGcMoveListAfterCount, stackFrameWriteRegister,
         wordStackMachineWriteRegister, wordStackMachineWriteMemory,
-        wordStackMachineBinOp, haddress, htargetWord, htargetOfNat,
-        htargetAddress, hmemory target htarget, hscratch0, hscratch1,
-        hscratch5, hscratch7, hscratch8, Ne.symm hscratch0,
-        Ne.symm hscratch1, Ne.symm hscratch5, Ne.symm hscratch7,
+        wordStackMachineBinOp, haddress, htargetOfNat,
+        htargetAddress, hmemory target htarget, 
+        Ne.symm hscratch0,
+        Ne.symm hscratch1, Ne.symm hscratch5, 
         Ne.symm hscratch8]
   exact ⟨heval, ⟨hscanOut, hmemoryOut⟩⟩
 
@@ -1925,7 +1925,7 @@ theorem evalStackFrameFuel_stackGcMoveList_forwarding_one_memory_relation
       wordStackMachineWriteRegister, wordStackMachineBinOp,
       wordStackMachineShift, stackGcMachineForwardingValue,
       stackGcMachineMoveAddress,
-      hscratch0, hscratch1, hscratch5, Ne.symm hscratch0,
+      Ne.symm hscratch0,
       Ne.symm hscratch1, Ne.symm hscratch5]
   have hfinal5 :
       (stackGcMoveListForwardingState config state).machine.registers 5 =
@@ -1933,7 +1933,7 @@ theorem evalStackFrameFuel_stackGcMoveList_forwarding_one_memory_relation
           (stackGcMoveListAfterCount config state)).machine.registers 5 := by
     simp [stackGcMoveListForwardingState, stackFrameWriteRegister,
       wordStackMachineWriteRegister, wordStackMachineWriteMemory,
-      hscratch5, hscratch8, Ne.symm hscratch5, Ne.symm hscratch8]
+      Ne.symm hscratch5, Ne.symm hscratch8]
   have hafterMove8 :
       (stackGcMoveForwardingState config
         (stackGcMoveListAfterCount config state)).machine.registers 8 =
@@ -1942,23 +1942,23 @@ theorem evalStackFrameFuel_stackGcMoveList_forwarding_one_memory_relation
       stackGcMoveAddressState, stackGcMoveListAfterCount,
       stackFrameWriteRegister, wordStackMachineWriteRegister,
       wordStackMachineBinOp, wordStackMachineShift,
-      hscratch0, hscratch1, hscratch5, hscratch7, hscratch8,
+      
       Ne.symm hscratch0, Ne.symm hscratch1, Ne.symm hscratch5,
-      Ne.symm hscratch7, Ne.symm hscratch8]
+      Ne.symm hscratch8]
   have hfinalMemory :
       (stackGcMoveListForwardingState config state).machine.memory
           (BitVec.ofNat width address) =
         (stackGcMoveListForwardingState config state).machine.registers 5 := by
     simp [stackGcMoveListForwardingState, stackFrameWriteRegister,
       wordStackMachineWriteRegister, wordStackMachineWriteMemory,
-      haddress, hscratch0, hscratch1, hscratch5, hscratch7, hscratch8,
+      haddress, 
       hafterMove8,
-      Ne.symm hscratch0, Ne.symm hscratch1, Ne.symm hscratch5,
-      Ne.symm hscratch7, Ne.symm hscratch8]
+      Ne.symm hscratch5,
+      Ne.symm hscratch8]
   rw [heval, hnat]
   by_cases htargetAddress : target = address
   · subst target
-    simp only [stackFrameNormalMemoryNat, if_pos rfl]
+    simp only [stackFrameNormalMemoryNat]
     rw [hfinalMemory, hfinal5, hafterMove5, hforwardValue]
     simp
   · have htargetWord : BitVec.ofNat width target ≠
@@ -1981,10 +1981,10 @@ theorem evalStackFrameFuel_stackGcMoveList_forwarding_one_memory_relation
       stackGcMoveAddressState, stackGcMoveListAfterCount,
       stackFrameWriteRegister, wordStackMachineWriteRegister,
       wordStackMachineWriteMemory, wordStackMachineBinOp,
-      haddress, htargetWord, htargetOfNat, htargetAddress,
-      hmemory target htarget, hscratch0, hscratch1, hscratch5,
-      hscratch7, hscratch8, Ne.symm hscratch0, Ne.symm hscratch1,
-      Ne.symm hscratch5, Ne.symm hscratch7, Ne.symm hscratch8]
+      haddress, htargetOfNat, htargetAddress,
+      hmemory target htarget, 
+      Ne.symm hscratch0, Ne.symm hscratch1,
+      Ne.symm hscratch5, Ne.symm hscratch8]
 
 def stackGcMoveListCopyState [NeZero width]
     (config : StackGcConfig) (state : StackFrameMachineState width) :
@@ -2052,10 +2052,10 @@ theorem evalStackFrameFuel_stackGcMoveList_copy_one [NeZero width]
   have hsub : evalStackFrameFuel (fuel + 42) afterLoad
       (stackGcSubOne config 7) = some (.normal afterCount) := by
     simp [afterCount, afterLoad, stackGcMoveListAfterCount,
-      stackGcSubOne, stackGcSubImmediate, stackGcAddImmediate,
+      stackGcSubOne, stackGcSubImmediate, 
       stackGcConst, stackGcSub, stackSeq, evalStackFrameFuel,
       evalStackFrameFuelWithCode, stackFrameBasic, stackFrameWriteRegister,
-      wordStackMachineWriteRegister, wordStackMachineBinOp, hscratch7,
+      wordStackMachineWriteRegister, wordStackMachineBinOp, 
       Ne.symm hscratch7]
   have hodd' : afterCount.machine.registers 5 &&&
       BitVec.ofNat width 1 ≠ 0 := by
@@ -2071,7 +2071,7 @@ theorem evalStackFrameFuel_stackGcMoveList_copy_one [NeZero width]
       stackSeq, evalStackFrameFuel, evalStackFrameFuelWithCode, stackFrameBasic,
       stackFrameWriteRegister, wordStackMachineWriteRegister,
       wordStackMachineBinOp, afterFinal, afterScratch, afterStore,
-      hscratch8, Ne.symm hscratch8]
+      Ne.symm hscratch8]
   have hload := evalStackFrameFuel_memLoad (fuel + 43) state 5 8 hdomain
   have hbody : evalStackFrameFuel (fuel + 44) state
       (stackSeq [
@@ -2124,41 +2124,41 @@ theorem evalStackFrameFuel_stackGcMoveList_copy_one [NeZero width]
       (stackGcMoveAddressState config source).machine.registers 7 =
         source.machine.registers 7 := by
     simp [stackGcMoveAddressState, stackFrameWriteRegister,
-      wordStackMachineWriteRegister, hscratch0, hscratch1,
-      hscratch7, Ne.symm hscratch0, Ne.symm hscratch1, Ne.symm hscratch7]
+      wordStackMachineWriteRegister, 
+      Ne.symm hscratch0, Ne.symm hscratch1, Ne.symm hscratch7]
   have hprefix7 (source : StackFrameMachineState width) :
       (stackGcMoveCopyPrefixState config source).machine.registers 7 =
         source.machine.registers 7 := by
     simp [stackGcMoveCopyPrefixState, stackFrameWriteRegister,
-      wordStackMachineWriteRegister, hscratch0, hscratch1, hscratch2,
-      hscratch6, hscratch7, Ne.symm hscratch0, Ne.symm hscratch1,
-      Ne.symm hscratch2, Ne.symm hscratch6, Ne.symm hscratch7]
+      wordStackMachineWriteRegister, 
+      Ne.symm hscratch0, Ne.symm hscratch1,
+      Ne.symm hscratch7]
   have hsuffix7 (source : StackFrameMachineState width) :
       (stackGcMoveCopySuffixState config source).machine.registers 7 =
         source.machine.registers 7 := by
     simp [stackGcMoveCopySuffixState, stackFrameMemcpyStep,
       stackFrameWriteRegister, wordStackMachineWriteRegister,
-      wordStackMachineWriteMemory, hscratch0, hscratch1, hscratch2,
-      hscratch3, hscratch4, hscratch5, hscratch6, hscratch7,
+      wordStackMachineWriteMemory, 
+      
       Ne.symm hscratch0, Ne.symm hscratch1, Ne.symm hscratch2,
       Ne.symm hscratch3, Ne.symm hscratch4, Ne.symm hscratch5,
       Ne.symm hscratch6, Ne.symm hscratch7]
   have hcount7 : afterCount.machine.registers 7 = BitVec.ofNat width 0 := by
-    simp [afterCount, stackGcMoveListAfterCount, afterLoad,
+    simp [afterCount, stackGcMoveListAfterCount, 
       stackFrameWriteRegister, wordStackMachineWriteRegister,
-      wordStackMachineBinOp, hone, hscratch7, Ne.symm hscratch7]
+      wordStackMachineBinOp, hone]
   have hmove7 : afterMove.machine.registers 7 = afterCount.machine.registers 7 := by
     simp only [afterMove, stackGcMoveCopyState]
     rw [hsuffix7, hprefix7, haddress7]
   have hfinal7 : afterFinal.machine.registers 7 = afterMove.machine.registers 7 := by
     simp [afterFinal, afterScratch, afterStore, stackFrameWriteRegister,
       wordStackMachineWriteRegister, wordStackMachineWriteMemory,
-      wordStackMachineBinOp, hscratch7, hscratch8,
+      wordStackMachineBinOp, 
       Ne.symm hscratch7, Ne.symm hscratch8]
   have hcondition' :
       stackMachineCondition afterFinal.machine .notEqual 7 (.imm 0) = false := by
-    simp [stackMachineCondition, hfinal7, hmove7, hcount7, hone,
-      NeZero.ne width]
+    simp [stackMachineCondition, hfinal7, hmove7, hcount7, 
+      ]
   have hite : evalStackFrameFuel (fuel + 45) state
       (.ite .notEqual 7 (.imm 0)
         (stackSeq [
@@ -2271,10 +2271,10 @@ theorem evalStackFrameFuel_stackGcMoveList_copy_body [NeZero width]
   have hsub : evalStackFrameFuel (fuel + 42) afterLoad
       (stackGcSubOne config 7) = some (.normal afterCount) := by
     simp [afterCount, afterLoad, stackGcMoveListAfterCount,
-      stackGcSubOne, stackGcSubImmediate, stackGcAddImmediate,
+      stackGcSubOne, stackGcSubImmediate, 
       stackGcConst, stackGcSub, stackSeq, evalStackFrameFuel,
       evalStackFrameFuelWithCode, stackFrameBasic, stackFrameWriteRegister,
-      wordStackMachineWriteRegister, wordStackMachineBinOp, hscratch7,
+      wordStackMachineWriteRegister, wordStackMachineBinOp, 
       Ne.symm hscratch7]
   have hodd' : afterCount.machine.registers 5 &&&
       BitVec.ofNat width 1 ≠ 0 := by
@@ -2290,7 +2290,7 @@ theorem evalStackFrameFuel_stackGcMoveList_copy_body [NeZero width]
       stackSeq, evalStackFrameFuel, evalStackFrameFuelWithCode, stackFrameBasic,
       stackFrameWriteRegister, wordStackMachineWriteRegister,
       wordStackMachineBinOp, afterFinal, afterScratch, afterStore,
-      hscratch8, Ne.symm hscratch8]
+      Ne.symm hscratch8]
   have hload := evalStackFrameFuel_memLoad (fuel + 43) state 5 8 hdomain
   have hbody : evalStackFrameFuel (fuel + 44) state
       (stackSeq [
@@ -2405,10 +2405,10 @@ theorem evalStackFrameFuel_stackGcMoveList_copy_one_matches_nat
           (stackGcMoveListAfterCount config state)).machine.registers 5 := by
     simp [stackGcMoveListCopyState, stackFrameWriteRegister,
       wordStackMachineWriteRegister, wordStackMachineWriteMemory,
-      hscratch5, hscratch8, Ne.symm hscratch5, Ne.symm hscratch8]
+      Ne.symm hscratch5, Ne.symm hscratch8]
   rw [hnat]
   rw [heval]
-  simp only [stackFrameNormalRegisterNat, if_pos rfl]
+  simp only [stackFrameNormalRegisterNat]
   congr 1
   rw [hfinal5, hcopyValue]
   simp
@@ -2496,7 +2496,7 @@ theorem evalStackFrameFuel_stackGcMoveList_copy_one_memory_relation
           (stackGcMoveListAfterCount config state)).machine.registers 5 := by
     simp [stackGcMoveListCopyState, stackFrameWriteRegister,
       wordStackMachineWriteRegister, wordStackMachineWriteMemory,
-      hscratch5, hscratch8, Ne.symm hscratch5, Ne.symm hscratch8]
+      Ne.symm hscratch5, Ne.symm hscratch8]
   have hafterMove8 :
       (stackGcMoveCopyState config
         (stackGcMoveListAfterCount config state)).machine.registers 8 =
@@ -2505,35 +2505,35 @@ theorem evalStackFrameFuel_stackGcMoveList_copy_one_memory_relation
         (stackGcMoveAddressState config source).machine.registers 8 =
           source.machine.registers 8 := by
       simp [stackGcMoveAddressState, stackFrameWriteRegister,
-        wordStackMachineWriteRegister, hscratch0, hscratch1,
-        hscratch7, hscratch8, Ne.symm hscratch0, Ne.symm hscratch1,
-        Ne.symm hscratch7, Ne.symm hscratch8]
+        wordStackMachineWriteRegister, 
+        Ne.symm hscratch0, Ne.symm hscratch1,
+        Ne.symm hscratch8]
     have hprefix8 (source : StackFrameMachineState width) :
         (stackGcMoveCopyPrefixState config source).machine.registers 8 =
           source.machine.registers 8 := by
       simp [stackGcMoveCopyPrefixState, stackFrameWriteRegister,
-        wordStackMachineWriteRegister, hscratch0, hscratch1,
-        hscratch2, hscratch6, hscratch7, hscratch8,
-        Ne.symm hscratch0, Ne.symm hscratch1, Ne.symm hscratch2,
-        Ne.symm hscratch6, Ne.symm hscratch7, Ne.symm hscratch8]
+        wordStackMachineWriteRegister, 
+        
+        Ne.symm hscratch0, Ne.symm hscratch1, 
+        Ne.symm hscratch8]
     have hsuffix8 (source : StackFrameMachineState width) :
         (stackGcMoveCopySuffixState config source).machine.registers 8 =
           source.machine.registers 8 := by
       simp [stackGcMoveCopySuffixState, stackFrameMemcpyStep,
         stackFrameWriteRegister, wordStackMachineWriteRegister,
-        wordStackMachineWriteMemory, hscratch0, hscratch1,
-        hscratch2, hscratch3, hscratch4, hscratch5, hscratch6,
-        hscratch7, hscratch8, Ne.symm hscratch0, Ne.symm hscratch1,
+        wordStackMachineWriteMemory, 
+        
+        Ne.symm hscratch0, Ne.symm hscratch1,
         Ne.symm hscratch2, Ne.symm hscratch3, Ne.symm hscratch4,
-        Ne.symm hscratch5, Ne.symm hscratch6, Ne.symm hscratch7,
+        Ne.symm hscratch5, Ne.symm hscratch6, 
         Ne.symm hscratch8]
     have hcount8 :
         (stackGcMoveListAfterCount config state).machine.registers 8 =
           state.machine.registers 8 := by
       simp [stackGcMoveListAfterCount, stackFrameWriteRegister,
-        wordStackMachineWriteRegister, hscratch0, hscratch5,
-        hscratch7, hscratch8, Ne.symm hscratch0, Ne.symm hscratch5,
-        Ne.symm hscratch7, Ne.symm hscratch8]
+        wordStackMachineWriteRegister, 
+        
+        Ne.symm hscratch8]
     simp only [stackGcMoveCopyState]
     rw [hsuffix8, hprefix8, haddress8]
     exact hcount8
@@ -2544,13 +2544,13 @@ theorem evalStackFrameFuel_stackGcMoveList_copy_one_memory_relation
     simp only [stackGcMoveListCopyState]
     simp only [stackFrameWriteRegister,
       wordStackMachineWriteRegister, wordStackMachineWriteMemory,
-      wordStackMachineBinOp, haddress, hafterMove8, hscratch0,
-      hscratch1, hscratch2, hscratch3, hscratch4, hscratch5,
-      hscratch6, hscratch7, hscratch8, Ne.symm hscratch0,
-      Ne.symm hscratch1, Ne.symm hscratch2, Ne.symm hscratch3,
-      Ne.symm hscratch4, Ne.symm hscratch5, Ne.symm hscratch6,
-      Ne.symm hscratch7, Ne.symm hscratch8]
-    simp only [if_pos rfl,
+      wordStackMachineBinOp, haddress, hafterMove8, 
+      
+      
+      
+      Ne.symm hscratch5, 
+      Ne.symm hscratch8]
+    simp only [
       if_neg (show (5 : Nat) ≠ 8 by decide),
       if_neg (show ¬ False by decide)]
     rfl
@@ -2558,7 +2558,7 @@ theorem evalStackFrameFuel_stackGcMoveList_copy_one_memory_relation
   by_cases htargetAddress : target = address
   · subst target
     rw [hnat]
-    simp only [stackFrameNormalMemoryNat, if_pos rfl]
+    simp only [stackFrameNormalMemoryNat]
     rw [hfinalMemory, hfinal5, hcopyValue]
     simp
   · have htargetWord : BitVec.ofNat width target ≠
@@ -2580,12 +2580,12 @@ theorem evalStackFrameFuel_stackGcMoveList_copy_one_memory_relation
     simp only [stackFrameNormalMemoryNat, stackGcMoveListCopyState,
       stackFrameWriteRegister, wordStackMachineWriteRegister,
       wordStackMachineWriteMemory, wordStackMachineBinOp,
-      haddress, hafterMove8, htargetWord, htargetAddress, hcopy,
-      hscratch0, hscratch1, hscratch2, hscratch3, hscratch4,
-      hscratch5, hscratch6, hscratch7, hscratch8,
-      Ne.symm hscratch0, Ne.symm hscratch1, Ne.symm hscratch2,
-      Ne.symm hscratch3, Ne.symm hscratch4, Ne.symm hscratch5,
-      Ne.symm hscratch6, Ne.symm hscratch7, Ne.symm hscratch8]
+      haddress, hafterMove8, 
+      
+      
+      
+      
+      Ne.symm hscratch8]
     simp only [if_neg htargetOfNat]
     exact congrArg some hcopy
 
@@ -2787,7 +2787,7 @@ theorem stackGcMachineBitmapTableMatchesNat_lookup [NeZero width]
           cases index with
           | zero =>
               simp [stackFrameBitmapAt, stackGcNatBitmapTableAt,
-                stackGcMachineBitmapTableMatchesNat, hrelation.1]
+                hrelation.1]
           | succ index =>
               have htail :
                   stackGcMachineBitmapTableMatchesNat bitmaps values :=
@@ -2885,7 +2885,7 @@ theorem evalStackFrameFuel_stackGcMoveLoop_code_step [NeZero width]
       evalStackFrameFuel, evalStackFrameFuelWithCode, stackFrameBasic,
       stackFrameWriteRegister, stackGcShiftImmediate, stackGcAddImmediate,
       stackGcAddOne, stackGcConst, stackGcAdd, wordStackMachineWriteRegister,
-      wordStackMachineBinOp, wordStackMachineShift, hscratch7, hscratch8,
+      wordStackMachineBinOp, wordStackMachineShift, 
       Ne.symm hscratch7, Ne.symm hscratch8]
   have hrest :
       evalStackFrameFuel (fuel + 11) afterLoad
@@ -2962,7 +2962,7 @@ theorem evalStackFrameFuel_stackGcMoveLoop_code_prefix [NeZero width]
     evalStackFrameFuelWithCode, stackFrameBasic, stackFrameWriteRegister,
     stackGcShiftImmediate, stackGcAddImmediate, stackGcAddBytes,
     stackGcConst, stackGcAdd, wordStackMachineWriteRegister,
-    wordStackMachineBinOp, wordStackMachineShift, hscratch7, hscratch8,
+    wordStackMachineBinOp, wordStackMachineShift, 
     Ne.symm hscratch7, Ne.symm hscratch8]
 
 theorem evalStackFrameFuel_stackGcMoveLoop_code_step_scan_matches_nat
@@ -3044,10 +3044,10 @@ theorem evalStackFrameFuel_stackGcMoveLoop_code_step_scan_matches_nat
               shiftAmount (BitVec.ofNat width config.wordShift)) := by
     simp [stackGcMoveLoopCodeStepState, stackFrameWriteRegister,
       wordStackMachineWriteRegister, wordStackMachineBinOp,
-      wordStackMachineShift, hscratch8, Ne.symm hscratch8]
+      wordStackMachineShift, Ne.symm hscratch8]
   rw [hreg, BitVec.toNat_add]
   rw [hcount]
-  simp [haddress, hmemory', BitVec.toNat_ofNat,
+  simp [haddress, BitVec.toNat_ofNat,
     Nat.mod_eq_of_lt hscanBound, Nat.mod_eq_of_lt hadvance]
 
 theorem stackGcMoveLoopCodeStepState_scan_matches_nat
@@ -3440,9 +3440,9 @@ theorem evalStackFrameFuel_stackGcMoveLoop_data_branch [NeZero width]
           (config.wordBits - config.lenSize)) =
       some (.normal afterShift) := by
     simp [afterShift, afterLength, stackGcShiftImmediate,
-      stackGcAddImmediate, stackGcConst, stackSeq, evalStackFrameFuel,
+      stackGcConst, stackSeq, evalStackFrameFuel,
       evalStackFrameFuelWithCode, stackFrameBasic, stackFrameWriteRegister,
-      wordStackMachineWriteRegister, wordStackMachineShift, hscratch7,
+      wordStackMachineWriteRegister, wordStackMachineShift, 
       Ne.symm hscratch7]
   have hadd :
       evalStackFrameFuel (fuel + 12) afterShift
@@ -3452,7 +3452,7 @@ theorem evalStackFrameFuel_stackGcMoveLoop_data_branch [NeZero width]
       stackGcAddBytes, stackGcAddImmediate, stackGcConst, stackGcAdd,
       stackSeq, evalStackFrameFuel, evalStackFrameFuelWithCode,
       stackFrameBasic, stackFrameWriteRegister, wordStackMachineWriteRegister,
-      wordStackMachineBinOp, hscratch8, Ne.symm hscratch8]
+      wordStackMachineBinOp, Ne.symm hscratch8]
   have hrest := evalStackFrameFuel_seq_normal (fuel + 12) afterShift
     (stackGcMoveLoopCodePrefixState config state)
     (stackGcAddBytes config 8) (stackGcMoveListCode config) hadd
@@ -3995,10 +3995,10 @@ theorem evalStackFrameFuel_stackGcMoveList_immediate_body_with_nat_relation
         scan + config.bytesInWord := by
     simp [stackGcMoveListImmediateState, stackFrameWriteRegister,
       wordStackMachineWriteRegister, wordStackMachineWriteMemory,
-      wordStackMachineBinOp, haddress, hbytes, hnextBound,
+      wordStackMachineBinOp, haddress, 
       BitVec.toNat_add, BitVec.toNat_ofNat,
-      Nat.mod_eq_of_lt hnextBound, hscratch5, hscratch7, hscratch8,
-      Ne.symm hscratch5, Ne.symm hscratch7, Ne.symm hscratch8]
+      Nat.mod_eq_of_lt hnextBound, 
+      Ne.symm hscratch5, Ne.symm hscratch8]
   have hmemoryOut : stackGcMachineMemoryMatchesNat
       (stackGcMoveListImmediateState config state)
       (fun current => if current = scan then memory scan else memory current) := by
@@ -4007,8 +4007,8 @@ theorem evalStackFrameFuel_stackGcMoveList_immediate_body_with_nat_relation
     · subst target
       simp [stackGcMoveListImmediateState, stackFrameWriteRegister,
         wordStackMachineWriteRegister, wordStackMachineWriteMemory,
-        wordStackMachineBinOp, haddress, hmemoryAt, hscratch5,
-        hscratch7, hscratch8, Ne.symm hscratch5, Ne.symm hscratch7,
+        wordStackMachineBinOp, haddress, 
+        Ne.symm hscratch5, 
         Ne.symm hscratch8]
       simpa [haddress] using hmemoryAt
     · have htargetWord : BitVec.ofNat width target ≠
@@ -4028,10 +4028,10 @@ theorem evalStackFrameFuel_stackGcMoveList_immediate_body_with_nat_relation
           Nat.mod_eq_of_lt hscanBound] using hto
       simp [stackGcMoveListImmediateState, stackFrameWriteRegister,
         wordStackMachineWriteRegister, wordStackMachineWriteMemory,
-        wordStackMachineBinOp, haddress, htargetWord, htargetAddress,
+        wordStackMachineBinOp, haddress, htargetAddress,
         htargetOfNat,
-        hrelation.2 target htarget, hscratch5, hscratch7, hscratch8,
-        Ne.symm hscratch5, Ne.symm hscratch7, Ne.symm hscratch8]
+        hrelation.2 target htarget, 
+        Ne.symm hscratch5, Ne.symm hscratch8]
   exact ⟨heval, ⟨hscanOut, hmemoryOut⟩⟩
 
 theorem evalStackFrameFuel_stackGcMoveList_copy_body_with_nat_relation
@@ -4122,7 +4122,7 @@ theorem evalStackFrameFuel_stackGcMoveList_copy_body_with_nat_relation
           (stackGcMoveListAfterCount config state)).machine.registers 5 := by
     simp [stackGcMoveListCopyState, stackFrameWriteRegister,
       wordStackMachineWriteRegister, wordStackMachineWriteMemory,
-      hscratch5, hscratch8, Ne.symm hscratch5, Ne.symm hscratch8]
+      Ne.symm hscratch5, Ne.symm hscratch8]
   have hfinalMemory :
       (stackGcMoveListCopyState config state).machine.memory
           (BitVec.ofNat width scan) =
@@ -4130,12 +4130,12 @@ theorem evalStackFrameFuel_stackGcMoveList_copy_body_with_nat_relation
     simp only [stackGcMoveListCopyState]
     simp only [stackFrameWriteRegister, wordStackMachineWriteRegister,
       wordStackMachineWriteMemory, wordStackMachineBinOp, haddress,
-      hcopyAddress, hscratch0, hscratch1, hscratch2, hscratch3,
-      hscratch4, hscratch5, hscratch6, hscratch7, hscratch8,
-      Ne.symm hscratch0, Ne.symm hscratch1, Ne.symm hscratch2,
-      Ne.symm hscratch3, Ne.symm hscratch4, Ne.symm hscratch5,
-      Ne.symm hscratch6, Ne.symm hscratch7, Ne.symm hscratch8]
-    simp only [if_pos rfl, if_neg (show (5 : Nat) ≠ 8 by decide),
+      hcopyAddress, 
+      
+      
+      Ne.symm hscratch5,
+      Ne.symm hscratch8]
+    simp only [if_neg (show (5 : Nat) ≠ 8 by decide),
       if_neg (show ¬ False by decide)]
     rfl
   have hfinalValue :
@@ -4149,10 +4149,10 @@ theorem evalStackFrameFuel_stackGcMoveList_copy_body_with_nat_relation
     have hbytes : config.bytesInWord < 2 ^ width := by omega
     simp [stackGcMoveListCopyState, stackFrameWriteRegister,
       wordStackMachineWriteRegister, wordStackMachineWriteMemory,
-      wordStackMachineBinOp, haddress, hcopyAddress, hbytes, hnextBound,
+      wordStackMachineBinOp, haddress, hcopyAddress, 
       BitVec.toNat_add, BitVec.toNat_ofNat,
-      Nat.mod_eq_of_lt hnextBound, hscratch5, hscratch8,
-      Ne.symm hscratch5, Ne.symm hscratch8]
+      Nat.mod_eq_of_lt hnextBound, 
+      Ne.symm hscratch8]
   have hmemoryOut : ∀ target, target < 2 ^ width →
       ((stackGcMoveListCopyState config state).machine.memory
         (BitVec.ofNat width target)).toNat =
@@ -4162,7 +4162,7 @@ theorem evalStackFrameFuel_stackGcMoveList_copy_body_with_nat_relation
     by_cases htargetAddress : target = scan
     · subst target
       rw [hnat]
-      simp only [if_pos rfl]
+      simp only []
       exact hfinalValue
     · have htargetWord : BitVec.ofNat width target ≠
           state.machine.registers 8 := by
@@ -4180,15 +4180,15 @@ theorem evalStackFrameFuel_stackGcMoveList_copy_body_with_nat_relation
         simpa [BitVec.toNat_ofNat, Nat.mod_eq_of_lt htarget,
           Nat.mod_eq_of_lt hscanBound] using hto
       have hcopy := hcopyMemory target htarget htargetAddress
-      simp only [stackGcMoveListCopyState, stackFrameNormalMemoryNat,
+      simp only [stackGcMoveListCopyState, 
         stackFrameWriteRegister, wordStackMachineWriteRegister,
         wordStackMachineWriteMemory, wordStackMachineBinOp, haddress,
-        hcopyAddress, htargetWord, htargetOfNat, htargetAddress,
-        hscratch0, hscratch1, hscratch2, hscratch3, hscratch4,
-        hscratch5, hscratch6, hscratch7, hscratch8,
-        Ne.symm hscratch0, Ne.symm hscratch1, Ne.symm hscratch2,
-        Ne.symm hscratch3, Ne.symm hscratch4, Ne.symm hscratch5,
-        Ne.symm hscratch6, Ne.symm hscratch7, Ne.symm hscratch8]
+        hcopyAddress, htargetOfNat, 
+        
+        
+        
+        
+        Ne.symm hscratch8]
       exact hcopy
   exact ⟨heval, hscanOut, hmemoryOut⟩
 
@@ -4233,13 +4233,13 @@ theorem evalStackFrameFuel_stackGcMoveCopySuffixAfterMemcpy [NeZero width]
   simp [stackGcMoveCopySuffixAfterMemcpy,
     stackGcMoveCopySuffixStateAfterMemcpy, evalStackFrameFuel,
     evalStackFrameFuelWithCode, stackSeq, stackGcMove, stackGcShiftImmediate,
-    stackGcAddImmediate, stackGcAddBytes, stackGcSubImmediate,
+    
     stackGcConst, stackGcAdd, stackGcSub, stackGcClearTop, stackFrameBasic,
     stackFrameWriteRegister, wordStackMachineWriteRegister,
     wordStackMachineWriteMemory, wordStackMachineBinOp, wordStackMachineShift,
-    hdomain, hscratch0, hscratch1, hscratch2, hscratch3, hscratch4,
-    hscratch5, hscratch6, Ne.symm hscratch0, Ne.symm hscratch1,
-    Ne.symm hscratch2, Ne.symm hscratch3, Ne.symm hscratch4,
+    hdomain, 
+    Ne.symm hscratch0, Ne.symm hscratch1,
+    Ne.symm hscratch2, Ne.symm hscratch4,
     Ne.symm hscratch5, Ne.symm hscratch6]
 
 theorem evalStackFrameFuel_stackGcMoveCopySuffix_iter [NeZero width]
@@ -4304,7 +4304,7 @@ theorem evalStackFrameFuel_stackGcMoveCode_copy_iter [NeZero width]
       stackMachineCondition state.machine .test 5 (.imm 1) = false := by
     change (state.machine.registers 5 &&& BitVec.ofNat width 1 == 0) = false
     cases hbool : (state.machine.registers 5 &&& BitVec.ofNat width 1 == 0) with
-    | false => simp [hbool]
+    | false => simp []
     | true =>
         have hzero : state.machine.registers 5 &&& BitVec.ofNat width 1 =
             BitVec.ofNat width 0 := by
@@ -4335,7 +4335,7 @@ theorem evalStackFrameFuel_stackGcMoveCode_copy_iter [NeZero width]
     cases hbool :
         ((stackGcMoveAddressState config state).machine.registers 1 &&&
           BitVec.ofNat width 3 == 0) with
-    | false => simp [hbool]
+    | false => simp []
     | true =>
         have hzero :
             (stackGcMoveAddressState config state).machine.registers 1 &&&
@@ -4391,9 +4391,9 @@ theorem evalStackFrameFuel_stackGcMoveCode_copy_iter [NeZero width]
           (stackGcMoveAddressState config state)))) := by
     simpa [Nat.add_assoc] using hcopySuffix'
   simp [stackGcMoveCode, stackSeq, evalStackFrameFuel,
-    evalStackFrameFuelWithCode, houter, hinner, hprefix, hprefix',
-    hprefix'', hcopyPrefix, hcopyPrefix', hcopyPrefix'', hcopySuffix,
-    hcopySuffix', hcopySuffix'', Nat.add_assoc]
+    evalStackFrameFuelWithCode, houter, hinner, 
+    hprefix'', hcopyPrefix'', 
+    hcopySuffix'', Nat.add_assoc]
 
 theorem evalStackFrameFuel_stackGcMoveCopySuffixAfterMemcpy_with_nat_relation
     [NeZero width] (config : StackGcConfig) (fuel words : Nat)
@@ -4455,10 +4455,10 @@ theorem evalStackFrameFuel_stackGcMoveCopySuffixAfterMemcpy_with_nat_relation
         else state.machine.memory address := by
     simp [stackGcMoveCopySuffixStateAfterMemcpy, stackFrameWriteRegister,
       wordStackMachineWriteRegister, wordStackMachineWriteMemory,
-      wordStackMachineBinOp, wordStackMachineShift, hscratch0, hscratch1,
-      hscratch2, hscratch3, hscratch4, hscratch5, hscratch6,
+      wordStackMachineBinOp, wordStackMachineShift, 
+      
       Ne.symm hscratch0, Ne.symm hscratch1, Ne.symm hscratch2,
-      Ne.symm hscratch3, Ne.symm hscratch4, Ne.symm hscratch5,
+      Ne.symm hscratch4, Ne.symm hscratch5,
       Ne.symm hscratch6]
   refine ⟨heval, ?_, ?_, ?_, ?_⟩
   · rw [stackGcNatMoveCopySuffix_nextAddress]
@@ -4469,7 +4469,7 @@ theorem evalStackFrameFuel_stackGcMoveCopySuffixAfterMemcpy_with_nat_relation
     by_cases htargetAddress : target = source
     · subst target
       rw [hfinalMemory, hwriteAddress]
-      simp only [if_pos rfl]
+      simp only []
       simpa [stackGcNatMoveCopySuffix] using hwriteValue
     · have htargetWord : BitVec.ofNat width target ≠
           (stackGcMoveCopySuffixStateAfterMemcpy config state).machine.registers 2 := by
@@ -4751,10 +4751,10 @@ theorem evalStackFrameFuel_stackGcMoveList_copy_body_iter [NeZero width]
   have hsub : evalStackFrameFuel (fuel + words + 42) afterLoad
       (stackGcSubOne config 7) = some (.normal afterCount) := by
     simp [afterCount, afterLoad, stackGcMoveListAfterCount,
-      stackGcSubOne, stackGcSubImmediate, stackGcAddImmediate,
+      stackGcSubOne, stackGcSubImmediate, 
       stackGcConst, stackGcSub, stackSeq, evalStackFrameFuel,
       evalStackFrameFuelWithCode, stackFrameBasic, stackFrameWriteRegister,
-      wordStackMachineWriteRegister, wordStackMachineBinOp, hscratch7,
+      wordStackMachineWriteRegister, wordStackMachineBinOp, 
       Ne.symm hscratch7]
   have hmove := evalStackFrameFuel_stackGcMoveCode_copy_iter config
     (fuel + 12) words afterCount hscratch0 hscratch1 hscratch2 hscratch3
@@ -4776,7 +4776,7 @@ theorem evalStackFrameFuel_stackGcMoveList_copy_body_iter [NeZero width]
       stackSeq, evalStackFrameFuel, evalStackFrameFuelWithCode, stackFrameBasic,
       stackFrameWriteRegister, wordStackMachineWriteRegister,
       wordStackMachineBinOp, afterFinal, afterScratch, afterStore,
-      hscratch8, Ne.symm hscratch8]
+      Ne.symm hscratch8]
   have hload := evalStackFrameFuel_memLoad (fuel + words + 43)
     state 5 8 hdomain
   have hbody : evalStackFrameFuel (fuel + words + 44) state
@@ -4986,10 +4986,10 @@ theorem evalStackFrameFuel_stackGcMoveList_copy_body_iter_with_nat_relation
     have hbytes : config.bytesInWord < 2 ^ width := by omega
     simp [afterFinal, afterScratch, afterStore,
       stackFrameWriteRegister, wordStackMachineWriteRegister,
-      wordStackMachineWriteMemory, wordStackMachineBinOp, haddress,
-      hmoveAddress, hbytes, hnextBound, BitVec.toNat_add,
-      BitVec.toNat_ofNat, Nat.mod_eq_of_lt hnextBound, hscratch5,
-      hscratch7, hscratch8, Ne.symm hscratch5, Ne.symm hscratch7,
+      wordStackMachineWriteMemory, wordStackMachineBinOp, 
+      hmoveAddress, BitVec.toNat_add,
+      BitVec.toNat_ofNat, Nat.mod_eq_of_lt hnextBound, 
+      
       Ne.symm hscratch8, stackGcNatMoveListCopyBody]
   · change (afterFinal.machine.registers 4).toNat =
       (stackGcNatMoveListCopyBody config words scan source destination index value
@@ -5037,13 +5037,13 @@ theorem evalStackFrameFuel_stackGcMoveList_copy_body_iter_with_nat_relation
       simp [afterFinal, afterScratch, afterStore, afterMove,
         stackGcNatMoveListCopyBody,
         stackFrameWriteRegister, wordStackMachineWriteRegister,
-        wordStackMachineWriteMemory, wordStackMachineBinOp, haddress,
-        hcopyAddress, hmoveAddress, hvalue', hscratch0,
-        hscratch1, hscratch2, hscratch3, hscratch4, hscratch5,
-        hscratch6, hscratch7, hscratch8, Ne.symm hscratch0,
-        Ne.symm hscratch1, Ne.symm hscratch2, Ne.symm hscratch3,
-        Ne.symm hscratch4, Ne.symm hscratch5, Ne.symm hscratch6,
-        Ne.symm hscratch7, Ne.symm hscratch8]
+        wordStackMachineWriteMemory, wordStackMachineBinOp, 
+        hmoveAddress, hvalue', 
+        
+        
+        
+        
+        Ne.symm hscratch8]
     · have hcopy := hmove.2.2.2.2 target htarget
       have htargetWord : BitVec.ofNat width target ≠ afterMove.machine.registers 8 := by
         rw [hcopyAddress, haddress]
@@ -5055,13 +5055,13 @@ theorem evalStackFrameFuel_stackGcMoveList_copy_body_iter_with_nat_relation
       simp [afterFinal, afterScratch, afterStore, afterMove,
         stackGcNatMoveListCopyBody,
         stackFrameWriteRegister, wordStackMachineWriteRegister,
-        wordStackMachineWriteMemory, wordStackMachineBinOp, haddress,
-        hcopyAddress, htargetWord, htargetScan, hcopy, hscratch0,
-        hscratch1, hscratch2, hscratch3, hscratch4, hscratch5,
-        hscratch6, hscratch7, hscratch8, Ne.symm hscratch0,
-        Ne.symm hscratch1, Ne.symm hscratch2, Ne.symm hscratch3,
-        Ne.symm hscratch4, Ne.symm hscratch5, Ne.symm hscratch6,
-        Ne.symm hscratch7, Ne.symm hscratch8]
+        wordStackMachineWriteMemory, wordStackMachineBinOp, 
+        htargetWord, htargetScan, hcopy, 
+        
+        
+        
+        
+        Ne.symm hscratch8]
 
 theorem evalStackFrameFuel_stackGcMoveLoop_done_with_nat_relation
     [NeZero width] (config : StackGcConfig) (fuel : Nat)
@@ -5204,17 +5204,17 @@ theorem stackGcMoveLoopCodeStepState_preserves_nat_state_relation
       (stackGcMoveLoopCodeStepState config state).machine.registers 3 =
         state.machine.registers 3 := by
     simp [stackGcMoveLoopCodeStepState, stackFrameWriteRegister,
-      wordStackMachineWriteRegister, wordStackMachineWriteMemory,
-      wordStackMachineBinOp, hscratch3, hscratch7, hscratch8,
-      hscratch4, Ne.symm hscratch3, Ne.symm hscratch4,
-      Ne.symm hscratch7, Ne.symm hscratch8]
+      wordStackMachineWriteRegister, 
+      wordStackMachineBinOp, 
+      Ne.symm hscratch3, 
+      Ne.symm hscratch8]
   have hindexOut :
       (stackGcMoveLoopCodeStepState config state).machine.registers 4 =
         state.machine.registers 4 := by
     simp [stackGcMoveLoopCodeStepState, stackFrameWriteRegister,
-      wordStackMachineWriteRegister, wordStackMachineWriteMemory,
-      wordStackMachineBinOp, hscratch3, hscratch4, hscratch7, hscratch8,
-      Ne.symm hscratch3, Ne.symm hscratch4, Ne.symm hscratch7,
+      wordStackMachineWriteRegister, 
+      wordStackMachineBinOp, 
+      Ne.symm hscratch4, 
       Ne.symm hscratch8]
   exact ⟨hbaseOut, hdestinationOut.trans hdestination,
     hindexOut.trans hindex⟩
