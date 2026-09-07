@@ -343,7 +343,7 @@ theorem evalLoopProg_one_local_projection [BEq α] [OfNat α 0] [OfNat α 1]
       cases hvalue : evalLoopExp state value with
       | none => simp [evalLoopProg, hvalue]
       | some value =>
-          simp [evalLoopProg, loopResultState, loopNoLocalWrites,
+          simp [evalLoopProg, loopResultState, 
             updateLoopLocal, hname, hvalue]
   | arith operation =>
       cases operation with
@@ -360,7 +360,7 @@ theorem evalLoopProg_one_local_projection [BEq α] [OfNat α 0] [OfNat α 1]
                 | some rightValue =>
                     simp [evalLoopProg, loopResultState,
                       updateLoopLocal, hname, hleft, hright]
-          · simp [evalLoopProg, loopNoLocalWrites, heq]
+          · simp [evalLoopProg, heq]
       | longDiv destinationLeft destinationRight sourceLeft sourceRight quotient =>
           simp [evalLoopProg]
       | div destination dividend divisor =>
@@ -385,7 +385,7 @@ theorem evalLoopProg_one_local_projection [BEq α] [OfNat α 0] [OfNat α 1]
           cases hvalue : state.memory addressValue with
           | none => simp [evalLoopProg, haddress, hvalue]
           | some value =>
-              simp [evalLoopProg, loopResultState, loopNoLocalWrites,
+              simp [evalLoopProg, loopResultState, 
                 updateLoopLocal, hname, haddress, hvalue]
   | loadByte address destination =>
       have hname : name ≠ destination := by
@@ -396,7 +396,7 @@ theorem evalLoopProg_one_local_projection [BEq α] [OfNat α 0] [OfNat α 1]
           cases hvalue : state.memory addressValue with
           | none => simp [evalLoopProg, haddress, hvalue]
           | some value =>
-              simp [evalLoopProg, loopResultState, loopNoLocalWrites,
+              simp [evalLoopProg, loopResultState, 
                 updateLoopLocal, hname, haddress, hvalue]
   | seq first second =>
       simp [evalLoopProg]
@@ -817,17 +817,17 @@ theorem evalLoopProg_one_global_projection [BEq α] [OfNat α 0] [OfNat α 1]
                   · simp [evalLoopProg, loopResultState, hdividend, hdivisor, hzero]
   | ite operator condition right thenBranch elseBranch live =>
       cases right <;>
-        simp [evalLoopProg, loopNoGlobalWrites, loopResultState, Function.comp_def]
+        simp [evalLoopProg, loopResultState]
   | loop liveIn body liveOut =>
-      simp [evalLoopProg, evalLoopRepeat, loopNoGlobalWrites, loopResultState,
-        Function.comp_def]
+      simp [evalLoopProg, evalLoopRepeat, loopResultState,
+        ]
   | shMem operator name address =>
       cases operator <;>
-        simp [evalLoopProg, loopNoGlobalWrites, loopResultState, Function.comp_def]
+        simp [evalLoopProg, loopResultState, Function.comp_def]
   | setGlobal address value =>
       simp [loopNoGlobalWrites] at hprogram
   | _ =>
-      simp [evalLoopProg, loopNoGlobalWrites, loopResultState, Function.comp_def]
+      simp [evalLoopProg, loopResultState, Function.comp_def]
 
 theorem evalLoopProg_one_memory_projection [BEq α] [OfNat α 0] [OfNat α 1]
     [Add α] [Mul α] [Div α] [Sub α] [AndOp α] [OrOp α] [HXor α α α]
@@ -862,12 +862,12 @@ theorem evalLoopProg_one_memory_projection [BEq α] [OfNat α 0] [OfNat α 1]
                   by_cases hzero : (divisorValue == 0) = true
                   · simp [evalLoopProg, loopResultState, hdividend, hdivisor, hzero]
                   · simp [evalLoopProg, loopResultState, hdividend, hdivisor, hzero]
-      | _ => simp [evalLoopProg, loopResultState, Function.comp_def]
+      | _ => simp [evalLoopProg, loopResultState]
   | ite operator condition right thenBranch elseBranch live =>
       cases right <;>
-        simp [evalLoopProg, loopResultState, Function.comp_def]
+        simp [evalLoopProg, loopResultState]
   | loop liveIn body liveOut =>
-      simp [evalLoopProg, evalLoopRepeat, loopResultState, Function.comp_def]
+      simp [evalLoopProg, evalLoopRepeat, loopResultState]
   | store address value =>
       simp [loopNoMemoryWrites] at hprogram
   | store32 address value =>
@@ -877,12 +877,12 @@ theorem evalLoopProg_one_memory_projection [BEq α] [OfNat α 0] [OfNat α 1]
   | shMem operator name address =>
       cases operator with
       | load | load8 | load16 | load32 =>
-          simp [evalLoopProg, loopNoMemoryWrites, loopResultState,
+          simp [evalLoopProg, loopResultState,
             Function.comp_def]
       | store | store8 | store16 | store32 =>
           simp [loopNoMemoryWrites] at hprogram
   | _ =>
-      simp [evalLoopProg, loopNoMemoryWrites, loopResultState, Function.comp_def]
+      simp [evalLoopProg, loopResultState, Function.comp_def]
 
 theorem evalLoopProg_memory_projection [BEq α] [OfNat α 0] [OfNat α 1]
     [Add α] [Mul α] [Div α] [Sub α] [AndOp α] [OrOp α] [HXor α α α]
@@ -1077,7 +1077,7 @@ theorem evalLoopProg_memory_projection [BEq α] [OfNat α 0] [OfNat α 1]
               | store | store8 | store16 | store32 =>
                   simp [loopNoMemoryWrites] at hprogram
           | _ =>
-              simp [evalLoopProg, loopNoMemoryWrites, loopResultState,
+              simp [evalLoopProg, loopResultState,
                 Function.comp_def]
 
 theorem evalLoopProg_result_memory [BEq α] [OfNat α 0] [OfNat α 1]
@@ -1256,7 +1256,7 @@ theorem evalLoopProg_global_projection [BEq α] [OfNat α 0] [OfNat α 1]
                                   have hbranch := ih fuel (by omega) state thenBranch hbranches.1
                                   simpa [evalLoopProg, hleft, hright, hchoose] using hbranch
           | _ =>
-              simp [evalLoopProg, loopNoGlobalWrites, loopResultState, Function.comp_def]
+              simp [evalLoopProg, loopResultState, Function.comp_def]
 
 theorem evalLoopProg_result_globals [BEq α] [OfNat α 0] [OfNat α 1]
     [Add α] [Mul α] [Div α] [Sub α] [AndOp α] [OrOp α] [HXor α α α]
