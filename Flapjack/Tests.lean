@@ -7,6 +7,7 @@ import Flapjack.Test.SpillAllocation
 import Flapjack.Test.CorrectnessBackend
 import Flapjack.Test.CorrectnessCondition
 import Flapjack.Test.CorrectnessCode
+import Flapjack.Test.CorrectnessConditional
 
 /-!
 # Flapjack regression tests
