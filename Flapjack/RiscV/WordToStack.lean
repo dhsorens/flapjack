@@ -1,5 +1,6 @@
 import Flapjack.Stack
 import Flapjack.RiscV.Allocator
+import Flapjack.RiscV.RegAlloc
 
 /-!
 # Word-to-Stack spill moves
@@ -2256,6 +2257,40 @@ def wordToStackFunctionWithSpillStateAndLocationBitmaps [NeZero width]
   wordToStackFunctionWithParametersAndLocationBitmaps
     { config with locations := allocation.locations }
     parameters registerCount bitmapRegister frameSlots storeConstsStub state program
+
+/-! Graph allocation produces the source-to-location map from the renamed
+    program's graph colours.  This adapter keeps the renamed names intact and
+    feeds that map directly to the location-aware StackLang lowering. -/
+def wordToStackFunctionWithGraphAllocationAndLocationBitmaps [NeZero width]
+    (config : WordStackConfig) (parameters : List Nat)
+    (allocation : WordGraphAllocation) (colours stackStart : Nat)
+    (registerCount bitmapRegister frameSlots : Nat)
+    (storeConstsStub : Option Nat) (state : WordStackBitmapState)
+    (program : WordProg (Word width)) :
+    Option (StackProg Nat × WordStackBitmapState) :=
+  wordToStackFunctionWithParametersAndLocationBitmaps
+    { config with locations := wordGraphLocations allocation colours stackStart }
+    parameters registerCount bitmapRegister frameSlots storeConstsStub state program
+
+/-! Compose CakeML-shaped SSA/graph allocation with the actual location-aware
+    StackLang entry point.  The allocation witness and renamed metadata are
+    retained in the result so later linking and correctness layers can use
+    the same graph proof that justified the locations. -/
+def wordAllocateGraphFunctionWithStackOnlyToStack [NeZero width]
+    (config : WordStackConfig) (parameters : List Nat)
+    (program : WordProg (Word width)) (fixedSources : List Nat)
+    (colours stackStart : Nat) (registerCount bitmapRegister frameSlots : Nat)
+    (storeConstsStub : Option Nat) (state : WordStackBitmapState) :
+    Option (WordSsaState × List Nat × WordGraphAllocation ×
+      StackProg Nat × WordStackBitmapState) := do
+  let (ssaState, renamedParameters, allocation, renamedProgram) ←
+    wordAllocateGraphFunctionWithStackOnlyRenamed parameters program fixedSources
+      colours stackStart
+  let (stackProgram, state) ←
+    wordToStackFunctionWithGraphAllocationAndLocationBitmaps config
+      renamedParameters allocation colours stackStart registerCount bitmapRegister
+      frameSlots storeConstsStub state renamedProgram
+  pure (ssaState, renamedParameters, allocation, stackProgram, state)
 
 /-! Location map used by the currently register-coloured pipeline fragment.
     The spill-aware entry point above accepts the allocator-produced map

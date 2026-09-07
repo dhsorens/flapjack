@@ -19,4 +19,17 @@ example [NeZero width] (config : WordStackConfig) (parameters : List Nat)
         parameters registerCount bitmapRegister frameSlots storeConstsStub state program := by
   rfl
 
+example [NeZero width] (config : WordStackConfig) (parameters : List Nat)
+    (allocation : WordGraphAllocation) (colours stackStart : Nat)
+    (registerCount bitmapRegister frameSlots : Nat)
+    (storeConstsStub : Option Nat) (state : WordStackBitmapState)
+    (program : WordProg (Word width)) :
+    wordToStackFunctionWithGraphAllocationAndLocationBitmaps config parameters
+        allocation colours stackStart registerCount bitmapRegister frameSlots
+        storeConstsStub state program =
+      wordToStackFunctionWithParametersAndLocationBitmaps
+        { config with locations := wordGraphLocations allocation colours stackStart }
+        parameters registerCount bitmapRegister frameSlots storeConstsStub state program := by
+  rfl
+
 end Flapjack.RiscV
