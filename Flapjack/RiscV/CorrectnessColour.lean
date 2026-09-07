@@ -620,6 +620,159 @@ theorem evalWordProg_assignBinaryVarConst_applyColour
         wordColourStateRelation_executeImmediateBinary colour valid injective colourZero
           source target hrelation .xor name sourceName value hname hsource⟩
 
+theorem wordColourStateRelation_executeShift
+    (colour : Nat → Nat) (valid : wordColourValid colour)
+    (injective : Function.Injective colour) (colourZero : colour 0 = 0)
+    (source target : State width) [NeZero width]
+    (hrelation : WordColourStateRelation colour source target)
+    (operator : Shift) (name left right : Nat) (hoperator : operator ≠ .ror)
+    (hname : name < 32) (hleft : left < 32) (hright : right < 32) :
+    WordColourStateRelation colour
+      (execute source (match operator with
+        | .lsl => .sll ⟨name, hname⟩ ⟨left, hleft⟩ ⟨right, hright⟩
+        | .lsr => .srl ⟨name, hname⟩ ⟨left, hleft⟩ ⟨right, hright⟩
+        | .asr => .sra ⟨name, hname⟩ ⟨left, hleft⟩ ⟨right, hright⟩
+        | .ror => .sll ⟨name, hname⟩ ⟨left, hleft⟩ ⟨right, hright⟩))
+      (execute target (match operator with
+        | .lsl => .sll ⟨colour name, valid name hname⟩
+            ⟨colour left, valid left hleft⟩ ⟨colour right, valid right hright⟩
+        | .lsr => .srl ⟨colour name, valid name hname⟩
+            ⟨colour left, valid left hleft⟩ ⟨colour right, valid right hright⟩
+        | .asr => .sra ⟨colour name, valid name hname⟩
+            ⟨colour left, valid left hleft⟩ ⟨colour right, valid right hright⟩
+        | .ror => .sll ⟨colour name, valid name hname⟩
+            ⟨colour left, valid left hleft⟩ ⟨colour right, valid right hright⟩)) := by
+  cases operator with
+  | lsl =>
+      have hvalue :
+          BitVec.shiftLeft (readRegister source ⟨left, hleft⟩)
+              (shiftAmount (readRegister source ⟨right, hright⟩)) =
+            BitVec.shiftLeft (readRegister target ⟨colour left, valid left hleft⟩)
+              (shiftAmount (readRegister target ⟨colour right, valid right hright⟩)) := by
+        rw [hrelation.register left hleft (valid left hleft),
+          hrelation.register right hright (valid right hright)]
+      have hnext := wordColourStateRelation_nextPc colour valid source target hrelation
+      simpa [execute] using
+        (wordColourStateRelation_writeRegister colour valid injective colourZero
+          {source with pc := nextPc source} {target with pc := nextPc target}
+          hnext name hname
+          (BitVec.shiftLeft (readRegister source ⟨left, hleft⟩)
+            (shiftAmount (readRegister source ⟨right, hright⟩)))
+          (BitVec.shiftLeft (readRegister target ⟨colour left, valid left hleft⟩)
+            (shiftAmount (readRegister target ⟨colour right, valid right hright⟩))) hvalue)
+  | lsr =>
+      have hvalue :
+          BitVec.ushiftRight (readRegister source ⟨left, hleft⟩)
+              (shiftAmount (readRegister source ⟨right, hright⟩)) =
+            BitVec.ushiftRight (readRegister target ⟨colour left, valid left hleft⟩)
+              (shiftAmount (readRegister target ⟨colour right, valid right hright⟩)) := by
+        rw [hrelation.register left hleft (valid left hleft),
+          hrelation.register right hright (valid right hright)]
+      have hnext := wordColourStateRelation_nextPc colour valid source target hrelation
+      simpa [execute] using
+        (wordColourStateRelation_writeRegister colour valid injective colourZero
+          {source with pc := nextPc source} {target with pc := nextPc target}
+          hnext name hname
+          (BitVec.ushiftRight (readRegister source ⟨left, hleft⟩)
+            (shiftAmount (readRegister source ⟨right, hright⟩)))
+          (BitVec.ushiftRight (readRegister target ⟨colour left, valid left hleft⟩)
+            (shiftAmount (readRegister target ⟨colour right, valid right hright⟩))) hvalue)
+  | asr =>
+      have hvalue :
+          BitVec.sshiftRight (readRegister source ⟨left, hleft⟩)
+              (shiftAmount (readRegister source ⟨right, hright⟩)) =
+            BitVec.sshiftRight (readRegister target ⟨colour left, valid left hleft⟩)
+              (shiftAmount (readRegister target ⟨colour right, valid right hright⟩)) := by
+        rw [hrelation.register left hleft (valid left hleft),
+          hrelation.register right hright (valid right hright)]
+      have hnext := wordColourStateRelation_nextPc colour valid source target hrelation
+      simpa [execute] using
+        (wordColourStateRelation_writeRegister colour valid injective colourZero
+          {source with pc := nextPc source} {target with pc := nextPc target}
+          hnext name hname
+          (BitVec.sshiftRight (readRegister source ⟨left, hleft⟩)
+            (shiftAmount (readRegister source ⟨right, hright⟩)))
+          (BitVec.sshiftRight (readRegister target ⟨colour left, valid left hleft⟩)
+            (shiftAmount (readRegister target ⟨colour right, valid right hright⟩))) hvalue)
+  | ror => exact (hoperator rfl).elim
+
+theorem evalWordProg_assignShiftVarVar_applyColour
+    (colour : Nat → Nat) (valid : wordColourValid colour)
+    (injective : Function.Injective colour) (colourZero : colour 0 = 0)
+    (source target : State width) [NeZero width]
+    (hrelation : WordColourStateRelation colour source target)
+    (operator : Shift) (name left right : Nat) (hoperator : operator ≠ .ror)
+    (hname : name < 32) (hleft : left < 32) (hright : right < 32) :
+    ∃ source' target',
+      evalWordProg source
+          (.assign name (.shift operator (.var left) (.var right))) = some source' ∧
+      evalWordProg target
+          (wordApplyColour colour
+            (.assign name (.shift operator (.var left) (.var right)))) = some target' ∧
+      WordColourStateRelation colour source' target' := by
+  cases operator with
+  | lsl =>
+      have hsourceEval :
+          evalWordProg source (.assign name (.shift .lsl (.var left) (.var right))) =
+            some (execute source (.sll ⟨name, hname⟩ ⟨left, hleft⟩ ⟨right, hright⟩)) := by
+        simp [evalWordProg, wordExpToInstructions, wordExpToInstruction,
+          registerOfNat, hname, hleft, hright, executeInstructions]
+      have htargetEval :
+          evalWordProg target
+              (wordApplyColour colour
+                (.assign name (.shift .lsl (.var left) (.var right)))) =
+            some (execute target
+              (.sll ⟨colour name, valid name hname⟩
+                ⟨colour left, valid left hleft⟩ ⟨colour right, valid right hright⟩)) := by
+        simp [evalWordProg, wordApplyColour, wordApplyColourExp,
+          wordExpToInstructions, wordExpToInstruction, registerOfNat,
+          hname, hleft, hright, valid name hname, valid left hleft,
+          valid right hright, executeInstructions]
+      exact ⟨_, _, hsourceEval, htargetEval,
+        wordColourStateRelation_executeShift colour valid injective colourZero
+          source target hrelation .lsl name left right hoperator hname hleft hright⟩
+  | lsr =>
+      have hsourceEval :
+          evalWordProg source (.assign name (.shift .lsr (.var left) (.var right))) =
+            some (execute source (.srl ⟨name, hname⟩ ⟨left, hleft⟩ ⟨right, hright⟩)) := by
+        simp [evalWordProg, wordExpToInstructions, wordExpToInstruction,
+          registerOfNat, hname, hleft, hright, executeInstructions]
+      have htargetEval :
+          evalWordProg target
+              (wordApplyColour colour
+                (.assign name (.shift .lsr (.var left) (.var right)))) =
+            some (execute target
+              (.srl ⟨colour name, valid name hname⟩
+                ⟨colour left, valid left hleft⟩ ⟨colour right, valid right hright⟩)) := by
+        simp [evalWordProg, wordApplyColour, wordApplyColourExp,
+          wordExpToInstructions, wordExpToInstruction, registerOfNat,
+          hname, hleft, hright, valid name hname, valid left hleft,
+          valid right hright, executeInstructions]
+      exact ⟨_, _, hsourceEval, htargetEval,
+        wordColourStateRelation_executeShift colour valid injective colourZero
+          source target hrelation .lsr name left right hoperator hname hleft hright⟩
+  | asr =>
+      have hsourceEval :
+          evalWordProg source (.assign name (.shift .asr (.var left) (.var right))) =
+            some (execute source (.sra ⟨name, hname⟩ ⟨left, hleft⟩ ⟨right, hright⟩)) := by
+        simp [evalWordProg, wordExpToInstructions, wordExpToInstruction,
+          registerOfNat, hname, hleft, hright, executeInstructions]
+      have htargetEval :
+          evalWordProg target
+              (wordApplyColour colour
+                (.assign name (.shift .asr (.var left) (.var right)))) =
+            some (execute target
+              (.sra ⟨colour name, valid name hname⟩
+                ⟨colour left, valid left hleft⟩ ⟨colour right, valid right hright⟩)) := by
+        simp [evalWordProg, wordApplyColour, wordApplyColourExp,
+          wordExpToInstructions, wordExpToInstruction, registerOfNat,
+          hname, hleft, hright, valid name hname, valid left hleft,
+          valid right hright, executeInstructions]
+      exact ⟨_, _, hsourceEval, htargetEval,
+        wordColourStateRelation_executeShift colour valid injective colourZero
+          source target hrelation .asr name left right hoperator hname hleft hright⟩
+  | ror => exact (hoperator rfl).elim
+
 inductive WordVarStraightLine (width : Nat) : WordProg (Word width) → Prop where
   | skip : WordVarStraightLine width .skip
   | assign (name source : Nat) (hname : name < 32) (hsource : source < 32) :
@@ -632,6 +785,9 @@ inductive WordVarStraightLine (width : Nat) : WordProg (Word width) → Prop whe
   | assignImmediate (operator : BinOp) (name source : Nat) (value : Word width)
       (hname : name < 32) (hsource : source < 32) :
       WordVarStraightLine width (.assign name (.op operator [.var source, .const value]))
+  | assignShift (operator : Shift) (name left right : Nat) (hoperator : operator ≠ .ror)
+      (hname : name < 32) (hleft : left < 32) (hright : right < 32) :
+      WordVarStraightLine width (.assign name (.shift operator (.var left) (.var right)))
   | seq {first second : WordProg (Word width)} :
       WordVarStraightLine width first → WordVarStraightLine width second →
       WordVarStraightLine width (.seq first second)
@@ -662,6 +818,9 @@ theorem evalWordProg_wordVarStraightLine_applyColour
   | assignImmediate operator name sourceName value hname hsource =>
       exact evalWordProg_assignBinaryVarConst_applyColour colour valid injective colourZero
         source target hrelation operator name sourceName value hname hsource
+  | assignShift operator name left right hoperator hname hleft hright =>
+      exact evalWordProg_assignShiftVarVar_applyColour colour valid injective colourZero
+        source target hrelation operator name left right hoperator hname hleft hright
   | @seq first second hfirst hsecond ihFirst ihSecond =>
       rcases ihFirst source target hrelation with
         ⟨firstSource, firstTarget, hfirstSource, hfirstTarget, hfirstRelation⟩
