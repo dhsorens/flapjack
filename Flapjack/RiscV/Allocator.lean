@@ -2390,6 +2390,42 @@ theorem wordGreedyAllocateWithSpillsAndPreferences_maps_names
           · simpa [wordGreedyAllocateWithSpillsAndPreferences, forbidden,
               candidates, allocated, havailable] using ih allocated name htail
 
+theorem wordAllocateVarsWithFixedSources_maps_slots (slots : List Nat)
+    (edges preferences : List (Nat × Nat)) (fixedSources : List Nat)
+    (state : WordSpillState)
+    (hstate : wordAllocateVarsWithFixedSources slots edges preferences
+      fixedSources = some state) :
+    ∀ name, name ∈ slots.eraseDups →
+      ∃ location, lookupNatInfo name state.locations = some location := by
+  let initial : WordSpillState :=
+    { locations := wordFixedSourceLocations fixedSources, nextSpill := 0 }
+  let names := slots.eraseDups.filter (fun candidate => candidate ∉ fixedSources)
+  let allocated := wordGreedyAllocateWithSpillsAndPreferences names
+    edges preferences initial
+  have hstate' :
+      (if wordSpillAllocationRespectsClashes edges allocated.locations = true then
+          some allocated else none) = some state := by
+    simpa [wordAllocateVarsWithFixedSources, initial, names, allocated] using hstate
+  split at hstate'
+  · have heq : allocated = state := Option.some.inj hstate'
+    subst state
+    intro name hslot
+    by_cases hfixed : name ∈ fixedSources
+    · have hnot : name ∉ names := by
+        simp [names, hfixed]
+      refine ⟨.register name, ?_⟩
+      calc
+        lookupNatInfo name allocated.locations = lookupNatInfo name initial.locations :=
+          wordGreedyAllocateWithSpillsAndPreferences_preserves_lookup
+            names edges preferences initial name hnot
+        _ = some (.register name) :=
+          lookupNatInfo_wordFixedSourceLocations_mem fixedSources name hfixed
+    · have hname : name ∈ names := by
+        simp [names, hslot, hfixed]
+      exact wordGreedyAllocateWithSpillsAndPreferences_maps_names
+        names edges preferences initial name hname
+  · contradiction
+
 theorem wordAllocateVarsWithSpillsAndPreferences_maps_slots (slots : List Nat)
     (edges preferences : List (Nat × Nat)) (state : WordSpillState)
     (hstate : wordAllocateVarsWithSpillsAndPreferences slots edges preferences =
@@ -2548,6 +2584,54 @@ def wordAllocateSsaFunctionWithEntryAndClashTreeWithSpillsAndPreferencesFixed
         some (state, renamedParameters, program, allocation)
       else
         none
+
+theorem wordAllocateSsaFunctionWithEntryAndClashTreeWithSpillsAndPreferencesFixed_preserves_parameters
+    (parameters : List Nat) (program : WordProg α)
+    (state : WordSsaState) (renamedParameters : List Nat)
+    (renamedProgram : WordProg α) (allocation : WordSpillState)
+    (halloc :
+      wordAllocateSsaFunctionWithEntryAndClashTreeWithSpillsAndPreferencesFixed
+        parameters program =
+        some (state, renamedParameters, renamedProgram, allocation)) :
+    ∀ name, name ∈ parameters →
+      lookupNatInfo name allocation.locations = some (.register name) := by
+  simp [wordAllocateSsaFunctionWithEntryAndClashTreeWithSpillsAndPreferencesFixed]
+    at halloc
+  split at halloc <;> simp_all
+  rcases halloc with ⟨_, rfl, rfl, rfl, rfl⟩
+  rename_i _ alloc _ hallocation
+  exact wordAllocateVarsWithFixedSources_preserves_fixed_source _ _ _ _ alloc
+    hallocation
+
+theorem wordAllocateSsaFunctionWithEntryAndClashTreeWithSpillsAndPreferencesFixed_maps_parameters
+    (parameters : List Nat) (program : WordProg α)
+    (state : WordSsaState) (renamedParameters : List Nat)
+    (renamedProgram : WordProg α) (allocation : WordSpillState)
+    (halloc :
+      wordAllocateSsaFunctionWithEntryAndClashTreeWithSpillsAndPreferencesFixed
+        parameters program =
+        some (state, renamedParameters, renamedProgram, allocation)) :
+    ∀ name, name ∈ renamedParameters →
+      ∃ location, lookupNatInfo name allocation.locations = some location := by
+  simp [wordAllocateSsaFunctionWithEntryAndClashTreeWithSpillsAndPreferencesFixed]
+    at halloc
+  split at halloc <;> simp_all
+  rcases halloc with ⟨_, rfl, rfl, rfl, rfl⟩
+  rename_i _ alloc _ hallocation
+  have hslots := wordAllocateVarsWithFixedSources_maps_slots
+    ((wordSsaRenameFunctionWithEntry parameters program).2.fst ++
+      (wordProgVariables (wordSsaRenameFunctionWithEntry parameters program).2.snd ++
+        (wordClashTreeAnalyze
+          (wordClashTree (wordSsaRenameFunctionWithEntry parameters program).2.snd [])
+          []).fst))
+    (wordClashTreeAnalyze
+      (wordClashTree (wordSsaRenameFunctionWithEntry parameters program).2.snd []) []).snd
+    (wordProgPreferenceEdges
+      (wordSsaRenameFunctionWithEntry parameters program).2.snd)
+    parameters alloc hallocation
+  intro name hname
+  apply hslots name
+  simp [hname]
 
 /-! Spill allocation over the complete CakeML-shaped SSA function.  In
     contrast with the historical entry point above, the explicit formal

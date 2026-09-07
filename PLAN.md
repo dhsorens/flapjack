@@ -560,6 +560,10 @@ definitions, pass ordering, examples, and proof obligations.
   spill allocator before lowering entry moves.
 - [x] Prove that seeded full-SSA ABI source locations are preserved by the
   spill allocation worklist.
+- [x] Prove that the fixed-source spill allocator maps every requested SSA
+  slot, while retaining the architectural locations of ABI source names.
+- [x] Expose fixed-source function-level contracts for ABI parameter
+  preservation and renamed formal-parameter location coverage.
 - [x] Expose a graph-backed Word-to-Stack pipeline that consumes the complete
   full-SSA entry-inclusive function program.
 - [x] Expose the corresponding ABI-correct spill-backed Word-to-Stack pipeline

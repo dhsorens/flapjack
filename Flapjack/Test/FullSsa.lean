@@ -49,4 +49,11 @@ example (state : WordSpillState)
   exact wordAllocateVarsWithFixedSources_preserves_fixed_source
     [2, 5] [] [] [2] state hstate 2 (by simp)
 
+example (state : WordSpillState)
+    (hstate : wordAllocateVarsWithFixedSources [2, 5] [] [] [2] = some state) :
+    ∀ name, name ∈ [2, 5].eraseDups →
+      ∃ location, lookupNatInfo name state.locations = some location := by
+  exact wordAllocateVarsWithFixedSources_maps_slots
+    [2, 5] [] [] [2] state hstate
+
 end Flapjack
