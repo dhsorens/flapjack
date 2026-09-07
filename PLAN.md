@@ -1421,6 +1421,9 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Close the generated Word-to-Stack/StackRemove/LabLang FFI path with a
   machine-level RISC-V execution theorem, retaining the host transition as
   an explicit hypothesis.
+- [x] Connect loop-aware FFI lowering to a machine-level RISC-V execution
+  regression, including the ECALL host program-counter transition and break
+  target.
 
 ## First implementation slice
 
