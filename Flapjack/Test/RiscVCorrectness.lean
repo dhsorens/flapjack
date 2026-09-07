@@ -20,7 +20,7 @@ example :
           [.sltu 31 0 4, .add 5 2 3, .sltu 6 5 3, .add 5 5 31,
             .sltu 31 5 31, .or 6 6 31]) 7) =
       readRegister (zeroState 64) 7 := by
-  native_decide
+  decide
 
 example [NeZero width] (state : State width)
     (zero : readRegister state 0 = 0) :

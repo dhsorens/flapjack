@@ -18,13 +18,13 @@ example :
     panRiscVReadByte riscvFlatTestDomain riscvFlatTestMemory
       (BitVec.ofNat 64 8) (BitVec.ofNat 64 9) =
       some (BitVec.ofNat 64 2) := by
-  native_decide
+  decide
 
 example :
     panRiscVRead32 riscvFlatTestDomain riscvFlatTestMemory
       (BitVec.ofNat 64 8) (BitVec.ofNat 64 8) =
       some (BitVec.ofNat 64 67305985) := by
-  native_decide
+  decide
 
 example :
     (do
@@ -33,18 +33,18 @@ example :
       panRiscVRead32 riscvFlatTestDomain memory
         (BitVec.ofNat 64 8) (BitVec.ofNat 64 8)) =
       some (BitVec.ofNat 64 67305985) := by
-  native_decide
+  decide
 
 example :
     panRiscVRead32 riscvFlatTestDomain riscvFlatTestMemory
       (BitVec.ofNat 64 8) (BitVec.ofNat 64 2) = none := by
-  native_decide
+  decide
 
 example :
     panRiscVRead16 riscvFlatTestDomain riscvFlatTestMemory
       (BitVec.ofNat 64 8) (BitVec.ofNat 64 8) =
       some (BitVec.ofNat 64 513) := by
-  native_decide
+  decide
 
 example :
     (do
@@ -53,7 +53,7 @@ example :
       panRiscVRead16 riscvFlatTestDomain memory
         (BitVec.ofNat 64 8) (BitVec.ofNat 64 8)) =
       some (BitVec.ofNat 64 48879) := by
-  native_decide
+  decide
 
 example :
     evalPanRiscVFlatResult [] (BitVec.ofNat 64 0) (BitVec.ofNat 64 100)
@@ -139,7 +139,7 @@ example :
       (fun result => match result with
       | .normal _ _ _ => true
       | _ => false) = some true := by
-  native_decide
+  decide +kernel
 
 example :
     (evalPanRiscVFlatProgWithCallsAndFfi
@@ -150,6 +150,6 @@ example :
       (.call (some (some (.local, "result"), none)) "increment"
         [.const (BitVec.ofNat 64 41)])).bind riscvFlatLocalResultNat =
       some 42 := by
-  native_decide
+  decide +kernel
 
 end Flapjack
