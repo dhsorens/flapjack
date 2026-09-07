@@ -218,20 +218,20 @@ theorem addCarry_preserves_mapped_locals [NeZero width]
       carryRegister : Fin 32)
     (leftValue rightValue carryValue : RiscV.Word width)
     (hlocals : loopLocalsMappedToRiscV context locals state)
-    (hleft : locals left = some leftValue)
-    (hright : locals right = some rightValue)
-    (hcarry : locals carry = some carryValue)
+    (_hleft : locals left = some leftValue)
+    (_hright : locals right = some rightValue)
+    (_hcarry : locals carry = some carryValue)
     (hdestination :
       RiscV.registerOfNat (wordFindVar context destination) =
         some destinationRegister)
     (hresultCarry :
       RiscV.registerOfNat (wordFindVar context resultCarry) =
         some resultCarryRegister)
-    (hleft_register :
+    (_hleft_register :
       RiscV.registerOfNat (wordFindVar context left) = some leftRegister)
-    (hright_register :
+    (_hright_register :
       RiscV.registerOfNat (wordFindVar context right) = some rightRegister)
-    (hcarry_register :
+    (_hcarry_register :
       RiscV.registerOfNat (wordFindVar context carry) = some carryRegister)
     (hleft_state : RiscV.readRegister state leftRegister = leftValue)
     (hright_state : RiscV.readRegister state rightRegister = rightValue)
@@ -247,11 +247,11 @@ theorem addCarry_preserves_mapped_locals [NeZero width]
     (hright_scratch : rightRegister ≠ 31)
     (hcarry_scratch : carryRegister ≠ 31)
     (hdestination_name_resultCarry : destination ≠ resultCarry)
-    (hdestination_name_scratch : wordFindVar context destination ≠ 31)
-    (hresultCarry_name_scratch : wordFindVar context resultCarry ≠ 31)
-    (hleft_name_scratch : wordFindVar context left ≠ 31)
-    (hright_name_scratch : wordFindVar context right ≠ 31)
-    (hcarry_name_scratch : wordFindVar context carry ≠ 31)
+    (_hdestination_name_scratch : wordFindVar context destination ≠ 31)
+    (_hresultCarry_name_scratch : wordFindVar context resultCarry ≠ 31)
+    (_hleft_name_scratch : wordFindVar context left ≠ 31)
+    (_hright_name_scratch : wordFindVar context right ≠ 31)
+    (_hcarry_name_scratch : wordFindVar context carry ≠ 31)
     (hnoalias :
       ∀ name, name ≠ destination → name ≠ resultCarry →
         ∀ register,

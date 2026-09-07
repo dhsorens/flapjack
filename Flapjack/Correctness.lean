@@ -56,7 +56,7 @@ def compiledPipelineAddRun (left right : RiscV.Word 64) :
       | none => none
   | _ => none
 
-def pipelineAddSource (left right : RiscV.Word 64) : Prog (RiscV.Word 64) :=
+def pipelineAddSource (_left _right : RiscV.Word 64) : Prog (RiscV.Word 64) :=
   .return (.op .add [.var .local "left", .var .local "right"])
 
 def pipelineAddLocals (left right : RiscV.Word 64) :
@@ -297,7 +297,7 @@ def compiledPipelineCompareIteRun
       | none => none
   | _ => none
 
-def pipelineCompareIteSource (left right : RiscV.Word 64) : Prog (RiscV.Word 64) :=
+def pipelineCompareIteSource (_left _right : RiscV.Word 64) : Prog (RiscV.Word 64) :=
   .ite (.cmp .equal (.var .local "left") (.var .local "right"))
     (.return (.const (BitVec.ofNat 64 7)))
     (.return (.const (BitVec.ofNat 64 8)))
@@ -738,7 +738,7 @@ theorem loopToWord_loadByte_register_agreement_mapped [NeZero width]
     (context : WordContext) (state : RiscV.State width)
     (memory : RiscV.Word width → Option (RiscV.Word width))
     (address destination : Nat) (addressRegister destinationRegister : Fin 32)
-    (addressValue value : RiscV.Word width) (byteValue : BitVec 8)
+    (addressValue _value : RiscV.Word width) (byteValue : BitVec 8)
     (zero : RiscV.ZeroRegister state)
     (haddress :
       RiscV.registerOfNat (wordFindVar context address) = some addressRegister)
@@ -1306,8 +1306,8 @@ theorem loopToWord_seq_control_simulation [NeZero width]
     (fuel : Nat) (first second : LoopProg (RiscV.Word width))
     (loopResult : LoopResult (RiscV.Word width))
     (wordResult : RiscV.WordControlResult width)
-    (hfirst : ∀ (middleLoop : LoopState (RiscV.Word width))
-      (middleWord : RiscV.State width) firstResult firstWordResult,
+    (hfirst : ∀ (_middleLoop : LoopState (RiscV.Word width))
+      (_middleWord : RiscV.State width) firstResult firstWordResult,
       evalLoopProgWithCallsAndFfi functions loopHandler fuel loopState first =
         some firstResult →
       RiscV.evalWordFunctionWithHandlersAndFfi wordFunctions wordHandler fuel
@@ -2993,7 +2993,7 @@ theorem loopToWord_ite_preserves_mapped_locals [NeZero width]
     (thenBranch elseBranch : LoopProg (RiscV.Word width))
     (live : List Nat) (leftValue rightValue : RiscV.Word width)
     (choose : Bool)
-    (hlocals : loopLocalsMappedToRiscV context loopState.locals state)
+    (_hlocals : loopLocalsMappedToRiscV context loopState.locals state)
     (hleft : loopState.locals condition = some leftValue)
     (hright : (match right with
       | .imm value => some value

@@ -266,28 +266,28 @@ def evalStackFrameFuelWithCode [NeZero width] :
     Nat → (Nat → Option (StackProg Nat)) → StackFrameMachineState width →
       StackProg Nat → Option (StackFrameMachineControl width)
   | 0, _, _, _ => none
-  | fuel + 1, _, state, .stackAlloc words =>
+  | _fuel + 1, _, state, .stackAlloc words =>
       if state.stackSpace < words then
         some (.halted state (BitVec.ofNat width 2))
       else
         some (.normal { state with stackSpace := state.stackSpace - words })
-  | fuel + 1, _, state, .stackFree words =>
+  | _fuel + 1, _, state, .stackFree words =>
       if state.stackLimit ≤ state.stackSpace + words then none
       else
         some (.normal { state with stackSpace := state.stackSpace + words })
-  | fuel + 1, _, state, .stackLoad register offset =>
+  | _fuel + 1, _, state, .stackLoad register offset =>
       let index := stackFrameSlotIndex state offset
       if stackFrameIndexValid state index then
         some (.normal (stackFrameWriteRegister state register
           (state.machine.stack index)))
       else none
-  | fuel + 1, _, state, .stackStore register offset =>
+  | _fuel + 1, _, state, .stackStore register offset =>
       let index := stackFrameSlotIndex state offset
       if stackFrameIndexValid state index then
         some (.normal (stackFrameWriteSlot state index
           (state.machine.registers register)))
       else none
-  | fuel + 1, _, state, .stackLoadAny register offsetRegister =>
+  | _fuel + 1, _, state, .stackLoadAny register offsetRegister =>
       match stackFrameAnyOffset (state.machine.registers offsetRegister) with
       | none => none
       | some offset =>
@@ -296,7 +296,7 @@ def evalStackFrameFuelWithCode [NeZero width] :
             some (.normal (stackFrameWriteRegister state register
               (state.machine.stack index)))
           else none
-  | fuel + 1, _, state, .stackStoreAny register offsetRegister =>
+  | _fuel + 1, _, state, .stackStoreAny register offsetRegister =>
       match stackFrameAnyOffset (state.machine.registers offsetRegister) with
       | none => none
       | some offset =>
@@ -305,10 +305,10 @@ def evalStackFrameFuelWithCode [NeZero width] :
             some (.normal (stackFrameWriteSlot state index
               (state.machine.registers register)))
           else none
-  | fuel + 1, _, state, .stackGetSize register =>
+  | _fuel + 1, _, state, .stackGetSize register =>
       some (.normal (stackFrameWriteRegister state register
         (BitVec.ofNat width state.stackSpace)))
-  | fuel + 1, _, state, .stackSetSize register =>
+  | _fuel + 1, _, state, .stackSetSize register =>
       let value := (state.machine.registers register).toNat
       if state.stackLimit ≤ value then none
       else
@@ -316,7 +316,7 @@ def evalStackFrameFuelWithCode [NeZero width] :
           { (stackFrameWriteRegister state register
               (BitVec.shiftLeft (state.machine.registers register) 3)) with
             stackSpace := value })
-  | fuel + 1, _, state, .bitmapLoad destination address =>
+  | _fuel + 1, _, state, .bitmapLoad destination address =>
       if destination = address then none
       else match state.machine.registers address with
       | address =>
@@ -324,13 +324,13 @@ def evalStackFrameFuelWithCode [NeZero width] :
           | none => none
           | some bitmap =>
               some (.normal (stackFrameWriteRegister state destination bitmap))
-  | fuel + 1, _, state, .break _ => some (.break state)
-  | fuel + 1, _, state, .continue _ => some (.continue state)
-  | fuel + 1, _, state, .raise register =>
+  | _fuel + 1, _, state, .break _ => some (.break state)
+  | _fuel + 1, _, state, .continue _ => some (.continue state)
+  | _fuel + 1, _, state, .raise register =>
       some (.raised state (state.machine.registers register))
-  | fuel + 1, _, state, .return register =>
+  | _fuel + 1, _, state, .return register =>
       some (.returned state (state.machine.registers register))
-  | fuel + 1, _, state, .halt register =>
+  | _fuel + 1, _, state, .halt register =>
       some (.halted state (state.machine.registers register))
   | fuel + 1, code, state, .seq first second =>
       match evalStackFrameFuelWithCode fuel code state first with
@@ -360,8 +360,8 @@ def evalStackFrameFuelWithCode [NeZero width] :
           | some (.raised state value) => some (.raised state value)
           | some (.halted state value) => some (.halted state value)
           | _ => none
-  | fuel + 1, _, _, .call _ _ _ => none
-  | fuel + 1, _, state, program => stackFrameBasic state program
+  | _fuel + 1, _, _, .call _ _ _ => none
+  | _fuel + 1, _, state, program => stackFrameBasic state program
 
 def evalStackFrameFuel [NeZero width]
     (fuel : Nat) (state : StackFrameMachineState width)
@@ -382,7 +382,7 @@ def evalStackFrameFuelWithCodeAndFfi [NeZero width]
     Nat → (Nat → Option (StackProg Nat)) → StackFrameMachineState width →
       StackProg Nat → Option (StackFrameMachineControl width)
   | 0, _, _, _ => none
-  | fuel + 1, _, state, .ffi function configuration configurationLength array
+  | _fuel + 1, _, state, .ffi function configuration configurationLength array
       arrayLength _ =>
       (host function (state.machine.registers configuration)
         (state.machine.registers configurationLength)
@@ -425,7 +425,7 @@ def evalStackFrameFuelWithCodeAndFfi [NeZero width]
               | none => some (.raised state value)
           | some (.halted state value) => some (.halted state value)
           | _ => none
-  | fuel + 1, _, _, .call _ _ _ => none
+  | _fuel + 1, _, _, .call _ _ _ => none
   | fuel + 1, code, state, program =>
       evalStackFrameFuelWithCode (fuel + 1) code state program
 

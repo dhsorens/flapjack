@@ -74,9 +74,9 @@ def stackAllocCompFuel : Nat → StackAllocConfig → Nat → StackProg α →
               stackAllocCompFuel fuel config nextLabel program
             (some (program, exceptionLabel, handlerLabel), nextLabel)
       (.call returnHandler target handler, nextLabel)
-  | fuel + 1, config, nextLabel, .alloc _ =>
+  | _fuel + 1, config, nextLabel, .alloc _ =>
       (stackAllocRuntimeCall config nextLabel config.gcStubLocation, nextLabel + 1)
-  | fuel + 1, config, nextLabel, .storeConsts source bitmap stub =>
+  | _fuel + 1, config, nextLabel, .storeConsts source bitmap stub =>
       match stub with
       | none => (.storeConsts source bitmap none, nextLabel)
       | some target =>
@@ -214,7 +214,7 @@ theorem stackAllocComp_storeConsts (config : StackAllocConfig)
   simp [stackAllocComp, stackAllocRuntimeCall]
 
 theorem stackAllocComp_drops_handler_without_return (config : StackAllocConfig)
-    (nextLabel target handler exceptionLabel handlerLabel : Nat)
+    (nextLabel target _handler exceptionLabel handlerLabel : Nat)
     (body : StackProg α) :
     stackAllocComp config nextLabel
       (.call none (.label target) (some (body, exceptionLabel, handlerLabel))) =

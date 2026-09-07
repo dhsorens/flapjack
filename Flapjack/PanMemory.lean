@@ -51,7 +51,7 @@ where
 
 def panValueWordsFuel : Nat → PanValue α → List α
   | 0, _ => []
-  | fuel + 1, .word value => [value]
+  | _fuel + 1, .word value => [value]
   | fuel + 1, .rStruct fields => panValueWordsListFuel fuel fields
   | fuel + 1, .nStruct _ fields => panValueWordsFieldListFuel fuel fields
 where
@@ -79,7 +79,7 @@ def panFlatLoadFuel [BEq α] [OfNat α 0] [Add α]
     (memory : PanFlatMemory α) (bytesInWord : α) : Nat → Shape → α →
       Option (PanValue α)
   | 0, _, _ => none
-  | fuel + 1, .one, address => panFlatReadWord domain memory address
+  | _fuel + 1, .one, address => panFlatReadWord domain memory address
   | fuel + 1, .comb shapes, address =>
       (panFlatLoadListFuel context domain memory bytesInWord fuel shapes address).map
         PanValue.rStruct
@@ -88,7 +88,7 @@ def panFlatLoadFuel [BEq α] [OfNat α 0] [Add α]
       let fields ← panFlatLoadFieldsFuel context domain memory bytesInWord fuel
         info.fields address
       pure (.nStruct name fields)
-termination_by fuel shape address => fuel
+termination_by fuel _shape _address => fuel
 where
   panFlatLoadListFuel [BEq α] [OfNat α 0] [Add α]
       (context : StructContext) (domain : PanMemoryDomain α)
@@ -101,7 +101,7 @@ where
         let values ← panFlatLoadListFuel context domain memory bytesInWord fuel shapes
           (panOffset bytesInWord address (shapeSizeWithContext context shape))
         pure (value :: values)
-    termination_by fuel shapes address => fuel
+    termination_by fuel _shapes _address => fuel
 
   panFlatLoadFieldsFuel [BEq α] [OfNat α 0] [Add α]
       (context : StructContext) (domain : PanMemoryDomain α)
@@ -115,7 +115,7 @@ where
         let values ← panFlatLoadFieldsFuel context domain memory bytesInWord fuel fields
           (panOffset bytesInWord address (shapeSizeWithContext context shape))
         pure ((field, value) :: values)
-    termination_by fuel fields address => fuel
+    termination_by fuel _fields _address => fuel
 
 def panFlatLoad [BEq α] [OfNat α 0] [Add α]
     (context : StructContext) (domain : PanMemoryDomain α)
@@ -135,7 +135,7 @@ def panFlatStoreWord [BEq α] (domain : PanMemoryDomain α)
 def panFlatStoreWords [BEq α] [Add α] (domain : PanMemoryDomain α)
     (memory : PanFlatMemory α) (bytesInWord : α) : α → List α →
       Option (PanFlatMemory α)
-  | address, [] => some memory
+  | _address, [] => some memory
   | address, value :: values => do
       let memory ← panFlatStoreWord domain memory address value
       panFlatStoreWords domain memory bytesInWord
@@ -446,7 +446,7 @@ mutual
         (VarName → Option (PanValue α)) → PanFlatMemory α → Prog α →
         Option (PanFlatControlResult α)
     | 0, _, _, _, _ => none
-    | fuel + 1, locals, globals, memory, .skip =>
+    | _fuel + 1, locals, globals, memory, .skip =>
         some (.normal locals globals memory)
     | fuel + 1, locals, globals, memory, .dec name shape value body => do
         let value ← evalPanFlatExp structs locals globals domain memory
@@ -458,15 +458,15 @@ mutual
             (updatePanValueMap locals name value) globals memory body
           pure (restorePanFlatControlLocal name oldValue result)
         else none
-    | fuel + 1, locals, globals, memory, .assign .local name value => do
+    | _fuel + 1, locals, globals, memory, .assign .local name value => do
         let value ← evalPanFlatExp structs locals globals domain memory
           baseAddress topAddress bytesInWord value
         pure (.normal (updatePanValueMap locals name value) globals memory)
-    | fuel + 1, locals, globals, memory, .assign .global name value => do
+    | _fuel + 1, locals, globals, memory, .assign .global name value => do
         let value ← evalPanFlatExp structs locals globals domain memory
           baseAddress topAddress bytesInWord value
         pure (.normal locals (updatePanValueMap globals name value) memory)
-    | fuel + 1, locals, globals, memory, .primitive name operator arguments => do
+    | _fuel + 1, locals, globals, memory, .primitive name operator arguments => do
         let values ← evalPanFlatExps structs locals globals domain memory
           baseAddress topAddress bytesInWord arguments
         let value ← primitive operator values
@@ -474,7 +474,7 @@ mutual
         if panShapeMatches (panValueShape structs value) (panValueShape structs oldValue) then
           pure (.normal (updatePanValueMap locals name value) globals memory)
         else none
-    | fuel + 1, locals, globals, memory, .store address value => do
+    | _fuel + 1, locals, globals, memory, .store address value => do
         let address ← evalPanFlatExp structs locals globals domain memory
           baseAddress topAddress bytesInWord address
         let value ← evalPanFlatExp structs locals globals domain memory
@@ -518,7 +518,7 @@ mutual
               else none
             else none
         | result => pure result
-    | fuel + 1, locals, globals, memory, .extCall function configuration configurationLength array arrayLength => do
+    | _fuel + 1, locals, globals, memory, .extCall function configuration configurationLength array arrayLength => do
         let configuration ← evalPanFlatExp structs locals globals domain memory
           baseAddress topAddress bytesInWord configuration
         let configurationLength ← evalPanFlatExp structs locals globals domain memory
@@ -549,19 +549,19 @@ mutual
                 (.while condition body)
           | .broke locals globals memory => pure (.normal locals globals memory)
           | result => pure result
-    | fuel + 1, locals, globals, memory, .break =>
+    | _fuel + 1, locals, globals, memory, .break =>
         pure (.broke locals globals memory)
-    | fuel + 1, locals, globals, memory, .continue =>
+    | _fuel + 1, locals, globals, memory, .continue =>
         pure (.continued locals globals memory)
-    | fuel + 1, locals, globals, memory, .raise exception value => do
+    | _fuel + 1, locals, globals, memory, .raise exception value => do
         let value ← evalPanFlatExp structs locals globals domain memory
           baseAddress topAddress bytesInWord value
         pure (.raised locals globals memory exception value)
-    | fuel + 1, locals, globals, memory, .return value => do
+    | _fuel + 1, locals, globals, memory, .return value => do
         let value ← evalPanFlatExp structs locals globals domain memory
           baseAddress topAddress bytesInWord value
         pure (.returned locals globals memory [value])
-    | fuel + 1, locals, globals, memory, .tick | fuel + 1, locals, globals, memory, .annot _ _ =>
+    | _fuel + 1, locals, globals, memory, .tick | _fuel + 1, locals, globals, memory, .annot _ _ =>
         pure (.normal locals globals memory)
     | _, _, _, _, _ => none
     termination_by fuel _ _ _ _ => fuel

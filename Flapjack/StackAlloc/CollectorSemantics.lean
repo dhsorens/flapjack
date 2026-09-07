@@ -1193,8 +1193,8 @@ theorem evalStackFrameFuel_stackGcMoveList_immediate_one_scan_matches_nat
 theorem evalStackFrameFuel_stackGcMoveList_immediate_one_count_matches_nat
     [NeZero width] (config : StackGcConfig) (fuel : Nat)
     (state : StackFrameMachineState width)
-    (address index destination oldBase : Nat)
-    (memory : Nat → Nat) (domain : Nat → Bool)
+    (address _index _destination _oldBase : Nat)
+    (_memory : Nat → Nat) (_domain : Nat → Bool)
     (hscratch5 : config.immediateScratch ≠ 5)
     (hscratch7 : config.immediateScratch ≠ 7)
     (hscratch8 : config.immediateScratch ≠ 8)
@@ -1685,7 +1685,7 @@ theorem evalStackFrameFuel_stackGcMoveList_forwarding_body [NeZero width]
 theorem evalStackFrameFuel_stackGcMoveList_forwarding_body_with_nat_relation
     [NeZero width] (config : StackGcConfig) (fuel : Nat)
     (state : StackFrameMachineState width)
-    (scan value oldBase : Nat) (memory : Nat → Nat) (domain : Nat → Bool)
+    (scan value oldBase : Nat) (memory : Nat → Nat) (_domain : Nat → Bool)
     (hscratch0 : config.immediateScratch ≠ 0)
     (hscratch1 : config.immediateScratch ≠ 1)
     (hscratch5 : config.immediateScratch ≠ 5)
@@ -1699,7 +1699,7 @@ theorem evalStackFrameFuel_stackGcMoveList_forwarding_body_with_nat_relation
       (state.machine.memory (BitVec.ofNat width current)).toNat =
         memory current)
     (hloadedNat : memory scan = value)
-    (hvalue : value % 2 ≠ 0)
+    (_hvalue : value % 2 ≠ 0)
     (hodd :
       (stackGcMoveListAfterCount config state).machine.registers 5 &&&
         BitVec.ofNat width 1 ≠ 0)
@@ -1715,7 +1715,7 @@ theorem evalStackFrameFuel_stackGcMoveList_forwarding_body_with_nat_relation
         (stackGcMoveListAfterCount config state)).memoryDomain
           ((stackGcMoveForwardingState config
             (stackGcMoveListAfterCount config state)).machine.registers 8) = true)
-    (hforwardNat :
+    (_hforwardNat :
       stackGcNatIsForwardingPointer
         (memory (stackGcNatPointerAddress config oldBase value)))
     (hforwardValue :
@@ -2968,7 +2968,7 @@ theorem evalStackFrameFuel_stackGcMoveLoop_code_prefix [NeZero width]
 theorem evalStackFrameFuel_stackGcMoveLoop_code_step_scan_matches_nat
     [NeZero width] (config : StackGcConfig) (fuel : Nat)
     (state : StackFrameMachineState width)
-    (scan : Nat) (memory : Nat → Nat) (domain : Nat → Bool)
+    (scan : Nat) (memory : Nat → Nat) (_domain : Nat → Bool)
     (hscratch7 : config.immediateScratch ≠ 7)
     (hscratch8 : config.immediateScratch ≠ 8)
     (hdomain : state.memoryDomain (state.machine.registers 8) = true)
@@ -3789,7 +3789,7 @@ theorem evalStackFrameFuel_stackGcMoveList_iterate_with_nat_relation
 theorem evalStackFrameFuel_stackGcMoveLoop_data_step_with_nat_relation
     [NeZero width] (config : StackGcConfig) (fuel scan index destination oldBase : Nat)
     (state final : StackFrameMachineState width)
-    (memory : Nat → Nat) (domain : Nat → Bool) (condition : Bool)
+    (memory : Nat → Nat) (domain : Nat → Bool) (_condition : Bool)
     (hwidth : 3 ≤ width)
     (hscratch7 : config.immediateScratch ≠ 7)
     (hscratch8 : config.immediateScratch ≠ 8)
@@ -3798,7 +3798,7 @@ theorem evalStackFrameFuel_stackGcMoveLoop_data_step_with_nat_relation
     (hmemory :
       (state.machine.memory (state.machine.registers 8)).toNat =
         memory scan)
-    (hscan : scan ≠ destination)
+    (_hscan : scan ≠ destination)
     (hcodeNat : stackGcNatHeaderHasCode (memory scan) ≠ true)
     (hmove :
       evalStackFrameFuel (fuel + 12)
@@ -3958,7 +3958,7 @@ theorem evalStackFrameFuel_stackGcMoveLoop_iterate_with_nat_relation
 theorem evalStackFrameFuel_stackGcMoveList_immediate_body_with_nat_relation
     [NeZero width] (config : StackGcConfig) (fuel : Nat)
     (state : StackFrameMachineState width)
-    (scan : Nat) (memory : Nat → Nat) (domain : Nat → Bool)
+    (scan : Nat) (memory : Nat → Nat) (_domain : Nat → Bool)
     (hscratch5 : config.immediateScratch ≠ 5)
     (hscratch7 : config.immediateScratch ≠ 7)
     (hscratch8 : config.immediateScratch ≠ 8)
@@ -4844,8 +4844,8 @@ theorem evalStackFrameFuel_stackGcMoveList_copy_body_iter_with_nat_relation
     (hmemory : ∀ current, current < 2 ^ width →
       (state.machine.memory (BitVec.ofNat width current)).toNat =
         memory current)
-    (hloadedNat : memory scan = value)
-    (hvalue : value % 2 ≠ 0)
+    (_hloadedNat : memory scan = value)
+    (_hvalue : value % 2 ≠ 0)
     (hodd :
       (stackGcMoveListAfterCount config state).machine.registers 5 &&&
         BitVec.ofNat width 1 ≠ 0)
@@ -5671,7 +5671,7 @@ theorem evalStackFrameFuel_stackGcMoveLoop_iterate_with_machine_nat_terminal
     [NeZero width] (config : StackGcConfig)
     (fuel stepFuel natFuel iterations : Nat)
     (state final : StackFrameMachineState width)
-    (step : StackFrameMachineState width → StackFrameMachineState width)
+    (_step : StackFrameMachineState width → StackFrameMachineState width)
     (oldBase : Nat) (domain : Nat → Bool)
     (scans indices destinations : Nat → Nat)
     (memories : Nat → Nat → Nat) (conditions : Nat → Bool)

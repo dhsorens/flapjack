@@ -211,20 +211,20 @@ def stackRemoveStoreConsts [OfNat α 0] [OfNat α 1] (config : StackRemoveConfig
 
 def stackRemoveFuel [OfNat α 0] [OfNat α 1] : Nat → StackRemoveConfig → StackProg α → StackProg α
   | 0, _, program => program
-  | fuel + 1, _, .skip => .skip
-  | fuel + 1, config, .get destination store =>
+  | _fuel + 1, _, .skip => .skip
+  | _fuel + 1, config, .get destination store =>
       stackRemoveGet config destination store
-  | fuel + 1, config, .set store source =>
+  | _fuel + 1, config, .set store source =>
       stackRemoveSet config store source
-  | fuel + 1, _, .inst instruction => .inst instruction
-  | fuel + 1, _, .shMem operator source address =>
+  | _fuel + 1, _, .inst instruction => .inst instruction
+  | _fuel + 1, _, .shMem operator source address =>
       .shMem operator source address
-  | fuel + 1, _, .const destination value => .const destination value
-  | fuel + 1, _, .arith operator destination left right =>
+  | _fuel + 1, _, .const destination value => .const destination value
+  | _fuel + 1, _, .arith operator destination left right =>
       .arith operator destination left right
-  | fuel + 1, _, .shift operator destination left right =>
+  | _fuel + 1, _, .shift operator destination left right =>
       .shift operator destination left right
-  | fuel + 1, config, .opCurrHeap operator destination source =>
+  | _fuel + 1, config, .opCurrHeap operator destination source =>
       stackRemoveOpCurrHeap config operator destination source
   | fuel + 1, config, .call returnHandler target handler =>
       match returnHandler, handler with
@@ -247,47 +247,47 @@ def stackRemoveFuel [OfNat α 0] [OfNat α 1] : Nat → StackRemoveConfig → St
       .ite operator condition right (stackRemoveFuel fuel config thenBranch)
         (stackRemoveFuel fuel config elseBranch)
   | fuel + 1, config, .loop body => .loop (stackRemoveFuel fuel config body)
-  | fuel + 1, _, .jumpLower register target label =>
+  | _fuel + 1, _, .jumpLower register target label =>
       .jumpLower register target label
-  | fuel + 1, _, .alloc words => .alloc words
-  | fuel + 1, config, .storeConsts source bitmap stub =>
+  | _fuel + 1, _, .alloc words => .alloc words
+  | _fuel + 1, config, .storeConsts source bitmap stub =>
       stackRemoveStoreConsts config source bitmap stub
-  | fuel + 1, _, .codeBufferWrite address value =>
+  | _fuel + 1, _, .codeBufferWrite address value =>
       .codeBufferWrite address value
-  | fuel + 1, _, .dataBufferWrite address value =>
+  | _fuel + 1, _, .dataBufferWrite address value =>
       .inst (.mem .store value address)
-  | fuel + 1, _, .raise exception => .raise exception
-  | fuel + 1, _, .return value => .return value
-  | fuel + 1, _, .break label => .break label
-  | fuel + 1, _, .continue label => .continue label
-  | fuel + 1, _, .ffi function configuration configurationLength array arrayLength
+  | _fuel + 1, _, .raise exception => .raise exception
+  | _fuel + 1, _, .return value => .return value
+  | _fuel + 1, _, .break label => .break label
+  | _fuel + 1, _, .continue label => .continue label
+  | _fuel + 1, _, .ffi function configuration configurationLength array arrayLength
       returnAddress =>
       .ffi function configuration configurationLength array arrayLength returnAddress
-  | fuel + 1, _, .tick => .tick
-  | fuel + 1, _, .locValue destination label entry =>
+  | _fuel + 1, _, .tick => .tick
+  | _fuel + 1, _, .locValue destination label entry =>
       .locValue destination label entry
-  | fuel + 1, _, .install codeBuffer codeLength dataBuffer dataLength returnAddress =>
+  | _fuel + 1, _, .install codeBuffer codeLength dataBuffer dataLength returnAddress =>
       .install codeBuffer codeLength dataBuffer dataLength returnAddress
-  | fuel + 1, _, .rawCall target => .rawCall target
-  | fuel + 1, config, .stackAlloc words =>
+  | _fuel + 1, _, .rawCall target => .rawCall target
+  | _fuel + 1, config, .stackAlloc words =>
       stackRemoveStackAlloc config words
-  | fuel + 1, config, .stackFree words =>
+  | _fuel + 1, config, .stackFree words =>
       stackRemoveStackFree config words
-  | fuel + 1, config, .stackStore register offset =>
+  | _fuel + 1, config, .stackStore register offset =>
       stackRemoveStackStore config register offset
-  | fuel + 1, config, .stackStoreAny register offsetRegister =>
+  | _fuel + 1, config, .stackStoreAny register offsetRegister =>
       stackRemoveStackStoreAny config register offsetRegister
-  | fuel + 1, config, .stackLoad register offset =>
+  | _fuel + 1, config, .stackLoad register offset =>
       stackRemoveStackLoad config register offset
-  | fuel + 1, config, .stackLoadAny register offsetRegister =>
+  | _fuel + 1, config, .stackLoadAny register offsetRegister =>
       stackRemoveStackLoadAny config register offsetRegister
-  | fuel + 1, config, .stackGetSize register =>
+  | _fuel + 1, config, .stackGetSize register =>
       stackRemoveStackGetSize config register
-  | fuel + 1, config, .stackSetSize register =>
+  | _fuel + 1, config, .stackSetSize register =>
       stackRemoveStackSetSize config register
-  | fuel + 1, config, .bitmapLoad destination address =>
+  | _fuel + 1, config, .bitmapLoad destination address =>
       stackRemoveBitmapLoad config destination address
-  | fuel + 1, _, .halt register => .halt register
+  | _fuel + 1, _, .halt register => .halt register
 
 /- A generous default keeps the public pass total and executable.  The worker
    is exposed so callers processing generated programs can choose a larger

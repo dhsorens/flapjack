@@ -258,8 +258,8 @@ mutual
                                   else
                                     some (.raised exception, callerState)
                               | _ => some (.raised exception, callerState)
-                          | .broke label => some (.error, callerState)
-                          | .continued label => some (.error, callerState)
+                          | .broke _label => some (.error, callerState)
+                          | .continued _label => some (.error, callerState)
                           | .error => some (.error, callerState)
                           | .timeout => some (.timeout, callerState)
                           | .finalFfi event => some (.finalFfi event, callerState)
@@ -275,7 +275,7 @@ mutual
       Nat → CrepRuntimeState α σ → CrepProg α →
         Option (CrepRuntimeStep α σ ε)
     | 0, _, _ => none
-    | fuel + 1, state, .skip => some (.normal, state)
+    | _fuel + 1, state, .skip => some (.normal, state)
     | fuel + 1, state, .dec name value body =>
         match evalCrepRuntimeExp state value with
         | none => some (.error, state)
@@ -284,12 +284,12 @@ mutual
             match evalCrepRuntimeProg handler primitive fuel nextState body with
             | none => some (.error, state)
             | some result => some (restoreCrepRuntimeStep name (state.locals name) result)
-    | fuel + 1, state, .assign name value =>
+    | _fuel + 1, state, .assign name value =>
         match evalCrepRuntimeExp state value with
         | none => some (.error, state)
         | some value =>
             some (.normal, { state with locals := updateCrepLocal state.locals name value })
-    | fuel + 1, state, .primitive names operator arguments =>
+    | _fuel + 1, state, .primitive names operator arguments =>
         match arguments.mapM state.locals with
         | none => some (.error, state)
         | some arguments =>
@@ -299,22 +299,22 @@ mutual
                 match assignCrepValues state.locals names values with
                 | some locals => some (.normal, { state with locals := locals })
                 | none => some (.error, state)
-    | fuel + 1, state, .store address value =>
+    | _fuel + 1, state, .store address value =>
         match evalCrepRuntimeExp state address, evalCrepRuntimeExp state value with
         | some address, some value =>
             match crepRuntimeStore state address value with
             | some state => some (.normal, state)
             | none => some (.error, state)
         | _, _ => some (.error, state)
-    | fuel + 1, state, .store32 address value
-    | fuel + 1, state, .storeByte address value =>
+    | _fuel + 1, state, .store32 address value
+    | _fuel + 1, state, .storeByte address value =>
         match evalCrepRuntimeExp state address, evalCrepRuntimeExp state value with
         | some address, some value =>
             match crepRuntimeStore state address value with
             | some state => some (.normal, state)
             | none => some (.error, state)
         | _, _ => some (.error, state)
-    | fuel + 1, state, .storeGlob address value =>
+    | _fuel + 1, state, .storeGlob address value =>
         match evalCrepRuntimeExp state value with
         | some value =>
             some (.normal, { state with globals := updateMemory state.globals address value })
@@ -358,21 +358,21 @@ mutual
               | some (.continued label, state) => some (.continued (label - 1), state)
               | some (.broke label, state) => some (.broke (label - 1), state)
               | some (result, state) => some (result, state)
-    | fuel + 1, state, .break label => some (.broke label, state)
-    | fuel + 1, state, .continue label => some (.continued label, state)
+    | _fuel + 1, state, .break label => some (.broke label, state)
+    | _fuel + 1, state, .continue label => some (.continued label, state)
     | fuel + 1, state, .call info function arguments =>
         evalCrepRuntimeCall handler primitive fuel state info function arguments
-    | fuel + 1, state, .extCall function configuration configurationLength array arrayLength =>
+    | _fuel + 1, state, .extCall function configuration configurationLength array arrayLength =>
         some (crepRuntimeExtCall handler state function
           configuration configurationLength array arrayLength)
-    | fuel + 1, state, .raise exception => some (.raised exception, state)
-    | fuel + 1, state, .return values =>
+    | _fuel + 1, state, .raise exception => some (.raised exception, state)
+    | _fuel + 1, state, .return values =>
         match evalCrepRuntimeExps state values with
         | some values => some (.returned values, state)
         | none => some (.error, state)
-    | fuel + 1, state, .shMem operator name address =>
+    | _fuel + 1, state, .shMem operator name address =>
         some (crepRuntimeSharedMemExp handler state operator name address)
-    | fuel + 1, state, .tick =>
+    | _fuel + 1, state, .tick =>
         if state.clock = 0 then some (.timeout, state)
         else some (.normal, { state with clock := state.clock - 1 })
     termination_by fuel _ _ => fuel

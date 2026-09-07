@@ -275,15 +275,15 @@ mutual
       Nat → (VarName → Option α) → Prog α →
         Option ((VarName → Option α) × List α)
     | 0, _, _ => none
-    | fuel + 1, locals, .skip => some (locals, [])
+    | _fuel + 1, locals, .skip => some (locals, [])
     | fuel + 1, locals, .dec name _ value body => do
         let value ← evalPanExp locals value
         evalPanProgWithCalls functions fuel
           (updatePanLocal locals name value) body
-    | fuel + 1, locals, .assign .local name value => do
+    | _fuel + 1, locals, .assign .local name value => do
         let value ← evalPanExp locals value
         pure (updatePanLocal locals name value, [])
-    | fuel + 1, locals, .return value => do
+    | _fuel + 1, locals, .return value => do
         let value ← evalPanExp locals value
         pure (locals, [value])
     | fuel + 1, locals, .seq first second => do
@@ -298,7 +298,7 @@ mutual
           (.call info function arguments)
     | fuel + 1, locals,
         .decCall name _ function arguments body => do
-        let (locals', values) ←
+        let (locals', _values) ←
           evalPanCallWithCalls functions fuel locals
             (.call (some (some (.local, name), none)) function arguments)
         evalPanProgWithCalls functions fuel locals' body
@@ -365,12 +365,12 @@ mutual
       (functions : List (FunName × List VarName × Prog α)) :
       Nat → (VarName → Option α) → Prog α → Option (PanControlResult α)
     | 0, _, _ => none
-    | fuel + 1, locals, .skip => some (.normal locals)
+    | _fuel + 1, locals, .skip => some (.normal locals)
     | fuel + 1, locals, .dec name _ value body => do
         let value ← evalPanExp locals value
         evalPanProgWithHandlers functions fuel
           (updatePanLocal locals name value) body
-    | fuel + 1, locals, .assign .local name value => do
+    | _fuel + 1, locals, .assign .local name value => do
         let value ← evalPanExp locals value
         pure (.normal (updatePanLocal locals name value))
     | fuel + 1, locals, .seq first second => do
@@ -386,10 +386,10 @@ mutual
         match result with
         | .normal locals => evalPanProgWithHandlers functions fuel locals body
         | result => pure result
-    | fuel + 1, locals, .raise exception value => do
+    | _fuel + 1, locals, .raise exception value => do
         let value ← evalPanExp locals value
         pure (.raised locals exception value)
-    | fuel + 1, locals, .return value => do
+    | _fuel + 1, locals, .return value => do
         let value ← evalPanExp locals value
         pure (.returned locals [value])
     | _, _, _ => none
@@ -502,8 +502,8 @@ mutual
       (handler : PanFfiHandler α) :
       Nat → (VarName → Option α) → Prog α → Option (PanControlResult α)
     | 0, _, _ => none
-    | fuel + 1, locals, .skip => some (.normal locals)
-    | fuel + 1, locals, .assign .local name value => do
+    | _fuel + 1, locals, .skip => some (.normal locals)
+    | _fuel + 1, locals, .assign .local name value => do
         let value ← evalPanExp locals value
         pure (.normal (updatePanLocal locals name value))
     | fuel + 1, locals, .dec name _ value body => do
@@ -531,15 +531,15 @@ mutual
         match result with
         | .normal locals => evalPanProgWithCallsAndFfi functions handler fuel locals body
         | result => pure result
-    | fuel + 1, locals,
+    | _fuel + 1, locals,
         .extCall function configuration configurationLength array arrayLength => do
         let locals ← evalPanExtCall handler locals function configuration
           configurationLength array arrayLength
         pure (.normal locals)
-    | fuel + 1, locals, .raise exception value => do
+    | _fuel + 1, locals, .raise exception value => do
         let value ← evalPanExp locals value
         pure (.raised locals exception value)
-    | fuel + 1, locals, .return value => do
+    | _fuel + 1, locals, .return value => do
         let value ← evalPanExp locals value
         pure (.returned locals [value])
     | _, _, _ => none
@@ -615,15 +615,15 @@ mutual
       Nat → (Nat → Option α) → CrepProg α →
         Option ((Nat → Option α) × List α)
     | 0, _, _ => none
-    | fuel + 1, locals, .skip => some (locals, [])
+    | _fuel + 1, locals, .skip => some (locals, [])
     | fuel + 1, locals, .dec name value body => do
         let value ← evalCrepExp locals value
         evalCrepStateProgWithFunctions functions fuel
           (updateCrepLocal locals name value) body
-    | fuel + 1, locals, .assign name value => do
+    | _fuel + 1, locals, .assign name value => do
         let value ← evalCrepExp locals value
         pure (updateCrepLocal locals name value, [])
-    | fuel + 1, locals, .return values => do
+    | _fuel + 1, locals, .return values => do
         let values ← evalCrepExps locals values
         pure (locals, values)
     | fuel + 1, locals, .seq first second => do
@@ -826,18 +826,18 @@ def evalPanMemProgFuelBase [BEq α] [Add α] [Mul α] [OfNat α 0]
     | fuel + 1, .dec name _ value body => do
         let value ← evalPanMemExp locals memory value
         evalPanMemProgFuelBase fuel (updatePanLocal locals name value) memory body
-    | fuel + 1, .assign .local name value => do
+    | _fuel + 1, .assign .local name value => do
         let value ← evalPanMemExp locals memory value
         pure (updatePanLocal locals name value, memory, [])
-    | fuel + 1, .store address value => do
+    | _fuel + 1, .store address value => do
         let address ← evalPanMemExp locals memory address
         let value ← evalPanMemExp locals memory value
         pure (locals, updateMemory memory address value, [])
-    | fuel + 1, .store32 address value | fuel + 1, .storeByte address value => do
+    | _fuel + 1, .store32 address value | _fuel + 1, .storeByte address value => do
         let address ← evalPanMemExp locals memory address
         let value ← evalPanMemExp locals memory value
         pure (locals, updateMemory memory address value, [])
-    | fuel + 1, .return value => do
+    | _fuel + 1, .return value => do
         let value ← evalPanMemExp locals memory value
         pure (locals, memory, [value])
     | fuel + 1, .seq first second => do
@@ -853,7 +853,7 @@ def evalPanMemProgFuelBase [BEq α] [Add α] [Mul α] [OfNat α 0]
           evalPanMemProgFuelBase fuel locals memory thenBranch
         else
           evalPanMemProgFuelBase fuel locals memory elseBranch
-    | fuel + 1, .while _ _ => none
+    | _fuel + 1, .while _ _ => none
     | _, _ => none
 termination_by fuel => fuel
 
@@ -921,21 +921,21 @@ def evalCrepMemProgFuel [BEq α] [Add α] [Mul α] [OfNat α 0]
     | fuel + 1, .dec name value body => do
         let value ← evalCrepMemExp locals memory value
         evalCrepMemProgFuel fuel (updateCrepLocal locals name value) memory body
-    | fuel + 1, .assign name value => do
+    | _fuel + 1, .assign name value => do
         let value ← evalCrepMemExp locals memory value
         pure (updateCrepLocal locals name value, memory, [])
-    | fuel + 1, .store address value => do
+    | _fuel + 1, .store address value => do
         let address ← evalCrepMemExp locals memory address
         let value ← evalCrepMemExp locals memory value
         pure (locals, updateMemory memory address value, [])
-    | fuel + 1, .store32 address value | fuel + 1, .storeByte address value => do
+    | _fuel + 1, .store32 address value | _fuel + 1, .storeByte address value => do
         let address ← evalCrepMemExp locals memory address
         let value ← evalCrepMemExp locals memory value
         pure (locals, updateMemory memory address value, [])
-    | fuel + 1, .storeGlob address value => do
+    | _fuel + 1, .storeGlob address value => do
         let value ← evalCrepMemExp locals memory value
         pure (locals, updateMemory memory address value, [])
-    | fuel + 1, .return values => do
+    | _fuel + 1, .return values => do
         let values ← evalCrepMemProg.evalCrepMemExps locals memory values
         pure (locals, memory, values)
     | fuel + 1, .seq first second => do
@@ -951,7 +951,7 @@ def evalCrepMemProgFuel [BEq α] [Add α] [Mul α] [OfNat α 0]
           evalCrepMemProgFuel fuel locals memory elseBranch
         else
           evalCrepMemProgFuel fuel locals memory thenBranch
-    | fuel + 1, .while _ _ => none
+    | _fuel + 1, .while _ _ => none
     | _, _ => none
 termination_by fuel => fuel
 

@@ -140,7 +140,7 @@ def globalCompileDecls [BEq String] [Add α] [Mul α]
 def globalCompileInitializers [BEq String] [Add α] [Mul α]
     (context : GlobalPassContext α) : List (Decl α) → List (Prog α)
   | [] => []
-  | .decl shape name value :: declarations =>
+  | .decl _shape name value :: declarations =>
       let initializer :=
         match lookupInfo name context.globals with
         | some (_, address) =>

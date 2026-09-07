@@ -708,7 +708,7 @@ def wordStackAllocWithBitmaps (config : WordStackConfig)
   wordStackAllocWithBitmapBuilder config bitmapRegister frameSlots state live
     (wordStackLiveBitmap registerCount frameSlots wordBits)
 
-def wordStackStoreConstsWithBitmaps (config : WordStackConfig)
+def wordStackStoreConstsWithBitmaps (_config : WordStackConfig)
     (registerCount specialScratch wordBits : Nat)
     (storeConstsStub : Option Nat) (state : WordStackBitmapState)
     (constants : List (Bool × Nat)) :
@@ -1802,7 +1802,7 @@ def wordToStackProg [BEq α] [OfNat α 0] [OfNat α 1] [Add α] [Mul α]
       (some (exception, body, handlerLabel, entryLabel)) => do
       let argumentMoves ← wordStackMovesToPhysical config arguments 2
       let returnCode ← wordStackReturnCode config returns
-      let destinations := returns.map (fun result => result.1) |>.getD []
+      let _destinations := returns.map (fun result => result.1) |>.getD []
       let handlerCode ← wordToStackProg config body
       let callCode := wordToStackCallWithHandler config.perf target arguments.length
         config.frameOffset config.scratch returnCode handlerCode
@@ -1873,7 +1873,7 @@ def wordToStackProgNat [BEq Nat] (config : WordStackConfig) :
         config.returnLabel config.entryLabel
       pure (wordStackJoin argumentMoves callCode)
   | .call returns (some target) arguments
-      (some (exception, body, handlerLabel, entryLabel)) => do
+      (some (exception, body, _handlerLabel, _entryLabel)) => do
       let argumentMoves ← wordStackMovesToPhysical config arguments 2
       let returnCode ← wordStackReturnCode config returns
       let handlerCode ← wordToStackProgNat config body
@@ -1929,7 +1929,7 @@ def wordToStackProgNatWithBitmapBuilder [BEq Nat]
         storeConstsStub state elseBranch
       pure (wordStackJoin prelude
         (.ite operator condition right thenBranch elseBranch), state)
-  | .loop liveIn body liveOut => do
+  | .loop _liveIn body _liveOut => do
       let (body, state) ← wordToStackProgNatWithBitmapBuilder config bitmapBuilder
         registerCount
         bitmapRegister frameSlots wordBits storeConstsStub state body
@@ -1938,10 +1938,10 @@ def wordToStackProgNatWithBitmapBuilder [BEq Nat]
       wordToStackProgNatWithBitmapBuilder config bitmapBuilder registerCount bitmapRegister frameSlots
         wordBits storeConstsStub state body
   | .call returns (some target) arguments
-      (some (exception, body, handlerLabel, entryLabel)) => do
+      (some (exception, body, _handlerLabel, _entryLabel)) => do
       let argumentMoves ← wordStackMovesToPhysical config arguments 2
       let returnCode ← wordStackReturnCode config returns
-      let destinations := returns.map (fun result => result.1) |>.getD []
+      let _destinations := returns.map (fun result => result.1) |>.getD []
       let (handlerCode, state) ← wordToStackProgNatWithBitmapBuilder config
         bitmapBuilder registerCount bitmapRegister frameSlots wordBits storeConstsStub state body
       let callCode := wordToStackCallWithHandler config.perf target arguments.length
@@ -2235,12 +2235,12 @@ def wordProgToNat : WordProg (Word width) → WordProg Nat
   | .tick => .tick
   | .locValue destination source => .locValue destination source
   | .call returns target arguments none =>
-      .call (returns.map (fun (values, cutsets, returnCode, returnLabel, entryLabel) =>
+      .call (returns.map (fun (values, cutsets, _returnCode, returnLabel, entryLabel) =>
         (values, cutsets, .skip, returnLabel, entryLabel))) target
         arguments none
   | .call returns target arguments
       (some (exception, body, handlerLabel, entryLabel)) =>
-      .call (returns.map (fun (values, cutsets, returnCode, returnLabel, entryLabel) =>
+      .call (returns.map (fun (values, cutsets, _returnCode, returnLabel, entryLabel) =>
         (values, cutsets, .skip, returnLabel, entryLabel))) target
         arguments (some (exception, wordProgToNat body, handlerLabel, entryLabel))
   | .alloc destination (nonGc, gc) =>

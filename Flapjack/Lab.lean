@@ -128,7 +128,7 @@ def labFlatten (tail : Bool) (sectionId counter : Nat)
       ⟨[labJump sectionId (labFindLabel label breaks)], true, counter⟩
   | .continue label =>
       ⟨[labJump sectionId (labFindLabel label continues)], true, counter⟩
-  | .rawCall target =>
+  | .rawCall _target =>
       ⟨[.labAsm (.jump ⟨sectionId, 1⟩) [] 0], true, counter⟩
   | .jumpLower register target label =>
       ⟨[labJumpCmp .lower register (.reg target) label 0], false, counter⟩
@@ -145,7 +145,7 @@ def labFlatten (tail : Bool) (sectionId counter : Nat)
       ⟨[.labAsm (.heapAlloc words) [] 0], false, counter⟩
   | .locValue register label entry =>
       ⟨[.labAsm (.locValue register ⟨label, entry⟩) [] 0], false, counter⟩
-  | .halt register =>
+  | .halt _register =>
       ⟨[.labAsm .halt [] 0], true, counter⟩
   | .get _ _ | .set _ _ | .opCurrHeap _ _ _
     | .storeConsts _ _ _ | .stackAlloc _ | .stackFree _ | .stackStore _ _
@@ -157,7 +157,7 @@ def labFlatten (tail : Bool) (sectionId counter : Nat)
       ⟨[match labCompileJump target with
         | .direct target => .labAsm (.jump target) [] 0
         | .register register => .asm (.jumpReg register) [] 0], true, counter⟩
-  | .call (some (returnCode, linkRegister, returnLabel, entryLabel)) target handler =>
+  | .call (some (returnCode, linkRegister, returnLabel, _entryLabel)) target handler =>
       let returnResult := labFlatten false sectionId counter continues breaks returnCode
       let callPrefix : List (LabLine α) :=
         [.labAsm (.locValue linkRegister ⟨sectionId, returnLabel⟩) [] 0,
