@@ -541,6 +541,8 @@ definitions, pass ordering, examples, and proof obligations.
   colored Word body, retaining the state relation across the entry boundary.
 - [x] Match CakeML's Simple/IRC distinction in graph allocation modes: modes
   0--1 omit move preferences, while modes 2--3 retain prioritized moves.
+- [x] Preserve SSA-renamed virtual names at the heuristic allocator's
+  location-aware StackLang boundary; color only the register-semantic result.
 - [x] Prove the reserved-x31 five-instruction rotate-right colouring boundary
   under explicit scratch non-aliasing hypotheses.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware
