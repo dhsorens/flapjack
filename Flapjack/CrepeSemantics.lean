@@ -267,6 +267,40 @@ theorem evalCrepFullProg_extCall [BEq α] [OfNat α 0] [OfNat α 1]
   simp [evalCrepFullProg, hconfiguration, hconfigurationLength, harray,
     harrayLength, hffi]
 
+theorem evalCrepFullCall_caught_handler [BEq α] [OfNat α 0] [OfNat α 1]
+    [Add α] [Mul α] [Sub α] [AndOp α] [OrOp α] [HXor α α α]
+    [ShiftLeft α] [ShiftRight α] [LT α]
+    [DecidableRel (fun left right : α => left < right)]
+    (functions : List (CompiledFunction α))
+    (primitive : CrepPrimitiveHandler α) (ffi : CrepFfiHandler α)
+    (sharedMem : CrepSharedMemHandler α)
+    (baseAddress topAddress : α) (fuel : Nat)
+    (caller : CrepState α) (function : FunName)
+    (destinations : List Nat) (caught : α) (handler : CrepProg α)
+    (arguments : List (CrepExp α)) (values : List α)
+    (parameters : List Nat) (body : CrepProg α)
+    (calleeLocals : Nat → Option α) (callee : CrepState α)
+    (exception : α) (result : CrepControlResult α)
+    (hvalues : evalCrepFullExps caller.locals caller.memory
+      baseAddress topAddress arguments = some values)
+    (hlookup : lookupCompiledFunction function functions = some (parameters, body))
+    (hassign : assignCrepValues (fun _ => none) parameters values =
+      some calleeLocals)
+    (hcallee : evalCrepFullProg functions primitive ffi sharedMem
+      baseAddress topAddress fuel
+      { locals := calleeLocals, memory := caller.memory } body =
+      some (.raised callee exception))
+    (hcaught : caught == exception)
+    (hhandler : evalCrepFullProg functions primitive ffi sharedMem
+      baseAddress topAddress fuel
+      { locals := caller.locals, memory := callee.memory } handler =
+      some result) :
+    evalCrepFullCall functions primitive ffi sharedMem baseAddress topAddress
+      (fuel + 1) caller (some (destinations, some (caught, handler))) function
+      arguments = some result := by
+  simp [evalCrepFullCall, hvalues, hlookup, hassign, hcallee, hcaught,
+    hhandler]
+
 def evalCrepFullResult
     [BEq α] [OfNat α 0] [OfNat α 1] [Add α] [Mul α]
     [Sub α] [AndOp α] [OrOp α] [HXor α α α] [ShiftLeft α] [ShiftRight α]
