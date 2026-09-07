@@ -50,41 +50,35 @@ def pipelineAllocatedCallDeclarations : List (Decl (RiscV.Word 64)) :=
         [.const (BitVec.ofNat 64 41)]
         (.return (.var .local "result")), returnShape := .one }]
 
-example :
+#guard
     (compileFlapjackRiscVViaStack (width := 64) .rv64i
       (BitVec.ofNat 64 8) (fun value => BitVec.ofNat 64 value) []
-      pipelineStackRemoveConfig pipelineStackAddDeclarations).isSome := by
-  native_decide
+      pipelineStackRemoveConfig pipelineStackAddDeclarations).isSome
 
-example :
+#guard
     (compileFlapjackRiscVViaStack (width := 64) .rv64i
       (BitVec.ofNat 64 8) (fun value => BitVec.ofNat 64 value) [("sum", 7)]
-      pipelineStackRemoveConfig pipelineFfiDeclarations).isSome := by
-  native_decide
+      pipelineStackRemoveConfig pipelineFfiDeclarations).isSome
 
-example :
+#guard
     (compileFlapjackRiscVViaStack (width := 64) .rv64i
       (BitVec.ofNat 64 8) (fun value => BitVec.ofNat 64 value) []
-      pipelineStackRemoveConfig pipelineHandlerDeclarations).isSome := by
-  native_decide
+      pipelineStackRemoveConfig pipelineHandlerDeclarations).isSome
 
-example :
+#guard
     (compileFlapjackRiscVViaAllocatedStack (width := 64) .rv64i
       (BitVec.ofNat 64 8) (fun value => BitVec.ofNat 64 value) []
-      pipelineStackRemoveConfig pipelineStackAddDeclarations).isSome := by
-  native_decide
+      pipelineStackRemoveConfig pipelineStackAddDeclarations).isSome
 
-example :
+#guard
     (compileFlapjackRiscVViaAllocatedStack (width := 64) .rv64i
       (BitVec.ofNat 64 8) (fun value => BitVec.ofNat 64 value) []
-      pipelineStackRemoveConfig pipelineAllocatedCallDeclarations).isSome := by
-  native_decide
+      pipelineStackRemoveConfig pipelineAllocatedCallDeclarations).isSome
 
-example :
+#guard
     (compileFlapjackRiscVViaAllocatedStackLinked (width := 64) .rv64i
       (BitVec.ofNat 64 8) (fun value => BitVec.ofNat 64 value) []
-      pipelineStackRemoveConfig pipelineAllocatedCallDeclarations).isSome := by
-  native_decide
+      pipelineStackRemoveConfig pipelineAllocatedCallDeclarations).isSome
 
 def globalTestContext : GlobalPassContext Nat :=
   { globals := [("g", (.one, 8))]
@@ -175,7 +169,7 @@ example :
       [none, none, some (5, 5, 3, 4)] := by
   decide +kernel
 
-example :
+#guard
     let result := compileFlapjackRiscV (width := 64) .rv64i
       (BitVec.ofNat 64 8) (fun value => BitVec.ofNat 64 value)
       [.function
@@ -183,24 +177,21 @@ example :
           body := .return (.panOp .mul [.const (BitVec.ofNat 64 2),
             .const (BitVec.ofNat 64 3)]), returnShape := .one }]
     result.functions.length = 1 &&
-      result.functions.all (fun (_, _, artifact) => artifact.isSome) := by
-  native_decide
+      result.functions.all (fun (_, _, artifact) => artifact.isSome)
 
-example :
+#guard
     let result := compileFlapjackRiscV (width := 64) .rv64i
       (BitVec.ofNat 64 8) (fun value => BitVec.ofNat 64 value)
       pipelineAddDeclarations
-    result.linkedFunctions.isSome := by
-  native_decide
+    result.linkedFunctions.isSome
 
-example :
+#guard
     let result := compileFlapjackRiscV (width := 64) .rv64i
       (BitVec.ofNat 64 8) (fun value => BitVec.ofNat 64 value)
       pipelineAddDeclarations
-    result.callLinkedFunctions.isSome := by
-  native_decide
+    result.callLinkedFunctions.isSome
 
-example :
+#guard
     let result := compileFlapjackRiscV (width := 64) .rv64i
       (BitVec.ofNat 64 8) (fun value => BitVec.ofNat 64 value)
       [.function
@@ -216,11 +207,9 @@ example :
             | [.add destination left right] =>
                 destination = 5 && left = 2 && right = 3
             | _ => false
-        | none => false) := by
-  native_decide
+        | none => false)
 
-example : compiledPipelineAddRun 7 8 = some [15] := by
-  native_decide
+#guard compiledPipelineAddRun 7 8 = some [15]
 
 example :
     RiscV.executeFunction 10 (0 : RiscV.Word 64) [2, 3]

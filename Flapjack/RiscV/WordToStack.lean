@@ -1588,11 +1588,11 @@ theorem evalWordStackMachine_ffi_move_preserves_register [NeZero width]
   cases sourceLocation with
   | register sourceRegister =>
       by_cases hsame : sourceRegister = destination
-      · simp [wordStackFfiMove, wordStackLocation, lookupNatInfo,
+      · simp [wordStackFfiMove, wordStackLocation, 
           hsource, hsame] at heval
         cases heval
         rfl
-      · simp [wordStackFfiMove, wordStackLocation, lookupNatInfo,
+      · simp [wordStackFfiMove, wordStackLocation, 
           hsource, hsame] at heval
         cases heval
         have hregister : register ≠ destination := by
@@ -1601,7 +1601,7 @@ theorem evalWordStackMachine_ffi_move_preserves_register [NeZero width]
         simp [wordStackMachineWriteRegister, wordStackMachineBinOp,
           hregister]
   | stack sourceSlot =>
-      simp [wordStackFfiMove, wordStackLocation, lookupNatInfo,
+      simp [wordStackFfiMove, wordStackLocation, 
         hsource] at heval
       cases heval
       have hregister : register ≠ destination := by

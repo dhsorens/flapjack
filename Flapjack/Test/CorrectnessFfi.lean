@@ -219,13 +219,11 @@ example :
         | _ => none) = some (some 41) := by
   decide +kernel
 
-example :
+#guard
     sourceFfiPipeline.pipeline.word.length = 2 &&
-      sourceFfiPipeline.functions.all (fun (_, _, artifact) => artifact.isSome) := by
-  native_decide
+      sourceFfiPipeline.functions.all (fun (_, _, artifact) => artifact.isSome)
 
-example : sourceFfiPipeline.callLinkedFunctions.isSome := by
-  native_decide
+#guard sourceFfiPipeline.callLinkedFunctions.isSome
 
 def sourceFfiHost : WordFfiHost 64 :=
   fun service configuration _ _ _ state =>
@@ -239,11 +237,10 @@ def sourceFfiImage : Option (Word 64 × List (Instruction 64)) := do
   let code := entries.flatMap (fun (_, _, _, code, _) => code)
   pure (entry, code)
 
-example :
+#guard
     sourceFfiImage.bind (fun (entry, code) =>
       executeFunctionAtWithFfi sourceFfiHost 100 0 entry 100 [] code [4] []
-        (writeRegister (zeroState 64) 1 100)) = some [42] := by
-  native_decide
+        (writeRegister (zeroState 64) 1 100)) = some [42]
 
 theorem sourceFfi_end_to_end_correct :
     (evalPanProgWithCallsAndFfi sourceFfiFunctions sourceFfiHandler 20

@@ -90,8 +90,7 @@ example : isWfShape pairContext (.named "Missing") = false := by
 example : isWfContext pairContext = true := by
   decide +kernel
 
-example : shapeSizeWithContext pairContext (.named "Pair") = 2 := by
-  native_decide
+#guard shapeSizeWithContext pairContext (.named "Pair") = 2
 
 def duplicateContext : StructContext :=
   [("Pair", { fields := [], size := 0 }), ("Pair", { fields := [], size := 0 })]
