@@ -13,4 +13,14 @@ example [NeZero width] (state : State width) (operator : Cmp)
   exact wordConditionOperands_register_sound state operator condition source hzero
     branchLeft right prelude hoperands
 
+example [NeZero width] (state : State width) (operator : Cmp)
+    (condition : Nat) (branchLeft right : Fin 32)
+    (prelude : List (Instruction width)) (hzero : ZeroRegister state)
+    (hoperands : wordConditionOperands operator condition (.imm 0) =
+      some (branchLeft, right, prelude)) :
+    evalWordCondition state operator condition (.imm 0) =
+      riscVCondition (executeInstructions state prelude) operator branchLeft right := by
+  exact wordConditionOperands_immediate_zero_sound state operator condition hzero
+    branchLeft right prelude hoperands
+
 end Flapjack.RiscV
