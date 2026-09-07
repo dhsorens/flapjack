@@ -1053,6 +1053,8 @@ definitions, pass ordering, examples, and proof obligations.
   result values through the fixed return register sequence.
 - [x] Port CakeML's SSA Install boundary, including code-pointer/length ABI
   marshalling and post-install pointer/cut-set restoration.
+- [x] Port CakeML's SSA StoreConsts boundary, including code/data length ABI
+  marshalling and fresh result restoration.
 - [x] Marshal allocated Word call arguments into the even-numbered ABI
   registers before StackLang call-frame construction, for both handler-free
   and handler-aware calls.

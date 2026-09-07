@@ -725,10 +725,15 @@ def wordSsaRenameProgramWithLoops (frames : List WordSsaLoopFrame)
         (state, wordSsaSeq stackMove
           (wordSsaSeq (.move 0 [(2, destination)])
             (wordSsaSeq (.alloc 2 stackCutsets) restoreMove)))
-    | .storeConsts source bitmap codeLength dataLength constants =>
-        (state, .storeConsts (wordSsaRead state source)
-          (wordSsaRead state bitmap) (wordSsaRead state codeLength)
-          (wordSsaRead state dataLength) constants)
+    | .storeConsts _source _bitmap codeLength dataLength constants =>
+        let codeLengthValue := wordSsaRead state codeLength
+        let dataLengthValue := wordSsaRead state dataLength
+        let (state, dataLength) := wordSsaFresh state dataLength
+        let (state, codeLength) := wordSsaFresh state codeLength
+        (state, wordSsaSeq (.move 0
+            [(4, codeLengthValue), (6, dataLengthValue)])
+          (wordSsaSeq (.storeConsts 0 2 4 6 constants)
+            (.move 0 [(codeLength, 4), (dataLength, 6)])))
     | .opCurrHeap operator destination source =>
         let source := wordSsaRead state source
         let (state, destination) := wordSsaFresh state destination

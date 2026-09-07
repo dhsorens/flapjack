@@ -179,6 +179,18 @@ example :
 
 example :
     wordSsaRenameProgram
+        ({ current := [(1, 100), (2, 104), (3, 108), (4, 112)], next := 200 } :
+          WordSsaState)
+      ((.storeConsts 1 2 3 4 [] : WordProg Nat)) =
+      ({ current := [(3, 204), (4, 200), (1, 100), (2, 104)], next := 208 },
+        .seq (.move 0 [(4, 108), (6, 112)])
+          (.seq (.storeConsts 0 2 4 6 [])
+            (.move 0 [(204, 4), (200, 6)]))) := by
+  simp [wordSsaRenameProgram, wordSsaRenameProgramWithLoops,
+    wordSsaFresh, wordSsaRead, wordSsaSeq, lookupNatInfo]
+
+example :
+    wordSsaRenameProgram
         ({ current := [], next := 10 } : WordSsaState)
       ((.loop [1] (.break 0) []) : WordProg Nat) =
       ({ current := [], next := 14 },
