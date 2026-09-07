@@ -115,10 +115,9 @@ def pipelineMulSource : Prog (RiscV.Word 64) :=
   .return (.panOp .mul
     [.const (BitVec.ofNat 64 2), .const (BitVec.ofNat 64 3)])
 
-theorem compiledPipelineMul_correct :
+#guard
     compiledPipelineMulRun =
-      evalPanProg (fun _ => none) pipelineMulSource := by
-  native_decide
+      evalPanProg (fun _ => none) pipelineMulSource
 
 def pipelineSubDeclarations : List (Decl (RiscV.Word 64)) :=
   [.function
@@ -146,10 +145,9 @@ def pipelineSubSource : Prog (RiscV.Word 64) :=
   .return (.op .sub
     [.const (BitVec.ofNat 64 9), .const (BitVec.ofNat 64 4)])
 
-theorem compiledPipelineSub_correct :
+#guard
     compiledPipelineSubRun =
-      evalPanProg (fun _ => none) pipelineSubSource := by
-  native_decide
+      evalPanProg (fun _ => none) pipelineSubSource
 
 def pipelineBitwiseDeclarations : List (Decl (RiscV.Word 64)) :=
   [.function
@@ -177,10 +175,9 @@ def pipelineBitwiseSource : Prog (RiscV.Word 64) :=
   .return (.op .and
     [.const (BitVec.ofNat 64 13), .const (BitVec.ofNat 64 7)])
 
-theorem compiledPipelineBitwise_correct :
+#guard
     compiledPipelineBitwiseRun =
-      evalPanProg (fun _ => none) pipelineBitwiseSource := by
-  native_decide
+      evalPanProg (fun _ => none) pipelineBitwiseSource
 
 def pipelineStoreLoadDeclarations : List (Decl (RiscV.Word 64)) :=
   [.function
@@ -209,11 +206,10 @@ def pipelineStoreLoadSource : Prog (RiscV.Word 64) :=
       (.const (BitVec.ofNat 64 42)))
     (.return (.load .one (.const (BitVec.ofNat 64 100))))
 
-theorem compiledPipelineStoreLoad_correct :
+#guard
     compiledPipelineStoreLoadRun =
       evalPanMemResult (fun _ => none) (fun _ => none)
-        pipelineStoreLoadSource := by
-  native_decide
+        pipelineStoreLoadSource
 
 def pipelineIteDeclarations : List (Decl (RiscV.Word 64)) :=
   [.function
@@ -242,10 +238,9 @@ def pipelineIteSource : Prog (RiscV.Word 64) :=
     (.return (.const (BitVec.ofNat 64 7)))
     (.return (.const (BitVec.ofNat 64 8)))
 
-theorem compiledPipelineIte_correct :
+#guard
     compiledPipelineIteRun =
-      evalPanProg (fun _ => none) pipelineIteSource := by
-  native_decide
+      evalPanProg (fun _ => none) pipelineIteSource
 
 def pipelineCompareIteDeclarations : List (Decl (RiscV.Word 64)) :=
   [.function
@@ -307,17 +302,15 @@ def pipelineCompareIteLocals (left right : RiscV.Word 64) :
   fun name => if name == "left" then some left
     else if name == "right" then some right else none
 
-theorem compiledPipelineCompareIte_equal_correct :
+#guard
     compiledPipelineCompareIteRun (BitVec.ofNat 64 9) (BitVec.ofNat 64 9) =
       evalPanProg (pipelineCompareIteLocals 9 9)
-        (pipelineCompareIteSource 9 9) := by
-  native_decide
+        (pipelineCompareIteSource 9 9)
 
-theorem compiledPipelineCompareIte_unequal_correct :
+#guard
     compiledPipelineCompareIteRun (BitVec.ofNat 64 9) (BitVec.ofNat 64 10) =
       evalPanProg (pipelineCompareIteLocals 9 10)
-        (pipelineCompareIteSource 9 10) := by
-  native_decide
+        (pipelineCompareIteSource 9 10)
 
 /-!
 The first end-to-end call regression. The source program uses a declaration
@@ -343,9 +336,8 @@ def pipelineCallPipeline : FlapjackRiscVResult 64 :=
     (BitVec.ofNat 64 8) (fun value => BitVec.ofNat 64 value)
     pipelineCallDeclarations
 
-theorem pipelineCallLinkedFunctions_available :
-    pipelineCallPipeline.callLinkedFunctions.isSome := by
-  native_decide
+#guard
+    pipelineCallPipeline.callLinkedFunctions.isSome
 
 def pipelineCallImage : List (RiscV.Instruction 64) :=
   [.addi 4 2 0, .jalr 0 1 0,

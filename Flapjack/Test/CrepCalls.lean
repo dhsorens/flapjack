@@ -19,22 +19,20 @@ def crepCallFunctions : List (CompiledFunction (RiscV.Word 64)) :=
 
 def crepCallLocals : Nat → Option (RiscV.Word 64) := fun _ => none
 
-theorem compileToCrepe_call_semantics :
+#guard
     (do
       let (_, main) ← lookupCompiledFunction "main" crepCallFunctions
       let (_, values) ← evalCrepStateProgWithFunctions crepCallFunctions 20
         crepCallLocals main
-      pure values) = some [BitVec.ofNat 64 41] := by
-  native_decide
+      pure values) = some [BitVec.ofNat 64 41]
 
-theorem compileToCrepe_call_source_agreement :
+#guard
     (do
       let (_, main) ← lookupCompiledFunction "main" crepCallFunctions
       let (_, values) ← evalCrepStateProgWithFunctions crepCallFunctions 20
         crepCallLocals main
       pure values) =
       (evalPanProgWithCalls pipelineCallSourceFunctions 20 (fun _ => none)
-        pipelineCallSourceMain).map (fun result => result.2) := by
-  native_decide
+        pipelineCallSourceMain).map (fun result => result.2)
 
 end Flapjack
