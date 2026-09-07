@@ -2242,10 +2242,25 @@ def wordToStackFunctionWithParametersAndLocationBitmaps [NeZero width]
   let parameterMoves ← wordStackMovesFromPhysical config parameters 2
   pure (wordStackJoin parameterMoves body, state)
 
+/-! Public entry point for the spill-aware path.  The allocator's location
+    map is authoritative for the renamed Word program; the remaining stack
+    and bitmap configuration stays with the caller because it depends on the
+    enclosing frame and linked runtime sections. -/
+def wordToStackFunctionWithSpillStateAndLocationBitmaps [NeZero width]
+    (config : WordStackConfig) (parameters : List Nat)
+    (allocation : WordSpillState)
+    (registerCount bitmapRegister frameSlots : Nat)
+    (storeConstsStub : Option Nat) (state : WordStackBitmapState)
+    (program : WordProg (Word width)) :
+    Option (StackProg Nat × WordStackBitmapState) :=
+  wordToStackFunctionWithParametersAndLocationBitmaps
+    { config with locations := allocation.locations }
+    parameters registerCount bitmapRegister frameSlots storeConstsStub state program
+
 /-! Location map used by the currently register-coloured pipeline fragment.
-    It is intentionally identity-based; the spill-aware allocator will
-    replace this with a map containing `WordLocation.stack` entries once its
-    StackLang frame contract is connected. -/
+    The spill-aware entry point above accepts the allocator-produced map
+    directly; this identity helper remains useful for the register-only path.
+-/
 def wordStackIdentityConfig [NeZero width]
     (program : WordProg (Word width)) : WordStackConfig :=
   { locations := (wordProgVariables program).eraseDups.map
