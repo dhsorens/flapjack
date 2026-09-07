@@ -224,6 +224,56 @@ mutual
     termination_by fuel _ _ => fuel
 end
 
+/-!
+The normal path of a sequence is the semantic counterpart of the instruction
+list concatenation used by the FFI-aware compiler.  Keeping this equation
+named makes later handler and loop simulation proofs consume the evaluator
+without unfolding its fuel recursion at every call site.
+-/
+theorem evalWordFunctionWithCallsAndFfi_seq_normal [NeZero width]
+    (functions : List (Nat × List Nat × WordProg (Word width)))
+    (handler : FunName → Word width → Word width → Word width → Word width →
+      State width → Option (State width))
+    (fuel : Nat) (state middle final : State width)
+    (first second : WordProg (Word width)) (values : List (Word width))
+    (hfirst : evalWordFunctionWithCallsAndFfi functions handler fuel state first =
+      some (middle, []))
+    (hsecond : evalWordFunctionWithCallsAndFfi functions handler fuel middle second =
+      some (final, values)) :
+    evalWordFunctionWithCallsAndFfi functions handler (fuel + 1) state
+      (.seq first second) = some (final, values) := by
+  simp [evalWordFunctionWithCallsAndFfi, hfirst, hsecond]
+
+theorem evalWordFunctionWithCallsAndFfi_ite_true [NeZero width]
+    (functions : List (Nat × List Nat × WordProg (Word width)))
+    (handler : FunName → Word width → Word width → Word width → Word width →
+      State width → Option (State width))
+    (fuel : Nat) (state : State width) (operator : Cmp)
+    (condition : Nat) (rightValue : WordRegImm (Word width))
+    (thenBranch elseBranch : WordProg (Word width))
+    (result : State width × List (Word width))
+    (hcondition : evalWordCondition state operator condition rightValue = some true)
+    (hthen : evalWordFunctionWithCallsAndFfi functions handler fuel state thenBranch =
+      some result) :
+    evalWordFunctionWithCallsAndFfi functions handler (fuel + 1) state
+      (.ite operator condition rightValue thenBranch elseBranch) = some result := by
+  simp [evalWordFunctionWithCallsAndFfi, hcondition, hthen]
+
+theorem evalWordFunctionWithCallsAndFfi_ite_false [NeZero width]
+    (functions : List (Nat × List Nat × WordProg (Word width)))
+    (handler : FunName → Word width → Word width → Word width → Word width →
+      State width → Option (State width))
+    (fuel : Nat) (state : State width) (operator : Cmp)
+    (condition : Nat) (rightValue : WordRegImm (Word width))
+    (thenBranch elseBranch : WordProg (Word width))
+    (result : State width × List (Word width))
+    (hcondition : evalWordCondition state operator condition rightValue = some false)
+    ( helse : evalWordFunctionWithCallsAndFfi functions handler fuel state elseBranch =
+      some result) :
+    evalWordFunctionWithCallsAndFfi functions handler (fuel + 1) state
+      (.ite operator condition rightValue thenBranch elseBranch) = some result := by
+  simp [evalWordFunctionWithCallsAndFfi, hcondition, helse]
+
 theorem wordFunctionToRiscVWithCallsAndFfi_ffi [NeZero width] :
     wordFunctionToRiscVWithCallsAndFfi
       ({ targets := [], services := [("sum", 7)] } : WordCallFfiContext width)
