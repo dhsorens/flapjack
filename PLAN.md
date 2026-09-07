@@ -976,6 +976,8 @@ definitions, pass ordering, examples, and proof obligations.
   for compositional collector proofs.
 - [x] Prove the generated bitmap `MoveBitmap` and `MoveBitmaps` sentinel
   machine states terminate without changing the frame state.
+- [x] Expose the bounded frame-machine bitmap-table load equation under its
+  destination/register separation and successful bitmap lookup conditions.
 - [x] Prove the exact bounded-frame collector memcpy-body transition,
   including scratch-register state and destination-memory update.
 - [x] Compose that transition with the bounded loop evaluator for the

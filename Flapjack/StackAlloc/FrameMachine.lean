@@ -1232,6 +1232,17 @@ theorem evalStackFrameFuel_stackGcMoveBitmaps_zero [NeZero width]
   simp [stackGcMoveBitmapsCode, stackGcWhile, evalStackFrameFuel,
     evalStackFrameFuelWithCode, stackMachineCondition, hzero]
 
+theorem evalStackFrameFuel_bitmapLoad [NeZero width]
+    (fuel : Nat) (state : StackFrameMachineState width)
+    (destination address : Nat) (value : Word width)
+    (hdestination : destination ≠ address)
+    (hbitmap : stackFrameBitmapAt state.bitmaps
+        (state.machine.registers address).toNat = some value) :
+    evalStackFrameFuel (fuel + 1) state (.bitmapLoad destination address) =
+      some (.normal (stackFrameWriteRegister state destination value)) := by
+  simp [evalStackFrameFuel, evalStackFrameFuelWithCode,
+    stackFrameBitmapAt, hdestination, hbitmap]
+
 theorem evalStackFrameFuel_stackGcMoveBitmap_skip_one [NeZero width]
     (config : StackGcConfig) (fuel : Nat)
     (state : StackFrameMachineState width)
