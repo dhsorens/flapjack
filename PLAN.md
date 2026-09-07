@@ -552,6 +552,8 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Port the CakeML `full_ssa_cc_trans` function-entry sequence, retaining
   fresh formal names and the explicit priority-1 parameter moves in the Lean
   Word program returned to allocation clients.
+- [x] Compose the full-SSA entry sequence with the graph allocator, retaining
+  fixed ABI source names and returning the coloured entry-inclusive program.
 - [x] Route the spill-aware RISC-V pipeline through the implemented
   clash-tree/preference allocator and retain its allocation witness at the
   Word-to-Stack boundary.
