@@ -1517,6 +1517,10 @@ definitions, pass ordering, examples, and proof obligations.
   execution, threading both the intermediate machine and bitmap states.
 - [x] Expose state-threaded Word-to-Stack conditional composition, including
   condition materialization and branch-state threading.
+- [x] Compose the nontrivial true branch of state-threaded conditional
+  lowering with bounded StackLang execution after condition materialization.
+- [x] Compose the corresponding false branch with bounded StackLang execution
+  after condition materialization.
 - [x] Expose state-threaded Word-to-Stack loop and MustTerminate composition.
 - [x] Expose source-order bitmap threading through the allocated Word-to-Stack
   function pipeline, including a compositional append equation.
