@@ -16,6 +16,18 @@ def pipelineStackRemoveConfig : StackRemoveConfig :=
   { storeBase := 10, currHeap := 12, scratch := 31, addressScratch := 29,
     stackPointer := 20, bytesInWord := 8, stackBase := 21, wordShift := 3 }
 
+def pipelineHandlerDeclarations : List (Decl (RiscV.Word 64)) :=
+  [.exnDecl "E" .one,
+   .function
+    { name := "raise", inline := false, exported := false, params := [],
+      body := .raise "E" (.const (BitVec.ofNat 64 7)), returnShape := .one },
+   .function
+    { name := "main", inline := false, exported := true, params := [],
+      body := .dec "exception" .one (.const (BitVec.ofNat 64 0))
+        (.call (some (none, some ("E", "exception",
+          .return (.var .local "exception")))) "raise" []),
+      returnShape := .one }]
+
 def pipelineAllocatedCallDeclarations : List (Decl (RiscV.Word 64)) :=
   [.function
     { name := "id", inline := false, exported := false,
@@ -32,6 +44,12 @@ example :
     (compileFlapjackRiscVViaStack (width := 64) .rv64i
       (BitVec.ofNat 64 8) (fun value => BitVec.ofNat 64 value) []
       pipelineStackRemoveConfig pipelineStackAddDeclarations).isSome := by
+  native_decide
+
+example :
+    (compileFlapjackRiscVViaStack (width := 64) .rv64i
+      (BitVec.ofNat 64 8) (fun value => BitVec.ofNat 64 value) []
+      pipelineStackRemoveConfig pipelineHandlerDeclarations).isSome := by
   native_decide
 
 example :

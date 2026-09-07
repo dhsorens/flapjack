@@ -456,6 +456,17 @@ def compileStackProgramNatListToRiscV [NeZero width]
       labProgramToEntrySection sectionId entryLabel initialLabel
         (stackRemoveComplete config program))).map labSectionNatToWord)
 
+/-! Exception expressions lower to a call to the reserved raise stub at
+    section `stackRaiseStubLocation`.  Include that stub in every linked
+    image so handler-bearing programs have a concrete target. -/
+def compileStackProgramNatListWithRaiseStubToRiscV [NeZero width]
+    (context : WordFfiContext) (config : StackRemoveConfig)
+    (entryLabel initialLabel : Nat)
+    (programs : List (Nat × StackProg Nat)) :
+    Option (List (Instruction width)) :=
+  compileStackProgramNatListToRiscV context config entryLabel initialLabel
+    ((stackRaiseStubLocation, stackRaiseStub false config.scratch) :: programs)
+
 def compileStackProgramNatListWithHaltToRiscV [NeZero width]
     (context : WordFfiContext) (config : StackRemoveConfig)
     (entryLabel initialLabel : Nat)
@@ -497,6 +508,14 @@ def compileStackProgramNatListLinkedToRiscV [NeZero width]
     ((programs.map (fun (sectionId, program) =>
       labProgramToEntrySection sectionId entryLabel initialLabel
         (stackRemoveComplete config program))).map labSectionNatToWord)
+
+def compileStackProgramNatListLinkedWithRaiseStubToRiscV [NeZero width]
+    (context : WordFfiContext) (config : StackRemoveConfig)
+    (entryLabel initialLabel : Nat)
+    (programs : List (Nat × StackProg Nat)) :
+    Option (List (Nat × Word width × List (Instruction width))) :=
+  compileStackProgramNatListLinkedToRiscV context config entryLabel initialLabel
+    ((stackRaiseStubLocation, stackRaiseStub false config.scratch) :: programs)
 
 theorem labLineInstructionCount_ffi :
     labLineInstructionCount

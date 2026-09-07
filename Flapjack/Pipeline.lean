@@ -83,8 +83,9 @@ def pipelineWordFunctionsToStack [NeZero width] :
       Option (List (Nat × List Nat × StackProg Nat))
   | [] => some []
   | (label, parameters, body) :: functions => do
-      let stackBody ← RiscV.wordToStackProgWord
-        (RiscV.wordStackIdentityConfig body) body
+      let config := { RiscV.wordStackIdentityConfig body with
+        handlerLabel := label }
+      let stackBody ← RiscV.wordToStackProgWord config body
       let rest ← pipelineWordFunctionsToStack functions
       pure ((label, parameters, stackBody) :: rest)
 
@@ -120,7 +121,8 @@ def pipelineWordFunctionsAllocatedWithSpills [NeZero width] :
         { locations := allocation.locations
           scratch := 31
           stackBase := 0
-          addressScratch := 29 }
+          addressScratch := 29
+          handlerLabel := label }
       let stackBody ← RiscV.wordToStackFunctionWithParameters config renamedParameters
         renamedBody
       let rest ← pipelineWordFunctionsAllocatedWithSpills functions
@@ -149,7 +151,8 @@ def pipelineWordFunctionsAllocatedWithSpillsAndBitmaps [NeZero width]
         { locations := allocation.locations
           scratch := 31
           stackBase := 0
-          addressScratch := 29 }
+          addressScratch := 29
+          handlerLabel := label }
       let (stackBody, bitmaps) ←
         RiscV.wordToStackFunctionWithParametersAndLocationBitmaps config
           renamedParameters wordAllocatableRegisters.length config.scratch
@@ -363,7 +366,8 @@ def compileFlapjackRiscVViaStack [NeZero width] [BEq (RiscV.Word width)]
     Option (List (RiscV.Instruction width)) := do
   let pipeline := compileFlapjack architecture bytesInWord fromNat declarations
   let functions ← pipelineWordFunctionsToStack pipeline.word
-  RiscV.compileStackProgramNatListToRiscV { services := services } removeConfig 0 0
+  RiscV.compileStackProgramNatListWithRaiseStubToRiscV { services := services }
+    removeConfig 0 0
     (functions.map (fun (label, _, body) => (label, body)))
 
 /-! End-to-end RISC-V entry point using the executable Word allocator before
@@ -381,7 +385,8 @@ def compileFlapjackRiscVViaAllocatedStack [NeZero width]
     Option (List (RiscV.Instruction width)) := do
   let pipeline := compileFlapjack architecture bytesInWord fromNat declarations
   let functions ← pipelineWordFunctionsAllocatedWithSpills pipeline.loop
-  RiscV.compileStackProgramNatListToRiscV { services := services } removeConfig 0 0
+  RiscV.compileStackProgramNatListWithRaiseStubToRiscV { services := services }
+    removeConfig 0 0
     (functions.map (fun (label, _, body) => (label, body)))
 
 /-! Bitmap-carrying variant of the allocator-aware RISC-V entry point.  The
@@ -401,7 +406,8 @@ def compileFlapjackRiscVViaAllocatedStackWithBitmaps [NeZero width]
     pipelineWordFunctionsAllocatedWithSpillsAndBitmaps
       (RiscV.wordStackInitialBitmaps false) pipeline.loop
   let instructions ←
-    RiscV.compileStackProgramNatListToRiscV { services := services } removeConfig 0 0
+    RiscV.compileStackProgramNatListWithRaiseStubToRiscV { services := services }
+      removeConfig 0 0
       (functions.map (fun (label, _, body) => (label, body)))
   pure (bitmaps, instructions)
 
@@ -419,7 +425,8 @@ def compileFlapjackRiscVViaGraphAllocatedStack [NeZero width]
     Option (List (RiscV.Instruction width)) := do
   let pipeline := compileFlapjack architecture bytesInWord fromNat declarations
   let functions ← pipelineWordFunctionsAllocatedWithGraph pipeline.loop
-  RiscV.compileStackProgramNatListToRiscV { services := services } removeConfig 0 0
+  RiscV.compileStackProgramNatListWithRaiseStubToRiscV { services := services }
+    removeConfig 0 0
     (functions.map (fun (label, _, body) => (label, body)))
 
 /-! Linked graph-allocator artifact.  Keep the section labels and byte entry
@@ -436,7 +443,7 @@ def compileFlapjackRiscVViaGraphAllocatedStackLinked [NeZero width]
     Option (List (Nat × RiscV.Word width × List (RiscV.Instruction width))) := do
   let pipeline := compileFlapjack architecture bytesInWord fromNat declarations
   let functions ← pipelineWordFunctionsAllocatedWithGraph pipeline.loop
-  RiscV.compileStackProgramNatListLinkedToRiscV { services := services }
+  RiscV.compileStackProgramNatListLinkedWithRaiseStubToRiscV { services := services }
     removeConfig 0 0 (functions.map (fun (label, _, body) => (label, body)))
 
 /-! Linked form of the allocator-aware entry point.  The flat instruction
@@ -454,7 +461,7 @@ def compileFlapjackRiscVViaAllocatedStackLinked [NeZero width]
     Option (List (Nat × RiscV.Word width × List (RiscV.Instruction width))) := do
   let pipeline := compileFlapjack architecture bytesInWord fromNat declarations
   let functions ← pipelineWordFunctionsAllocatedWithSpills pipeline.loop
-  RiscV.compileStackProgramNatListLinkedToRiscV { services := services }
+  RiscV.compileStackProgramNatListLinkedWithRaiseStubToRiscV { services := services }
     removeConfig 0 0 (functions.map (fun (label, _, body) => (label, body)))
 
 def compileFlapjackChecked [BEq String] [BEq α] [OfNat α 0] [OfNat α 1]

@@ -1245,6 +1245,8 @@ definitions, pass ordering, examples, and proof obligations.
   preserving the callee memory in the propagated result.
 - [x] Compose machine bitmap-root movement and heap scanning with the Nat
   full bitmap collector result under explicit root and loop witnesses.
+- [x] Connect handler-aware Word-to-Stack lowering to the RISC-V image,
+  including function-local handler labels and the reserved raise stub.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
