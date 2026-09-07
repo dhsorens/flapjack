@@ -302,6 +302,47 @@ theorem evalStackProgFuelWithCodeAndFfi_call_return_handler [NeZero width]
   simp [evalStackProgFuelWithCodeAndFfi, evalStackProgFuelWithCode,
     hcallee]
 
+/-! General call equations for a callee whose result is supplied by an
+    evaluation witness.  These are the abstract StackLang counterparts of
+    the bounded FrameMachine equations and allow compound callees to be
+    composed without exposing their internal syntax. -/
+
+theorem evalStackProgFuelWithCodeAndFfi_call_raise_handler_of_eval [NeZero width]
+    (host : StackMachineFfiHandler width)
+    (fuel : Nat) (code : Nat → Option (StackProg Nat))
+    (state calleeState : WordStackMachineState width)
+    (target exceptionRegister handlerLabel : Nat) (returnCode : StackProg Nat)
+    (link returnLabel entryLabel : Nat) (handlerCode callee : StackProg Nat)
+    (value : Word width)
+    (hcode : code target = some callee)
+    (hcallee :
+      evalStackProgFuelWithCodeAndFfi host (fuel + 1) code state callee =
+        some (.raised calleeState value)) :
+    evalStackProgFuelWithCodeAndFfi host (fuel + 2) code state
+        (.call (some (returnCode, link, returnLabel, entryLabel)) (.label target)
+          (some (handlerCode, exceptionRegister, handlerLabel))) =
+      evalStackProgFuelWithCodeAndFfi host (fuel + 1) code
+        (wordStackMachineWriteRegister calleeState exceptionRegister value) handlerCode := by
+  simp [evalStackProgFuelWithCodeAndFfi, hcode, hcallee]
+
+theorem evalStackProgFuelWithCodeAndFfi_call_return_handler_of_eval [NeZero width]
+    (host : StackMachineFfiHandler width)
+    (fuel : Nat) (code : Nat → Option (StackProg Nat))
+    (state calleeState : WordStackMachineState width)
+    (target : Nat) (returnCode : StackProg Nat)
+    (link returnLabel entryLabel : Nat)
+    (handler : Option (StackProg Nat × Nat × Nat)) (callee : StackProg Nat)
+    (value : Word width)
+    (hcode : code target = some callee)
+    (hcallee :
+      evalStackProgFuelWithCodeAndFfi host (fuel + 1) code state callee =
+        some (.returned calleeState value)) :
+    evalStackProgFuelWithCodeAndFfi host (fuel + 2) code state
+        (.call (some (returnCode, link, returnLabel, entryLabel)) (.label target)
+          handler) =
+      evalStackProgFuelWithCodeAndFfi host (fuel + 1) code calleeState returnCode := by
+  simp [evalStackProgFuelWithCodeAndFfi, hcode, hcallee]
+
 theorem evalStackGcMoveCode_immediate
     (config : StackGcConfig) (fuel : Nat)
     (state : WordStackMachineState 64)
