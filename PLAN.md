@@ -576,6 +576,8 @@ definitions, pass ordering, examples, and proof obligations.
   full-SSA spill pipeline.
 - [x] Expose the linked full-SSA RISC-V artifact with section entry addresses
   for downstream execution and correctness clients.
+- [x] Prove concrete machine execution of the linked full-SSA artifact for a
+  constant-return `main`, including the linked raise-stub image.
 - [x] Route the spill-aware RISC-V pipeline through the implemented
   clash-tree/preference allocator and retain its allocation witness at the
   Word-to-Stack boundary.
