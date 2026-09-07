@@ -477,6 +477,9 @@ definitions, pass ordering, examples, and proof obligations.
   comparisons and bit tests under the RISC-V zero-register invariant.
 - [x] Reduce zero-immediate branch conditions to the verified register-zero
   condition boundary.
+- [x] Prove the machine-level PC contract for the branch instruction selected
+  by every Word comparison, and compose it with the verified condition
+  prelude under the RISC-V zero-register invariant.
 - [x] Preserve CakeML WordLang's `MustTerminate` wrapper through Word
   semantics, SSA/clash analysis, colouring, Word-to-Stack, and RISC-V lowering,
   with focused regressions.
