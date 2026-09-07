@@ -92,4 +92,22 @@ def wordGetHeuristics (algorithm currentFunction : Nat) (program : WordProg α) 
   else
     (moves, none)
 
+def wordAllocateGraphFunctionWithHeuristics (parameters : List Nat)
+    (program : WordProg α) (fixedSources : List Nat)
+    (algorithm currentFunction colours stackStart : Nat) :
+    Option (WordSsaState × List Nat × WordGraphAllocation × WordProg α) :=
+  let (state, renamedParameters, renamedProgram) :=
+    wordSsaRenameFunction parameters program
+  let stackOnly := wordStackOnly renamedProgram
+  let tree := WordClashTree.seq (.set renamedParameters)
+    (wordClashTree renamedProgram [])
+  let forced := wordProgForcedClashes renamedProgram
+  let (moves, _) := wordGetHeuristics algorithm currentFunction renamedProgram
+  (wordAllocateGraphWithPrioritizedMoves tree forced
+      (wordStackOnlyUnion fixedSources stackOnly.forced)
+      moves colours stackStart).map
+    (fun allocation =>
+      (state, renamedParameters, allocation,
+        wordApplyColour (wordGraphColouringAt allocation.colouring) renamedProgram))
+
 end Flapjack

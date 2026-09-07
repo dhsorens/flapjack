@@ -39,4 +39,9 @@ example :
     (wordGetHeuristics 1 7 (.move 9 [(1, 2)] : WordProg Nat)).2.isSome = true := by
   native_decide
 
+example :
+    (wordAllocateGraphFunctionWithHeuristics
+      [] (.move 9 [(0, 1)] : WordProg Nat) [] 1 7 13 26).isSome = true := by
+  native_decide
+
 end Flapjack

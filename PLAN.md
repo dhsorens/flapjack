@@ -472,6 +472,8 @@ definitions, pass ordering, examples, and proof obligations.
   move priorities at the graph-allocation boundary.
 - [x] Port CakeML spill-cost weighting, move canonicalization, and odd/even
   heuristic worklist selection.
+- [x] Wire the heuristic worklist into a function-level stack-aware graph
+  allocation entry point.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware
   RISC-V contracts before claiming general call-aware allocation correctness.
 - [x] Add a combined graph-allocation soundness contract exposing fixed tags,
