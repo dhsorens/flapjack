@@ -475,6 +475,8 @@ definitions, pass ordering, examples, and proof obligations.
   instruction-list fragment, including sequential code composition.
 - [x] Prove that register-based branch condition preludes preserve Word
   comparisons and bit tests under the RISC-V zero-register invariant.
+- [x] Reduce zero-immediate branch conditions to the verified register-zero
+  condition boundary.
 - [x] Preserve CakeML WordLang's `MustTerminate` wrapper through Word
   semantics, SSA/clash analysis, colouring, Word-to-Stack, and RISC-V lowering,
   with focused regressions.
