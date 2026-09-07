@@ -1497,6 +1497,8 @@ definitions, pass ordering, examples, and proof obligations.
   execution, retaining the bitmap state after argument moves and call code.
 - [x] Expose the matching state-threaded no-handler call lowering equation,
   including return destinations and the unchanged bitmap state.
+- [x] Compose state-threaded no-handler call lowering with bounded StackLang
+  execution under explicit argument-move and return-call premises.
 - [x] Expose the state-threaded Word-to-Stack FFI equation, retaining the
   bitmap accumulator across ABI argument lowering.
 - [x] Compose state-threaded Word-to-Stack FFI lowering with bounded
