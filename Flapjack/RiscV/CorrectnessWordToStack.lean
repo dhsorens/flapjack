@@ -515,6 +515,31 @@ theorem wordToStackProgNatWithBitmapBuilder_call_handler
         finalState) := by
   simp [wordToStackProgNatWithBitmapBuilder, hargs, hreturn, hhandler]
 
+/-! The state-threaded compiler composes the results of sequential source
+    programs.  Keeping both intermediate states in the theorem makes the
+    equation useful for composing an allocating prefix with a later FFI or
+    handler body. -/
+
+theorem wordToStackProgNatWithBitmapBuilder_seq
+    [BEq Nat] (config : WordStackConfig)
+    (bitmapBuilder : List Nat → List Nat)
+    (registerCount bitmapRegister frameSlots wordBits : Nat)
+    (storeConstsStub : Option Nat)
+    (state state1 finalState : WordStackBitmapState)
+    (first second : WordProg Nat)
+    (firstCode secondCode : StackProg Nat)
+    (hfirst : wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+      registerCount bitmapRegister frameSlots wordBits storeConstsStub state first =
+      some (firstCode, state1))
+    (hsecond : wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+      registerCount bitmapRegister frameSlots wordBits storeConstsStub state1 second =
+      some (secondCode, finalState)) :
+    wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+      registerCount bitmapRegister frameSlots wordBits storeConstsStub state
+      (.seq first second) =
+      some (.seq firstCode secondCode, finalState) := by
+  simp [wordToStackProgNatWithBitmapBuilder, hfirst, hsecond]
+
 /-! The state-threaded compiler has no special bitmap effect for an FFI
     instruction.  Its lowering equation therefore returns the original
     accumulator while exposing the same four-move ABI prefix as the
