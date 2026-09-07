@@ -1267,6 +1267,8 @@ definitions, pass ordering, examples, and proof obligations.
   constant-storage lowering.
 - [x] Lift the bitmap-state length invariant through the complete recursive
   Word-to-Stack builder, including sequences, branches, loops, and handlers.
+- [x] Prove the one-step FFI compatibility equation across register colouring,
+  with the host transition retained as an explicit semantic hypothesis.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
