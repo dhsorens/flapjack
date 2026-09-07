@@ -3563,11 +3563,8 @@ theorem loopToWord_loadByte_preserves_mapped_locals [NeZero width]
     (state : RiscV.State width) (address destination : Nat)
     (destinationRegister : Fin 32) (addressValue : RiscV.Word width)
     (byteValue : BitVec 8)
-    (zero : RiscV.ZeroRegister state)
     (hlocals : loopLocalsMappedToRiscV context loopState.locals state)
     (haddress : loopState.locals address = some addressValue)
-    (hmemory : loopState.memory addressValue =
-      some (BitVec.ofNat width byteValue.toNat))
     (hmachine : RiscV.readByte state addressValue = byteValue)
     (hdestination :
       RiscV.registerOfNat (wordFindVar context destination) =
@@ -3949,7 +3946,6 @@ theorem loopToWord_shMem_load_preserves_mapped_locals [NeZero width]
     (destinationRegister : Fin 32) (addressValue value : RiscV.Word width)
     (hlocals : loopLocalsMappedToRiscV context loopState.locals state)
     (haddress : loopState.locals address = some addressValue)
-    (hmemory : loopState.memory addressValue = some value)
     (hmachine : RiscV.readWordValue state addressValue = value)
     (hdestination :
       RiscV.registerOfNat (wordFindVar context destination) =
