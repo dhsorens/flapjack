@@ -112,4 +112,13 @@ example :
         (.delta [5] [7] : WordClashTree)) = true := by
   native_decide
 
+example :
+    let state :=
+      { (wordLinearScanInitialState 3 3) with
+        colours := [(2, 1), (4, 0)] }
+    let exchanged := wordLinearScanApplyRegisterExchange [2, 4] state
+    lookupNatInfo 2 exchanged.colours = some 1 &&
+      lookupNatInfo 4 exchanged.colours = some 2 := by
+  native_decide
+
 end Flapjack

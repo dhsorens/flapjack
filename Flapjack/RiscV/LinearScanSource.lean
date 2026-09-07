@@ -244,6 +244,48 @@ def wordLinearScanPass2 : NatInfoMap (List Nat) → NatInfoMap (List Nat) →
       let state ← wordLinearScanPass2Step forced moves register beginnings endings state
       wordLinearScanPass2 forced moves registers beginnings endings state
 
+def wordLinearScanExchangeUpdate (colour replacement : Nat)
+    (exchange : NatInfoMap Nat) : NatInfoMap Nat :=
+  (colour, replacement) :: exchange.filter (fun entry => entry.1 != colour)
+
+def wordLinearScanExchangeLookup (exchange : NatInfoMap Nat)
+    (colour : Nat) : Nat :=
+  match lookupNatInfo colour exchange with
+  | some replacement => replacement
+  | none => colour
+
+def wordLinearScanFindRegExchangeAux
+    (state : WordLinearScanState) : List Nat → NatInfoMap Nat →
+    NatInfoMap Nat → NatInfoMap Nat × NatInfoMap Nat
+  | [], exchange, inverse => (exchange, inverse)
+  | register :: registers, exchange, inverse =>
+      let colour :=
+        match lookupNatInfo register state.colours with
+        | some colour => colour
+        | none => 0
+      let fixedColour := register / 2
+      let exchangedColour := wordLinearScanExchangeLookup inverse fixedColour
+      let fixedExchangedColour := wordLinearScanExchangeLookup exchange colour
+      let exchange := wordLinearScanExchangeUpdate colour fixedColour
+        (wordLinearScanExchangeUpdate exchangedColour fixedExchangedColour exchange)
+      let inverse := wordLinearScanExchangeUpdate fixedColour colour
+        (wordLinearScanExchangeUpdate fixedExchangedColour exchangedColour inverse)
+      wordLinearScanFindRegExchangeAux state registers exchange inverse
+
+def wordLinearScanFindRegExchange (registers : List Nat)
+    (state : WordLinearScanState) : NatInfoMap Nat × NatInfoMap Nat :=
+  wordLinearScanFindRegExchangeAux state registers [] []
+
+def wordLinearScanApplyColourExchange (exchange : NatInfoMap Nat)
+    (state : WordLinearScanState) : WordLinearScanState :=
+  { state with colours := state.colours.map (fun entry =>
+      (entry.1, wordLinearScanExchangeLookup exchange entry.2)) }
+
+def wordLinearScanApplyRegisterExchange (registers : List Nat)
+    (state : WordLinearScanState) : WordLinearScanState :=
+  let (exchange, _) := wordLinearScanFindRegExchange registers state
+  wordLinearScanApplyColourExchange exchange state
+
 /-! Source-shaped two-pass entry point.  The register list is expected to be
 in interval-start order, as it is after CakeML's sorting pass. -/
 def wordLinearScanTwoPass (colours : Nat)
@@ -252,18 +294,24 @@ def wordLinearScanTwoPass (colours : Nat)
     Option (WordLinearScanState × List Nat × WordLinearScanState) := do
   let forcedAdjacency := wordLinearScanAdjacency forced
   let moveAdjacency := wordLinearScanAdjacency moves
-  let first ← wordLinearScanPass1 forcedAdjacency moveAdjacency registers
+  let firstRaw ← wordLinearScanPass1 forcedAdjacency moveAdjacency registers
     beginnings endings
     { (wordLinearScanInitialState colours colours) with
       nextSpill := colours }
+  let firstPhysical := registers.filter (fun register =>
+    register % 2 == 0 && register < 2 * colours)
+  let first := wordLinearScanApplyRegisterExchange firstPhysical firstRaw
   let stackRegisters ← wordLinearScanStackRegisters colours registers first
-  let second ← wordLinearScanPass2
+  let secondRaw ← wordLinearScanPass2
     (wordLinearScanFilterAdjacency stackRegisters forcedAdjacency)
     (wordLinearScanFilterAdjacency stackRegisters moveAdjacency)
     stackRegisters beginnings endings
     { (wordLinearScanInitialState (colours + stackRegisters.length) (colours + stackRegisters.length)) with
       nextColour := colours
       nextSpill := colours + stackRegisters.length }
+  let secondPhysical := stackRegisters.filter (fun register =>
+    register % 2 == 0 && 2 * colours ≤ register)
+  let second := wordLinearScanApplyRegisterExchange secondPhysical secondRaw
   pure (first, stackRegisters, second)
 
 def wordLinearScanRegisterPrecedes (beginnings : NatInfoMap Int)
