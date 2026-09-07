@@ -22,6 +22,8 @@ import Flapjack.Test.CorrectnessColour
 import Flapjack.Test.FrameMachineCalls
 import Flapjack.Test.StackMachineCalls
 import Flapjack.Test.WordCallEquations
+import Flapjack.Test.WordToStack.CompilerFfi
+import Flapjack.Test.WordToStack.HandlerLowering
 
 /-!
 # Flapjack regression tests

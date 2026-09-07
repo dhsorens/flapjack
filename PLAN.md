@@ -1386,6 +1386,10 @@ definitions, pass ordering, examples, and proof obligations.
   raised-handler equations, with frame-state regressions.
 - [x] Expose the bounded FrameMachine FFI returned-callee continuation
   equation, with a return-path FFI regression.
+- [x] Lift the Word-to-Stack FFI ABI equation through the option-valued
+  compiler entry point, with a spill-aware source-location regression.
+- [x] Expose the state-threaded handler-call equation for the Word-to-Stack
+  compiler, retaining the generated call shape and bitmap state.
 - [x] Add abstract and bounded FFI loop-break simulation equations, with
   FFI-in-loop regressions.
 - [x] Expose the abstract StackLang FFI returned-callee continuation equation,
