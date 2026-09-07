@@ -58,9 +58,9 @@ def stackGcNatValueRootValid : StackGcNatValue → Prop
 def stackGcNatEncodeStackFuel (config : StackGcConfig)
     (bitmaps : List Nat) : Nat → List StackGcNatValue → Option (List StackGcNatValue)
   | 0, _ => none
-  | Nat.succ fuel, [] => none
-  | Nat.succ fuel, [.word 0] => some []
-  | Nat.succ fuel, .word 0 :: _ => none
+  | Nat.succ _fuel, [] => none
+  | Nat.succ _fuel, [.word 0] => some []
+  | Nat.succ _fuel, .word 0 :: _ => none
   | Nat.succ fuel, value :: values =>
       match stackGcNatFullReadBitmap config bitmaps value with
       | none => none
@@ -81,10 +81,10 @@ def stackGcNatDecodeStackFuel (config : StackGcConfig)
     (bitmaps : List Nat) : Nat → List StackGcNatValue →
       List StackGcNatValue → Option (List StackGcNatValue)
   | 0, _, _ => none
-  | Nat.succ fuel, _, [] => none
-  | Nat.succ fuel, [], [.word 0] => some [.word 0]
-  | Nat.succ fuel, _, [.word 0] => none
-  | Nat.succ fuel, _, .word 0 :: _ => none
+  | Nat.succ _fuel, _, [] => none
+  | Nat.succ _fuel, [], [.word 0] => some [.word 0]
+  | Nat.succ _fuel, _, [.word 0] => none
+  | Nat.succ _fuel, _, .word 0 :: _ => none
   | Nat.succ fuel, encoded, value :: values =>
       match stackGcNatFullReadBitmap config bitmaps value with
       | none => none

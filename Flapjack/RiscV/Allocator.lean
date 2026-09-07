@@ -996,7 +996,7 @@ def wordClashTree : WordProg α → List (List Nat × List Nat) → WordClashTre
   | .call returns _ arguments none, _ =>
       match returns with
       | none => .set arguments.eraseDups
-      | some (values, cutsets, returnCode, _, _) =>
+      | some (values, cutsets, _returnCode, _, _) =>
           let live := cutsets.1 ++ cutsets.2
           .seq (.set (wordClashTreeCallSet values live))
             (.set (wordClashTreeCallSet arguments live))
@@ -1113,7 +1113,7 @@ def wordClashTreeCheck (colour : Nat → Nat) : WordClashTree →
       | some (thenOut, fThenOut) =>
           match wordClashTreeCheck colour elseBranch live flive with
           | none => none
-          | some (elseOut, fElseOut) =>
+          | some (elseOut, _fElseOut) =>
               match branchLive with
               | none =>
                   wordCheckPartialColour colour

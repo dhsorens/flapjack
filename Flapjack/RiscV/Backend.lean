@@ -146,7 +146,7 @@ def wordExpToInstruction [NeZero width] (destination : Nat) :
 
 def wordArithToInstruction [NeZero width] :
     WordArith → Option (Instruction width)
-  | .longMul destinationLeft destinationRight sourceLeft sourceRight =>
+  | .longMul _destinationLeft _destinationRight _sourceLeft _sourceRight =>
       none
   | .longDiv _ _ _ _ _ => none
   | .addCarry _ _ _ _ _ => none

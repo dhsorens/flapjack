@@ -41,7 +41,7 @@ def wordOracleStackSafe (colour : Nat → Nat) (stackStart : Nat) :
       (if name % 4 == 3 then colour name ≥ stackStart else true) &&
         wordOracleStackSafe colour stackStart names
 
-def wordOracleColouringOk (colours stackStart : Nat)
+def wordOracleColouringOk (_colours stackStart : Nat)
     (tree : WordClashTree) (forced : List (Nat × Nat))
     (oracle : NatInfoMap Nat) : Bool :=
   let colour := wordOracleColour oracle

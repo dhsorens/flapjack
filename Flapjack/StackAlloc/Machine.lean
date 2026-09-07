@@ -45,7 +45,7 @@ def stackMachineCondition [NeZero width] (state : WordStackMachineState width)
   | .notTest => leftValue &&& rightValue != 0
 
 def stackMachineWriteAny [NeZero width]
-    (state : WordStackMachineState width) (register offsetRegister : Nat)
+    (state : WordStackMachineState width) (_register offsetRegister : Nat)
     (value : Word width) : WordStackMachineState width :=
   wordStackMachineWriteSlot state
     (state.registers offsetRegister).toNat value
@@ -65,43 +65,43 @@ def evalStackProgFuelWithCode [NeZero width] :
       StackProg Nat →
     Option (StackMachineControl width)
   | 0, _, _, _ => none
-  | fuel + 1, _, state, .skip => some (.normal state)
-  | fuel + 1, _, state, .const destination value =>
+  | _fuel + 1, _, state, .skip => some (.normal state)
+  | _fuel + 1, _, state, .const destination value =>
       some (.normal (wordStackMachineWriteRegister state destination
         (BitVec.ofNat width value)))
-  | fuel + 1, _, state, .arith operator destination left right =>
+  | _fuel + 1, _, state, .arith operator destination left right =>
       some (.normal (wordStackMachineWriteRegister state destination
         (wordStackMachineBinOp operator (state.registers left)
           (state.registers right))))
-  | fuel + 1, _, state, .shift operator destination left right =>
+  | _fuel + 1, _, state, .shift operator destination left right =>
       some (.normal (wordStackMachineWriteRegister state destination
         (wordStackMachineShift operator (state.registers left)
           (state.registers right))))
-  | fuel + 1, _, state, .inst instruction =>
+  | _fuel + 1, _, state, .inst instruction =>
       (evalWordStackMachine state (.inst instruction)).map .normal
-  | fuel + 1, _, state, .get destination store =>
+  | _fuel + 1, _, state, .get destination store =>
       some (.normal (wordStackMachineWriteRegister state destination
         (state.stores store)))
-  | fuel + 1, _, state, .set store source =>
+  | _fuel + 1, _, state, .set store source =>
       some (.normal (wordStackMachineWriteStore state store
         (state.registers source)))
-  | fuel + 1, _, state, .opCurrHeap operator destination source =>
+  | _fuel + 1, _, state, .opCurrHeap operator destination source =>
       some (.normal (wordStackMachineWriteRegister state destination
         (wordStackMachineBinOp operator (state.registers source)
           (state.stores .currHeap))))
-  | fuel + 1, _, state, .stackLoad register offset =>
+  | _fuel + 1, _, state, .stackLoad register offset =>
       some (.normal (wordStackMachineWriteRegister state register
         (state.stack offset)))
-  | fuel + 1, _, state, .stackStore register offset =>
+  | _fuel + 1, _, state, .stackStore register offset =>
       some (.normal (wordStackMachineWriteSlot state offset
         (state.registers register)))
-  | fuel + 1, _, state, .stackLoadAny register offsetRegister =>
+  | _fuel + 1, _, state, .stackLoadAny register offsetRegister =>
       some (.normal (wordStackMachineWriteRegister state register
         (stackMachineReadAny state offsetRegister)))
-  | fuel + 1, _, state, .stackStoreAny register offsetRegister =>
+  | _fuel + 1, _, state, .stackStoreAny register offsetRegister =>
       some (.normal (stackMachineWriteAny state register offsetRegister
         (state.registers register)))
-  | fuel + 1, _, state, .bitmapLoad destination address =>
+  | _fuel + 1, _, state, .bitmapLoad destination address =>
       some (.normal (stackMachineWriteBitmap state destination address))
   | fuel + 1, code, state, .seq first second =>
       match evalStackProgFuelWithCode fuel code state first with
@@ -118,13 +118,13 @@ def evalStackProgFuelWithCode [NeZero width] :
       | some (.continue state) => evalStackProgFuelWithCode fuel code state (.loop body)
       | some (.break state) => some (.normal state)
       | result => result
-  | fuel + 1, _, state, .break _ => some (.break state)
-  | fuel + 1, _, state, .continue _ => some (.continue state)
-  | fuel + 1, _, state, .raise register =>
+  | _fuel + 1, _, state, .break _ => some (.break state)
+  | _fuel + 1, _, state, .continue _ => some (.continue state)
+  | _fuel + 1, _, state, .raise register =>
       some (.raised state (state.registers register))
-  | fuel + 1, _, state, .return register =>
+  | _fuel + 1, _, state, .return register =>
       some (.returned state (state.registers register))
-  | fuel + 1, _, state, .halt register =>
+  | _fuel + 1, _, state, .halt register =>
       some (.halted state (state.registers register))
   | fuel + 1, code, state, .call returnHandler (.label target) handler =>
       match code target with
@@ -145,7 +145,7 @@ def evalStackProgFuelWithCode [NeZero width] :
               | none => some (.raised state value)
           | some (.halted state value) => some (.halted state value)
           | _ => none
-  | fuel + 1, _, _, .call _ _ _ => none
+  | _fuel + 1, _, _, .call _ _ _ => none
   | _, _, _, _ => none
 
 def evalStackProgFuel [NeZero width] :
@@ -188,7 +188,7 @@ def evalStackProgFuelWithCodeAndFfi [NeZero width]
     Nat → (Nat → Option (StackProg Nat)) → WordStackMachineState width →
       StackProg Nat → Option (StackMachineControl width)
   | 0, _, _, _ => none
-  | fuel + 1, _, state, .ffi function configuration configurationLength array arrayLength _ =>
+  | _fuel + 1, _, state, .ffi function configuration configurationLength array arrayLength _ =>
       (host function (state.registers configuration)
         (state.registers configurationLength) (state.registers array)
         (state.registers arrayLength) state).map .normal
@@ -229,7 +229,7 @@ def evalStackProgFuelWithCodeAndFfi [NeZero width]
               | none => some (.raised state value)
           | some (.halted state value) => some (.halted state value)
           | _ => none
-  | fuel + 1, _, _, .call _ _ _ => none
+  | _fuel + 1, _, _, .call _ _ _ => none
   | fuel + 1, code, state, program =>
       evalStackProgFuelWithCode (fuel + 1) code state program
 

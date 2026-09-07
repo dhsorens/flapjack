@@ -98,7 +98,7 @@ mutual
         else evalWordFunctionWithCalls functions fuel state elseBranch
     | fuel + 1, state, .mustTerminate body =>
         evalWordFunctionWithCalls functions fuel state body
-    | fuel + 1, state, program => evalWordFunction state program
+    | _fuel + 1, state, program => evalWordFunction state program
     termination_by fuel _ _ => fuel
 end
 
@@ -130,9 +130,9 @@ mutual
         evalWordLoopRepeat fuel state body
     | fuel + 1, state, .mustTerminate body =>
         evalWordLoopProg fuel state body
-    | fuel + 1, state, .break label => some (.broke state label)
-    | fuel + 1, state, .continue label => some (.continued state label)
-    | fuel + 1, state, program =>
+    | _fuel + 1, state, .break label => some (.broke state label)
+    | _fuel + 1, state, .continue label => some (.continued state label)
+    | _fuel + 1, state, program =>
         (evalWordProg state program).map (.normal ·)
 
   def evalWordLoopRepeat [NeZero width] :
@@ -226,7 +226,7 @@ mutual
     | fuel + 1, state, .call returns target arguments handler =>
         evalWordLoopCallWithHandlersAndFfi functions ffiHandler fuel state returns
           target arguments handler
-    | fuel + 1, state,
+    | _fuel + 1, state,
         .ffi function configuration configurationLength array arrayLength _ => do
         let configuration ← registerOfNat configuration
         let configurationLength ← registerOfNat configurationLength
@@ -253,17 +253,17 @@ mutual
         evalWordLoopRepeatWithHandlersAndFfi functions ffiHandler fuel state body
     | fuel + 1, state, .mustTerminate body =>
         evalWordLoopProgWithHandlersAndFfi functions ffiHandler fuel state body
-    | fuel + 1, state, .break label => some (.broke state label)
-    | fuel + 1, state, .continue label => some (.continued state label)
-    | fuel + 1, state, .raise exception => do
+    | _fuel + 1, state, .break label => some (.broke state label)
+    | _fuel + 1, state, .continue label => some (.continued state label)
+    | _fuel + 1, state, .raise exception => do
         let exception ← registerOfNat exception
         pure (.raised state (readRegister state exception))
-    | fuel + 1, state, .return _ values => do
+    | _fuel + 1, state, .return _ values => do
         let values ← values.mapM (fun name => do
           let register ← registerOfNat name
           pure (readRegister state register))
         pure (.returned state values)
-    | fuel + 1, state, program => do
+    | _fuel + 1, state, program => do
         let (state, values) ← evalWordFunction state program
         if values.isEmpty then some (.normal state)
         else some (.returned state values)
@@ -386,15 +386,15 @@ mutual
         else evalWordFunctionWithHandlers functions fuel state elseBranch
     | fuel + 1, state, .mustTerminate body =>
         evalWordFunctionWithHandlers functions fuel state body
-    | fuel + 1, state, .raise exception => do
+    | _fuel + 1, state, .raise exception => do
         let exception ← registerOfNat exception
         pure (.raised state (readRegister state exception))
-    | fuel + 1, state, .return _ values => do
+    | _fuel + 1, state, .return _ values => do
         let values ← values.mapM (fun name => do
           let register ← registerOfNat name
           pure (readRegister state register))
         pure (.returned state values)
-    | fuel + 1, state, program => do
+    | _fuel + 1, state, program => do
         let (state, values) ← evalWordFunction state program
         if values.isEmpty then some (.normal state)
         else some (.returned state values)
@@ -416,7 +416,7 @@ mutual
       Nat → State width → WordProg (Word width) →
         Option (State width × List (Word width))
     | 0, _, _ => none
-    | fuel + 1, state,
+    | _fuel + 1, state,
         .ffi function configuration configurationLength array arrayLength _ => do
         let configuration ← registerOfNat configuration
         let configurationLength ← registerOfNat configurationLength
@@ -436,7 +436,7 @@ mutual
         else evalWordFfi handler fuel state elseBranch
     | fuel + 1, state, .mustTerminate body =>
         evalWordFfi handler fuel state body
-    | fuel + 1, state, program => evalWordFunction state program
+    | _fuel + 1, state, program => evalWordFunction state program
     termination_by fuel _ _ => fuel
 end
 
@@ -519,7 +519,7 @@ mutual
     | fuel + 1, state, .call returns target arguments handler =>
         evalWordCallWithHandlersAndFfi functions ffiHandler fuel state returns target
           arguments handler
-    | fuel + 1, state,
+    | _fuel + 1, state,
         .ffi function configuration configurationLength array arrayLength _ => do
         let configuration ← registerOfNat configuration
         let configurationLength ← registerOfNat configurationLength
@@ -545,15 +545,15 @@ mutual
           evalWordFunctionWithHandlersAndFfi functions ffiHandler fuel state elseBranch
     | fuel + 1, state, .mustTerminate body =>
         evalWordFunctionWithHandlersAndFfi functions ffiHandler fuel state body
-    | fuel + 1, state, .raise exception => do
+    | _fuel + 1, state, .raise exception => do
         let exception ← registerOfNat exception
         pure (.raised state (readRegister state exception))
-    | fuel + 1, state, .return _ values => do
+    | _fuel + 1, state, .return _ values => do
         let values ← values.mapM (fun name => do
           let register ← registerOfNat name
           pure (readRegister state register))
         pure (.returned state values)
-    | fuel + 1, state, program => do
+    | _fuel + 1, state, program => do
         let (state, values) ← evalWordFunction state program
         if values.isEmpty then some (.normal state)
         else some (.returned state values)

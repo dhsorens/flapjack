@@ -133,7 +133,7 @@ def loopFfiEvalExp
   | _ => none
 termination_by expression => sizeOf expression
 
-def loopFfiByteCount (state : LoopFfiState α σ) (width : Nat) : List UInt8 :=
+def loopFfiByteCount (_state : LoopFfiState α σ) (width : Nat) : List UInt8 :=
   [UInt8.ofNat width]
 
 def loopFfiSharedAddress (state : LoopFfiState α σ)

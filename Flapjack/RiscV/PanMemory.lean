@@ -455,7 +455,7 @@ mutual
         PanFlatMemory (Word width) → Prog (Word width) →
         Option (PanFlatControlResult (Word width))
     | 0, _, _, _, _ => none
-    | fuel + 1, locals, globals, memory, .skip =>
+    | _fuel + 1, locals, globals, memory, .skip =>
         some (.normal locals globals memory)
     | fuel + 1, locals, globals, memory, .dec name shape value body => do
         let value ← evalPanRiscVFlatExp structs locals globals domain memory
@@ -467,15 +467,15 @@ mutual
             (updatePanValueMap locals name value) globals memory body
           pure (restorePanFlatControlLocal name oldValue result)
         else none
-    | fuel + 1, locals, globals, memory, .assign .local name value => do
+    | _fuel + 1, locals, globals, memory, .assign .local name value => do
         let value ← evalPanRiscVFlatExp structs locals globals domain memory
           baseAddress topAddress bytesInWord value
         pure (.normal (updatePanValueMap locals name value) globals memory)
-    | fuel + 1, locals, globals, memory, .assign .global name value => do
+    | _fuel + 1, locals, globals, memory, .assign .global name value => do
         let value ← evalPanRiscVFlatExp structs locals globals domain memory
           baseAddress topAddress bytesInWord value
         pure (.normal locals (updatePanValueMap globals name value) memory)
-    | fuel + 1, locals, globals, memory, .primitive name operator arguments => do
+    | _fuel + 1, locals, globals, memory, .primitive name operator arguments => do
         let values ← evalPanRiscVFlatExps structs locals globals domain memory
           baseAddress topAddress bytesInWord arguments
         let value ← primitive operator values
@@ -483,7 +483,7 @@ mutual
         if panShapeMatches (panValueShape structs value) (panValueShape structs oldValue) then
           pure (.normal (updatePanValueMap locals name value) globals memory)
         else none
-    | fuel + 1, locals, globals, memory, .store address value => do
+    | _fuel + 1, locals, globals, memory, .store address value => do
         let address ← evalPanRiscVFlatExp structs locals globals domain memory
           baseAddress topAddress bytesInWord address
         let value ← evalPanRiscVFlatExp structs locals globals domain memory
@@ -491,7 +491,7 @@ mutual
         let .word address := address | none
         let memory ← panFlatStore domain memory bytesInWord address value
         pure (.normal locals globals memory)
-    | fuel + 1, locals, globals, memory, .store32 address value => do
+    | _fuel + 1, locals, globals, memory, .store32 address value => do
         let address ← evalPanRiscVFlatExp structs locals globals domain memory
           baseAddress topAddress bytesInWord address
         let value ← evalPanRiscVFlatExp structs locals globals domain memory
@@ -500,7 +500,7 @@ mutual
         let .word value := value | none
         let memory ← panRiscVStore32 domain memory bytesInWord address value
         pure (.normal locals globals memory)
-    | fuel + 1, locals, globals, memory, .storeByte address value => do
+    | _fuel + 1, locals, globals, memory, .storeByte address value => do
         let address ← evalPanRiscVFlatExp structs locals globals domain memory
           baseAddress topAddress bytesInWord address
         let value ← evalPanRiscVFlatExp structs locals globals domain memory
@@ -547,7 +547,7 @@ mutual
               else none
             else none
         | result => pure result
-    | fuel + 1, locals, globals, memory,
+    | _fuel + 1, locals, globals, memory,
         .extCall function configuration configurationLength array arrayLength => do
         let configuration ← evalPanRiscVFlatExp structs locals globals domain memory
           baseAddress topAddress bytesInWord configuration
@@ -580,19 +580,19 @@ mutual
                 (.while condition body)
           | .broke locals globals memory => pure (.normal locals globals memory)
           | result => pure result
-    | fuel + 1, locals, globals, memory, .break =>
+    | _fuel + 1, locals, globals, memory, .break =>
         pure (.broke locals globals memory)
-    | fuel + 1, locals, globals, memory, .continue =>
+    | _fuel + 1, locals, globals, memory, .continue =>
         pure (.continued locals globals memory)
-    | fuel + 1, locals, globals, memory, .raise exception value => do
+    | _fuel + 1, locals, globals, memory, .raise exception value => do
         let value ← evalPanRiscVFlatExp structs locals globals domain memory
           baseAddress topAddress bytesInWord value
         pure (.raised locals globals memory exception value)
-    | fuel + 1, locals, globals, memory, .return value => do
+    | _fuel + 1, locals, globals, memory, .return value => do
         let value ← evalPanRiscVFlatExp structs locals globals domain memory
           baseAddress topAddress bytesInWord value
         pure (.returned locals globals memory [value])
-    | fuel + 1, locals, globals, memory, .shMemLoad size kind name address => do
+    | _fuel + 1, locals, globals, memory, .shMemLoad size kind name address => do
         let address ← evalPanRiscVFlatExp structs locals globals domain memory
           baseAddress topAddress bytesInWord address
         let .word address := address | none
@@ -600,7 +600,7 @@ mutual
         match kind with
         | .local => pure (.normal (updatePanValueMap locals name (.word value)) globals memory)
         | .global => pure (.normal locals (updatePanValueMap globals name (.word value)) memory)
-    | fuel + 1, locals, globals, memory, .shMemStore size address value => do
+    | _fuel + 1, locals, globals, memory, .shMemStore size address value => do
         let address ← evalPanRiscVFlatExp structs locals globals domain memory
           baseAddress topAddress bytesInWord address
         let value ← evalPanRiscVFlatExp structs locals globals domain memory
@@ -609,7 +609,7 @@ mutual
         let .word value := value | none
         let memory ← panRiscVStoreShared size domain memory bytesInWord address value
         pure (.normal locals globals memory)
-    | fuel + 1, locals, globals, memory, .tick | fuel + 1, locals, globals, memory, .annot _ _ =>
+    | _fuel + 1, locals, globals, memory, .tick | _fuel + 1, locals, globals, memory, .annot _ _ =>
         pure (.normal locals globals memory)
     termination_by fuel _ _ _ _ => fuel
 end

@@ -215,12 +215,12 @@ mutual
       [LT α] [DecidableRel (fun left right : α => left < right)]
       : Nat → LoopState α → LoopProg α → Option (LoopResult α)
     | 0, _, _ => none
-    | fuel + 1, state, .skip => some (.normal state)
-    | fuel + 1, state, .assign name expression => do
+    | _fuel + 1, state, .skip => some (.normal state)
+    | _fuel + 1, state, .assign name expression => do
         let value ← evalLoopExp state expression
         pure (.normal { state with
           locals := updateLoopLocal state.locals name value })
-    | fuel + 1, state, .arith (.longMul left right sourceLeft sourceRight) =>
+    | _fuel + 1, state, .arith (.longMul left right sourceLeft sourceRight) =>
         if left = right then do
           let sourceLeft ← state.locals sourceLeft
           let sourceRight ← state.locals sourceRight
@@ -228,37 +228,37 @@ mutual
           pure (.normal { state with
             locals := updateLoopLocal state.locals left value })
         else none
-    | fuel + 1, state, .arith (.div destination dividend divisor) => do
+    | _fuel + 1, state, .arith (.div destination dividend divisor) => do
         let dividend ← state.locals dividend
         let divisor ← state.locals divisor
         if divisor == 0 then none
         else pure (.normal { state with
           locals := updateLoopLocal state.locals destination (dividend / divisor) })
-    | fuel + 1, state, .load32 address destination => do
+    | _fuel + 1, state, .load32 address destination => do
         let address ← state.locals address
         let value ← state.memory address
         pure (.normal { state with
           locals := updateLoopLocal state.locals destination value })
-    | fuel + 1, state, .loadByte address destination => do
+    | _fuel + 1, state, .loadByte address destination => do
         let address ← state.locals address
         let value ← state.memory address
         pure (.normal { state with
           locals := updateLoopLocal state.locals destination value })
-    | fuel + 1, state, .store address value => do
+    | _fuel + 1, state, .store address value => do
         let address ← evalLoopExp state address
         let value ← state.locals value
         pure (.normal { state with
           memory := updateLoopMemory state.memory address value })
-    | fuel + 1, state, .setGlobal address value => do
+    | _fuel + 1, state, .setGlobal address value => do
         let value ← evalLoopExp state value
         pure (.normal { state with
           globals := updateLoopGlobal state.globals address value })
-    | fuel + 1, state, .store32 address value => do
+    | _fuel + 1, state, .store32 address value => do
         let address ← state.locals address
         let value ← state.locals value
         pure (.normal { state with
           memory := updateLoopMemory state.memory address value })
-    | fuel + 1, state, .storeByte address value => do
+    | _fuel + 1, state, .storeByte address value => do
         let address ← state.locals address
         let value ← state.locals value
         pure (.normal { state with
@@ -278,19 +278,19 @@ mutual
         else evalLoopProg fuel state elseBranch
     | fuel + 1, state, .loop _ body _ =>
         evalLoopRepeat fuel state body
-    | fuel + 1, state, .break label => some (.broke state label)
-    | fuel + 1, state, .continue label => some (.continued state label)
-    | fuel + 1, state, .raise exception => do
+    | _fuel + 1, state, .break label => some (.broke state label)
+    | _fuel + 1, state, .continue label => some (.continued state label)
+    | _fuel + 1, state, .raise exception => do
         let exception ← state.locals exception
         pure (.raised state exception)
-    | fuel + 1, state, .return values => do
+    | _fuel + 1, state, .return values => do
         let values ← loopReadLocals state.locals values
         pure (.returned state values)
-    | fuel + 1, state, .locValue destination source => do
+    | _fuel + 1, state, .locValue destination source => do
         let value ← state.locals source
         pure (.normal { state with
           locals := updateLoopLocal state.locals destination value })
-    | fuel + 1, state, .shMem operator name address => do
+    | _fuel + 1, state, .shMem operator name address => do
         let address ← evalLoopExp state address
         match operator with
         | .load | .load8 | .load16 | .load32 => do
@@ -301,7 +301,7 @@ mutual
             let value ← state.locals name
             pure (.normal { state with
               memory := updateLoopMemory state.memory address value })
-    | fuel + 1, state, .tick => some (.normal state)
+    | _fuel + 1, state, .tick => some (.normal state)
     | fuel + 1, state, .mark body => evalLoopProg fuel state body
     | _, _, .fail => none
     | _, _, .primitive _ _ _
@@ -1341,7 +1341,7 @@ mutual
       (primitive : LoopPrimitiveHandler α) :
       Nat → LoopState α → LoopProg α → Option (LoopResult α)
     | 0, _, _ => none
-    | fuel + 1, state, .primitive destinations operator arguments => do
+    | _fuel + 1, state, .primitive destinations operator arguments => do
         let arguments ← loopReadLocals state.locals arguments
         let values ← primitive operator arguments
         let locals ← loopAssignValues state.locals destinations values
@@ -1351,7 +1351,7 @@ mutual
         match result with
         | .normal state => evalLoopProgWithPrimitive primitive fuel state second
         | result => pure result
-    | fuel + 1, state, .ite operator condition right thenBranch elseBranch live => do
+    | fuel + 1, state, .ite operator condition right thenBranch elseBranch _live => do
         let left ← state.locals condition
         let right ← match right with
           | .imm value => some value
@@ -1361,7 +1361,7 @@ mutual
           evalLoopProgWithPrimitive primitive fuel state thenBranch
         else
           evalLoopProgWithPrimitive primitive fuel state elseBranch
-    | fuel + 1, state, .loop liveIn body liveOut =>
+    | fuel + 1, state, .loop _liveIn body _liveOut =>
         evalLoopRepeatWithPrimitive primitive fuel state body
     | fuel + 1, state, .mark body =>
         evalLoopProgWithPrimitive primitive fuel state body
@@ -1482,7 +1482,7 @@ mutual
       (handler : FunName → α → α → α → α → LoopState α → Option (LoopState α)) :
       Nat → LoopState α → LoopProg α → Option (LoopResult α)
     | 0, _, _ => none
-    | fuel + 1, state, .ffi function configuration configurationLength array arrayLength _ => do
+    | _fuel + 1, state, .ffi function configuration configurationLength array arrayLength _ => do
         let configuration ← state.locals configuration
         let configurationLength ← state.locals configurationLength
         let array ← state.locals array
@@ -1577,7 +1577,7 @@ mutual
     | 0, _, _ => none
     | fuel + 1, state, .call returns target arguments handler =>
         evalLoopCallWithCallsAndFfi functions ffiHandler fuel state returns target arguments handler
-    | fuel + 1, state, .ffi function configuration configurationLength array arrayLength _ => do
+    | _fuel + 1, state, .ffi function configuration configurationLength array arrayLength _ => do
         let configuration ← state.locals configuration
         let configurationLength ← state.locals configurationLength
         let array ← state.locals array
@@ -1680,7 +1680,7 @@ mutual
       (ffiHandler : FunName → α → α → α → α → LoopState α → Option (LoopState α)) :
       Nat → LoopState α → LoopProg α → Option (LoopResult α)
     | 0, _, _ => none
-    | fuel + 1, state, .primitive destinations operator arguments => do
+    | _fuel + 1, state, .primitive destinations operator arguments => do
         let arguments ← loopReadLocals state.locals arguments
         let values ← primitive operator arguments
         let locals ← loopAssignValues state.locals destinations values
@@ -1688,7 +1688,7 @@ mutual
     | fuel + 1, state, .call returns target arguments handler =>
         evalLoopCallWithPrimitiveCallsAndFfi primitive functions ffiHandler fuel state
           returns target arguments handler
-    | fuel + 1, state, .ffi function configuration configurationLength array arrayLength _ => do
+    | _fuel + 1, state, .ffi function configuration configurationLength array arrayLength _ => do
         let configuration ← state.locals configuration
         let configurationLength ← state.locals configurationLength
         let array ← state.locals array
