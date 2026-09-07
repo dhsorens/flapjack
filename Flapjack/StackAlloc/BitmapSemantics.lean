@@ -46,6 +46,79 @@ def stackGcNatFullReadBitmap (config : StackGcConfig)
       else stackGcNatReadBitmap config (bitmaps.drop (value - 1))
   | .loc _ _ => none
 
+/-! Fuel-bounded counterparts of the CakeML stack codec.  The wrapper
+    supplies one more step than the input stack length, which is enough for
+    every successful recursive call because each frame consumes its header.
+-/
+
+def stackGcNatEncodeStackFuel (config : StackGcConfig)
+    (bitmaps : List Nat) : Nat → List StackGcNatValue → Option (List StackGcNatValue)
+  | 0, _ => none
+  | fuel + 1, [] => none
+  | fuel + 1, [.word 0] => some []
+  | fuel + 1, .word 0 :: _ => none
+  | fuel + 1, value :: values =>
+      match stackGcNatFullReadBitmap config bitmaps value with
+      | none => none
+      | some bits =>
+          match stackGcNatFilterBitmap bits values with
+          | none => none
+          | some (selected, rest) =>
+              match stackGcNatEncodeStackFuel config bitmaps fuel rest with
+              | none => none
+              | some encoded => some (selected ++ encoded)
+
+def stackGcNatEncodeStack (config : StackGcConfig)
+    (bitmaps : List Nat) (stack : List StackGcNatValue) :
+    Option (List StackGcNatValue) :=
+  stackGcNatEncodeStackFuel config bitmaps (stack.length + 1) stack
+
+def stackGcNatDecodeStackFuel (config : StackGcConfig)
+    (bitmaps : List Nat) : Nat → List StackGcNatValue →
+      List StackGcNatValue → Option (List StackGcNatValue)
+  | 0, _, _ => none
+  | fuel + 1, _, [] => none
+  | fuel + 1, [], [.word 0] => some [.word 0]
+  | fuel + 1, _, [.word 0] => none
+  | fuel + 1, _, .word 0 :: _ => none
+  | fuel + 1, encoded, value :: values =>
+      match stackGcNatFullReadBitmap config bitmaps value with
+      | none => none
+      | some bits =>
+          match stackGcNatMapBitmap bits encoded values with
+          | none => none
+          | some (mapped, restEncoded, restValues) =>
+              match stackGcNatDecodeStackFuel config bitmaps fuel
+                  restEncoded restValues with
+              | none => none
+              | some rest => some (value :: mapped ++ rest)
+
+def stackGcNatDecodeStack (config : StackGcConfig)
+    (bitmaps : List Nat) (encoded stack : List StackGcNatValue) :
+    Option (List StackGcNatValue) :=
+  stackGcNatDecodeStackFuel config bitmaps (stack.length + 1) encoded stack
+
+example :
+    stackGcNatEncodeStack { wordBits := 8 } [3]
+        [.word 1, .word 11, .word 0] = some [.word 11] := by
+  native_decide
+
+example :
+    stackGcNatDecodeStack { wordBits := 8 } [3] [.word 11]
+        [.word 1, .word 11, .word 0] = some [.word 1, .word 11, .word 0] := by
+  native_decide
+
+example :
+    stackGcNatEncodeStack { wordBits := 8 } [3]
+        [.word 1, .word 11] = none := by
+  native_decide
+
+example :
+    stackGcNatDecodeStack { wordBits := 8 } [3] []
+        [.word 1, .word 0] = none := by
+  native_decide
+
+
 @[simp] theorem stackGcNatBitLength_zero :
     stackGcNatBitLength 0 = 0 := by
   simp [stackGcNatBitLength]
