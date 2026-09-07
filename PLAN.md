@@ -520,6 +520,8 @@ definitions, pass ordering, examples, and proof obligations.
   and arithmetic/bitwise RISC-V operations.
 - [x] Extend the executable colouring simulation to variable-plus-constant
   binary expressions and immediate RISC-V operations.
+- [x] Extend the executable colouring simulation to variable shifts and their
+  SLL/SRL/SRA lowering.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware
   RISC-V contracts before claiming general call-aware allocation correctness.
 - [x] Add a combined graph-allocation soundness contract exposing fixed tags,
