@@ -491,7 +491,6 @@ example [NeZero width]
     (destinationLocation := .register 4) (addressLocation := .register 5)
     (hdestination := by simp [config, wordStackLocation, lookupNatInfo])
     (haddress := by simp [config, wordStackLocation, lookupNatInfo])
-    (hscratch := by simp [config])
     (by simpa [config] using heval)
 
 example [NeZero width]
