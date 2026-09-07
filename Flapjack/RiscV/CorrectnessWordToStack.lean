@@ -1144,6 +1144,44 @@ theorem wordToStackProgNatWithBitmapBuilder_loop
       some (.loop bodyCode, finalState) := by
   simp [wordToStackProgNatWithBitmapBuilder, hbody]
 
+theorem evalStackProgFuelWithCodeAndFfi_wordToStackProgNatWithBitmapBuilder_loop_break
+    [BEq Nat] [NeZero width] (host : StackMachineFfiHandler width)
+    (fuel : Nat) (code : Nat → Option (StackProg Nat))
+    (config : WordStackConfig)
+    (bitmapBuilder : List Nat → List Nat)
+    (registerCount bitmapRegister frameSlots wordBits : Nat)
+    (storeConstsStub : Option Nat)
+    (state finalState : WordStackBitmapState)
+    (machineState finalMachine : WordStackMachineState width)
+    (liveIn liveOut : List Nat) (body : WordProg Nat)
+    (bodyCode : StackProg Nat)
+    (hbody : wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+      registerCount bitmapRegister frameSlots wordBits storeConstsStub state body =
+      some (bodyCode, finalState))
+    (hevalBody : evalStackProgFuelWithCodeAndFfi host fuel code machineState
+      bodyCode = some (.break finalMachine)) :
+    (wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+      registerCount bitmapRegister frameSlots wordBits storeConstsStub state
+      (.loop liveIn body liveOut)).bind
+        (fun compiled =>
+          (evalStackProgFuelWithCodeAndFfi host (fuel + 1) code machineState
+            compiled.1).map (fun control => (control, compiled.2))) =
+      some (.normal finalMachine, finalState) := by
+  have hcompile := wordToStackProgNatWithBitmapBuilder_loop
+    (config := config) (bitmapBuilder := bitmapBuilder)
+    (registerCount := registerCount) (bitmapRegister := bitmapRegister)
+    (frameSlots := frameSlots) (wordBits := wordBits)
+    (storeConstsStub := storeConstsStub) (state := state)
+    (finalState := finalState) (liveIn := liveIn) (liveOut := liveOut)
+    (body := body) (bodyCode := bodyCode) (hbody := hbody)
+  rw [hcompile]
+  simp only [Option.bind_some]
+  have hloop := evalStackProgFuelWithCodeAndFfi_loop_break
+    (host := host) (fuel := fuel) (code := code)
+    (state := machineState) (state' := finalMachine)
+    (body := bodyCode) hevalBody
+  simp [hloop]
+
 theorem wordToStackProgNatWithBitmapBuilder_mustTerminate
     [BEq Nat] (config : WordStackConfig)
     (bitmapBuilder : List Nat → List Nat)
