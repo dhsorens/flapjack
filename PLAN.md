@@ -1076,6 +1076,8 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Add executable CakeML bitmap encoding and an explicit bitmap-state
   accumulator for Word-to-Stack Alloc/StoreConsts, including sequential
   state-threading and fixed-width regression tests.
+- [x] Add the recursive word/Nat bitmap-table relation and prove lookup
+  preservation for bounded frame-machine bitmap loads.
 - [x] Bridge the immediate one-word machine MoveList evaluator to the Nat
   semantics for its moved value, scan pointer, count register, and stored
   memory projection.

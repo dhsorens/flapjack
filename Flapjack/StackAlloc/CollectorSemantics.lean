@@ -2752,6 +2752,48 @@ def stackGcMachineMemoryMatchesNat [NeZero width]
     (state.machine.memory (BitVec.ofNat width address)).toNat =
       memory address
 
+def stackGcNatBitmapTableAt : List Nat → Nat → Option Nat
+  | [], _ => none
+  | value :: _, 0 => some value
+  | _ :: values, index + 1 => stackGcNatBitmapTableAt values index
+
+def stackGcMachineBitmapTableMatchesNat [NeZero width] :
+    List (Word width) → List Nat → Prop
+  | [], [] => True
+  | bitmap :: bitmaps, value :: values =>
+      bitmap.toNat = value ∧
+        stackGcMachineBitmapTableMatchesNat bitmaps values
+  | _, _ => False
+
+theorem stackGcMachineBitmapTableMatchesNat_lookup [NeZero width]
+    (bitmaps : List (Word width)) (values : List Nat)
+    (hrelation : stackGcMachineBitmapTableMatchesNat bitmaps values)
+    (index : Nat) :
+    (stackFrameBitmapAt bitmaps index).map BitVec.toNat =
+      stackGcNatBitmapTableAt values index := by
+  induction bitmaps generalizing values index with
+  | nil =>
+      cases values with
+      | nil =>
+          cases index <;> rfl
+      | cons value values =>
+          simp [stackGcMachineBitmapTableMatchesNat] at hrelation
+  | cons bitmap bitmaps ih =>
+      cases values with
+      | nil =>
+          simp [stackGcMachineBitmapTableMatchesNat] at hrelation
+      | cons value values =>
+          cases index with
+          | zero =>
+              simp [stackFrameBitmapAt, stackGcNatBitmapTableAt,
+                stackGcMachineBitmapTableMatchesNat, hrelation.1]
+          | succ index =>
+              have htail :
+                  stackGcMachineBitmapTableMatchesNat bitmaps values :=
+                hrelation.2
+              simpa [stackFrameBitmapAt, stackGcNatBitmapTableAt] using
+                ih values htail index
+
 theorem stackGcMoveLoopCodeStepState_memory_matches_nat [NeZero width]
     (config : StackGcConfig) (state : StackFrameMachineState width)
     (memory : Nat → Nat)
