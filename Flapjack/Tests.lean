@@ -36,6 +36,7 @@ import Flapjack.Test.CorrectnessFfiRiscVLoop
 import Flapjack.Test.FullSsa
 import Flapjack.Test.FullSsaPipeline
 import Flapjack.Test.FullSsaBitmaps
+import Flapjack.Test.RuntimeLinking
 
 /-!
 # Flapjack regression tests

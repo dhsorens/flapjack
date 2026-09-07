@@ -1539,6 +1539,8 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Add a bitmap-carrying full-SSA spill pipeline and RISC-V entrypoint,
   retaining entry-inclusive parameter allocation and the generated bitmap
   artifact.
+- [x] Link the full-SSA bitmap path with separate raise, StoreConsts, and
+  simple-GC runtime sections, reserving their labels before compiled functions.
 - [x] Expose source-order bitmap threading through the allocated Word-to-Stack
   function pipeline, including a compositional append equation.
 - [x] Add abstract and bounded FFI loop-break simulation equations, with

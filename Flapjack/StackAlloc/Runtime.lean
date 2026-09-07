@@ -229,6 +229,16 @@ def stackGcSimpleCode (config : StackGcConfig) : StackProg Nat :=
 def stackGcSimpleStub (config : StackGcConfig) : StackProg Nat :=
   stackSeq [stackGcSimpleCode config, .return 0]
 
+/- CakeML links StoreConsts through a small stub when the word-to-stack pass
+   has requested one. Keeping the operation in the stub lets StackRemove
+   lower it with the same bitmap-copy code used for direct StoreConsts leaves.
+   The collector and StoreConsts stubs are separate sections in the reference
+   backend. -/
+def stackStoreConstsStub (registerCount : Nat) : StackProg Nat :=
+  stackSeq [
+    .storeConsts registerCount (registerCount + 1) none,
+    .return 0]
+
 /-! A runtime-backed section compiler for the RISC-V/Nat StackLang adapter.
     The ordinary `stackAllocCompile` remains the generic boundary used by
     clients whose collector configuration is not yet represented. -/
@@ -236,10 +246,23 @@ def stackAllocSimpleStubs (allocConfig : StackAllocConfig)
     (gcConfig : StackGcConfig) : List (Nat × StackProg Nat) :=
   [(allocConfig.gcStubLocation, stackGcSimpleStub gcConfig)]
 
+def stackAllocSimpleStubsWithStoreConsts (allocConfig : StackAllocConfig)
+    (gcConfig : StackGcConfig) (storeConstsLocation registerCount : Nat) :
+    List (Nat × StackProg Nat) :=
+  (storeConstsLocation, stackStoreConstsStub registerCount) ::
+    stackAllocSimpleStubs allocConfig gcConfig
+
 def stackAllocCompileWithSimpleGc (allocConfig : StackAllocConfig)
     (gcConfig : StackGcConfig)
     (programs : List (Nat × StackProg Nat)) : List (Nat × StackProg Nat) :=
   stackAllocSimpleStubs allocConfig gcConfig ++
+    programs.map (stackAllocProgram allocConfig)
+
+def stackAllocCompileWithSimpleGcAndStoreConsts (allocConfig : StackAllocConfig)
+    (gcConfig : StackGcConfig) (storeConstsLocation registerCount : Nat)
+    (programs : List (Nat × StackProg Nat)) : List (Nat × StackProg Nat) :=
+  stackAllocSimpleStubsWithStoreConsts allocConfig gcConfig
+      storeConstsLocation registerCount ++
     programs.map (stackAllocProgram allocConfig)
 
 theorem stackGcWhile_shape (operator : Cmp) (condition : Nat)
@@ -258,5 +281,16 @@ theorem stackAllocCompileWithSimpleGc_emits_runtime
     (stackAllocCompileWithSimpleGc allocConfig gcConfig programs).head? =
       some (allocConfig.gcStubLocation, stackGcSimpleStub gcConfig) := by
   simp [stackAllocCompileWithSimpleGc, stackAllocSimpleStubs]
+
+theorem stackAllocCompileWithSimpleGcAndStoreConsts_emits_stubs
+    (allocConfig : StackAllocConfig) (gcConfig : StackGcConfig)
+    (storeConstsLocation registerCount : Nat)
+    (programs : List (Nat × StackProg Nat)) :
+    (stackAllocCompileWithSimpleGcAndStoreConsts allocConfig gcConfig
+      storeConstsLocation registerCount programs).take 2 =
+      [(storeConstsLocation, stackStoreConstsStub registerCount),
+       (allocConfig.gcStubLocation, stackGcSimpleStub gcConfig)] := by
+  simp [stackAllocCompileWithSimpleGcAndStoreConsts,
+    stackAllocSimpleStubsWithStoreConsts, stackAllocSimpleStubs]
 
 end Flapjack

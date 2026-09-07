@@ -169,6 +169,14 @@ def stackRaiseStub (perf : Bool) (register : Nat) : StackProg α :=
    The concrete target table will fill this in when stack-to-lab is ported. -/
 def stackRaiseStubLocation : Nat := 0
 
+/- The first three section labels are reserved by the executable Flapjack
+   runtime-linked entry point: raise, StoreConsts, and the collector. -/
+def stackStoreConstsStubLocation : Nat := 1
+
+def stackGcStubLocation : Nat := 2
+
+def stackFunctionFirstLabel : Nat := 3
+
 def wordToStackFfi (function : FunName)
     (configuration configurationLength array arrayLength : Nat) :
     StackProg α :=

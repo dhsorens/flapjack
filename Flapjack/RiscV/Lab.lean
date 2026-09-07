@@ -499,6 +499,19 @@ def compileStackProgramNatListWithSimpleGcToRiscV [NeZero width]
     entryLabel initialLabel
     (stackAllocCompileWithSimpleGc allocConfig gcConfig programs)
 
+def compileStackProgramNatListWithSimpleGcAndStoreConstsToRiscV [NeZero width]
+    (context : WordFfiContext) (removeConfig : StackRemoveConfig)
+    (allocConfig : StackAllocConfig) (gcConfig : StackGcConfig)
+    (storeConstsLocation registerCount : Nat)
+    (entryLabel initialLabel : Nat)
+    (programs : List (Nat × StackProg Nat)) :
+    Option (List (Instruction width)) :=
+  compileStackProgramNatListWithHaltToRiscV context removeConfig
+    entryLabel initialLabel
+    ((stackRaiseStubLocation, stackRaiseStub false removeConfig.scratch) ::
+      stackAllocCompileWithSimpleGcAndStoreConsts allocConfig gcConfig
+        storeConstsLocation registerCount programs)
+
 def compileStackProgramNatListLinkedToRiscV [NeZero width]
     (context : WordFfiContext) (config : StackRemoveConfig)
     (entryLabel initialLabel : Nat)
