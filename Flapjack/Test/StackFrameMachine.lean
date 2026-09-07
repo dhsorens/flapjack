@@ -28,6 +28,31 @@ example :
   rfl
 
 example :
+    evalStackFrameFuelWithCodeAndFfi identityFrameFfi 5
+      (fun _ => none) frameMachineState
+      (.seq (.ffi "echo" 3 4 5 6 0) (.const 7 9)) =
+      some (.normal (stackFrameWriteRegister frameMachineState 7 9)) := by
+  apply evalStackFrameFuelWithCodeAndFfi_seq_normal
+    (state' := frameMachineState)
+  · rfl
+
+example :
+    evalStackFrameFuelWithCodeAndFfi identityFrameFfi 20
+      (fun target => if target = 0 then
+        some ((.raise 31 : StackProg Nat)) else none)
+      frameMachineState
+      (.call (some (.skip, 0, 0, 0)) (.label 0)
+        (some ((.const 3 9 : StackProg Nat), 3, 0))) =
+      evalStackFrameFuelWithCodeAndFfi identityFrameFfi 19
+        (fun target => if target = 0 then
+          some ((.raise 31 : StackProg Nat)) else none)
+        (stackFrameWriteRegister frameMachineState 3
+          (frameMachineState.machine.registers 31))
+        (.const 3 9 : StackProg Nat) := by
+  apply evalStackFrameFuelWithCodeAndFfi_call_raise_handler
+  rfl
+
+example :
     evalStackFrameFuelWithCodeAndFfi identityFrameFfi 6
       (fun target => if target = 7 then
         some ((.seq (.ffi "echo" 3 4 5 6 0) (.return 3)) : StackProg Nat)
