@@ -28,18 +28,18 @@ theorem evalStackProgFuelWithCodeAndFfi_wordStackMove
   cases sourceLocation with
   | register register =>
       by_cases hsame : register = destination
-      · simp [wordStackFfiMove, wordStackLocation, lookupNatInfo,
+      · simp [wordStackFfiMove, wordStackLocation, 
           hsource, hsame] at hmove heval
         cases hmove
         cases heval
         rfl
-      · simp [wordStackFfiMove, wordStackLocation, lookupNatInfo,
+      · simp [wordStackFfiMove, wordStackLocation, 
           hsource, hsame] at hmove heval
         cases hmove
         cases heval
         rfl
   | stack slot =>
-      simp [wordStackFfiMove, wordStackLocation, lookupNatInfo,
+      simp [wordStackFfiMove, wordStackLocation, 
         hsource] at hmove heval
       cases hmove
       cases heval
@@ -59,12 +59,12 @@ theorem wordStackFfiMove_ne_skip
         intro heq
         apply hdestination
         simp [heq]
-      simp [wordStackFfiMove, wordStackLocation, lookupNatInfo,
+      simp [wordStackFfiMove, wordStackLocation, 
         hsource, hregister] at hmove
       cases hmove
       simp
   | stack slot =>
-      simp [wordStackFfiMove, wordStackLocation, lookupNatInfo,
+      simp [wordStackFfiMove, wordStackLocation, 
         hsource] at hmove
       cases hmove
       simp
