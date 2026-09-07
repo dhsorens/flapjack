@@ -17,6 +17,27 @@ def frameMachineState : StackFrameMachineState 64 :=
     memoryDomain := fun _ => true
     sharedMemoryDomain := fun _ => true }
 
+def identityFrameFfi : StackFrameMachineFfiHandler 64 :=
+  fun _ _ _ _ _ state => some state
+
+example :
+    evalStackFrameFuelWithCodeAndFfi identityFrameFfi 4
+      (fun _ => none) frameMachineState
+      (.seq (.const 3 48) (.ffi "echo" 3 4 5 6 0)) =
+      some (.normal (stackFrameWriteRegister frameMachineState 3 48)) := by
+  rfl
+
+example :
+    evalStackFrameFuelWithCodeAndFfi identityFrameFfi 6
+      (fun target => if target = 7 then
+        some ((.seq (.ffi "echo" 3 4 5 6 0) (.return 3)) : StackProg Nat)
+        else none)
+      frameMachineState
+      (.call none (.label 7) none) =
+      some (.returned frameMachineState
+        (frameMachineState.machine.registers 3)) := by
+  rfl
+
 example :
     stackFrameNormalStackSpace
       (evalStackFrameFuel 2 frameMachineState (.stackAlloc 3)) = some 5 := by
