@@ -5856,4 +5856,52 @@ theorem evalStackFrameFuel_stackGcMoveLoop_data_step_with_machine_nat_step
     oldBase memory domain condition hscan hcodeNat
   exact ⟨heval.1, hnat, heval.2⟩
 
+/-! A reusable witness for the complete bitmap-root/heap-scan collector.
+    The component witnesses are deliberately kept explicit: callers can
+    discharge them from the source-level root and loop invariants without
+    unfolding the generated StackLang program at the final composition point. -/
+structure StackGcFullSimulation [NeZero width]
+    (config : StackGcConfig) (fuel : Nat)
+    (state roots final : StackFrameMachineState width)
+    (bitmaps : List Nat) (stack : List StackGcNatValue)
+    (newBase oldBase : Nat) (memory : Nat → Nat) (domain : Nat → Bool)
+    (moved : StackGcValueRootsResult)
+    (scanned : StackGcNatMoveLoopResult) : Prop where
+  machineRoots :
+    evalStackFrameFuel fuel state (stackGcMoveRootsBitmapsCode config) =
+      some (.normal roots)
+  natRoots :
+    stackGcNatMoveRootsBitmaps config bitmaps stack 0 newBase oldBase
+      memory domain = some moved
+  machineLoop :
+    evalStackFrameFuel fuel roots (stackGcMoveLoopCode config) =
+      some (.normal final)
+  natLoop :
+    stackGcNatMoveLoop config fuel newBase moved.nextIndex moved.nextAddress
+      oldBase moved.memory domain moved.condition = scanned
+
+theorem evalStackFrameFuel_stackGcFullBitmaps_simulates
+    [NeZero width] (config : StackGcConfig) (fuel : Nat)
+    (state roots final : StackFrameMachineState width)
+    (bitmaps : List Nat) (stack : List StackGcNatValue)
+    (newBase oldBase : Nat) (memory : Nat → Nat) (domain : Nat → Bool)
+    (moved : StackGcValueRootsResult)
+    (scanned : StackGcNatMoveLoopResult)
+    (simulation : StackGcFullSimulation config fuel state roots final bitmaps
+      stack newBase oldBase memory domain moved scanned) :
+    evalStackFrameFuel (fuel + 1) state
+        (stackSeq [stackGcMoveRootsBitmapsCode config,
+          stackGcMoveLoopCode config]) = some (.normal final) ∧
+      stackGcNatFullBitmaps config bitmaps stack newBase oldBase memory domain fuel =
+        some { values := moved.values
+               nextIndex := scanned.nextIndex
+               nextAddress := scanned.nextAddress
+               memory := scanned.memory
+               condition := scanned.condition } := by
+  have hmachine := evalStackFrameFuel_stackGcRootBitmaps_then_moveLoop
+    config fuel state roots final simulation.machineRoots simulation.machineLoop
+  constructor
+  · exact hmachine
+  · simp [stackGcNatFullBitmaps, simulation.natRoots, simulation.natLoop]
+
 end Flapjack.RiscV

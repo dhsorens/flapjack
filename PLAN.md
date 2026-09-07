@@ -1255,6 +1255,8 @@ definitions, pass ordering, examples, and proof obligations.
   contract for nested control forms.
 - [x] Add the corresponding FFI-aware bounded frame evaluator, preserving
   stack-frame checks and host transitions through calls and returns.
+- [x] Package the complete bitmap-root/heap-scan collector as an explicit
+  machine/Nat simulation witness and composition theorem.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
