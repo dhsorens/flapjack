@@ -46,7 +46,7 @@ example :
        (2, .const 1 7)] =
       some [.jal 0 (BitVec.ofNat 64 4),
         .addi 1 0 (BitVec.ofNat 64 7)] := by
-  native_decide
+  decide +kernel
 
 example :
     compileStackProgramNatListLinkedToRiscV (width := 64) { services := [] }
@@ -134,7 +134,7 @@ example :
       some [.or 10 4 4, .or 11 5 5, .or 12 6 6, .or 13 7 7,
         .addi 0 0 (BitVec.ofNat 64 28),
         .addi 14 0 (BitVec.ofNat 64 7), .ecall] := by
-  native_decide
+  decide +kernel
 
 example :
     labLineInstructionCount
