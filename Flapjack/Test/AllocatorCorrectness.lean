@@ -162,6 +162,27 @@ example [NeZero 64]
   exact evalWordSsaRenameProgram_raise ssa source target hregister 3 2
     (by decide) htarget htargetScratch
 
+example [NeZero 64]
+    (source target : State 64) (ssa : WordSsaState)
+    (hregister : ∀ name,
+      (do
+        let register ← registerOfNat name
+        pure (readRegister source register)) =
+      (do
+        let register ← registerOfNat (wordSsaRead ssa name)
+        pure (readRegister target register)))
+    (htarget : wordSsaRead ssa 2 < 32)
+    (htargetScratch : wordSsaRead ssa 2 ≠ 31) :
+    (evalWordFunctionWithHandlersAndFfi []
+        (fun _ _ _ _ _ state => some state) 4 source
+        (.return 0 [2])).map wordControlResultValues =
+      (evalWordFunctionWithHandlersAndFfi []
+        (fun _ _ _ _ _ state => some state) 5 target
+        (wordSsaRenameProgram ssa (.return 0 [2])).2).map
+        wordControlResultValues := by
+  exact evalWordSsaRenameProgram_return_singleton ssa source target hregister
+    3 0 2 (by decide) htarget htargetScratch
+
 example [NeZero 64] (state : State 64) (name sourceName : Nat)
     (hname : name < 32) (hsource : sourceName < 32) :
     evalWordProg state (.assign name (.var sourceName)) =

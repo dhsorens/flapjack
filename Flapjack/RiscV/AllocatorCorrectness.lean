@@ -745,6 +745,65 @@ theorem evalWordSsaRenameProgram_raise [NeZero width]
       writeRegister, readRegister, wordControlResultException]
     simpa [readRegister] using hexceptionValue
 
+/-! A one-result `Return` uses the same generated ABI move as `Raise`, but
+    exposes the value through the returned-value projection. -/
+
+theorem evalWordSsaRenameProgram_return_singleton [NeZero width]
+    (ssa : WordSsaState) (source target : State width)
+    (hregister : ∀ name,
+      (do
+        let register ← registerOfNat name
+        pure (readRegister source register)) =
+      (do
+        let register ← registerOfNat (wordSsaRead ssa name)
+        pure (readRegister target register)))
+    (fuel label value : Nat)
+    (hsource : value < 32) (htarget : wordSsaRead ssa value < 32)
+    (htargetScratch : wordSsaRead ssa value ≠ 31) :
+    (evalWordFunctionWithHandlersAndFfi []
+        (fun _ _ _ _ _ state => some state) (fuel + 1) source
+        (.return label [value])).map wordControlResultValues =
+      (evalWordFunctionWithHandlersAndFfi []
+        (fun _ _ _ _ _ state => some state) (fuel + 2) target
+        (wordSsaRenameProgram ssa (.return label [value])).2).map
+        wordControlResultValues := by
+  have hvalue :
+      readRegister source ⟨value, hsource⟩ =
+        readRegister target ⟨wordSsaRead ssa value, htarget⟩ := by
+    have h := hregister value
+    simpa [registerOfNat, hsource, htarget] using h
+  have hprogram :
+      (wordSsaRenameProgram ssa
+        (.return label [value] : WordProg (Word width))).2 =
+        (.seq (.move 0 [(2, wordSsaRead ssa value)])
+          (.return (wordSsaRead ssa label) [2]) : WordProg (Word width)) := by
+    simp [wordSsaRenameProgram, wordSsaRenameProgramWithLoops,
+      wordSsaRead, wordSsaSeq, wordSsaCallAbiRegisters]
+  have hmove := wordMoveToInstructions_abi_singleton (width := width)
+    (wordSsaRead ssa value) htarget htargetScratch
+  rw [hprogram]
+  by_cases htwo : wordSsaRead ssa value = 2
+  · have hmove' : wordMoveToInstructions (width := width)
+        [(2, wordSsaRead ssa value)] =
+        some ([.addi 31 2 (0 : Word width), .addi 2 31 0] :
+          List (Instruction width)) := by
+      simpa [htwo] using hmove
+    simp only [evalWordFunctionWithHandlersAndFfi, evalWordFunction]
+    rw [hmove']
+    simp [registerOfNat, hsource, executeInstructions, execute, nextPc,
+      writeRegister, readRegister, wordControlResultValues]
+    simpa [readRegister, htwo] using hvalue
+  · have hmove' : wordMoveToInstructions (width := width)
+        [(2, wordSsaRead ssa value)] =
+        some ([.addi 2 ⟨wordSsaRead ssa value, htarget⟩ (0 : Word width)] :
+          List (Instruction width)) := by
+      simpa [htwo] using hmove
+    simp only [evalWordFunctionWithHandlersAndFfi, evalWordFunction]
+    rw [hmove']
+    simp [registerOfNat, hsource, executeInstructions, execute, nextPc,
+      writeRegister, readRegister, wordControlResultValues]
+    simpa [readRegister] using hvalue
+
 /-! FFI is an explicit semantic environment at the Word boundary.  This
     lemma records the exact compatibility condition required when a completed
     colouring changes the four ABI argument registers: the host transition on
