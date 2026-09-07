@@ -427,7 +427,7 @@ def evalStackFrameFuelWithCodeAndFfi [NeZero width]
           | _ => none
   | fuel + 1, _, _, .call _ _ _ => none
   | fuel + 1, code, state, program =>
-      evalStackFrameFuelWithCode fuel code state program
+      evalStackFrameFuelWithCode (fuel + 1) code state program
 
 theorem evalStackFrameFuelWithCodeAndFfi_ffi [NeZero width]
     (host : StackFrameMachineFfiHandler width)
@@ -443,6 +443,35 @@ theorem evalStackFrameFuelWithCodeAndFfi_ffi [NeZero width]
         (state.machine.registers array)
         (state.machine.registers arrayLength) state).map .normal := by
   rfl
+
+theorem evalStackFrameFuelWithCodeAndFfi_seq_normal [NeZero width]
+    (host : StackFrameMachineFfiHandler width)
+    (fuel : Nat) (code : Nat → Option (StackProg Nat))
+    (state state' : StackFrameMachineState width)
+    (first second : StackProg Nat)
+    (hfirst :
+      evalStackFrameFuelWithCodeAndFfi host fuel code state first =
+        some (.normal state')) :
+    evalStackFrameFuelWithCodeAndFfi host (fuel + 1) code state
+        (.seq first second) =
+      evalStackFrameFuelWithCodeAndFfi host fuel code state' second := by
+  simp [evalStackFrameFuelWithCodeAndFfi, hfirst]
+
+theorem evalStackFrameFuelWithCodeAndFfi_call_raise_handler [NeZero width]
+    (host : StackFrameMachineFfiHandler width)
+    (fuel : Nat) (code : Nat → Option (StackProg Nat))
+    (state : StackFrameMachineState width) (target exceptionRegister
+      handlerLabel : Nat) (returnCode : StackProg Nat)
+    (link returnLabel entryLabel register : Nat) (handlerCode : StackProg Nat)
+    (hcallee : code target = some (.raise register)) :
+    evalStackFrameFuelWithCodeAndFfi host (fuel + 2) code state
+        (.call (some (returnCode, link, returnLabel, entryLabel)) (.label target)
+          (some (handlerCode, exceptionRegister, handlerLabel))) =
+      evalStackFrameFuelWithCodeAndFfi host (fuel + 1) code
+        (stackFrameWriteRegister state exceptionRegister
+          (state.machine.registers register)) handlerCode := by
+  simp [evalStackFrameFuelWithCodeAndFfi, evalStackFrameFuelWithCode,
+    hcallee]
 
 theorem evalStackFrameFuel_seq_normal [NeZero width]
     (fuel : Nat) (state state' : StackFrameMachineState width)
