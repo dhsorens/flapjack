@@ -510,6 +510,8 @@ definitions, pass ordering, examples, and proof obligations.
   and inverse-colour extraction into a witness-carrying allocator result.
 - [x] Port CakeML's clash-tree interval pass with boundary live-set closure,
   including `Delta`, `Set`, branch cut sets, and sequencing.
+- [x] Port the source register-colour exchange between linear-scan passes and
+  apply it to the low/high physical-register partitions.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware
   RISC-V contracts before claiming general call-aware allocation correctness.
 - [x] Add a combined graph-allocation soundness contract exposing fixed tags,
