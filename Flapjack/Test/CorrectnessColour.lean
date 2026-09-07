@@ -259,4 +259,46 @@ example [NeZero width] (state : State width) :
   · omega
   · omega
 
+example [NeZero 64] (state : State 64) :
+    ∃ source' target',
+      evalWordProg state (.skip : WordProg (Word 64)) = some source' ∧
+      evalWordProg state
+          (wordApplyColour (wordFindVar ({ vars := [] } : WordContext))
+            (.skip : WordProg (Word 64))) = some target' ∧
+      WordColourStateRelation (wordFindVar ({ vars := [] } : WordContext))
+        source' target' := by
+  let context : WordContext := { vars := [] }
+  have halloc : wordAllocateProgramWithClashTreeAndColour []
+      (.skip : WordProg (Word 64)) = some (context, .skip) := by
+    simp [wordAllocateProgramWithClashTreeAndColour,
+      wordAllocateContextWithClashes, wordAllocateVarsWithClashes,
+      wordGreedyColour, wordColouringUsesAllocatable,
+      wordColouringRespectsClashes, wordClashTreeAnalyze, wordClashTree,
+      wordProgVariables, wordProgReadVars, wordProgWriteVars, wordClashPairs,
+      wordListUnion, wordApplyColour, context]
+  have hvalid : wordColourValid (wordFindVar context) := by
+    intro name hname
+    simpa [context, wordFindVar, lookupNatInfo] using hname
+  have hinjective : Function.Injective (wordFindVar context) := by
+    intro left right hcolour
+    simpa [context, wordFindVar, lookupNatInfo] using hcolour
+  have hzero : wordFindVar context 0 = 0 := by
+    simp [context, wordFindVar, lookupNatInfo]
+  have hscratch : ∀ name, name < 31 → wordFindVar context name ≠ 31 := by
+    intro name hname
+    simp [context, wordFindVar, lookupNatInfo]
+    omega
+  have hrelation : WordColourStateRelation (wordFindVar context) state state := by
+    constructor
+    · rfl
+    · rfl
+    · rfl
+    · rfl
+    · intro name hname hcolour
+      simp [context, wordFindVar, lookupNatInfo]
+  have hresult := wordAllocateProgramWithClashTreeAndColour_straightLine_simulation
+    [] (.skip : WordProg (Word 64)) context .skip halloc hvalid hinjective hzero
+    hscratch state state hrelation .skip
+  simpa [context, wordApplyColour] using hresult
+
 end Flapjack.RiscV
