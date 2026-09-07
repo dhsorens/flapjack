@@ -265,4 +265,35 @@ theorem executeWordMoves_preserves_sources [NeZero width]
           hheadValid.1 hheadValid.2.1 (hvalid move (by simp [hmove])).2.1
           hheadNonzero (htailNoSourceHead move hmove)
 
+def wordReadRegisterNat [NeZero width] (state : State width) (name : Nat) :
+    Option (Word width) :=
+  do
+    let register ← registerOfNat name
+    pure (readRegister state register)
+
+theorem wordReadRegisterNat_mapM_zip [NeZero width]
+    (source target : State width) (destinations sources : List Nat)
+    (hpair : ∀ move, move ∈ destinations.zip sources →
+      wordReadRegisterNat target move.1 =
+        wordReadRegisterNat source move.2)
+    (hlength : destinations.length = sources.length) :
+    List.mapM (wordReadRegisterNat target) destinations =
+      List.mapM (wordReadRegisterNat source) sources := by
+  induction destinations generalizing sources with
+  | nil =>
+      cases sources with
+      | nil => rfl
+      | cons head tail => simp at hlength
+  | cons head tail ih =>
+      cases sources with
+      | nil => simp at hlength
+      | cons sourceHead sourceTail =>
+          have hlengthTail : tail.length = sourceTail.length := by
+            simp_all
+          simp only [List.mapM_cons]
+          rw [hpair (head, sourceHead) (by simp)]
+          rw [ih (sources := sourceTail) (hlength := hlengthTail)]
+          intro move hmove
+          exact hpair move (by simp [hmove])
+
 end Flapjack.RiscV

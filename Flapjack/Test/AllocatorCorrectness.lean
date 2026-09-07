@@ -183,6 +183,40 @@ example [NeZero 64]
   exact evalWordSsaRenameProgram_return_singleton ssa source target hregister
     3 0 2 (by decide) htarget htargetScratch
 
+example [NeZero 64]
+    (source target : State 64) (ssa : WordSsaState)
+    (hregister : ∀ name,
+      (do
+        let register ← registerOfNat name
+        pure (readRegister source register)) =
+      (do
+        let register ← registerOfNat (wordSsaRead ssa name)
+        pure (readRegister target register)))
+    (hvalid : ∀ move, move ∈
+        (wordSsaCallAbiRegisters 1 [2, 3].length).zip
+          ([2, 3].map (wordSsaRead ssa)) →
+      move.1 < 32 ∧ move.2 < 32 ∧ move.1 ≠ 31 ∧ move.2 ≠ 31)
+    (hdestNonzero : ∀ move, move ∈
+        (wordSsaCallAbiRegisters 1 [2, 3].length).zip
+          ([2, 3].map (wordSsaRead ssa)) → move.1 ≠ 0)
+    (hdestinations :
+      (((wordSsaCallAbiRegisters 1 [2, 3].length).zip
+        ([2, 3].map (wordSsaRead ssa))).map Prod.fst).Nodup)
+    (hnoSource : ∀ move, move ∈
+        (wordSsaCallAbiRegisters 1 [2, 3].length).zip
+          ([2, 3].map (wordSsaRead ssa)) →
+      move.2 ∉ ((wordSsaCallAbiRegisters 1 [2, 3].length).zip
+        ([2, 3].map (wordSsaRead ssa))).map Prod.fst) :
+    (evalWordFunctionWithHandlersAndFfi []
+        (fun _ _ _ _ _ state => some state) 4 source
+        (.return 0 [2, 3])).map wordControlResultValues =
+      (evalWordFunctionWithHandlersAndFfi []
+        (fun _ _ _ _ _ state => some state) 5 target
+        (wordSsaRenameProgram ssa (.return 0 [2, 3])).2).map
+        wordControlResultValues := by
+  exact evalWordSsaRenameProgram_return ssa source target hregister
+    3 0 [2, 3] hvalid hdestNonzero hdestinations hnoSource
+
 example [NeZero 64] (state : State 64) (name sourceName : Nat)
     (hname : name < 32) (hsource : sourceName < 32) :
     evalWordProg state (.assign name (.var sourceName)) =

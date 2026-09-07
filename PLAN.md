@@ -1065,6 +1065,8 @@ definitions, pass ordering, examples, and proof obligations.
   semantic result under the allocator's register and scratch invariants.
 - [x] Prove the generated one-result SSA `Return` ABI sequence preserves the
   returned value under the allocator's register and scratch invariants.
+- [x] Prove the generated multi-result SSA `Return` ABI sequence preserves all
+  returned values under acyclic ABI-move and register-state invariants.
 - [x] Marshal allocated Word call arguments into the even-numbered ABI
   registers before StackLang call-frame construction, for both handler-free
   and handler-aware calls.
