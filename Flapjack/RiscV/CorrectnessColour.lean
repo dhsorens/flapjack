@@ -1152,6 +1152,50 @@ theorem evalWordProg_assignShiftVarVar_applyColour
           source target hrelation .asr name left right hoperator hname hleft hright⟩
   | ror => exact (hoperator rfl).elim
 
+theorem evalWordProg_moveOne_applyColour [NeZero width]
+    (colour : Nat → Nat) (valid : wordColourValid colour)
+    (injective : Function.Injective colour) (colourZero : colour 0 = 0)
+    (source target : State width)
+    (hrelation : WordColourStateRelation colour source target)
+    (name sourceName : Nat) (hname : name < 32) (hsource : sourceName < 32)
+    (hname31 : name ≠ 31) (hsource31 : sourceName ≠ 31)
+    (hcolourName31 : colour name ≠ 31) (hcolourSource31 : colour sourceName ≠ 31)
+    (hne : name ≠ sourceName) :
+    ∃ source' target',
+      evalWordProg source (.move 1 [(name, sourceName)]) = some source' ∧
+      evalWordProg target
+          (wordApplyColour colour (.move 1 [(name, sourceName)])) = some target' ∧
+      WordColourStateRelation colour source' target' := by
+  have hne' : sourceName ≠ name := Ne.symm hne
+  have hcolourNe : colour name ≠ colour sourceName := fun heq =>
+    hne (injective heq)
+  have hcolourNe' : colour sourceName ≠ colour name := Ne.symm hcolourNe
+  have hsourceMove :
+      evalWordProg source (.move 1 [(name, sourceName)]) =
+        evalWordProg source (.assign name (.var sourceName)) := by
+    simp [evalWordProg, wordMoveToInstructions, wordMoveToInstructionsAux,
+      wordMoveRegisterDestinations, wordMoveRegisterReady,
+      wordMoveRegisterRemoveDestination, wordExpToInstructions,
+      wordExpToInstruction, registerOfNat, hname, hsource, hname31, hsource31,
+      hne']
+  have htargetMove :
+      evalWordProg target
+          (wordApplyColour colour (.move 1 [(name, sourceName)])) =
+        evalWordProg target
+          (.assign (colour name) (.var (colour sourceName))) := by
+    simp [evalWordProg, wordApplyColour, wordMoveToInstructions,
+      wordMoveToInstructionsAux, wordMoveRegisterDestinations,
+      wordMoveRegisterReady, wordMoveRegisterRemoveDestination,
+      wordExpToInstructions, wordExpToInstruction, registerOfNat,
+      valid name hname, valid sourceName hsource, hcolourName31,
+      hcolourSource31, hcolourNe']
+  rcases evalWordProg_assignVar_applyColour colour valid injective colourZero
+      source target hrelation name sourceName hname hsource with
+    ⟨source', target', hsource', htarget', hrelation'⟩
+  refine ⟨source', target', hsourceMove.trans hsource', ?_, hrelation'⟩
+  exact htargetMove.trans (by simpa [wordApplyColour, wordApplyColourExp]
+    using htarget')
+
 inductive WordVarStraightLine (width : Nat) : WordProg (Word width) → Prop where
   | skip : WordVarStraightLine width .skip
   | assign (name source : Nat) (hname : name < 32) (hsource : source < 32) :
