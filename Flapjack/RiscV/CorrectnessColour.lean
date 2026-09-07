@@ -30,7 +30,7 @@ theorem wordColourStateRelation_nextPc
     WordColourStateRelation colour
       {source with pc := nextPc source} {target with pc := nextPc target} := by
   constructor
-  · simpa [nextPc, hrelation.pc]
+  · simp [nextPc, hrelation.pc]
   · exact hrelation.memory
   · exact hrelation.privilege
   · exact hrelation.mode
@@ -173,7 +173,7 @@ theorem evalWordProg_assignConst_applyColour
   have hnext := wordColourStateRelation_nextPc colour valid source target hrelation
   have hread : readRegister source 0 = readRegister target 0 := by
     simpa [colourZero] using
-      hrelation.register 0 (by omega) (by simpa [colourZero])
+      hrelation.register 0 (by omega) (by simp [colourZero])
   have hvalue :
       readRegister source 0 + value = readRegister target 0 + value := by
     rw [hread]

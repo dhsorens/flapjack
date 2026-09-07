@@ -70,21 +70,21 @@ theorem loopToWord_repeat_loop_control_simulation [NeZero width]
                           hbodyWord] using hword
                   | returned middleWord values =>
                       exact False.elim (by
-                        simpa [loopResultMappedToWordLoop] using hbodyResult)
+                        simp [loopResultMappedToWordLoop] at hbodyResult)
                   | raised middleWord exception =>
                       exact False.elim (by
-                        simpa [loopResultMappedToWordLoop] using hbodyResult)
+                        simp [loopResultMappedToWordLoop] at hbodyResult)
                   | broke middleWord label =>
                       exact False.elim (by
-                        simpa [loopResultMappedToWordLoop] using hbodyResult)
+                        simp [loopResultMappedToWordLoop] at hbodyResult)
                   | continued middleWord label =>
                       exact False.elim (by
-                        simpa [loopResultMappedToWordLoop] using hbodyResult)
+                        simp [loopResultMappedToWordLoop] at hbodyResult)
               | returned middleLoop values =>
                   cases bodyWordResult with
                   | normal middleWord =>
                       exact False.elim (by
-                        simpa [loopResultMappedToWordLoop] using hbodyResult)
+                        simp [loopResultMappedToWordLoop] at hbodyResult)
                   | returned middleWord wordValues =>
                       have hloop' :
                           some (.returned middleLoop values) = some loopResult := by
@@ -100,21 +100,21 @@ theorem loopToWord_repeat_loop_control_simulation [NeZero width]
                       exact ⟨hbodyResult.1, hbodyResult.2⟩
                   | raised middleWord exception =>
                       exact False.elim (by
-                        simpa [loopResultMappedToWordLoop] using hbodyResult)
+                        simp [loopResultMappedToWordLoop] at hbodyResult)
                   | broke middleWord label =>
                       exact False.elim (by
-                        simpa [loopResultMappedToWordLoop] using hbodyResult)
+                        simp [loopResultMappedToWordLoop] at hbodyResult)
                   | continued middleWord label =>
                       exact False.elim (by
-                        simpa [loopResultMappedToWordLoop] using hbodyResult)
+                        simp [loopResultMappedToWordLoop] at hbodyResult)
               | raised middleLoop exception =>
                   cases bodyWordResult with
                   | normal middleWord =>
                       exact False.elim (by
-                        simpa [loopResultMappedToWordLoop] using hbodyResult)
+                        simp [loopResultMappedToWordLoop] at hbodyResult)
                   | returned middleWord values =>
                       exact False.elim (by
-                        simpa [loopResultMappedToWordLoop] using hbodyResult)
+                        simp [loopResultMappedToWordLoop] at hbodyResult)
                   | raised middleWord wordException =>
                       have hloop' :
                           some (.raised middleLoop exception) = some loopResult := by
@@ -130,24 +130,24 @@ theorem loopToWord_repeat_loop_control_simulation [NeZero width]
                       exact ⟨hbodyResult.1, hbodyResult.2⟩
                   | broke middleWord label =>
                       exact False.elim (by
-                        simpa [loopResultMappedToWordLoop] using hbodyResult)
+                        simp [loopResultMappedToWordLoop] at hbodyResult)
                   | continued middleWord label =>
                       exact False.elim (by
-                        simpa [loopResultMappedToWordLoop] using hbodyResult)
+                        simp [loopResultMappedToWordLoop] at hbodyResult)
               | broke middleLoop label =>
                   cases bodyWordResult with
                   | normal middleWord =>
                       exact False.elim (by
-                        simpa [loopResultMappedToWordLoop] using hbodyResult)
+                        simp [loopResultMappedToWordLoop] at hbodyResult)
                   | returned middleWord values =>
                       exact False.elim (by
-                        simpa [loopResultMappedToWordLoop] using hbodyResult)
+                        simp [loopResultMappedToWordLoop] at hbodyResult)
                   | raised middleWord exception =>
                       exact False.elim (by
-                        simpa [loopResultMappedToWordLoop] using hbodyResult)
+                        simp [loopResultMappedToWordLoop] at hbodyResult)
                   | continued middleWord wordLabel =>
                       exact False.elim (by
-                        simpa [loopResultMappedToWordLoop] using hbodyResult)
+                        simp [loopResultMappedToWordLoop] at hbodyResult)
                   | broke middleWord wordLabel =>
                       have hlabel : label = wordLabel := hbodyResult.1
                       have hlocals' :
@@ -187,16 +187,16 @@ theorem loopToWord_repeat_loop_control_simulation [NeZero width]
                   cases bodyWordResult with
                   | normal middleWord =>
                       exact False.elim (by
-                        simpa [loopResultMappedToWordLoop] using hbodyResult)
+                        simp [loopResultMappedToWordLoop] at hbodyResult)
                   | returned middleWord values =>
                       exact False.elim (by
-                        simpa [loopResultMappedToWordLoop] using hbodyResult)
+                        simp [loopResultMappedToWordLoop] at hbodyResult)
                   | raised middleWord exception =>
                       exact False.elim (by
-                        simpa [loopResultMappedToWordLoop] using hbodyResult)
+                        simp [loopResultMappedToWordLoop] at hbodyResult)
                   | broke middleWord wordLabel =>
                       exact False.elim (by
-                        simpa [loopResultMappedToWordLoop] using hbodyResult)
+                        simp [loopResultMappedToWordLoop] at hbodyResult)
                   | continued middleWord wordLabel =>
                       have hlabel : label = wordLabel := hbodyResult.1
                       have hlocals' :
