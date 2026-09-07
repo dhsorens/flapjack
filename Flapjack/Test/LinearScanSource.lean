@@ -26,29 +26,29 @@ def linearScanSourceAllocationShape : Option WordLinearScanSourceAllocation → 
 example :
     wordFixDomination (.reads [1, 2]) =
       .seq (.writes [1, 2]) (.reads [1, 2]) := by
-  native_decide
+  decide +kernel
 
 example :
     wordCheckNumberProperty (fun _ _ => true)
       (.branch (.reads [1]) (.writes [2])) 4 [] = true := by
-  native_decide
+  decide +kernel
 
 example :
     wordCheckNumberPropertyStrong (fun _ _ => true)
       (.seq (.reads [1]) (.writes [2])) 4 [] = true := by
-  native_decide
+  decide +kernel
 
 example :
     wordCheckStartLive (.writes [1]) 2 [(1, 0)] [(1, 4)] 0 = true := by
-  native_decide
+  decide +kernel
 
 example :
     wordPointInsideInterval (2, 5) 4 = true := by
-  native_decide
+  decide
 
 example :
     wordCheckIntervals (fun _ => 0) [(1, 0), (2, 1)] [(1, 3), (2, 2)] = false := by
-  native_decide
+  decide
 
 example :
     let state := wordLinearScanBijection
@@ -56,7 +56,7 @@ example :
     lookupNatInfo 5 state.toNode = some 1 &&
       lookupNatInfo 7 state.toNode = some 3 &&
       state.nextAlloc = 5 && state.nextStack = 7 := by
-  native_decide
+  decide +kernel
 
 example :
     let state := wordLinearScanBijection
@@ -64,39 +64,39 @@ example :
     lookupNatInfo 10 state.toNode = some 10 &&
       lookupNatInfo 3 state.toNode = some 3 &&
       state.nextAlloc = 1 && state.nextStack = 7 := by
-  native_decide
+  decide +kernel
 
 example :
     let tree := .seq (.delta [5] [7]) (.set [1])
     let state := wordLinearScanBijection (tree : WordClashTree)
     linearScanSourceShape (wordLinearScanApplyBijectionTree tree state) = true := by
-  native_decide
+  decide +kernel
 
 example :
     let state := wordLinearScanBijection
       (.delta [5] [7] : WordClashTree)
     wordLinearScanApplyBijectionForced state [(5, 7)] = [(1, 3)] := by
-  native_decide
+  decide +kernel
 
 example :
     wordLinearScanAdjacency [(1, 2)] =
       [(2, [1]), (1, [2])] := by
-  native_decide
+  decide
 
 example :
     (wordLinearScanTwoPass 2 [] [] [1, 3]
       [(1, 0), (3, 1)] [(1, 2), (3, 3)]).isSome = true := by
-  native_decide
+  decide +kernel
 
 example :
     linearScanSecondColour (wordLinearScanTwoPass 2 [] [] [1, 3]
       [(1, 0), (3, 1)] [(1, 2), (3, 3)]) = true := by
-  native_decide
+  decide +kernel
 
 example :
     wordLinearScanSortRegistersSource
       [(1, 0), (2, 0), (3, -1)] [2, 1, 3] = [3, 1, 2] := by
-  native_decide
+  decide +kernel
 
 example :
     wordLinearScanSortMovesSource
@@ -104,13 +104,13 @@ example :
        { priority := 1, left := 3, right := 4 }] =
       [{ priority := 1, left := 3, right := 4 },
        { priority := 3, left := 1, right := 2 }] := by
-  native_decide
+  decide +kernel
 
 example :
     linearScanSourceAllocationShape
       (wordLinearScanAllocateSource 2 [] []
         (.delta [5] [7] : WordClashTree)) = true := by
-  native_decide
+  decide +kernel
 
 example :
     let state :=
@@ -119,6 +119,6 @@ example :
     let exchanged := wordLinearScanApplyRegisterExchange [2, 4] state
     lookupNatInfo 2 exchanged.colours = some 1 &&
       lookupNatInfo 4 exchanged.colours = some 2 := by
-  native_decide
+  decide
 
 end Flapjack

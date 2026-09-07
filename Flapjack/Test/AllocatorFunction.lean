@@ -20,7 +20,7 @@ example :
 example :
     (wordAllocateSsaFunctionWithSpills [2]
       (.skip : WordProg (RiscV.Word 64))).isSome := by
-  native_decide
+  decide +kernel
 
 example (result : WordSsaState × List Nat × WordProg (RiscV.Word 64) ×
     WordSpillState)
@@ -36,7 +36,7 @@ example (result : WordSsaState × List Nat × WordProg (RiscV.Word 64) ×
 example :
     (wordAllocateSsaFunctionWithClashTreeWithSpillsAndPreferences [2]
       (.skip : WordProg (RiscV.Word 64))).isSome := by
-  native_decide
+  decide +kernel
 
 example (result : WordSsaState × List Nat × WordProg (RiscV.Word 64) ×
     WordSpillState)
