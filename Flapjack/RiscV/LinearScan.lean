@@ -71,6 +71,64 @@ def wordLiveTreeSize : WordLiveTree → Nat
 termination_by tree => sizeOf tree
 decreasing_by all_goals decreasing_trivial
 
+/-! Interval maps use the same update discipline as CakeML's
+`numset_list_add_if`: starts retain the smallest position seen, while ends
+retain the largest.  The position counter is an `Int`, matching the source
+development's backwards scan and avoiding an artificial lower bound. -/
+def wordIntervalUpdate (name : Nat) (value : Int)
+    (intervals : NatInfoMap Int) : NatInfoMap Int :=
+  (name, value) :: intervals.filter (fun entry => entry.1 != name)
+
+def wordIntervalAddIf (names : List Nat) (value : Int)
+    (intervals : NatInfoMap Int) (predicate : Int → Int → Bool) :
+    NatInfoMap Int :=
+  match names with
+  | [] => intervals
+  | name :: names =>
+      match lookupNatInfo name intervals with
+      | some previous =>
+          if predicate value previous then
+            wordIntervalAddIf names value
+              (wordIntervalUpdate name value intervals) predicate
+          else
+            wordIntervalAddIf names value intervals predicate
+      | none =>
+          wordIntervalAddIf names value
+            (wordIntervalUpdate name value intervals) predicate
+
+def wordIntervalAddIfLt (names : List Nat) (value : Int)
+    (intervals : NatInfoMap Int) : NatInfoMap Int :=
+  wordIntervalAddIf names value intervals (fun current previous =>
+    current < previous)
+
+def wordIntervalAddIfGt (names : List Nat) (value : Int)
+    (intervals : NatInfoMap Int) : NatInfoMap Int :=
+  wordIntervalAddIf names value intervals (fun current previous =>
+    previous ≤ current)
+
+def wordGetIntervals : WordLiveTree → Int → NatInfoMap Int →
+    NatInfoMap Int → Int × NatInfoMap Int × NatInfoMap Int
+  | .writes names, position, beginnings, endings =>
+      (position - 1,
+        wordIntervalAddIfLt names position beginnings,
+        wordIntervalAddIfGt names position endings)
+  | .reads names, position, beginnings, endings =>
+      (position - 1, beginnings,
+        wordIntervalAddIfGt names position endings)
+  | .branch thenBranch elseBranch, position, beginnings, endings =>
+      let (position, beginnings, endings) :=
+        wordGetIntervals elseBranch position beginnings endings
+      wordGetIntervals thenBranch position beginnings endings
+  | .seq first second, position, beginnings, endings =>
+      let (position, beginnings, endings) :=
+        wordGetIntervals second position beginnings endings
+      wordGetIntervals first position beginnings endings
+termination_by tree => sizeOf tree
+decreasing_by all_goals decreasing_trivial
+
+def wordIntervalIntersect (left right : Int × Int) : Bool :=
+  left.1 ≤ right.2 && right.1 ≤ left.2
+
 /-! Check a partial colouring while walking a live tree.  The two live lists
 are kept in lockstep, with the second one carrying the corresponding colours.
 This is the direct executable analogue of CakeML's `check_live_tree`. -/

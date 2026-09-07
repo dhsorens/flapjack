@@ -21,6 +21,26 @@ example :
   native_decide
 
 example :
+    wordIntervalAddIfLt [4] 3 [(4, 5)] =
+      [(4, 3)] := by
+  native_decide
+
+example :
+    wordIntervalAddIfGt [4] 7 [(4, 5)] =
+      [(4, 7)] := by
+  native_decide
+
+example :
+    wordGetIntervals
+      (.seq (.reads [1]) (.writes [1])) 2 [] [] =
+      (0, [(1, 2)], [(1, 2)]) := by
+  native_decide
+
+example :
+    wordIntervalIntersect (2, 5) (4, 8) = true := by
+  native_decide
+
+example :
     (wordCheckLiveTree id (.seq (.reads [1, 2]) (.writes [1])) [] []).isSome =
       true := by
   native_decide
