@@ -834,6 +834,21 @@ def wordSsaRenameFunction (parameters : List Nat) (program : WordProg α) :
   let (state, program) := wordSsaRenameProgram state program
   (state, renamedParameters, program)
 
+/-! The CakeML `full_ssa_cc_trans` result starts with the moves which copy
+    source formal parameters into their fresh SSA names.  The allocator needs
+    these moves in its input: they are part of the function, not merely an
+    implementation detail of the later Word-to-Stack entry lowering. -/
+
+def wordSsaEntryMove (parameters renamedParameters : List Nat) :
+    WordProg α :=
+  .move 1 (renamedParameters.zip parameters)
+
+def wordSsaRenameFunctionWithEntry (parameters : List Nat) (program : WordProg α) :
+    WordSsaState × List Nat × WordProg α :=
+  let (state, renamedParameters, program) :=
+    wordSsaRenameFunction parameters program
+  (state, renamedParameters, .seq (wordSsaEntryMove parameters renamedParameters) program)
+
 def wordProgLiveBefore (program : WordProg α) (liveAfter : List Nat) : List Nat :=
   wordProgReadVars program ++
     liveAfter.filter (fun name => name ∉ wordProgWriteVars program)
