@@ -301,4 +301,22 @@ example [NeZero 64] (state : State 64) :
     hscratch state state hrelation .skip
   simpa [context, wordApplyColour] using hresult
 
+example [NeZero width] (state : State width) :
+    ∃ source' target',
+      evalWordProg state
+          (.ite .equal 1 (.reg 1) (.assign 3 (.var 1))
+            (.assign 4 (.var 1))) = some source' ∧
+      evalWordProg (testTargetState state)
+          (wordApplyColour testColour
+            (.ite .equal 1 (.reg 1) (.assign 3 (.var 1))
+              (.assign 4 (.var 1)))) = some target' ∧
+      testRelation source' target' := by
+  apply evalWordProg_ite_applyColour testColour testColourValidFn
+    testColour_injective testColour_zero testColour_noScratch
+    state (testTargetState state) (testRelation_target state)
+    .equal 1 (.reg 1) true (by omega) (by intro name h; cases h; omega)
+  · simp [evalWordCondition, registerOfNat]
+  · exact .assign 3 1 (by omega) (by omega)
+  · exact .assign 4 1 (by omega) (by omega)
+
 end Flapjack.RiscV
