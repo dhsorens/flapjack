@@ -30,7 +30,7 @@ theorem compileWordProgramNatToRiscV_pipeline_ffi :
       some [.or 10 4 4, .or 11 5 5, .or 12 6 6, .or 13 7 7,
         .addi 0 0 (BitVec.ofNat 64 28),
         .addi 14 0 (BitVec.ofNat 64 7), .ecall] := by
-  native_decide
+  decide +kernel
 
 theorem executeCompiledPipelineFfi
     (host : WordFfiHost 64) (state : State 64)
