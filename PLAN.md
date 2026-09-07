@@ -81,6 +81,9 @@ definitions, pass ordering, examples, and proof obligations.
   the total transition used by the existing backend equations.
 - [x] Add an explicit privilege-sensitive ECALL and memory-alignment trap
   classifier, and connect checked execution to that classifier.
+- [x] Port the HOL RV64 word-width arithmetic and shift transitions
+  (`ADDW`, `SUBW`, `ADDIW`, `MULW`, and W-shifts), including sign-extension
+  back to the architectural register width.
 - [x] Add executable `ADD`/`ADDI` transitions with PC-advance and
   zero-register preservation theorems.
 - [x] Port HOL's signed `LB`/`LH` load value paths alongside the existing
