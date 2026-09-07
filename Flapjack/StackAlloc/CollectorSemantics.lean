@@ -354,7 +354,7 @@ theorem evalStackFrameFuel_stackGcMemcpy_iter [NeZero width]
         intro hzero
         have hzero' := congrArg BitVec.toNat hzero
         have hzero'' : words + 1 = 0 := by
-          simpa [BitVec.toNat_ofNat, Nat.mod_eq_of_lt hbound] using hzero'
+          simp [BitVec.toNat_ofNat, Nat.mod_eq_of_lt hbound] at hzero'
         omega
       have hcondition :
           stackMachineCondition state.machine .notEqual 0 (.imm 0) = true := by
@@ -2606,7 +2606,7 @@ theorem stackGcMoveLoop_machine_condition_matches_nat [NeZero width]
       simpa [BitVec.toNat_ofNat, Nat.mod_eq_of_lt hscanBound,
         Nat.mod_eq_of_lt hdestinationBound] using hto
     · intro h
-      simpa [h]
+      simp [h]
   simp [stackMachineCondition, hscan, hdestination, hwordEq]
   omega
 
@@ -2615,7 +2615,7 @@ private theorem natLandFour_eq_zero_iff_testBit_two_false (value : Nat) :
   constructor
   · intro hzero
     cases hbit : value.testBit 2 with
-    | false => simpa [hbit]
+    | false => simp [hbit]
     | true =>
         have hmask : (4 : Nat).testBit 2 = true := by decide
         have hand : (value &&& 4).testBit 2 = true := by
@@ -2673,7 +2673,7 @@ theorem stackGcMachineHeaderCondition_matches_nat [NeZero width]
       have hzero : header &&& BitVec.ofNat width 4 = 0 := by
         apply BitVec.eq_of_toNat_eq
         simpa [BitVec.toNat_and, hmask] using hzero'
-      simpa [hzero]
+      simp [hzero]
   have hcode := stackGcNatHeaderHasCode_iff_testBit_two header.toNat
   have hcodeData :
       stackGcNatHeaderHasCode header.toNat ≠ true ↔

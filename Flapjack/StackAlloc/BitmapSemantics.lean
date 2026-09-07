@@ -579,7 +579,7 @@ theorem stackGcNatMapBitmap_length_partition
                           cases hmapped
                           cases hvalues
                           exact ⟨by simp [hlength.1], by
-                            simpa [hlength.2, Nat.add_assoc, Nat.add_comm]⟩
+                            simp [hlength.2, Nat.add_assoc, Nat.add_comm]⟩
           | true =>
               cases moved with
               | nil =>
@@ -607,7 +607,7 @@ theorem stackGcNatMapBitmap_length_partition
                               cases hmapped
                               cases hvalues
                               exact ⟨by simp [hlength.1], by
-                                simpa [hlength.2, Nat.add_assoc, Nat.add_comm]⟩
+                                simp [hlength.2, Nat.add_assoc, Nat.add_comm]⟩
 
 theorem stackGcNatMoveBitmap_values_length
     (config : StackGcConfig) (bitmaps : List Nat)

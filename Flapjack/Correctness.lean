@@ -953,8 +953,8 @@ theorem loopToWord_store32_memory_agreement_mapped [NeZero width]
     have hlt : (2 : Nat) < 2 ^ width :=
       Nat.lt_of_lt_of_le (by decide : (2 : Nat) < 4) hpow'
     have h'' : (2 : Nat) = 0 := by
-      simpa [BitVec.toNat_ofNat,
-        Nat.mod_eq_of_lt hlt] using h'
+      simp [BitVec.toNat_ofNat,
+        Nat.mod_eq_of_lt hlt] at h'
     omega
   have h3 : (BitVec.ofNat width 3) ≠ 0 := by
     intro h
@@ -966,8 +966,8 @@ theorem loopToWord_store32_memory_agreement_mapped [NeZero width]
     have hlt : (3 : Nat) < 2 ^ width :=
       Nat.lt_of_lt_of_le (by decide : (3 : Nat) < 4) hpow'
     have h'' : (3 : Nat) = 0 := by
-      simpa [BitVec.toNat_ofNat,
-        Nat.mod_eq_of_lt hlt] using h'
+      simp [BitVec.toNat_ofNat,
+        Nat.mod_eq_of_lt hlt] at h'
     omega
   simp [evalLoopProg, loopRegisterStateMappedWithMemory,
     loopRegisterStateMapped, loopToWordProg, RiscV.evalWordProg,
@@ -1692,11 +1692,11 @@ theorem loopRepeat_mapped_locals [NeZero width]
                       · simpa [evalLoopRepeat, hbodyLoop] using hloop
                       · simpa [RiscV.evalWordLoopRepeat, hbodyWord] using hword
                   | broke middleWord label | continued middleWord label =>
-                      exact False.elim (by simpa [loopResultMappedToRiscV] using hbodyResult)
+                      exact False.elim (by simp [loopResultMappedToRiscV] at hbodyResult)
               | broke middleLoop label =>
                   cases wordBodyResult with
                   | normal middleWord | continued middleWord wordLabel =>
-                      exact False.elim (by simpa [loopResultMappedToRiscV] using hbodyResult)
+                      exact False.elim (by simp [loopResultMappedToRiscV] at hbodyResult)
                   | broke middleWord wordLabel =>
                       have hlabel : label = wordLabel := by
                         exact hbodyResult.1
@@ -1733,7 +1733,7 @@ theorem loopRepeat_mapped_locals [NeZero width]
               | continued middleLoop label =>
                   cases wordBodyResult with
                   | normal middleWord | broke middleWord wordLabel =>
-                      exact False.elim (by simpa [loopResultMappedToRiscV] using hbodyResult)
+                      exact False.elim (by simp [loopResultMappedToRiscV] at hbodyResult)
                   | continued middleWord wordLabel =>
                       have hlabel : label = wordLabel := by
                         exact hbodyResult.1
@@ -1762,7 +1762,7 @@ theorem loopRepeat_mapped_locals [NeZero width]
                         cases hword'
                         exact ⟨hlabel, hlocals'⟩
               | returned middleLoop values | raised middleLoop exception =>
-                  exact False.elim (by simpa [loopResultMappedToRiscV] using hbodyResult)
+                  exact False.elim (by simp [loopResultMappedToRiscV] at hbodyResult)
 
 theorem loopToWord_loop_simulation [NeZero width]
     (context : WordContext)
@@ -1871,7 +1871,7 @@ theorem loopLocalsMappedToRiscV_single_parameter [NeZero width]
     exact ⟨register, hregister, by
       simp [RiscV.writeRegister, RiscV.readRegister, hregister_nonzero]⟩
   · have : (none : Option (RiscV.Word width)) = some currentValue := by
-      simpa [updateLoopLocal, hname] using hcurrent
+      simp [updateLoopLocal, hname] at hcurrent
     simp at this
 
 theorem loopBindParameters_single_parameter_agreement [NeZero width]
