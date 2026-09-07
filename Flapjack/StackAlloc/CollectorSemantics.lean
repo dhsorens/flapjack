@@ -1,4 +1,5 @@
 import Flapjack.StackAlloc.FrameMachine
+import Flapjack.StackAlloc.BitmapSemantics
 
 /-!
 # Bounded collector machine semantics
@@ -3370,6 +3371,38 @@ theorem evalStackFrameFuel_stackGcRootBitmaps_then_moveLoop [NeZero width]
     (evalStackFrameFuel_seq_normal fuel state roots
       (stackGcMoveRootsBitmapsCode config)
       (stackGcMoveLoopCode config) hroots)
+
+theorem evalStackFrameFuel_stackGcFullBitmaps_with_nat_result [NeZero width]
+    (config : StackGcConfig) (fuel : Nat)
+    (state roots final : StackFrameMachineState width)
+    (bitmaps : List Nat) (stack : List StackGcNatValue)
+    (newBase oldBase : Nat) (memory : Nat → Nat) (domain : Nat → Bool)
+    (moved : StackGcValueRootsResult)
+    (scanned : StackGcNatMoveLoopResult)
+    (hrootsMachine :
+      evalStackFrameFuel fuel state (stackGcMoveRootsBitmapsCode config) =
+        some (.normal roots))
+    (hrootsNat : stackGcNatMoveRootsBitmaps config bitmaps stack
+      0 newBase oldBase memory domain = some moved)
+    (hloopMachine :
+      evalStackFrameFuel fuel roots (stackGcMoveLoopCode config) =
+        some (.normal final))
+    (hloopNat : stackGcNatMoveLoop config fuel newBase moved.nextIndex
+      moved.nextAddress oldBase moved.memory domain moved.condition = scanned) :
+    evalStackFrameFuel (fuel + 1) state
+        (stackSeq [stackGcMoveRootsBitmapsCode config,
+          stackGcMoveLoopCode config]) = some (.normal final) ∧
+      stackGcNatFullBitmaps config bitmaps stack newBase oldBase memory domain fuel =
+        some { values := moved.values
+               nextIndex := scanned.nextIndex
+               nextAddress := scanned.nextAddress
+               memory := scanned.memory
+               condition := scanned.condition } := by
+  have hmachine := evalStackFrameFuel_stackGcRootBitmaps_then_moveLoop
+    config fuel state roots final hrootsMachine hloopMachine
+  constructor
+  · exact hmachine
+  · simp [stackGcNatFullBitmaps, hrootsNat, hloopNat]
 
 theorem evalStackFrameFuel_stackGcMoveLoop_data_branch [NeZero width]
     (config : StackGcConfig) (fuel : Nat)
