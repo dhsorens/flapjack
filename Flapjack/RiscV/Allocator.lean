@@ -540,6 +540,24 @@ def wordSsaRefreshList (state : WordSsaState) : List Nat →
 termination_by names => sizeOf names
 decreasing_by all_goals decreasing_trivial
 
+def wordSsaFakeMoves : List Nat → WordProg α
+  | [] => .skip
+  | name :: names =>
+      wordSsaSeq (.move 0 [(name, 0)]) (wordSsaFakeMoves names)
+
+def wordSsaLoopSetup (state : WordSsaState)
+    (liveIn liveOut : List Nat) : WordSsaState × WordProg α :=
+  let names := (liveIn ++ liveOut).eraseDups
+  let extend := names.filter (fun name =>
+    (lookupNatInfo name state.current).isNone)
+  let refresh := names.filter (fun name =>
+    (lookupNatInfo name state.current).isSome)
+  let (state, freshNames) := wordSsaFreshList state extend
+  let fakeMoves := wordSsaFakeMoves freshNames
+  let (state, _, refreshMove) :=
+    wordSsaListNextVarRenameMove state state.next refresh
+  (state, wordSsaSeq fakeMoves refreshMove)
+
 def wordSsaFindLoopFrame : Nat → List WordSsaLoopFrame →
     Option WordSsaLoopFrame
   | _, [] => none
@@ -717,8 +735,7 @@ def wordSsaRenameProgramWithLoops (frames : List WordSsaLoopFrame)
         (state, .dataBufferWrite (wordSsaRead state address)
           (wordSsaRead state value))
     | .loop liveIn body liveOut =>
-        let names := (liveIn ++ liveOut).eraseDups
-        let (setupState, setup) := wordSsaRefreshList state names
+        let (setupState, setup) := wordSsaLoopSetup state liveIn liveOut
         let entryState := wordSsaRestrict setupState liveIn
         let exitState := wordSsaRestrict setupState liveOut
         let frame := WordSsaLoopFrame.mk entryState exitState

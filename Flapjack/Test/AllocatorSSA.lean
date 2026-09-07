@@ -144,7 +144,22 @@ example :
           WordProg Nat)).1 =
       { current := [(1, 200)], next := 204 } := by
   simp [wordSsaRenameProgram, wordSsaRenameProgramWithLoops,
-    wordSsaRefreshList, wordSsaRestrict, wordSsaFresh,
+    wordSsaLoopSetup, wordSsaFakeMoves, wordSsaListNextVarRenameMove,
+    wordSsaFreshList, wordSsaRestrict, wordSsaFresh,
+    wordSsaFindLoopFrame, wordSsaReconcileTo, wordSsaRead,
+    wordSsaSeq, lookupNatInfo, List.eraseDups, List.eraseDupsBy,
+    List.eraseDupsBy.loop]
+
+example :
+    wordSsaRenameProgram
+        ({ current := [], next := 10 } : WordSsaState)
+      ((.loop [1] (.break 0) []) : WordProg Nat) =
+      ({ current := [], next := 14 },
+        .seq (.seq (.move 0 [(10, 0)]) (.move 0 []))
+          (.loop [10] (.break 0) [])) := by
+  simp [wordSsaRenameProgram, wordSsaRenameProgramWithLoops,
+    wordSsaLoopSetup, wordSsaFakeMoves, wordSsaListNextVarRenameMove,
+    wordSsaFreshList, wordSsaRestrict, wordSsaFresh,
     wordSsaFindLoopFrame, wordSsaReconcileTo, wordSsaRead,
     wordSsaSeq, lookupNatInfo, List.eraseDups, List.eraseDupsBy,
     List.eraseDupsBy.loop]

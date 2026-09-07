@@ -1045,6 +1045,8 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Port the returned-call exception-handler SSA boundary, including
   ABI return copies and explicit reconciliation of normal and exceptional
   handler states.
+- [x] Match CakeML's loop SSA setup by separating fresh live names from
+  refreshed names and zero-initializing newly introduced names.
 - [x] Marshal allocated Word call arguments into the even-numbered ABI
   registers before StackLang call-frame construction, for both handler-free
   and handler-aware calls.
