@@ -260,6 +260,32 @@ def pipelineWordFunctionsAllocatedWithGraphAndFullSsa [NeZero width] :
       let rest ← pipelineWordFunctionsAllocatedWithGraphAndFullSsa functions
       pure ((label, wordParameters, stackBody) :: rest)
 
+/-! Spill-backed pipeline variant using the ABI-correct full-SSA entry
+    allocator.  The generated entry moves therefore read the same physical
+    argument registers that `wordToStackFunctionWithParameters` initializes. -/
+def pipelineWordFunctionsAllocatedWithSpillsAndFullSsa [NeZero width] :
+    List (Nat × List Nat × LoopProg (RiscV.Word width)) →
+      Option (List (Nat × List Nat × StackProg Nat))
+  | [] => some []
+  | (label, parameters, body) :: functions => do
+      let slots := loopAccVars body parameters
+      let context : WordContext :=
+        { vars := slots.map (fun name => (name, name + 2)) }
+      let wordParameters := parameters.map (fun name => name + 2)
+      let unallocatedBody := loopToWordProg context body
+      let (_, renamedParameters, renamedProgram, allocation) ←
+        wordAllocateSsaFunctionWithEntryAndClashTreeWithSpillsAndPreferencesFixed
+          wordParameters unallocatedBody
+      let config : RiscV.WordStackConfig :=
+        { locations := allocation.locations
+          scratch := 31
+          stackBase := 0
+          addressScratch := 29 }
+      let stackBody ← RiscV.wordToStackFunctionWithParameters config
+        renamedParameters renamedProgram
+      let rest ← pipelineWordFunctionsAllocatedWithSpillsAndFullSsa functions
+      pure ((label, wordParameters, stackBody) :: rest)
+
 /-!
 An allocation-aware variant of the Word-function boundary.  The historical
 `pipelineWordFunctions` definition remains available for existing artifact

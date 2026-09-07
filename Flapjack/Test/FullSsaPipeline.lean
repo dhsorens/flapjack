@@ -11,6 +11,10 @@ open RiscV
     (pipelineWordFunctionsAllocatedWithGraphAndFullSsa
       [(0, [0], (.assign 1 (.var 0) : LoopProg (RiscV.Word 64))) ]).isSome
 
+#guard
+    (pipelineWordFunctionsAllocatedWithSpillsAndFullSsa
+      [(0, [0], (.assign 1 (.var 0) : LoopProg (RiscV.Word 64))) ]).isSome
+
 example :
     pipelineWordFunctionsAllocatedWithGraphAndFullSsa
       ([] : List (Nat × List Nat × LoopProg (RiscV.Word 64))) = some [] := by

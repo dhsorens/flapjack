@@ -556,8 +556,12 @@ definitions, pass ordering, examples, and proof obligations.
   fixed ABI source names and returning the coloured entry-inclusive program.
 - [x] Compose the full-SSA entry sequence with the clash-tree spill allocator,
   retaining entry moves in its locations, preferences, and returned program.
+- [x] Pin full-SSA ABI source names to their architectural registers in the
+  spill allocator before lowering entry moves.
 - [x] Expose a graph-backed Word-to-Stack pipeline that consumes the complete
   full-SSA entry-inclusive function program.
+- [x] Expose the corresponding ABI-correct spill-backed Word-to-Stack pipeline
+  for entry-inclusive full-SSA functions.
 - [x] Route the spill-aware RISC-V pipeline through the implemented
   clash-tree/preference allocator and retain its allocation witness at the
   Word-to-Stack boundary.

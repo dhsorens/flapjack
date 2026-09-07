@@ -2023,6 +2023,27 @@ def wordAllocateVarsWithSpillsAndPreferences (slots : List Nat)
   if wordSpillAllocationRespectsClashes edges state.locations then some state
   else none
 
+/-! Entry moves read architectural ABI sources.  Seed those names with their
+    architectural registers and remove them from the greedy worklist, so the
+    spill allocator cannot silently reassign an input before the entry move
+    executes. -/
+
+def wordFixedSourceLocations : List Nat → NatInfoMap WordLocation
+  | [] => []
+  | source :: sources =>
+      (source, .register source) :: wordFixedSourceLocations sources
+
+def wordAllocateVarsWithFixedSources (slots : List Nat)
+    (edges preferences : List (Nat × Nat))
+    (fixedSources : List Nat) : Option WordSpillState :=
+  let initial : WordSpillState :=
+    { locations := wordFixedSourceLocations fixedSources, nextSpill := 0 }
+  let names := slots.eraseDups.filter (fun name => name ∉ fixedSources)
+  let state := wordGreedyAllocateWithSpillsAndPreferences names
+    edges preferences initial
+  if wordSpillAllocationRespectsClashes edges state.locations then some state
+  else none
+
 theorem wordGreedyAllocateWithSpills_preserves_lookup (names : List Nat)
     (edges : List (Nat × Nat)) (state : WordSpillState) :
     ∀ name, name ∉ names →
@@ -2452,6 +2473,29 @@ def wordAllocateSsaFunctionWithClashTreeWithSpillsAndPreferences
   match wordAllocateVarsWithSpillsAndPreferences
       (renamedParameters ++ wordProgVariables program ++ liveIn)
       edges preferences with
+  | none => none
+  | some allocation =>
+      if wordProgSpecialLocationsSafe allocation.locations program = true &&
+          wordSpillClashTreeChecked tree allocation.locations then
+        some (state, renamedParameters, program, allocation)
+      else
+        none
+
+/-! ABI-correct variant of the entry-aware spill allocator.  The source
+    parameter names are fixed to their architectural registers before the
+    remaining SSA names are assigned registers or spill slots. -/
+
+def wordAllocateSsaFunctionWithEntryAndClashTreeWithSpillsAndPreferencesFixed
+    (parameters : List Nat) (program : WordProg α) :
+    Option (WordSsaState × List Nat × WordProg α × WordSpillState) :=
+  let (state, renamedParameters, program) :=
+    wordSsaRenameFunctionWithEntry parameters program
+  let tree := wordClashTree program []
+  let (liveIn, edges) := wordClashTreeAnalyze tree []
+  let preferences := wordProgPreferenceEdges program
+  match wordAllocateVarsWithFixedSources
+      (renamedParameters ++ wordProgVariables program ++ liveIn)
+      edges preferences parameters with
   | none => none
   | some allocation =>
       if wordProgSpecialLocationsSafe allocation.locations program = true &&
