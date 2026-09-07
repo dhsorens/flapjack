@@ -1237,6 +1237,8 @@ definitions, pass ordering, examples, and proof obligations.
   successful expression compilation witnesses.
 - [x] Prove the fuel-bounded full-Crepe `extCall` execution rule, threading
   decoded local arguments through the abstract FFI handler.
+- [x] Expose call-handler lowering with return-slot allocation, exception-code
+  lookup, and handler-result setup under successful context lookups.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
