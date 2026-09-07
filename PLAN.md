@@ -1249,6 +1249,8 @@ definitions, pass ordering, examples, and proof obligations.
   including function-local handler labels and the reserved raise stub.
 - [x] Exercise source `extCall` lowering through the StackLang/LabLang RISC-V
   image with a concrete service-table regression.
+- [x] Add explicit raised control outcomes and handler propagation to the
+  executable StackLang machine evaluator.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
