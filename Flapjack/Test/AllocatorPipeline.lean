@@ -116,7 +116,7 @@ example :
         stackBase := 21, wordShift := 3 }
       pipelineAllocatedMulDeclarations).map
         (fun sections => sections.map (fun (label, entry, _) => (label, entry))) =
-      some [(1, BitVec.ofNat 64 0)] := by
+      some [(0, BitVec.ofNat 64 0), (1, BitVec.ofNat 64 76)] := by
   native_decide
 
 
