@@ -254,6 +254,28 @@ example (state final : WordStackMachineState 8)
   · decide
   · exact heval
 
+example (state final : WordStackMachineState 8)
+    (heval : (wordStackFfiMove
+      { locations := [(2, .register 4), (3, .register 6)],
+        scratch := 31, stackBase := 10 }
+      2 10).bind (evalWordStackMachine state) = some final) :
+    wordStackMachineValue
+        { locations := [(2, .register 4), (3, .register 6)],
+          scratch := 31, stackBase := 10 }
+        final 3 =
+      wordStackMachineValue
+        { locations := [(2, .register 4), (3, .register 6)],
+          scratch := 31, stackBase := 10 }
+        state 3 := by
+  apply evalWordStackMachine_ffi_move_preserves_other_value
+    (source := 2) (destination := 10) (other := 3)
+    (sourceLocation := .register 4) (otherLocation := .register 6)
+  · native_decide
+  · native_decide
+  · decide
+  · decide
+  · exact heval
+
 example :
     wordToStackProgNat
         { locations := [(0, .register 4)], scratch := 31, stackBase := 10 }

@@ -1526,6 +1526,56 @@ theorem evalWordStackMachine_ffi_move_preserves_value [NeZero width]
         wordStackLocation, wordStackOffset, wordStackMachineWriteRegister,
         hsource]
 
+theorem evalWordStackMachine_ffi_move_preserves_other_value [NeZero width]
+    (config : WordStackConfig) (state final : WordStackMachineState width)
+    (source destination other : Nat) (sourceLocation otherLocation : WordLocation)
+    (hsource : wordStackLocation config source = some sourceLocation)
+    (hother : wordStackLocation config other = some otherLocation)
+    (hsource_destination : sourceLocation ≠ .register destination)
+    (hother_destination : otherLocation ≠ .register destination)
+    (heval : (wordStackFfiMove config source destination).bind
+      (evalWordStackMachine state) = some final) :
+      wordStackMachineValue config final other =
+        wordStackMachineValue config state other := by
+  change lookupNatInfo source config.locations = some sourceLocation at hsource
+  change lookupNatInfo other config.locations = some otherLocation at hother
+  cases sourceLocation with
+  | register sourceRegister =>
+      have hsourceRegister : sourceRegister ≠ destination := by
+        intro heq
+        apply hsource_destination
+        simp [heq]
+      simp [wordStackFfiMove, wordStackLocation, lookupNatInfo,
+        hsource, hsourceRegister] at heval
+      cases heval
+      cases otherLocation with
+      | register otherRegister =>
+          have hotherRegister : otherRegister ≠ destination := by
+            intro heq
+            apply hother_destination
+            simp [heq]
+          simp [wordStackMachineValue, wordStackLocation,
+            wordStackMachineWriteRegister, wordStackMachineBinOp, hother,
+            hotherRegister]
+      | stack otherSlot =>
+          simp [wordStackMachineValue, wordStackLocation,
+            wordStackMachineWriteRegister, wordStackMachineBinOp, hother]
+  | stack sourceSlot =>
+      simp [wordStackFfiMove, wordStackLocation, lookupNatInfo,
+        hsource] at heval
+      cases heval
+      cases otherLocation with
+      | register otherRegister =>
+          have hotherRegister : otherRegister ≠ destination := by
+            intro heq
+            apply hother_destination
+            simp [heq]
+          simp [wordStackMachineValue, wordStackLocation, wordStackOffset,
+            wordStackMachineWriteRegister, hother, hotherRegister]
+      | stack otherSlot =>
+          simp [wordStackMachineValue, wordStackLocation, wordStackOffset,
+            wordStackMachineWriteRegister, hother]
+
 theorem evalWordStackMachine_load_preserves_value [NeZero width]
     (config : WordStackConfig) (state final : WordStackMachineState width)
     (destination address : Nat)

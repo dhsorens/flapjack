@@ -1375,6 +1375,8 @@ definitions, pass ordering, examples, and proof obligations.
   FFI-in-loop regressions.
 - [x] Expose the abstract StackLang FFI returned-callee continuation equation,
   matching the bounded frame boundary.
+- [x] Prove that a Word-to-Stack FFI argument move preserves every unrelated
+  mapped variable, extending the per-destination FFI move contract.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
