@@ -1265,6 +1265,8 @@ definitions, pass ordering, examples, and proof obligations.
   lowering, preserving distinct bitmap indices for branch-local allocations.
 - [x] Prove bitmap-state length invariants for insertion, allocation, and
   constant-storage lowering.
+- [x] Lift the bitmap-state length invariant through the complete recursive
+  Word-to-Stack builder, including sequences, branches, loops, and handlers.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 

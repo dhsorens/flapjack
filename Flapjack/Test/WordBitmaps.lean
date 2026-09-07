@@ -94,4 +94,26 @@ example :
       some ([4, 28, 5, 7, 9], 5) := by
   native_decide
 
+example (compiled : StackProg Nat) (finalState : WordStackBitmapState)
+    (hresult : wordToStackProgNatWithBitmaps
+      { wordBitmapTestConfig with locations := [(1, .register 2)] }
+      1 30 3 8 none (wordStackInitialBitmaps false) wordBitmapBranchProgram =
+      some (compiled, finalState)) :
+    finalState.length = finalState.data.length := by
+  exact wordToStackProgNatWithBitmapBuilder_preserves_length
+    { wordBitmapTestConfig with locations := [(1, .register 2)] }
+    (wordStackLiveBitmap 1 3 8) 1 30 3 8 none
+    (wordStackInitialBitmaps false) wordBitmapBranchProgram rfl compiled finalState hresult
+
+example (compiled : StackProg Nat) (finalState : WordStackBitmapState)
+    (hresult : wordToStackProgNatWithBitmaps
+      { wordBitmapTestConfig with locations := [(1, .register 2), (2, .register 3)] }
+      1 30 3 8 none (wordStackInitialBitmaps false) wordBitmapHandlerProgram =
+      some (compiled, finalState)) :
+    finalState.length = finalState.data.length := by
+  exact wordToStackProgNatWithBitmapBuilder_preserves_length
+    { wordBitmapTestConfig with locations := [(1, .register 2), (2, .register 3)] }
+    (wordStackLiveBitmap 1 3 8) 1 30 3 8 none
+    (wordStackInitialBitmaps false) wordBitmapHandlerProgram rfl compiled finalState hresult
+
 end Flapjack
