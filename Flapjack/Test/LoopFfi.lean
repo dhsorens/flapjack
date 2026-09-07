@@ -33,7 +33,7 @@ def loopByteFfiTestState : LoopFfiState Nat Unit :=
 
 example :
     (loopFfiReadBytes loopByteFfiTestState 10 1) = some [42] := by
-  native_decide
+  decide
 
 example :
     match loopFfiSharedMem loopByteFfiTestState .load 5 10 with
