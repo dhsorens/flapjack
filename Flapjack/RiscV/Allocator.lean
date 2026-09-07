@@ -2496,6 +2496,31 @@ theorem wordAllocateSsaFunctionWithClashTreeWithSpillsAndPreferences_maps_parame
   apply hslots name
   simp [hname]
 
+theorem wordAllocateSsaProgramWithClashTreeWithSpillsAndPreferences_maps_variables
+    (state : WordSsaState) (program : WordProg α)
+    (renamedState : WordSsaState) (renamedProgram : WordProg α)
+    (allocation : WordSpillState)
+    (halloc :
+      wordAllocateSsaProgramWithClashTreeWithSpillsAndPreferences state
+        program = some (renamedState, renamedProgram, allocation)) :
+    ∀ name, name ∈ wordProgVariables renamedProgram →
+      ∃ location, lookupNatInfo name allocation.locations = some location := by
+  simp [wordAllocateSsaProgramWithClashTreeWithSpillsAndPreferences] at halloc
+  split at halloc <;> simp_all
+  rcases halloc with ⟨_, rfl, rfl, rfl⟩
+  rename_i _ alloc _ hallocation
+  have hslots := wordAllocateVarsWithSpillsAndPreferences_maps_slots
+    (wordProgVariables (wordSsaRenameProgram state program).2 ++
+      (wordClashTreeAnalyze
+        (wordClashTree (wordSsaRenameProgram state program).2 []) []).fst)
+    (wordClashTreeAnalyze
+      (wordClashTree (wordSsaRenameProgram state program).2 []) []).snd
+    (wordProgPreferenceEdges (wordSsaRenameProgram state program).2)
+    alloc hallocation
+  intro name hname
+  apply hslots name
+  simp [hname]
+
 theorem wordAllocateSsaFunctionWithClashTreeWithSpillsAndPreferences_safe
     (parameters : List Nat) (program : WordProg α)
     (state : WordSsaState) (renamedParameters : List Nat)
