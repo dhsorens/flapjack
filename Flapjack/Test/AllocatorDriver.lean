@@ -69,4 +69,18 @@ example (parameters : List Nat) (program : WordProg Nat)
   | spill state parameters' allocation program' =>
       exact hsound.1
 
+example (parameters : List Nat) (program : WordProg Nat)
+    (fixedSources : List Nat) (colours stackStart : Nat)
+    (oracle : NatInfoMap Nat) (state : WordSsaState)
+    (renamedParameters : List Nat) (allocation : WordSpillState)
+    (renamedProgram : WordProg Nat)
+    (halloc : wordAllocateFunctionWithOracleOrGraphOrSpill parameters program
+      fixedSources colours stackStart oracle =
+      some (.spill state renamedParameters allocation renamedProgram)) :
+    ∀ name, name ∈ renamedParameters →
+      ∃ location, lookupNatInfo name allocation.locations = some location := by
+  exact wordAllocateFunctionWithOracleOrGraphOrSpill_spill_maps_parameters
+    parameters program fixedSources colours stackStart oracle state
+    renamedParameters allocation renamedProgram halloc
+
 end Flapjack
