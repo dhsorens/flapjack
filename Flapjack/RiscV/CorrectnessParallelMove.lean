@@ -147,4 +147,40 @@ theorem evalWordProg_moveAcyclic_applyColour [NeZero width]
     rw [hcolourMoves, htargetCompile]
     exact congrArg some htargetExec
 
+theorem evalWordProg_acyclicEntry_seq_applyColour [NeZero width]
+    (colour : Nat → Nat) (valid : wordColourValid colour)
+    (injective : Function.Injective colour) (colourZero : colour 0 = 0)
+    (colourNoScratch : ∀ name, name < 31 → colour name ≠ 31)
+    (source target : State width)
+    (hrelation : WordColourStateRelation colour source target)
+    (moves : List (Nat × Nat))
+    (hdestinations : (moves.map Prod.fst).Nodup)
+    (hnoSource : ∀ move, move ∈ moves → move.2 ∉ moves.map Prod.fst)
+    (hvalid : ∀ move, move ∈ moves →
+      move.1 < 32 ∧ move.2 < 32 ∧ move.1 ≠ 31 ∧ move.2 ≠ 31)
+    (program : WordProg (Word width))
+    (hprogram : WordVarStraightLine width program) :
+    ∃ source' target',
+      evalWordProg source (.seq (.move 1 moves) program) = some source' ∧
+      evalWordProg target
+          (wordApplyColour colour (.seq (.move 1 moves) program)) = some target' ∧
+      WordColourStateRelation colour source' target' := by
+  have hcolourNoScratch :
+      ∀ move, move ∈ moves → colour move.1 ≠ 31 ∧ colour move.2 ≠ 31 := by
+    intro move hmove
+    have hmoveValid := hvalid move hmove
+    exact ⟨colourNoScratch move.1 (by omega),
+      colourNoScratch move.2 (by omega)⟩
+  rcases evalWordProg_moveAcyclic_applyColour colour valid injective colourZero
+      source target hrelation moves hdestinations hnoSource hvalid hcolourNoScratch with
+    ⟨middleSource, middleTarget, hmoveSource, hmoveTarget, hmoveRelation⟩
+  rcases evalWordProg_wordVarStraightLine_applyColour colour valid injective colourZero
+      colourNoScratch middleSource middleTarget hmoveRelation program hprogram with
+    ⟨source', target', hprogramSource, hprogramTarget, hrelation'⟩
+  refine ⟨source', target', ?_, ?_, hrelation'⟩
+  · rw [evalWordProg, hmoveSource]
+    simpa using hprogramSource
+  · rw [wordApplyColour, evalWordProg, hmoveTarget]
+    simpa using hprogramTarget
+
 end Flapjack.RiscV
