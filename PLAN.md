@@ -548,6 +548,8 @@ definitions, pass ordering, examples, and proof obligations.
   colored Word body, retaining the state relation across the entry boundary.
 - [x] Expose the clash-tree allocator's coloured-program result as a semantic
   straight-line simulation contract at the Word allocator boundary.
+- [x] Prove register-coloured condition preservation and conditional-branch
+  simulation for executable Word `ite` programs.
 - [x] Match CakeML's Simple/IRC distinction in graph allocation modes: modes
   0--1 omit move preferences, while modes 2--3 retain prioritized moves.
 - [x] Preserve SSA-renamed virtual names at the heuristic allocator's

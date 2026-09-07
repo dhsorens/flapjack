@@ -1441,4 +1441,80 @@ theorem wordAllocateProgramWithClashTreeAndColour_straightLine_simulation
     valid injective colourZero colourNoScratch source target hrelation program
     hprogram
 
+theorem wordColourStateRelation_evalWordCondition [NeZero width]
+    (colour : Nat → Nat) (valid : wordColourValid colour)
+    (source target : State width)
+    (hrelation : WordColourStateRelation colour source target)
+    (operator : Cmp) (condition : Nat)
+    (rightValue : WordRegImm (Word width))
+    (hcondition : condition < 32)
+    (hright : ∀ name, rightValue = .reg name → name < 32) :
+    evalWordCondition source operator condition rightValue =
+      evalWordCondition target operator (colour condition)
+        (wordApplyColourRegImm colour rightValue) := by
+  cases rightValue with
+  | imm value =>
+      have hcondition' : colour condition < 32 := valid condition hcondition
+      have hconditionValue := hrelation.register condition hcondition hcondition'
+      cases operator <;>
+        simp [evalWordCondition, wordApplyColourRegImm, registerOfNat,
+          hcondition, hcondition', hconditionValue]
+  | reg right =>
+      have hright' : right < 32 := hright right rfl
+      have hcondition' : colour condition < 32 := valid condition hcondition
+      have hrightColour : colour right < 32 := valid right hright'
+      have hleftValue := hrelation.register condition hcondition
+        (valid condition hcondition)
+      have hrightValue := hrelation.register right hright'
+        (valid right hright')
+      cases operator <;>
+        simp [evalWordCondition, wordApplyColourRegImm, registerOfNat,
+          hcondition, hright', hcondition', hrightColour, hleftValue,
+          hrightValue]
+
+theorem evalWordProg_ite_applyColour [NeZero width]
+    (colour : Nat → Nat) (valid : wordColourValid colour)
+    (injective : Function.Injective colour) (colourZero : colour 0 = 0)
+    (colourNoScratch : ∀ name, name < 31 → colour name ≠ 31)
+    (source target : State width)
+    (hrelation : WordColourStateRelation colour source target)
+    (operator : Cmp) (condition : Nat)
+    (rightValue : WordRegImm (Word width))
+    (choose : Bool)
+    (hcondition : condition < 32)
+    (hright : ∀ name, rightValue = .reg name → name < 32)
+    (hchoose : evalWordCondition source operator condition rightValue =
+      some choose)
+    (thenBranch elseBranch : WordProg (Word width))
+    (hthen : WordVarStraightLine width thenBranch)
+    (helse : WordVarStraightLine width elseBranch) :
+    ∃ source' target',
+      evalWordProg source
+          (.ite operator condition rightValue thenBranch elseBranch) =
+        some source' ∧
+      evalWordProg target
+          (wordApplyColour colour
+            (.ite operator condition rightValue thenBranch elseBranch)) =
+        some target' ∧
+      WordColourStateRelation colour source' target' := by
+  have hcondition' := wordColourStateRelation_evalWordCondition colour valid
+    source target hrelation operator condition rightValue hcondition hright
+  rw [hchoose] at hcondition'
+  have hcondition'' := hcondition'.symm
+  cases choose with
+  | false =>
+      rcases evalWordProg_wordVarStraightLine_applyColour colour valid
+        injective colourZero colourNoScratch source target hrelation elseBranch helse with
+        ⟨source', target', hsource, htarget, hrelation'⟩
+      refine ⟨source', target', ?_, ?_, hrelation'⟩
+      · simp [evalWordProg, hchoose, hsource]
+      · simp [evalWordProg, wordApplyColour, hcondition'', htarget]
+  | true =>
+      rcases evalWordProg_wordVarStraightLine_applyColour colour valid
+        injective colourZero colourNoScratch source target hrelation thenBranch hthen with
+        ⟨source', target', hsource, htarget, hrelation'⟩
+      refine ⟨source', target', ?_, ?_, hrelation'⟩
+      · simp [evalWordProg, hchoose, hsource]
+      · simp [evalWordProg, wordApplyColour, hcondition'', htarget]
+
 end Flapjack.RiscV
