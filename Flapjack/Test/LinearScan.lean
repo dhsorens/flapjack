@@ -85,6 +85,19 @@ example :
   native_decide
 
 example :
+    wordLinearScanAllocationSafe
+      (.seq (.delta [1] []) (.delta [5] [])) [] {
+        (wordLinearScanInitialState 2 0) with
+        locations := [(1, .register 2), (5, .register 4)]
+      } = true := by
+  native_decide
+
+example :
+    (wordLinearScanAllocateClashTreeChecked 1 0
+      (.delta [1, 5] []) [(1, 5)] []).isSome = true := by
+  native_decide
+
+example :
     (wordCheckLiveTree id (.seq (.reads [1, 2]) (.writes [1])) [] []).isSome =
       true := by
   native_decide
