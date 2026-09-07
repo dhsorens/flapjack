@@ -552,4 +552,124 @@ theorem wordToStackProgNatWithBitmapBuilder_ffi
     hconfigurationMove, hconfigurationLengthMove, harrayMove,
     harrayLengthMove]
 
+/-! Combine the state-threaded compiler equation with the bounded StackLang
+    evaluator.  The bitmap accumulator is an explicit component of the
+    result, so this theorem records that an FFI action does not alter it. -/
+
+theorem evalStackProgFuelWithCodeAndFfi_wordToStackProgNatWithBitmapBuilder_ffi
+    [BEq Nat] [NeZero width] (host : StackMachineFfiHandler width)
+    (fuel : Nat) (code : Nat → Option (StackProg Nat))
+    (config : WordStackConfig)
+    (bitmapBuilder : List Nat → List Nat)
+    (registerCount bitmapRegister frameSlots wordBits : Nat)
+    (storeConstsStub : Option Nat) (bitmapState : WordStackBitmapState)
+    (machineState state1 state2 state3 final : WordStackMachineState width)
+    (function : FunName)
+    (configuration configurationLength array arrayLength : Nat)
+    (live : List Nat × List Nat)
+    (configurationLocation configurationLengthLocation arrayLocation
+      arrayLengthLocation : WordLocation)
+    (configurationMove configurationLengthMove arrayMove arrayLengthMove :
+      StackProg Nat)
+    (configurationValue configurationLengthValue arrayValue arrayLengthValue :
+      Word width)
+    (hsafe : wordStackFfiSourcesSafe config
+      [configuration, configurationLength, array, arrayLength] = true)
+    (hsafeLocations : ∀ location, location ∈
+      [configurationLocation, configurationLengthLocation, arrayLocation,
+        arrayLengthLocation] →
+      ∀ destination, destination ∈ [10, 11, 12, 13] →
+        location ≠ .register destination)
+    (hconfiguration : wordStackLocation config configuration =
+      some configurationLocation)
+    (hconfigurationLength : wordStackLocation config configurationLength =
+      some configurationLengthLocation)
+    (harray : wordStackLocation config array = some arrayLocation)
+    (harrayLength : wordStackLocation config arrayLength =
+      some arrayLengthLocation)
+    (hconfigurationDestination : configurationLocation ≠ .register 10)
+    (hconfigurationLengthDestination :
+      configurationLengthLocation ≠ .register 11)
+    (harrayDestination : arrayLocation ≠ .register 12)
+    (harrayLengthDestination : arrayLengthLocation ≠ .register 13)
+    (hconfigurationMove : wordStackFfiMove config configuration 10 =
+      some configurationMove)
+    (hconfigurationLengthMove :
+      wordStackFfiMove config configurationLength 11 =
+        some configurationLengthMove)
+    (harrayMove : wordStackFfiMove config array 12 = some arrayMove)
+    (harrayLengthMove : wordStackFfiMove config arrayLength 13 =
+      some arrayLengthMove)
+    (hconfigurationValue : wordStackMachineValue config machineState
+      configuration = some configurationValue)
+    (hconfigurationLengthValue :
+      wordStackMachineValue config machineState configurationLength =
+        some configurationLengthValue)
+    (harrayValue : wordStackMachineValue config machineState array =
+      some arrayValue)
+    (harrayLengthValue : wordStackMachineValue config machineState arrayLength =
+      some arrayLengthValue)
+    (hevalConfiguration :
+      (wordStackFfiMove config configuration 10).bind
+        (evalWordStackMachine machineState) = some state1)
+    (hevalConfigurationLength :
+      (wordStackFfiMove config configurationLength 11).bind
+        (evalWordStackMachine state1) = some state2)
+    (hevalArray :
+      (wordStackFfiMove config array 12).bind
+        (evalWordStackMachine state2) = some state3)
+    (hevalArrayLength :
+      (wordStackFfiMove config arrayLength 13).bind
+        (evalWordStackMachine state3) = some final) :
+    (wordToStackProgNatWithBitmapBuilder config bitmapBuilder registerCount
+      bitmapRegister frameSlots wordBits storeConstsStub bitmapState
+      (.ffi function configuration configurationLength array arrayLength live)).bind
+        (fun result =>
+          (evalStackProgFuelWithCodeAndFfi host (fuel + 5) code machineState
+            result.1).map (fun control => (control, result.2))) =
+      (host function configurationValue configurationLengthValue
+        arrayValue arrayLengthValue final).map
+        (fun machine => (.normal machine, bitmapState)) := by
+  have hcompile := wordToStackProgNatWithBitmapBuilder_ffi
+    (config := config) (bitmapBuilder := bitmapBuilder)
+    (registerCount := registerCount) (bitmapRegister := bitmapRegister)
+    (frameSlots := frameSlots) (wordBits := wordBits)
+    (storeConstsStub := storeConstsStub) (state := bitmapState)
+    (function := function) (configuration := configuration)
+    (configurationLength := configurationLength) (array := array)
+    (arrayLength := arrayLength) (live := live)
+    (configurationMove := configurationMove)
+    (configurationLengthMove := configurationLengthMove)
+    (arrayMove := arrayMove) (arrayLengthMove := arrayLengthMove)
+    hsafe hconfigurationMove hconfigurationLengthMove harrayMove
+    harrayLengthMove
+  have hstack := evalStackProgFuelWithCodeAndFfi_wordStackFfi_source_values
+    (host := host) (fuel := fuel) (code := code) (config := config)
+    (state := machineState) (state1 := state1) (state2 := state2)
+    (state3 := state3) (final := final) (function := function)
+    (configuration := configuration)
+    (configurationLength := configurationLength) (array := array)
+    (arrayLength := arrayLength)
+    (configurationLocation := configurationLocation)
+    (configurationLengthLocation := configurationLengthLocation)
+    (arrayLocation := arrayLocation)
+    (arrayLengthLocation := arrayLengthLocation)
+    (configurationMove := configurationMove)
+    (configurationLengthMove := configurationLengthMove)
+    (arrayMove := arrayMove) (arrayLengthMove := arrayLengthMove)
+    (configurationValue := configurationValue)
+    (configurationLengthValue := configurationLengthValue)
+    (arrayValue := arrayValue) (arrayLengthValue := arrayLengthValue)
+    hconfiguration hconfigurationLength harray harrayLength
+    hconfigurationDestination hconfigurationLengthDestination
+    harrayDestination harrayLengthDestination hsafeLocations
+    hconfigurationMove hconfigurationLengthMove harrayMove harrayLengthMove
+    hconfigurationValue hconfigurationLengthValue harrayValue harrayLengthValue
+    hevalConfiguration hevalConfigurationLength hevalArray hevalArrayLength
+  rw [hcompile]
+  simp only [Option.bind_some]
+  simpa only [Option.map_map, Function.comp_def] using
+    congrArg (fun result => result.map (fun control => (control, bitmapState)))
+      hstack
+
 end Flapjack.RiscV
