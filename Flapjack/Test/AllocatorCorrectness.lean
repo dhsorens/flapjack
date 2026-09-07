@@ -147,4 +147,19 @@ example [NeZero 64] (state : State 64) (name sourceName : Nat)
       some (execute state (.addi ⟨name, hname⟩ ⟨sourceName, hsource⟩ 0)) := by
   exact compileWordAssignVar_sound state name sourceName hname hsource
 
+example [NeZero 64] (state : State 64)
+    (handler : FunName → Word 64 → Word 64 → Word 64 → Word 64 →
+      State 64 → Option (State 64))
+    (function : FunName)
+    (configuration configurationLength array arrayLength : Nat)
+    (live : List Nat × List Nat) :
+    (evalWordFfi handler 1 state
+      (.ffi function configuration configurationLength array arrayLength live)).map Prod.fst =
+    (evalWordFfi handler 1 state
+      (.ffi function configuration configurationLength array arrayLength
+        (live.1.map (fun name => name), live.2.map (fun name => name)))).map Prod.fst := by
+  exact evalWordFfi_applyColour (fun name => name) state state handler handler
+    (by intro name; rfl) function configuration configurationLength array arrayLength live
+    (by rfl)
+
 end Flapjack

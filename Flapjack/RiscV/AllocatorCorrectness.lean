@@ -551,4 +551,63 @@ theorem evalWordRaise_ssaRename [NeZero width]
       simp_all [hsource, htarget, hexceptionValue,
         wordControlResultException]
 
+/-! FFI is an explicit semantic environment at the Word boundary.  This
+    lemma records the exact compatibility condition required when a completed
+    colouring changes the four ABI argument registers: the host transition on
+    the source state must agree with the host transition on the coloured state. -/
+
+theorem evalWordFfi_applyColour [NeZero width]
+    (colour : Nat → Nat) (source target : State width)
+    (sourceHandler targetHandler : FunName → Word width → Word width →
+      Word width → Word width → State width → Option (State width))
+    (hregister : ∀ name,
+      (do
+        let register ← registerOfNat name
+        pure (readRegister source register)) =
+      (do
+        let register ← registerOfNat (colour name)
+        pure (readRegister target register)))
+    (function : FunName)
+    (configuration configurationLength array arrayLength : Nat)
+    (live : List Nat × List Nat)
+    (hhandler :
+      (do
+        let configuration ← registerOfNat configuration
+        let configurationLength ← registerOfNat configurationLength
+        let array ← registerOfNat array
+        let arrayLength ← registerOfNat arrayLength
+        sourceHandler function (readRegister source configuration)
+          (readRegister source configurationLength) (readRegister source array)
+          (readRegister source arrayLength) source) =
+      (do
+        let configuration ← registerOfNat (colour configuration)
+        let configurationLength ← registerOfNat (colour configurationLength)
+        let array ← registerOfNat (colour array)
+        let arrayLength ← registerOfNat (colour arrayLength)
+        targetHandler function (readRegister target configuration)
+          (readRegister target configurationLength) (readRegister target array)
+          (readRegister target arrayLength) target)) :
+    (evalWordFfi sourceHandler 1 source
+      (.ffi function configuration configurationLength array arrayLength live)).map Prod.fst =
+    (evalWordFfi targetHandler 1 target
+      (.ffi function (colour configuration) (colour configurationLength)
+        (colour array) (colour arrayLength)
+        (live.1.map colour, live.2.map colour))).map Prod.fst := by
+  simp only [evalWordFfi, Option.map]
+  cases hconfiguration : registerOfNat configuration <;>
+    cases hconfigurationLength : registerOfNat configurationLength <;>
+    cases harray : registerOfNat array <;>
+    cases harrayLength : registerOfNat arrayLength <;>
+    cases hconfiguration' : registerOfNat (colour configuration) <;>
+    cases hconfigurationLength' : registerOfNat (colour configurationLength) <;>
+    cases harray' : registerOfNat (colour array) <;>
+    cases harrayLength' : registerOfNat (colour arrayLength) <;>
+    all_goals
+      have hconfigurationValue := hregister configuration
+      have hconfigurationLengthValue := hregister configurationLength
+      have harrayValue := hregister array
+      have harrayLengthValue := hregister arrayLength
+      simp_all [hconfiguration, hconfigurationLength, harray, harrayLength,
+        hconfiguration', hconfigurationLength', harray', harrayLength', hhandler]
+
 end Flapjack
