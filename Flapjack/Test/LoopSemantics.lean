@@ -153,14 +153,13 @@ example :
           (.return (.const 1)) (.return (.const 0))) = some [1] := by
   decide
 
-example :
+#guard
     (evalPanMemProgFuel 4
       (fun _ => none)
       (fun address => if address == 4 then some 7 else none)
       (.ite (.cmp .equal (.load .one (.const 4)) (.const 7))
         (.return (.const 1)) (.return (.const 0)))).map
-      (fun result => result.2.2) = some [1] := by
-  native_decide
+      (fun result => result.2.2) = some [1]
 
 example :
     evalPanExp (α := Nat) (fun _ => none)
