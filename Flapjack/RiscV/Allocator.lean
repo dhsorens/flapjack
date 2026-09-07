@@ -2044,6 +2044,22 @@ def wordAllocateVarsWithFixedSources (slots : List Nat)
   if wordSpillAllocationRespectsClashes edges state.locations then some state
   else none
 
+theorem lookupNatInfo_wordFixedSourceLocations_mem
+    (fixedSources : List Nat) (name : Nat) (hname : name ∈ fixedSources) :
+    lookupNatInfo name (wordFixedSourceLocations fixedSources) =
+      some (.register name) := by
+  induction fixedSources with
+  | nil => simp at hname
+  | cons source sources ih =>
+      simp only [wordFixedSourceLocations, List.mem_cons] at hname ⊢
+      by_cases hsource : source = name
+      · subst source
+        simp [lookupNatInfo]
+      · have hname' : name ∈ sources := by
+          have hsource' : name ≠ source := Ne.symm hsource
+          simpa [hsource'] using hname
+        simp [lookupNatInfo, hsource, ih hname']
+
 theorem wordGreedyAllocateWithSpills_preserves_lookup (names : List Nat)
     (edges : List (Nat × Nat)) (state : WordSpillState) :
     ∀ name, name ∉ names →
@@ -2264,6 +2280,35 @@ theorem wordGreedyAllocateWithSpillsAndPreferences_preserves_lookup
             _ = lookupNatInfo name allocated.locations := htail
             _ = lookupNatInfo name state.locations := by
               simp [allocated, havailable, lookupNatInfo, hneq']
+
+theorem wordAllocateVarsWithFixedSources_preserves_fixed_source
+    (slots : List Nat) (edges preferences : List (Nat × Nat))
+    (fixedSources : List Nat) (state : WordSpillState)
+    (hstate : wordAllocateVarsWithFixedSources slots edges preferences
+      fixedSources = some state) (name : Nat) (hname : name ∈ fixedSources) :
+    lookupNatInfo name state.locations = some (.register name) := by
+  let initial : WordSpillState :=
+    { locations := wordFixedSourceLocations fixedSources, nextSpill := 0 }
+  let names := slots.eraseDups.filter (fun candidate => candidate ∉ fixedSources)
+  let allocated := wordGreedyAllocateWithSpillsAndPreferences names
+    edges preferences initial
+  have hstate' :
+      (if wordSpillAllocationRespectsClashes edges allocated.locations = true then
+          some allocated else none) = some state := by
+    simpa [wordAllocateVarsWithFixedSources, initial, names, allocated] using hstate
+  split at hstate'
+  · have heq : allocated = state := Option.some.inj hstate'
+    subst state
+    have hnot : name ∉ names := by
+      simp [names, hname]
+    calc
+      lookupNatInfo name allocated.locations =
+          lookupNatInfo name initial.locations :=
+        wordGreedyAllocateWithSpillsAndPreferences_preserves_lookup
+          names edges preferences initial name hnot
+      _ = some (.register name) := by
+        exact lookupNatInfo_wordFixedSourceLocations_mem fixedSources name hname
+  · contradiction
 
 theorem wordGreedyAllocateWithSpillsAndPreferences_maps_names
     (names : List Nat) (edges preferences : List (Nat × Nat))
