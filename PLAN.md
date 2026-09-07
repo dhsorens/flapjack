@@ -553,6 +553,8 @@ definitions, pass ordering, examples, and proof obligations.
   special-instruction safety, and the spill clash-tree witness.
 - [x] Expose location witnesses for every renamed program variable at the
   preference-aware spill allocator boundary, in addition to formal parameters.
+- [x] Extend variable-location coverage to the ABI-pinned, entry-inclusive
+  full-SSA spill allocator.
 - [x] Port the CakeML `full_ssa_cc_trans` function-entry sequence, retaining
   fresh formal names and the explicit priority-1 parameter moves in the Lean
   Word program returned to allocation clients.
