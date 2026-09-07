@@ -1,4 +1,5 @@
 import Flapjack.RiscV.CorrectnessColour
+import Flapjack.RiscV.CorrectnessParallelMove
 
 /-! Regression tests for the executable colouring simulation theorem. -/
 
@@ -102,6 +103,17 @@ example [NeZero width] (state : State width) :
       (by omega) (by omega) (by omega) (by omega)
       (by decide) (by decide) (by decide) (by decide)
       (by decide) (by decide) (by decide) (by decide) (by decide)
+
+example [NeZero width] (state : State width) :
+    ∃ source' target',
+      evalWordProg state (.move 1 [(3, 4), (5, 6)]) = some source' ∧
+      evalWordProg (testTargetState state)
+          (wordApplyColour testColour (.move 1 [(3, 4), (5, 6)])) = some target' ∧
+      testRelation source' target' := by
+  exact evalWordProg_moveAcyclic_applyColour testColour testColourValidFn
+    testColour_injective testColour_zero state (testTargetState state)
+    (testRelation_target state) [(3, 4), (5, 6)]
+    (by decide) (by decide) (by decide) (by decide)
 
 example [NeZero width] (state : State width) :
     ∃ source' target',

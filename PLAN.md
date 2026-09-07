@@ -535,6 +535,8 @@ definitions, pass ordering, examples, and proof obligations.
   coloring simulation induction, with an entry-shaped regression.
 - [x] Prove source-ordered lowering for arbitrary acyclic parallel-move lists,
   covering the fresh full-SSA formal-entry case without scratch-register use.
+- [x] Compose acyclic move-list lowering with the register-state relation,
+  proving semantic coloring simulation for arbitrary fresh full-SSA entries.
 - [x] Prove the reserved-x31 five-instruction rotate-right colouring boundary
   under explicit scratch non-aliasing hypotheses.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware
