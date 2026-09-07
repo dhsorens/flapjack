@@ -134,4 +134,97 @@ theorem wordConditionOperands_immediate_zero_sound [NeZero width]
   exact wordConditionOperands_register_sound state operator condition 0 hzero
     branchLeft right prelude hregister
 
+theorem wordConditionOperands_immediate_sound [NeZero width]
+    (state : State width) (operator : Cmp) (condition : Nat)
+    (value : Word width) (hzero : ZeroRegister state) :
+    ∀ branchLeft right prelude,
+      wordConditionOperands operator condition (.imm value) =
+        some (branchLeft, right, prelude) →
+      evalWordCondition state operator condition (.imm value) =
+        riscVCondition (executeInstructions state prelude) operator branchLeft right := by
+  intro branchLeft right prelude hoperands
+  by_cases hvalue : value == 0
+  · have hvalueEq : value = 0 := eq_of_beq hvalue
+    subst value
+    exact wordConditionOperands_immediate_zero_sound state operator condition hzero
+      branchLeft right prelude hoperands
+  · have hvalueNe : value ≠ 0 := by
+      intro h
+      subst value
+      simp at hvalue
+    cases hcondition : registerOfNat condition with
+    | none => simp [wordConditionOperands, hcondition] at hoperands
+    | some conditionRegister =>
+        have hzero' : state.registers 0 = 0 := hzero
+        simp only [wordConditionOperands, hcondition] at hoperands
+        split at hoperands
+        · simp_all
+        · by_cases hscratch : conditionRegister = 31
+          · simp [hscratch] at hoperands
+          · cases operator with
+          | equal =>
+              simp [hscratch] at hoperands
+              rcases hoperands with ⟨hleft, hright, hprelude⟩
+              subst branchLeft
+              subst right
+              subst prelude
+              simp [evalWordCondition, riscVCondition, executeInstructions,
+                execute, writeRegister, readRegister, hcondition, hscratch, hzero']
+          | notEqual =>
+              simp [hscratch] at hoperands
+              rcases hoperands with ⟨hleft, hright, hprelude⟩
+              subst branchLeft
+              subst right
+              subst prelude
+              simp [evalWordCondition, riscVCondition, executeInstructions,
+                execute, writeRegister, readRegister, hcondition, hscratch, hzero']
+          | less =>
+              simp [hscratch] at hoperands
+              rcases hoperands with ⟨hleft, hright, hprelude⟩
+              subst branchLeft
+              subst right
+              subst prelude
+              simp [evalWordCondition, riscVCondition, executeInstructions,
+                execute, writeRegister, readRegister, hcondition, hscratch, hzero']
+          | notLess =>
+              simp [hscratch] at hoperands
+              rcases hoperands with ⟨hleft, hright, hprelude⟩
+              subst branchLeft
+              subst right
+              subst prelude
+              simp [evalWordCondition, riscVCondition, executeInstructions,
+                execute, writeRegister, readRegister, hcondition, hscratch, hzero']
+          | lower =>
+              simp [hscratch] at hoperands
+              rcases hoperands with ⟨hleft, hright, hprelude⟩
+              subst branchLeft
+              subst right
+              subst prelude
+              simp [evalWordCondition, riscVCondition, executeInstructions,
+                execute, writeRegister, readRegister, hcondition, hscratch, hzero'] <;> rfl
+          | notLower =>
+              simp [hscratch] at hoperands
+              rcases hoperands with ⟨hleft, hright, hprelude⟩
+              subst branchLeft
+              subst right
+              subst prelude
+              simp [evalWordCondition, riscVCondition, executeInstructions,
+                execute, writeRegister, readRegister, hcondition, hscratch, hzero']
+          | test =>
+              simp [hscratch] at hoperands
+              rcases hoperands with ⟨hleft, hright, hprelude⟩
+              subst branchLeft
+              subst right
+              subst prelude
+              simp [evalWordCondition, riscVCondition, executeInstructions,
+                execute, writeRegister, readRegister, hcondition, hzero']
+          | notTest =>
+              simp [hscratch] at hoperands
+              rcases hoperands with ⟨hleft, hright, hprelude⟩
+              subst branchLeft
+              subst right
+              subst prelude
+              simp [evalWordCondition, riscVCondition, executeInstructions,
+                execute, writeRegister, readRegister, hcondition, hzero']
+
 end Flapjack.RiscV
