@@ -37,6 +37,34 @@ example :
 
 example :
     wordStackArithInst
+        { locations := [(4, .register 6)],
+          scratch := 31, stackBase := 10 } (.longDiv 0 3 3 0 4) =
+      some (.inst (.arith (.longDiv 0 3 3 0 6)) : StackProg Nat) := by
+  simp [wordStackArithInst, wordSpecialArithLocationsSafe,
+    wordStackLongDivInst, wordStackLocation,
+    wordStackJoin, lookupNatInfo]
+
+example :
+    wordStackArithInst
+        { locations := [(4, .stack 2)],
+          scratch := 31, stackBase := 10 } (.longDiv 0 3 3 0 4) =
+      some (.seq (.stackLoad 31 12)
+        (.inst (.arith (.longDiv 0 3 3 0 31))) : StackProg Nat) := by
+  simp [wordStackArithInst, wordSpecialArithLocationsSafe,
+    wordStackLongDivInst, wordStackLocation,
+    wordStackOffset, wordStackJoin, lookupNatInfo]
+
+example :
+    wordStackArithInst
+        { locations := [(4, .register 3)],
+          scratch := 31, stackBase := 10 } (.longDiv 0 3 3 0 4) =
+      (none : Option (StackProg Nat)) := by
+  simp [wordStackArithInst, wordSpecialArithLocationsSafe,
+    wordStackLongDivInst, wordStackReadRegister, wordStackLocation,
+    lookupNatInfo]
+
+example :
+    wordStackArithInst
         { locations := [(0, .register 31), (1, .register 5),
             (2, .register 6), (3, .register 7), (4, .register 8)],
           scratch := 31, stackBase := 10 } (.addCarry 0 1 2 3 4) =

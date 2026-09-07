@@ -360,6 +360,27 @@ def wordStackAddCarryInst (config : WordStackConfig)
         none
   | _ => none
 
+/-! CakeML's `LongDiv` uses a fixed four-register convention: the two-word
+    dividend is in x3:x0, the quotient is written to x0, and the remainder to
+    x3.  Only the divisor operand remains allocator-dependent.  Keep this
+    normalized shape explicit so an unnormalized operation cannot silently
+    acquire the special calling convention. -/
+def wordStackLongDivInst (config : WordStackConfig)
+    (operation : WordArith) : Option (StackProg α) :=
+  match operation with
+  | .longDiv 0 3 3 0 divisor => do
+      let location ← wordStackLocation config divisor
+      match location with
+      | .register divisorRegister =>
+          if divisorRegister = 0 || divisorRegister = 3 then
+            none
+          else
+            pure (.inst (.arith (.longDiv 0 3 3 0 divisorRegister)))
+      | .stack slot =>
+          pure (.seq (.stackLoad config.scratch (wordStackOffset config slot))
+            (.inst (.arith (.longDiv 0 3 3 0 config.scratch))))
+  | _ => none
+
 def wordStackArithInst (config : WordStackConfig) (operation : WordArith) :
     Option (StackProg α) :=
   if wordSpecialArithLocationsSafe operation config.locations = true then
@@ -370,7 +391,7 @@ def wordStackArithInst (config : WordStackConfig) (operation : WordArith) :
       wordStackAddCarryInst config operation
     | .div destination dividend divisor =>
       wordStackDivInst config destination dividend divisor
-    | .longDiv _ _ _ _ _ => none
+    | .longDiv _ _ _ _ _ => wordStackLongDivInst config operation
   else
     none
 
