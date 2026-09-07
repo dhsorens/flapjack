@@ -567,6 +567,8 @@ definitions, pass ordering, examples, and proof obligations.
   non-alias conditions.
 - [x] Package unrelated-value preservation as a reusable location-indexed
   Word-to-Stack state relation for subsequent spill-aware instruction proofs.
+- [x] Prove binary expression lowering preserves the reusable spill relation,
+  including explicit destination, scratch, and address-scratch non-aliasing.
 - [x] Expose soundness of the entry-aware SSA spill allocator, including its
   clash, special-location, and clash-tree checks.
 - [x] Expose location coverage for every variable in the entry-aware SSA spill

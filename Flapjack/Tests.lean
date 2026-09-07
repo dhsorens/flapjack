@@ -40,6 +40,8 @@ import Flapjack.Test.RuntimeLinking
 import Flapjack.Test.CallEntry
 import Flapjack.RiscV.CorrectnessSpill
 import Flapjack.Test.SpillRelation
+import Flapjack.RiscV.CorrectnessBinarySpill
+import Flapjack.Test.BinarySpillRelation
 
 /-!
 # Flapjack regression tests
