@@ -537,6 +537,8 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Add a reusable parameterized Word call/return semantic contract for the
   stack-based RISC-V calling convention.
 - [x] Add the corresponding parameterized Word tail-call semantic contract.
+- [x] Generalize FrameMachine call equations from leaf callees to explicit
+  evaluated callee-state witnesses, with compound return and handler tests.
 - [x] Add a combined graph-allocation soundness contract exposing fixed tags,
   edge safety, and the clash-tree witness at the function boundary.
 - [x] Add the spill-aware function allocator contract exposing clash safety,

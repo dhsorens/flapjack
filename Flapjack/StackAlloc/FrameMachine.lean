@@ -487,6 +487,46 @@ theorem evalStackFrameFuelWithCodeAndFfi_call_return_handler [NeZero width]
   simp [evalStackFrameFuelWithCodeAndFfi, evalStackFrameFuelWithCode,
     hcallee]
 
+/-! The preceding call equations expose the two leaf cases directly.  These
+    variants retain the callee's evaluated state and therefore compose with a
+    callee containing sequences or FFI actions. -/
+
+theorem evalStackFrameFuelWithCodeAndFfi_call_raise_handler_of_eval [NeZero width]
+    (host : StackFrameMachineFfiHandler width)
+    (fuel : Nat) (code : Nat → Option (StackProg Nat))
+    (state calleeState : StackFrameMachineState width)
+    (target exceptionRegister handlerLabel : Nat) (returnCode : StackProg Nat)
+    (link returnLabel entryLabel : Nat) (handlerCode callee : StackProg Nat)
+    (value : Word width)
+    (hcode : code target = some callee)
+    (hcallee :
+      evalStackFrameFuelWithCodeAndFfi host (fuel + 1) code state callee =
+        some (.raised calleeState value)) :
+    evalStackFrameFuelWithCodeAndFfi host (fuel + 2) code state
+        (.call (some (returnCode, link, returnLabel, entryLabel)) (.label target)
+          (some (handlerCode, exceptionRegister, handlerLabel))) =
+      evalStackFrameFuelWithCodeAndFfi host (fuel + 1) code
+        (stackFrameWriteRegister calleeState exceptionRegister value) handlerCode := by
+  simp [evalStackFrameFuelWithCodeAndFfi, hcode, hcallee]
+
+theorem evalStackFrameFuelWithCodeAndFfi_call_return_handler_of_eval [NeZero width]
+    (host : StackFrameMachineFfiHandler width)
+    (fuel : Nat) (code : Nat → Option (StackProg Nat))
+    (state calleeState : StackFrameMachineState width)
+    (target : Nat) (returnCode : StackProg Nat)
+    (link returnLabel entryLabel : Nat)
+    (handler : Option (StackProg Nat × Nat × Nat)) (callee : StackProg Nat)
+    (value : Word width)
+    (hcode : code target = some callee)
+    (hcallee :
+      evalStackFrameFuelWithCodeAndFfi host (fuel + 1) code state callee =
+        some (.returned calleeState value)) :
+    evalStackFrameFuelWithCodeAndFfi host (fuel + 2) code state
+        (.call (some (returnCode, link, returnLabel, entryLabel)) (.label target)
+          handler) =
+      evalStackFrameFuelWithCodeAndFfi host (fuel + 1) code calleeState returnCode := by
+  simp [evalStackFrameFuelWithCodeAndFfi, hcode, hcallee]
+
 theorem evalStackFrameFuelWithCodeAndFfi_loop_break [NeZero width]
     (host : StackFrameMachineFfiHandler width)
     (fuel : Nat) (code : Nat → Option (StackProg Nat))
