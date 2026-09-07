@@ -144,4 +144,23 @@ example [NeZero width] (state : State width) (amount : Word width) :
   · exact testRelation_target state
   · exact .assignShiftImmediate .lsr 3 1 amount (by decide) (by omega) (by omega)
 
+example [NeZero width] (state : State width) :
+    ∃ source' target',
+      evalWordProg state
+          (.assign 3 (.shift .ror (.var 1) (.var 2))) = some source' ∧
+      evalWordProg (testTargetState state)
+          (wordApplyColour testColour
+            (.assign 3 (.shift .ror (.var 1) (.var 2)))) = some target' ∧
+      testRelation source' target' := by
+  apply evalWordProg_assignRotateRight_applyColour testColour
+    testColourValidFn testColour_injective testColour_zero (by simp [testColour])
+    state (testTargetState state)
+  · exact testRelation_target state
+  · omega
+  · omega
+  · omega
+  · omega
+  · omega
+  · omega
+
 end Flapjack.RiscV
