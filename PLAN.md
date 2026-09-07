@@ -570,7 +570,8 @@ definitions, pass ordering, examples, and proof obligations.
   and the RISC-V shared-memory selector.
 - [x] Port the HOL RISC-V `LongMul` lowering with executable unsigned high-half
   multiplication (`MULHU`) followed by low-half multiplication (`MUL`),
-  including the target's high-destination/source non-aliasing precondition.
+  including the target's high-destination/source non-aliasing precondition and
+  a register-parametric machine execution contract.
 - [x] Port CakeML's normalized fixed-register `LongDiv` Word-to-Stack
   lowering, including divisor spill materialization and fixed-register guards.
 - [x] Carry register-resident `LongMul` and `AddCarry` Word arithmetic through
