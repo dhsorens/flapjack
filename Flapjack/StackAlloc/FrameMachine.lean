@@ -473,6 +473,20 @@ theorem evalStackFrameFuelWithCodeAndFfi_call_raise_handler [NeZero width]
   simp [evalStackFrameFuelWithCodeAndFfi, evalStackFrameFuelWithCode,
     hcallee]
 
+theorem evalStackFrameFuelWithCodeAndFfi_call_return_handler [NeZero width]
+    (host : StackFrameMachineFfiHandler width)
+    (fuel : Nat) (code : Nat → Option (StackProg Nat))
+    (state : StackFrameMachineState width) (target register : Nat)
+    (returnCode : StackProg Nat) (link returnLabel entryLabel : Nat)
+    (handler : Option (StackProg Nat × Nat × Nat))
+    (hcallee : code target = some (.return register)) :
+    evalStackFrameFuelWithCodeAndFfi host (fuel + 2) code state
+        (.call (some (returnCode, link, returnLabel, entryLabel)) (.label target)
+          handler) =
+      evalStackFrameFuelWithCodeAndFfi host (fuel + 1) code state returnCode := by
+  simp [evalStackFrameFuelWithCodeAndFfi, evalStackFrameFuelWithCode,
+    hcallee]
+
 theorem evalStackFrameFuel_seq_normal [NeZero width]
     (fuel : Nat) (state state' : StackFrameMachineState width)
     (first second : StackProg Nat)

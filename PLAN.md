@@ -1369,6 +1369,8 @@ definitions, pass ordering, examples, and proof obligations.
   equations, with machine-level regressions.
 - [x] Add the matching bounded FrameMachine FFI normal-sequence and
   raised-handler equations, with frame-state regressions.
+- [x] Expose the bounded FrameMachine FFI returned-callee continuation
+  equation, with a return-path FFI regression.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
