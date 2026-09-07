@@ -9,6 +9,12 @@ def stackRemoveRiscVConfig : StackRemoveConfig :=
 def wordStackRiscVConfig : WordStackConfig :=
   { locations := [(0, .register 4)], scratch := 31, stackBase := 21 }
 
+def wordFfiRiscVConfig : WordStackConfig :=
+  { locations := [(0, .register 4), (1, .register 5),
+      (2, .register 6), (3, .register 7)]
+    scratch := 31
+    stackBase := 21 }
+
 example :
     compileLabSection { services := [("sum", 7)] }
       ⟨2, [
@@ -40,7 +46,7 @@ example :
        (2, .const 1 7)] =
       some [.jal 0 (BitVec.ofNat 64 4),
         .addi 1 0 (BitVec.ofNat 64 7)] := by
-  decide +kernel
+  native_decide
 
 example :
     compileStackProgramNatListLinkedToRiscV (width := 64) { services := [] }
@@ -119,6 +125,16 @@ example :
       (.assign 0 (.const (BitVec.ofNat 64 42)) : WordProg (Word 64)) =
       some [.addi 4 0 (BitVec.ofNat 64 42)] := by
   decide +kernel
+
+example :
+    compileWordProgramNatToRiscV (width := 64)
+      { services := [("echo", 7)] } wordFfiRiscVConfig
+      stackRemoveRiscVConfig 2 3
+      (.ffi "echo" 0 1 2 3 ([], []) : WordProg Nat) =
+      some [.or 10 4 4, .or 11 5 5, .or 12 6 6, .or 13 7 7,
+        .addi 0 0 (BitVec.ofNat 64 28),
+        .addi 14 0 (BitVec.ofNat 64 7), .ecall] := by
+  native_decide
 
 example :
     labLineInstructionCount
