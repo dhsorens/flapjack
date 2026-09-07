@@ -1183,6 +1183,8 @@ definitions, pass ordering, examples, and proof obligations.
   memory, index, destination, and condition threading.
 - [x] Compose bitmap descriptor decoding, live-value filtering, root movement,
   and stack reconstruction for one frame.
+- [x] Compose complete bitmap-managed stack root collection through encoding,
+  value movement, and shape-preserving decoding.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
