@@ -537,6 +537,8 @@ definitions, pass ordering, examples, and proof obligations.
   covering the fresh full-SSA formal-entry case without scratch-register use.
 - [x] Compose acyclic move-list lowering with the register-state relation,
   proving semantic coloring simulation for arbitrary fresh full-SSA entries.
+- [x] Compose arbitrary acyclic full-SSA entry moves with a straight-line
+  colored Word body, retaining the state relation across the entry boundary.
 - [x] Prove the reserved-x31 five-instruction rotate-right colouring boundary
   under explicit scratch non-aliasing hypotheses.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware

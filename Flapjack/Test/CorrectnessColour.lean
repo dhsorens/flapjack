@@ -117,6 +117,22 @@ example [NeZero width] (state : State width) :
 
 example [NeZero width] (state : State width) :
     ∃ source' target',
+      evalWordProg state
+          (.seq (.move 1 [(5, 2), (9, 3)]) (.assign 1 (.var 5))) =
+        some source' ∧
+      evalWordProg (testTargetState state)
+          (wordApplyColour testColour
+            (.seq (.move 1 [(5, 2), (9, 3)]) (.assign 1 (.var 5)))) =
+        some target' ∧
+      testRelation source' target' := by
+  apply evalWordProg_acyclicEntry_seq_applyColour testColour
+    testColourValidFn testColour_injective testColour_zero testColour_noScratch
+    state (testTargetState state) (testRelation_target state)
+    [(5, 2), (9, 3)] (by decide) (by decide) (by decide)
+  · exact .assign 1 5 (by omega) (by omega)
+
+example [NeZero width] (state : State width) :
+    ∃ source' target',
       evalWordProg state (.move 1 [(3, 4)]) = some source' ∧
       evalWordProg (testTargetState state)
           (wordApplyColour testColour (.move 1 [(3, 4)])) = some target' ∧
