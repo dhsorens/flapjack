@@ -1233,6 +1233,10 @@ definitions, pass ordering, examples, and proof obligations.
   through the subsequent heap scan loop.
 - [x] Prove the one-iteration pointer-free `MoveBitmap` transition, including
   descriptor shifting, scan-pointer advancement, and loop termination.
+- [x] Expose exact `extCall` lowering with four fresh temporaries under
+  successful expression compilation witnesses.
+- [x] Prove the fuel-bounded full-Crepe `extCall` execution rule, threading
+  decoded local arguments through the abstract FFI handler.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 

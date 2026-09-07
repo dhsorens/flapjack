@@ -242,6 +242,31 @@ mutual
     termination_by fuel _ _ => fuel
 end
 
+theorem evalCrepFullProg_extCall [BEq α] [OfNat α 0] [OfNat α 1]
+    [Add α] [Mul α] [Sub α] [AndOp α] [OrOp α] [HXor α α α]
+    [ShiftLeft α] [ShiftRight α] [LT α]
+    [DecidableRel (fun left right : α => left < right)]
+    (functions : List (CompiledFunction α))
+    (primitive : CrepPrimitiveHandler α) (ffi : CrepFfiHandler α)
+    (sharedMem : CrepSharedMemHandler α)
+    (baseAddress topAddress : α) (fuel : Nat)
+    (state state' : CrepState α) (function : FunName)
+    (configuration configurationLength array arrayLength : Nat)
+    (configurationValue configurationLengthValue arrayValue arrayLengthValue : α)
+    (hconfiguration : state.locals configuration = some configurationValue)
+    (hconfigurationLength :
+      state.locals configurationLength = some configurationLengthValue)
+    (harray : state.locals array = some arrayValue)
+    (harrayLength : state.locals arrayLength = some arrayLengthValue)
+    (hffi : ffi function configurationValue configurationLengthValue
+      arrayValue arrayLengthValue state = some state') :
+    evalCrepFullProg functions primitive ffi sharedMem baseAddress topAddress
+      (fuel + 1) state
+      (.extCall function configuration configurationLength array arrayLength) =
+      some (.normal state') := by
+  simp [evalCrepFullProg, hconfiguration, hconfigurationLength, harray,
+    harrayLength, hffi]
+
 def evalCrepFullResult
     [BEq α] [OfNat α 0] [OfNat α 1] [Add α] [Mul α]
     [Sub α] [AndOp α] [OrOp α] [HXor α α α] [ShiftLeft α] [ShiftRight α]
