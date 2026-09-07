@@ -114,21 +114,31 @@ structure State (width : Nat) where
 inductive Instruction (width : Nat) where
   | add (destination sourceLeft sourceRight : Fin 32)
   | sub (destination sourceLeft sourceRight : Fin 32)
+  | addW (destination sourceLeft sourceRight : Fin 32)
+  | subW (destination sourceLeft sourceRight : Fin 32)
   | and (destination sourceLeft sourceRight : Fin 32)
   | or (destination sourceLeft sourceRight : Fin 32)
   | xor (destination sourceLeft sourceRight : Fin 32)
   | addi (destination source : Fin 32) (immediate : Word width)
+  | addiW (destination source : Fin 32) (immediate : Word width)
   | andi (destination source : Fin 32) (immediate : Word width)
   | ori (destination source : Fin 32) (immediate : Word width)
   | xori (destination source : Fin 32) (immediate : Word width)
   | mul (destination sourceLeft sourceRight : Fin 32)
+  | mulW (destination sourceLeft sourceRight : Fin 32)
   | mulHU (destination sourceLeft sourceRight : Fin 32)
   | sll (destination sourceLeft sourceRight : Fin 32)
   | srl (destination sourceLeft sourceRight : Fin 32)
   | sra (destination sourceLeft sourceRight : Fin 32)
+  | sllW (destination sourceLeft sourceRight : Fin 32)
+  | srlW (destination sourceLeft sourceRight : Fin 32)
+  | sraW (destination sourceLeft sourceRight : Fin 32)
   | slli (destination source : Fin 32) (amount : Word width)
   | srli (destination source : Fin 32) (amount : Word width)
   | srai (destination source : Fin 32) (amount : Word width)
+  | slliW (destination source : Fin 32) (amount : Word width)
+  | srliW (destination source : Fin 32) (amount : Word width)
+  | sraiW (destination source : Fin 32) (amount : Word width)
   | slt (destination sourceLeft sourceRight : Fin 32)
   | slti (destination source : Fin 32) (immediate : Word width)
   | sltu (destination sourceLeft sourceRight : Fin 32)
@@ -275,6 +285,17 @@ def nextPc (state : State width) : Word width := state.pc + 4
 
 def shiftAmount (value : Word width) : Nat := value.toNat % width
 
+/-! RV64 word operations compute in the low 32 bits and sign-extend their
+    result back to the architectural register width.  The same definitions
+    also give the natural RV32 behaviour when `width = 32`. -/
+def word32 (value : Word width) : Word width :=
+  BitVec.signExtend width (BitVec.extractLsb 31 0 value)
+
+def word32Low (value : Word width) : Word width :=
+  BitVec.ofNat width (BitVec.extractLsb 31 0 value).toNat
+
+def wordShiftAmount (value : Word width) : Nat := value.toNat % 32
+
 def uImmediate (immediate : Word width) : Word width :=
   BitVec.shiftLeft
     (BitVec.signExtend width (BitVec.ofNat 20 immediate.toNat)) 12
@@ -296,6 +317,12 @@ def execute (state : State width) : Instruction width → State width
   | .sub destination sourceLeft sourceRight =>
       writeRegister { state with pc := nextPc state } destination
         (readRegister state sourceLeft - readRegister state sourceRight)
+  | .addW destination sourceLeft sourceRight =>
+      writeRegister { state with pc := nextPc state } destination
+        (word32 (readRegister state sourceLeft + readRegister state sourceRight))
+  | .subW destination sourceLeft sourceRight =>
+      writeRegister { state with pc := nextPc state } destination
+        (word32 (readRegister state sourceLeft - readRegister state sourceRight))
   | .and destination sourceLeft sourceRight =>
       writeRegister { state with pc := nextPc state } destination
         (readRegister state sourceLeft &&& readRegister state sourceRight)
@@ -308,6 +335,9 @@ def execute (state : State width) : Instruction width → State width
   | .addi destination source immediate =>
       writeRegister { state with pc := nextPc state } destination
         (readRegister state source + immediate)
+  | .addiW destination source immediate =>
+      writeRegister { state with pc := nextPc state } destination
+        (word32 (readRegister state source + immediate))
   | .andi destination source immediate =>
       writeRegister { state with pc := nextPc state } destination
         (readRegister state source &&& immediate)
@@ -320,6 +350,9 @@ def execute (state : State width) : Instruction width → State width
   | .mul destination sourceLeft sourceRight =>
       writeRegister { state with pc := nextPc state } destination
         (readRegister state sourceLeft * readRegister state sourceRight)
+  | .mulW destination sourceLeft sourceRight =>
+      writeRegister { state with pc := nextPc state } destination
+        (word32 (readRegister state sourceLeft * readRegister state sourceRight))
   | .mulHU destination sourceLeft sourceRight =>
       writeRegister { state with pc := nextPc state } destination
         (BitVec.ofNat width
@@ -337,6 +370,18 @@ def execute (state : State width) : Instruction width → State width
       writeRegister { state with pc := nextPc state } destination
         (BitVec.sshiftRight (readRegister state sourceLeft)
           (shiftAmount (readRegister state sourceRight)))
+  | .sllW destination sourceLeft sourceRight =>
+      writeRegister { state with pc := nextPc state } destination
+        (word32 (BitVec.shiftLeft (word32Low (readRegister state sourceLeft))
+          (wordShiftAmount (readRegister state sourceRight))))
+  | .srlW destination sourceLeft sourceRight =>
+      writeRegister { state with pc := nextPc state } destination
+        (word32 (BitVec.ushiftRight (word32Low (readRegister state sourceLeft))
+          (wordShiftAmount (readRegister state sourceRight))))
+  | .sraW destination sourceLeft sourceRight =>
+      writeRegister { state with pc := nextPc state } destination
+        (word32 (BitVec.sshiftRight (word32 (readRegister state sourceLeft))
+          (wordShiftAmount (readRegister state sourceRight))))
   | .slli destination source amount =>
       writeRegister { state with pc := nextPc state } destination
         (BitVec.shiftLeft (readRegister state source) (shiftAmount amount))
@@ -346,6 +391,18 @@ def execute (state : State width) : Instruction width → State width
   | .srai destination source amount =>
       writeRegister { state with pc := nextPc state } destination
         (BitVec.sshiftRight (readRegister state source) (shiftAmount amount))
+  | .slliW destination source amount =>
+      writeRegister { state with pc := nextPc state } destination
+        (word32 (BitVec.shiftLeft (word32Low (readRegister state source))
+          (wordShiftAmount amount)))
+  | .srliW destination source amount =>
+      writeRegister { state with pc := nextPc state } destination
+        (word32 (BitVec.ushiftRight (word32Low (readRegister state source))
+          (wordShiftAmount amount)))
+  | .sraiW destination source amount =>
+      writeRegister { state with pc := nextPc state } destination
+        (word32 (BitVec.sshiftRight (word32 (readRegister state source))
+          (wordShiftAmount amount)))
   | .slt destination sourceLeft sourceRight =>
       writeRegister { state with pc := nextPc state } destination
         (if signedLess (readRegister state sourceLeft) (readRegister state sourceRight)

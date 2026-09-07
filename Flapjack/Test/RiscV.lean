@@ -76,6 +76,54 @@ example :
       BitVec.ofNat 64 4096 := by
   decide
 
+def wordArithmeticState : RiscV.State 64 :=
+  { (RiscV.zeroState 64) with
+    registers := fun register =>
+      if register = 1 then BitVec.ofNat 64 (2 ^ 31 - 1)
+      else if register = 2 then 1 else 0 }
+
+def wordShiftState : RiscV.State 64 :=
+  { (RiscV.zeroState 64) with
+    registers := fun register =>
+      if register = 1 then BitVec.ofNat 64 (2 ^ 32 - 1)
+      else if register = 2 then 4 else 0 }
+
+example :
+    RiscV.readRegister
+      (RiscV.execute wordArithmeticState (.addW 3 1 2)) 3 =
+      BitVec.signExtend 64 (BitVec.ofNat 32 (2 ^ 31)) := by
+  decide
+
+example :
+    RiscV.readRegister
+      (RiscV.execute wordArithmeticState (.addiW 3 1 1)) 3 =
+      BitVec.signExtend 64 (BitVec.ofNat 32 (2 ^ 31)) := by
+  decide
+
+example :
+    RiscV.readRegister
+      (RiscV.execute wordArithmeticState (.mulW 3 1 2)) 3 =
+      BitVec.signExtend 64 (BitVec.ofNat 32 (2 ^ 31 - 1)) := by
+  decide
+
+example :
+    RiscV.readRegister
+      (RiscV.execute wordShiftState (.sllW 3 2 2)) 3 =
+      BitVec.signExtend 64 (BitVec.ofNat 32 (2 ^ 6)) := by
+  decide
+
+example :
+    RiscV.readRegister
+      (RiscV.execute wordShiftState (.srlW 3 1 2)) 3 =
+      BitVec.signExtend 64 (BitVec.ofNat 32 (2 ^ 28 - 1)) := by
+  decide
+
+example :
+    RiscV.readRegister
+      (RiscV.execute wordShiftState (.sraW 3 1 2)) 3 =
+      BitVec.signExtend 64 (BitVec.ofNat 32 (2 ^ 32 - 1)) := by
+  decide
+
 example :
     (RiscV.execute signedOrderState
       (.branchLt 1 2 (BitVec.ofNat 8 12))).pc =
