@@ -1517,4 +1517,42 @@ theorem evalWordProg_ite_applyColour [NeZero width]
       · simp [evalWordProg, hchoose, hsource]
       · simp [evalWordProg, wordApplyColour, hcondition'', htarget]
 
+theorem evalWordFunction_wordVarStraightLine_eq_evalWordProg [NeZero width]
+    (state : State width) (program : WordProg (Word width))
+    (hprogram : WordVarStraightLine width program) :
+    evalWordFunction state program =
+      (evalWordProg state program).map (fun state => (state, [])) := by
+  induction hprogram generalizing state with
+  | skip => simp [evalWordFunction, evalWordProg]
+  | moveOne name sourceName hname hsource hname31 hsource31 hne =>
+      simp [evalWordFunction, evalWordProg, Function.comp_def]
+  | moveTwo destinationOne sourceOne destinationTwo sourceTwo
+      hdestinationOne hsourceOne hdestinationTwo hsourceTwo
+      hdestinationOne31 hsourceOne31 hdestinationTwo31 hsourceTwo31
+      hdestinations hsourceOneDestinationOne hsourceOneDestinationTwo
+      hsourceTwoDestinationOne hsourceTwoDestinationTwo =>
+      simp [evalWordFunction, evalWordProg, Function.comp_def]
+  | assign name sourceName hname hsource =>
+      simp [evalWordFunction, evalWordProg, Function.comp_def]
+  | assignConst name value hname =>
+      simp [evalWordFunction, evalWordProg, Function.comp_def]
+  | assignBinary operator name left right hname hleft hright =>
+      simp [evalWordFunction, evalWordProg, Function.comp_def]
+  | assignImmediate operator name source value hname hsource =>
+      simp [evalWordFunction, evalWordProg, Function.comp_def]
+  | assignShift operator name left right hoperator hname hleft hright =>
+      simp [evalWordFunction, evalWordProg, Function.comp_def]
+  | assignShiftImmediate operator name left amount hoperator hname hleft =>
+      simp [evalWordFunction, evalWordProg, Function.comp_def]
+  | @seq first second hfirst hsecond ihFirst ihSecond =>
+      simp only [evalWordFunction, evalWordProg]
+      rw [ihFirst state]
+      cases hfirstEval : evalWordProg state first with
+      | none => simp
+      | some firstState =>
+          simp [ihSecond firstState]
+          cases hsecondEval : evalWordProg firstState second with
+          | none => simp
+          | some secondState => simp
+
 end Flapjack.RiscV
