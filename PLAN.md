@@ -452,6 +452,8 @@ definitions, pass ordering, examples, and proof obligations.
   label pairs, including recursive call metadata and structured subprograms.
 - [x] Add a clash-tree-backed Word allocation boundary with explicit success
   witnesses for physical registers, clash safety, and label preservation.
+- [x] Expose success contracts for the SSA and function-level spill allocators,
+  including parameter coverage, special-location safety, and clash-tree checks.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware
   RISC-V contracts before claiming general call-aware allocation correctness.
 - [x] Add a combined graph-allocation soundness contract exposing fixed tags,
