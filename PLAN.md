@@ -546,6 +546,8 @@ definitions, pass ordering, examples, and proof obligations.
   proving semantic coloring simulation for arbitrary fresh full-SSA entries.
 - [x] Compose arbitrary acyclic full-SSA entry moves with a straight-line
   colored Word body, retaining the state relation across the entry boundary.
+- [x] Expose the clash-tree allocator's coloured-program result as a semantic
+  straight-line simulation contract at the Word allocator boundary.
 - [x] Match CakeML's Simple/IRC distinction in graph allocation modes: modes
   0--1 omit move preferences, while modes 2--3 retain prioritized moves.
 - [x] Preserve SSA-renamed virtual names at the heuristic allocator's

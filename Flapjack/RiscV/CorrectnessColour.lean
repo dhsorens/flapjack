@@ -1412,4 +1412,33 @@ theorem evalWordProg_wordVarStraightLine_applyColour
       · simp [evalWordProg, hfirstSource, hsecondSource]
       · simp [evalWordProg, wordApplyColour, hfirstTarget, hsecondTarget]
 
+/-! The semantic colouring theorem is also a contract for the executable
+    allocator boundary: once the clash-tree allocator has produced a context,
+    its returned coloured program is exactly the program covered by the
+    straight-line simulation theorem. -/
+
+theorem wordAllocateProgramWithClashTreeAndColour_straightLine_simulation
+    (slots : List Nat) (program : WordProg (Word width))
+    (context : WordContext) (coloured : WordProg (Word width))
+    (halloc : wordAllocateProgramWithClashTreeAndColour slots program =
+      some (context, coloured))
+    (valid : wordColourValid (wordFindVar context))
+    (injective : Function.Injective (wordFindVar context))
+    (colourZero : wordFindVar context 0 = 0)
+    (colourNoScratch : ∀ name, name < 31 → wordFindVar context name ≠ 31)
+    (source target : State width) [NeZero width]
+    (hrelation : WordColourStateRelation (wordFindVar context) source target)
+    (hprogram : WordVarStraightLine width program) :
+    ∃ source' target', evalWordProg source program = some source' ∧
+      evalWordProg target coloured = some target' ∧
+      WordColourStateRelation (wordFindVar context) source' target' := by
+  simp [wordAllocateProgramWithClashTreeAndColour] at halloc
+  rcases halloc with ⟨hcontext, hcontextEq, hcoloured⟩
+  rcases hcoloured with ⟨hcontextEq', hcoloured⟩
+  subst context
+  subst coloured
+  exact evalWordProg_wordVarStraightLine_applyColour (wordFindVar hcontext)
+    valid injective colourZero colourNoScratch source target hrelation program
+    hprogram
+
 end Flapjack.RiscV
