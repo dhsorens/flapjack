@@ -309,4 +309,64 @@ theorem wordAllocateFunctionWithOracleOrGraphOrSpill_sound
         parameters program fixedSources colours stackStart oracle state
         parameters' allocation program' halloc
 
+/-! The spill fallback also retains the renamed formal parameters in its
+    location map.  This is the driver-level form needed by entry-move
+    generation, where callers should not have to know whether graph allocation
+    or the spill fallback produced the result. -/
+
+theorem wordAllocateFunctionWithOracleOrGraphOrSpill_spill_maps_parameters
+    (parameters : List Nat) (program : WordProg α)
+    (fixedSources : List Nat) (colours stackStart : Nat)
+    (oracle : NatInfoMap Nat) (state : WordSsaState)
+    (renamedParameters : List Nat) (allocation : WordSpillState)
+    (renamedProgram : WordProg α)
+    (halloc : wordAllocateFunctionWithOracleOrGraphOrSpill parameters program
+      fixedSources colours stackStart oracle =
+      some (.spill state renamedParameters allocation renamedProgram)) :
+    ∀ name, name ∈ renamedParameters →
+      ∃ location, lookupNatInfo name allocation.locations = some location := by
+  cases hbase : wordAllocateFunctionWithOracleOrGraph parameters program
+      fixedSources colours stackStart oracle with
+  | some value =>
+      cases value with
+      | oracle oracleState oracleParameters oracleProgram =>
+          simp [wordAllocateFunctionWithOracleOrGraphOrSpill, hbase] at halloc
+      | graph graphState graphParameters graphAllocation graphProgram =>
+          simp [wordAllocateFunctionWithOracleOrGraphOrSpill, hbase] at halloc
+      | spill spillState spillParameters spillAllocation spillProgram =>
+          exact False.elim (wordAllocateFunctionWithOracleOrGraph_ne_spill
+            parameters program fixedSources colours stackStart oracle
+            spillState spillParameters spillAllocation spillProgram hbase)
+  | none =>
+      cases hspill : wordAllocateSsaFunctionWithClashTreeWithSpillsAndPreferences
+          parameters program with
+      | none =>
+          simp [wordAllocateFunctionWithOracleOrGraphOrSpill, hbase, hspill] at halloc
+      | some value =>
+          cases value with
+          | mk spillState rest =>
+              cases rest with
+              | mk spillParameters rest =>
+                  cases rest with
+                  | mk spillProgram spillAllocation =>
+                      have hresult :
+                          (.spill spillState spillParameters spillAllocation spillProgram :
+                            WordFunctionAllocationResult α) =
+                            .spill state renamedParameters allocation renamedProgram := by
+                        apply Option.some.inj
+                        simpa [wordAllocateFunctionWithOracleOrGraphOrSpill,
+                          hbase, hspill] using halloc
+                      have hspill' :
+                          wordAllocateSsaFunctionWithClashTreeWithSpillsAndPreferences
+                              parameters program =
+                            some (spillState, spillParameters, spillProgram,
+                              spillAllocation) := by
+                        simpa using hspill
+                      have hparameters :=
+                        wordAllocateSsaFunctionWithClashTreeWithSpillsAndPreferences_maps_parameters
+                          parameters program spillState spillParameters spillProgram
+                          spillAllocation hspill'
+                      cases hresult
+                      exact hparameters
+
 end Flapjack
