@@ -130,6 +130,189 @@ def wordLinearScanBijectionSources
     (bijection : WordLinearScanBijectionState) : List Nat :=
   bijection.toNode.map Prod.fst
 
+def wordLinearScanStepWithRules (spillStack physicalLimit : Bool)
+    (forbidden preferred : List Nat) (register : Nat)
+    (beginning ending : Int) (force : Bool)
+    (state : WordLinearScanState) : WordLinearScanState :=
+  let state := wordLinearScanReleaseInactive beginning state
+  if spillStack && register % 4 == 3 then
+    wordLinearScanSpill register state
+  else if physicalLimit && register % 2 == 0 &&
+      register ≥ 2 * state.maxColours then
+    wordLinearScanSpill register state
+  else
+    let forbidden :=
+      if register % 2 == 0 then
+        wordListUnion state.physicalColours forbidden
+      else
+        forbidden
+    let (state, colour) := wordLinearScanFindColour state forbidden preferred
+    match colour with
+    | some colour => wordLinearScanColourRegister register colour ending state
+    | none => wordLinearScanFindSpill forbidden register ending force state
+
+def wordLinearScanAdjacencyUpdate (register : Nat) (neighbours : List Nat)
+    (adjacency : NatInfoMap (List Nat)) : NatInfoMap (List Nat) :=
+  (register, neighbours) :: adjacency.filter (fun entry => entry.1 != register)
+
+def wordLinearScanAdjacencyAdd (left right : Nat)
+    (adjacency : NatInfoMap (List Nat)) : NatInfoMap (List Nat) :=
+  let leftNeighbours :=
+    match lookupNatInfo left adjacency with
+    | some neighbours => neighbours
+    | none => []
+  let rightNeighbours :=
+    match lookupNatInfo right adjacency with
+    | some neighbours => neighbours
+    | none => []
+  wordLinearScanAdjacencyUpdate right
+    (wordListUnion [left] rightNeighbours)
+    (wordLinearScanAdjacencyUpdate left
+      (wordListUnion [right] leftNeighbours) adjacency)
+
+def wordLinearScanAdjacency : List (Nat × Nat) → NatInfoMap (List Nat)
+  | [] => []
+  | (left, right) :: edges =>
+      wordLinearScanAdjacencyAdd left right
+        (wordLinearScanAdjacency edges)
+
+def wordLinearScanAdjacencyColours (adjacency : NatInfoMap (List Nat))
+    (state : WordLinearScanState) (register : Nat) : List Nat :=
+  match lookupNatInfo register adjacency with
+  | some neighbours => wordLinearScanColoursOf state neighbours
+  | none => []
+
+def wordLinearScanPass1Step (forced moves : NatInfoMap (List Nat))
+    (register : Nat) (beginnings endings : NatInfoMap Int)
+    (state : WordLinearScanState) : Option WordLinearScanState :=
+  match lookupNatInfo register beginnings, lookupNatInfo register endings with
+  | some beginning, some ending =>
+      let forcedColours := wordLinearScanAdjacencyColours forced state register
+      let preferredColours := wordLinearScanAdjacencyColours moves state register
+      some (if register % 2 == 0 then
+        wordLinearScanStepWithRules true true forcedColours [] register
+          beginning ending true state
+      else
+        wordLinearScanStepWithRules true true forcedColours preferredColours register
+          beginning ending false state)
+  | _, _ => none
+
+def wordLinearScanPass2Step (forced moves : NatInfoMap (List Nat))
+    (register : Nat) (beginnings endings : NatInfoMap Int)
+    (state : WordLinearScanState) : Option WordLinearScanState :=
+  match lookupNatInfo register beginnings, lookupNatInfo register endings with
+  | some beginning, some ending =>
+      let forcedColours := wordLinearScanAdjacencyColours forced state register
+      let preferredColours := wordLinearScanAdjacencyColours moves state register
+      some (if register % 2 == 0 then
+        wordLinearScanStepWithRules false false forcedColours [] register
+          beginning ending false state
+      else
+        wordLinearScanStepWithRules false false forcedColours preferredColours register
+          beginning ending false state)
+  | _, _ => none
+
+def wordLinearScanPass1 : NatInfoMap (List Nat) → NatInfoMap (List Nat) →
+    List Nat → NatInfoMap Int → NatInfoMap Int →
+    WordLinearScanState → Option WordLinearScanState
+  | _, _, [], _, _, state => some state
+  | forced, moves, register :: registers, beginnings, endings, state => do
+      let state ← wordLinearScanPass1Step forced moves register beginnings endings state
+      wordLinearScanPass1 forced moves registers beginnings endings state
+
+def wordLinearScanStackRegisters (colours : Nat) :
+    List Nat → WordLinearScanState → Option (List Nat)
+  | [], _ => some []
+  | register :: registers, state => do
+      let colour ← lookupNatInfo register state.colours
+      let rest ← wordLinearScanStackRegisters colours registers state
+      if register % 4 == 3 || colours ≤ colour then
+        some (register :: rest)
+      else
+        some rest
+
+def wordLinearScanFilterAdjacency (registers : List Nat)
+    (adjacency : NatInfoMap (List Nat)) : NatInfoMap (List Nat) :=
+  adjacency.map (fun entry =>
+    (entry.1, entry.2.filter (fun register => register ∈ registers)))
+
+def wordLinearScanPass2 : NatInfoMap (List Nat) → NatInfoMap (List Nat) →
+    List Nat → NatInfoMap Int → NatInfoMap Int →
+    WordLinearScanState → Option WordLinearScanState
+  | _, _, [], _, _, state => some state
+  | forced, moves, register :: registers, beginnings, endings, state => do
+      let state ← wordLinearScanPass2Step forced moves register beginnings endings state
+      wordLinearScanPass2 forced moves registers beginnings endings state
+
+/-! Source-shaped two-pass entry point.  The register list is expected to be
+in interval-start order, as it is after CakeML's sorting pass. -/
+def wordLinearScanTwoPass (colours : Nat)
+    (forced moves : List (Nat × Nat)) (registers : List Nat)
+    (beginnings endings : NatInfoMap Int) :
+    Option (WordLinearScanState × List Nat × WordLinearScanState) := do
+  let forcedAdjacency := wordLinearScanAdjacency forced
+  let moveAdjacency := wordLinearScanAdjacency moves
+  let first ← wordLinearScanPass1 forcedAdjacency moveAdjacency registers
+    beginnings endings
+    { (wordLinearScanInitialState colours colours) with
+      nextSpill := colours }
+  let stackRegisters ← wordLinearScanStackRegisters colours registers first
+  let second ← wordLinearScanPass2
+    (wordLinearScanFilterAdjacency stackRegisters forcedAdjacency)
+    (wordLinearScanFilterAdjacency stackRegisters moveAdjacency)
+    stackRegisters beginnings endings
+    { (wordLinearScanInitialState (colours + stackRegisters.length) (colours + stackRegisters.length)) with
+      nextColour := colours
+      nextSpill := colours + stackRegisters.length }
+  pure (first, stackRegisters, second)
+
+def wordLinearScanRegisterPrecedes (beginnings : NatInfoMap Int)
+    (register head : Nat) : Bool :=
+  match lookupNatInfo register beginnings, lookupNatInfo head beginnings with
+  | some registerBeginning, some headBeginning =>
+      registerBeginning < headBeginning ||
+        (registerBeginning == headBeginning && register ≤ head)
+  | some _, none => true
+  | none, _ => false
+
+def wordLinearScanInsertRegisterSource (beginnings : NatInfoMap Int)
+    (register : Nat) : List Nat → List Nat
+  | [] => [register]
+  | head :: tail =>
+      if wordLinearScanRegisterPrecedes beginnings register head then
+        register :: head :: tail
+      else
+        head :: wordLinearScanInsertRegisterSource beginnings register tail
+termination_by registers => sizeOf registers
+decreasing_by all_goals decreasing_trivial
+
+def wordLinearScanSortRegistersSource (beginnings : NatInfoMap Int) :
+    List Nat → List Nat
+  | [] => []
+  | register :: registers =>
+      wordLinearScanInsertRegisterSource beginnings register
+        (wordLinearScanSortRegistersSource beginnings registers)
+termination_by registers => sizeOf registers
+decreasing_by all_goals decreasing_trivial
+
+def wordLinearScanInsertMoveSource (move : WordMove) : List WordMove → List WordMove
+  | [] => [move]
+  | head :: moves =>
+      if move.priority < head.priority then
+        move :: head :: moves
+      else
+        head :: wordLinearScanInsertMoveSource move moves
+termination_by moves => sizeOf moves
+decreasing_by all_goals decreasing_trivial
+
+def wordLinearScanSortMovesSource : List WordMove → List WordMove
+  | [] => []
+  | move :: moves =>
+      wordLinearScanInsertMoveSource move
+        (wordLinearScanSortMovesSource moves)
+termination_by moves => sizeOf moves
+decreasing_by all_goals decreasing_trivial
+
 /-! A direct executable port of `check_number_property`.  The property is
 passed as a Boolean predicate so this remains suitable for native evaluation
 in the same way as the source allocator's checks. -/
