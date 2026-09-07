@@ -564,6 +564,8 @@ definitions, pass ordering, examples, and proof obligations.
   RISC-V contracts before claiming general call-aware allocation correctness.
 - [x] Expose soundness of the entry-aware SSA spill allocator, including its
   clash, special-location, and clash-tree checks.
+- [x] Expose location coverage for every variable in the entry-aware SSA spill
+  allocator's renamed program.
 - [x] Compose the oracle, graph, and spill allocator outcomes behind one
   result-level correctness witness for downstream lowering.
 - [x] Expose renamed formal-parameter locations through the composed spill
