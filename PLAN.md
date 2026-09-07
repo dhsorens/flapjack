@@ -501,6 +501,8 @@ definitions, pass ordering, examples, and proof obligations.
   the checked linear-scan RISC-V pipeline.
 - [x] Prove the checked linear-scan safety predicate and lift it through the
   SSA-renamed function allocation boundary.
+- [x] Expose linear-scan location coverage for every renamed formal parameter
+  at the function allocator boundary.
 - [x] Port linear-scan domination repair and the executable number-property,
   start-live, point-inside-interval, and interval-colouring checks.
 - [x] Port linear-scan source-variable normalization, clash-tree traversal,
