@@ -573,6 +573,8 @@ definitions, pass ordering, examples, and proof obligations.
   when both operands are spilled and both temporary registers are clobbered.
 - [x] Prove load expression lowering preserves the reusable spill relation
   when the address is spilled and the address scratch is materialized.
+- [x] Prove store expression lowering preserves every mapped value while
+  materializing spilled source and address operands in temporary registers.
 - [x] Expose soundness of the entry-aware SSA spill allocator, including its
   clash, special-location, and clash-tree checks.
 - [x] Expose location coverage for every variable in the entry-aware SSA spill

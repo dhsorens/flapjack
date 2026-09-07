@@ -1,0 +1,69 @@
+import Flapjack.RiscV.CorrectnessLoadSpill
+
+/-!
+# Spill-aware store expression contracts
+
+Store lowering can materialize its source and address in the two temporary
+registers, but it does not update any mapped register or stack location.  This
+file records that whole-relation preservation fact.
+-/
+
+namespace Flapjack.RiscV
+
+theorem evalWordStackMachine_store_preserves_other_value [NeZero width]
+    (config : WordStackConfig) (state final : WordStackMachineState width)
+    (source address other : Nat)
+    (sourceLocation addressLocation otherLocation : WordLocation)
+    (hsource : wordStackLocation config source = some sourceLocation)
+    (haddress : wordStackLocation config address = some addressLocation)
+    (hother : wordStackLocation config other = some otherLocation)
+    (hsafe : wordStackStoreLocationsSafe config sourceLocation addressLocation = true)
+    (hother_scratch : otherLocation ≠ .register config.scratch)
+    (hother_addressScratch : otherLocation ≠ .register config.addressScratch)
+    (heval : (wordStackCompileStoreNat config (.var address) (.var source)).bind
+      (evalWordStackMachine state) = some final) :
+    wordStackMachineValue config final other =
+      wordStackMachineValue config state other := by
+  change lookupNatInfo source config.locations = some sourceLocation at hsource
+  change lookupNatInfo address config.locations = some addressLocation at haddress
+  change lookupNatInfo other config.locations = some otherLocation at hother
+  cases sourceLocation <;> cases addressLocation <;> cases otherLocation <;>
+    simp [wordStackCompileStoreNat, wordStackAtomNat, wordStackReadRegister,
+      wordStackJoin, evalWordStackMachine, wordStackLocation, wordStackOffset,
+      hsource, haddress, wordStackStoreLocationsSafe] at hsafe heval
+  all_goals
+    cases heval
+    simp_all [wordStackMachineValue, wordStackLocation, wordStackOffset,
+      wordStackMachineWriteRegister, wordStackMachineWriteMemory]
+
+theorem evalWordStackMachine_store_preserves_mapped_values [NeZero width]
+    (config : WordStackConfig) (state final : WordStackMachineState width)
+    (source address : Nat)
+    (sourceLocation addressLocation : WordLocation)
+    (values : Nat → Option (Word width))
+    (hsource : wordStackLocation config source = some sourceLocation)
+    (haddress : wordStackLocation config address = some addressLocation)
+    (hsafe : wordStackStoreLocationsSafe config sourceLocation addressLocation = true)
+    (hvalues : wordStackMappedValues config values state)
+    (hno_scratch : ∀ name value location,
+      values name = some value →
+      wordStackLocation config name = some location →
+      location ≠ .register config.scratch)
+    (hno_addressScratch : ∀ name value location,
+      values name = some value →
+      wordStackLocation config name = some location →
+      location ≠ .register config.addressScratch)
+    (heval : (wordStackCompileStoreNat config (.var address) (.var source)).bind
+      (evalWordStackMachine state) = some final) :
+    wordStackMappedValues config values final := by
+  intro name value location hvalue hlocation
+  have hstateValue := hvalues name value location hvalue hlocation
+  have hpreserved := evalWordStackMachine_store_preserves_other_value
+    config state final source address name sourceLocation addressLocation location
+    hsource haddress hlocation hsafe
+    (hno_scratch name value location hvalue hlocation)
+    (hno_addressScratch name value location hvalue hlocation) heval
+  rw [hpreserved]
+  exact hstateValue
+
+end Flapjack.RiscV
