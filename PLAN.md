@@ -1383,6 +1383,9 @@ definitions, pass ordering, examples, and proof obligations.
   StackLang evaluator, including fuel accounting and optional host results.
 - [x] Rewrite the StackLang FFI host arguments to the original mapped Word
   values at the generated ABI boundary.
+- [x] Exercise Word FFI lowering through StackRemove, LabLang, and the
+  RISC-V backend, including ABI moves, return-label materialization, service
+  selection, and ECALL emission.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 
