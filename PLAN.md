@@ -1499,6 +1499,8 @@ definitions, pass ordering, examples, and proof obligations.
   including return destinations and the unchanged bitmap state.
 - [x] Compose state-threaded no-handler call lowering with bounded StackLang
   execution under explicit argument-move and return-call premises.
+- [x] Cover zero-return direct calls, including their raw StackLang call code,
+  in the state-threaded lowering and execution equations.
 - [x] Expose the state-threaded Word-to-Stack FFI equation, retaining the
   bitmap accumulator across ABI argument lowering.
 - [x] Compose state-threaded Word-to-Stack FFI lowering with bounded
