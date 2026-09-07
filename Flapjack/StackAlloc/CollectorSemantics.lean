@@ -2794,6 +2794,34 @@ theorem stackGcMachineBitmapTableMatchesNat_lookup [NeZero width]
               simpa [stackFrameBitmapAt, stackGcNatBitmapTableAt] using
                 ih values htail index
 
+theorem evalStackFrameFuel_bitmapLoad_matches_nat [NeZero width]
+    (fuel : Nat) (state : StackFrameMachineState width)
+    (destination address value : Nat) (natBitmaps : List Nat)
+    (hdestination : destination ≠ address)
+    (hrelation : stackGcMachineBitmapTableMatchesNat
+      state.bitmaps natBitmaps)
+    (hlookup : stackGcNatBitmapTableAt natBitmaps
+        (state.machine.registers address).toNat = some value) :
+    stackFrameNormalRegisterNat
+        (evalStackFrameFuel (fuel + 1) state
+          (.bitmapLoad destination address)) destination = some value := by
+  have hmachine := stackGcMachineBitmapTableMatchesNat_lookup
+    state.bitmaps natBitmaps hrelation
+    (state.machine.registers address).toNat
+  rw [hlookup] at hmachine
+  cases htable : stackFrameBitmapAt state.bitmaps
+      (state.machine.registers address).toNat with
+  | none =>
+      simp [htable] at hmachine
+  | some bitmap =>
+      have hvalue : bitmap.toNat = value := by
+        simpa [htable] using hmachine
+      have heval := evalStackFrameFuel_bitmapLoad fuel state destination address
+        bitmap hdestination htable
+      rw [heval]
+      simp [stackFrameNormalRegisterNat, stackFrameWriteRegister,
+        wordStackMachineWriteRegister, hvalue]
+
 theorem stackGcMoveLoopCodeStepState_memory_matches_nat [NeZero width]
     (config : StackGcConfig) (state : StackFrameMachineState width)
     (memory : Nat → Nat)
