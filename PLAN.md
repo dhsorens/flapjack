@@ -581,6 +581,8 @@ definitions, pass ordering, examples, and proof obligations.
   including a spilled destination and an explicit store-name mapping.
 - [x] Prove StackStore Set lowering preserves the complete mapped-value
   relation while materializing a spilled source through `scratch`.
+- [x] Prove shared-load lowering preserves unrelated mapped values while
+  reading through a spilled address from the separate shared-memory state.
 - [x] Expose soundness of the entry-aware SSA spill allocator, including its
   clash, special-location, and clash-tree checks.
 - [x] Expose location coverage for every variable in the entry-aware SSA spill
