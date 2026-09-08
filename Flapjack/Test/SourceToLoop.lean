@@ -238,4 +238,17 @@ theorem sourceToLoop_declaration_add_return_executes :
         some [BitVec.ofNat 64 42] := by
   native_decide
 
+def sourceToLoopDeclarationMulProgram : Prog (RiscV.Word 64) :=
+  .dec "x" .one
+    (.panOp .mul [.const (BitVec.ofNat 64 2), .const (BitVec.ofNat 64 3)])
+    (.return (.var .local "x"))
+
+theorem sourceToLoop_declaration_mul_return_executes :
+    (evalLoopProg 30 sourceToLoopState
+      (loopCompileProg sourceToLoopLoopContext []
+        (compileProg sourceToLoopCompileContext
+          sourceToLoopDeclarationMulProgram))).map loopResultValues =
+        some [BitVec.ofNat 64 6] := by
+  native_decide
+
 end Flapjack
