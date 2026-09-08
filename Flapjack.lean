@@ -17,6 +17,7 @@ import Flapjack.CrepeSemantics
 import Flapjack.CrepeRuntime
 import Flapjack.CrepeCorrectness
 import Flapjack.PanValues
+import Flapjack.PanSteppedSemantics
 import Flapjack.PanMemory
 import Flapjack.RiscV.Model
 import Flapjack.RiscV.PanMemory
