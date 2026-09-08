@@ -1441,6 +1441,53 @@ theorem wordAllocateProgramWithClashTreeAndColour_straightLine_simulation
     valid injective colourZero colourNoScratch source target hrelation program
     hprogram
 
+/-! The same simulation contract at the executable graph allocator boundary.
+    The graph allocator stores its source colouring directly in the returned
+    allocation, rather than wrapping it in a WordContext; exposing this
+    equation keeps later lowering proofs independent of allocator internals. -/
+
+theorem wordAllocateGraphProgram_straightLine_simulation
+    (program : WordProg (Word width))
+    (fixedSources : List Nat) (colours stackStart : Nat)
+    (allocation : WordGraphAllocation) (coloured : WordProg (Word width))
+    (halloc : wordAllocateGraphProgram program fixedSources colours stackStart =
+      some (allocation, coloured))
+    (valid : wordColourValid (wordGraphColouringAt allocation.colouring))
+    (injective : Function.Injective
+      (wordGraphColouringAt allocation.colouring))
+    (colourZero : wordGraphColouringAt allocation.colouring 0 = 0)
+    (colourNoScratch : ∀ name, name < 31 →
+      wordGraphColouringAt allocation.colouring name ≠ 31)
+    (source target : State width) [NeZero width]
+    (hrelation : WordColourStateRelation
+      (wordGraphColouringAt allocation.colouring) source target)
+    (hprogram : WordVarStraightLine width program) :
+    ∃ sourcePrime targetPrime, evalWordProg source program = some sourcePrime ∧
+      evalWordProg target coloured = some targetPrime ∧
+      WordColourStateRelation (wordGraphColouringAt allocation.colouring)
+        sourcePrime targetPrime := by
+  simp [wordAllocateGraphProgram] at halloc
+  rcases halloc with ⟨hallocation, hcoloured⟩
+  rcases hcoloured with ⟨_, hEq, hcolour⟩
+  have hvalid : wordColourValid (wordGraphColouringAt hallocation.colouring) := by
+    simpa [hEq] using valid
+  have hinjective : Function.Injective
+      (wordGraphColouringAt hallocation.colouring) := by
+    simpa [hEq] using injective
+  have hzero : wordGraphColouringAt hallocation.colouring 0 = 0 := by
+    simpa [hEq] using colourZero
+  have hscratch : ∀ name, name < 31 →
+      wordGraphColouringAt hallocation.colouring name ≠ 31 := by
+    simpa [hEq] using colourNoScratch
+  have hrelationHall : WordColourStateRelation
+      (wordGraphColouringAt hallocation.colouring) source target := by
+    simpa [hEq] using hrelation
+  have hresult := evalWordProg_wordVarStraightLine_applyColour
+    (wordGraphColouringAt hallocation.colouring) hvalid hinjective hzero
+    hscratch source target hrelationHall program hprogram
+  rw [hcolour] at hresult
+  simpa [hEq] using hresult
+
 theorem wordColourStateRelation_evalWordCondition [NeZero width]
     (colour : Nat → Nat) (valid : wordColourValid colour)
     (source target : State width)

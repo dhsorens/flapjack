@@ -548,6 +548,8 @@ definitions, pass ordering, examples, and proof obligations.
   colored Word body, retaining the state relation across the entry boundary.
 - [x] Expose the clash-tree allocator's coloured-program result as a semantic
   straight-line simulation contract at the Word allocator boundary.
+- [x] Connect the executable graph allocator output to the reusable straight-line
+  colouring simulation contract.
 - [x] Prove register-coloured condition preservation and conditional-branch
   simulation for executable Word `ite` programs.
 - [x] Relate straight-line handler-aware Word evaluation to the executable
