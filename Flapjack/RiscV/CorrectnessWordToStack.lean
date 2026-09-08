@@ -671,6 +671,81 @@ theorem evalStackProgFuelWithCodeAndFfi_wordToStackCallWithHandler_raise_of_eval
     (result := some result) hsetup hinner
   simpa [wordToStackCallWithHandler, stackSeq] using houter
 
+theorem evalStackProgFuelWithCodeAndFfi_wordToStackCallWithHandler_return_of_eval
+    [NeZero width]
+    (host : StackMachineFfiHandler width)
+    (fuel : Nat) (code : Nat → Option (StackProg Nat))
+    (config : WordStackConfig)
+    (state setupState calleeState : WordStackMachineState width)
+    (target exception : Nat) (argumentCount : Nat)
+    (returnCode handlerCode : StackProg Nat)
+    (result : StackMachineControl width)
+    (hsetup : evalStackProgFuelWithCodeAndFfi host (fuel + 3) code state
+      (stackPushHandler config.perf config.handlerLabel exception
+        config.scratch) = some (.normal setupState))
+    (hargs : evalStackProgFuelWithCodeAndFfi host (fuel + 2) code setupState
+      (stackHandlerArgs config.perf (argumentCount + 1) config.frameOffset
+        config.scratch) = some (.normal calleeState))
+    (callee : StackProg Nat) (value : Word width)
+    (hcode : code target = some callee)
+    (hcallee : evalStackProgFuelWithCodeAndFfi host (fuel + 1) code calleeState
+      callee = some (.returned calleeState value))
+    (hreturn : evalStackProgFuelWithCodeAndFfi host (fuel + 1) code calleeState
+      returnCode = some result) :
+    evalStackProgFuelWithCodeAndFfi host (fuel + 4) code state
+      (wordToStackCallWithHandler config.perf target argumentCount
+        config.frameOffset config.scratch returnCode handlerCode
+        config.returnLabel config.entryLabel config.handlerLabel exception) =
+      some result := by
+  have hcall :
+      evalStackProgFuelWithCodeAndFfi host (fuel + 2) code calleeState
+        (.call (some (returnCode, 0, config.returnLabel, config.entryLabel))
+          (.label target)
+          (some (handlerCode, exception, config.handlerLabel))) =
+        some result := by
+    rw [evalStackProgFuelWithCodeAndFfi_call_return_handler_of_eval
+      (host := host) (fuel := fuel) (code := code) (state := calleeState)
+      (calleeState := calleeState) (target := target)
+      (returnCode := returnCode) (link := 0)
+      (returnLabel := config.returnLabel) (entryLabel := config.entryLabel)
+      (handler := some (handlerCode, exception, config.handlerLabel))
+      (callee := callee) (value := value) hcode hcallee]
+    exact hreturn
+  have hinner := evalStackProgFuelWithCodeAndFfi_seq_normal_result
+    (host := host) (fuel := fuel + 2) (code := code) (state := setupState)
+    (middle := calleeState)
+    (first := stackHandlerArgs config.perf (argumentCount + 1)
+      config.frameOffset config.scratch)
+    (second :=
+      (.call (some (returnCode, 0, config.returnLabel, config.entryLabel))
+        (.label target)
+        (some (handlerCode, exception, config.handlerLabel))))
+    (result := some result) hargs hcall
+  have hinner' :
+      evalStackProgFuelWithCodeAndFfi host (fuel + 3) code setupState
+        (stackSeq [
+          stackHandlerArgs config.perf (argumentCount + 1) config.frameOffset
+            config.scratch,
+          (.call (some (returnCode, 0, config.returnLabel, config.entryLabel))
+            (.label target)
+            (some (handlerCode, exception, config.handlerLabel))) ]) =
+      some result := by
+    simpa [stackSeq, Nat.add_assoc] using hinner
+  have houter := evalStackProgFuelWithCodeAndFfi_seq_normal_result
+    (host := host) (fuel := fuel + 3) (code := code) (state := state)
+    (middle := setupState)
+      (first := stackPushHandler config.perf config.handlerLabel exception
+        config.scratch)
+    (second :=
+      (stackSeq [
+        stackHandlerArgs config.perf (argumentCount + 1) config.frameOffset
+          config.scratch,
+        (.call (some (returnCode, 0, config.returnLabel, config.entryLabel))
+          (.label target)
+          (some (handlerCode, exception, config.handlerLabel))) ]))
+    (result := some result) hsetup hinner'
+  simpa [wordToStackCallWithHandler, stackSeq] using houter
+
 theorem evalStackProgFuelWithCodeAndFfi_wordToStackProgNatWithBitmapBuilder_call_handler_raise_of_eval
     [BEq Nat] [NeZero width]
     (host : StackMachineFfiHandler width)

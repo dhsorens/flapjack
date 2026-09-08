@@ -1698,6 +1698,9 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Compose a raised StackLang callee with generated handler-call setup,
   argument transfer, exception-register write, and handler execution, with
   explicit fuel accounting.
+- [x] Compose a normally returned StackLang callee with generated handler-call
+  setup, argument transfer, and return continuation execution, with explicit
+  fuel accounting.
 - [x] Close the generated Word-to-Stack/StackRemove/LabLang FFI path with a
   machine-level RISC-V execution theorem, retaining the host transition as
   an explicit hypothesis.
