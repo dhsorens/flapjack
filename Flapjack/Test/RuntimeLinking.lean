@@ -1,4 +1,5 @@
 import Flapjack.Pipeline
+import Flapjack.RiscV.CorrectnessBackend
 
 namespace Flapjack
 
@@ -117,5 +118,44 @@ example :
     (arguments := [6]) (destinations := [4]) (by rfl)
   rw [h]
   exact RiscV.wordCallToRiscV_shape 12
+
+example :
+    RiscV.wordFunctionToRiscVWithCalls
+      ({ targets := [] } : RiscV.WordCallContext 64)
+      ((.move 0 [(2, 1)]) : WordProg (RiscV.Word 64)) =
+      some ([.addi 2 1 0], []) := by
+  simp [RiscV.wordFunctionToRiscVWithCalls,
+    RiscV.wordMoveToInstructions, RiscV.wordMoveToInstructionsAux,
+    RiscV.wordMoveRegisterDestinations, RiscV.wordMoveRegisterReady,
+    RiscV.wordMoveRegisterRemoveDestination,
+    RiscV.wordExpToInstructions, RiscV.wordExpToInstruction,
+    RiscV.registerOfNat]
+
+example :
+    RiscV.wordFunctionToRiscVWithCallsAndFfi
+      ({ targets := [], services := [] } : RiscV.WordCallFfiContext 64)
+      ((.move 0 [(2, 1)]) : WordProg (RiscV.Word 64)) =
+      some ([.addi 2 1 0], []) := by
+  simp [RiscV.wordFunctionToRiscVWithCallsAndFfi,
+    RiscV.wordFunctionToRiscVWithCalls,
+    RiscV.wordMoveToInstructions, RiscV.wordMoveToInstructionsAux,
+    RiscV.wordMoveRegisterDestinations, RiscV.wordMoveRegisterReady,
+    RiscV.wordMoveRegisterRemoveDestination,
+    RiscV.wordExpToInstructions, RiscV.wordExpToInstruction,
+    RiscV.registerOfNat]
+
+example [NeZero width] (context : RiscV.WordCallContext width)
+    (state : RiscV.State width) :
+    RiscV.evalWordFunction state
+        ((.move 0 [(2, 1)]) : WordProg (RiscV.Word width)) =
+      some (RiscV.executeInstructions state [.addi 2 1 0], []) := by
+  apply RiscV.wordFunctionToRiscVWithCalls_move_sound context state 0 [(2, 1)]
+    [.addi 2 1 0]
+  simp [RiscV.wordFunctionToRiscVWithCalls,
+    RiscV.wordMoveToInstructions, RiscV.wordMoveToInstructionsAux,
+    RiscV.wordMoveRegisterDestinations, RiscV.wordMoveRegisterReady,
+    RiscV.wordMoveRegisterRemoveDestination,
+    RiscV.wordExpToInstructions, RiscV.wordExpToInstruction,
+    RiscV.registerOfNat]
 
 end Flapjack

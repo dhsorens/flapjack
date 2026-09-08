@@ -73,8 +73,11 @@ def lookupWordCallTarget [NeZero width] (label : Nat) :
 
 def wordFunctionToRiscVWithCalls [NeZero width]
     (context : WordCallContext width) :
-    WordProg (Word width) → Option (List (Instruction width) × List (Fin 32))
+  WordProg (Word width) → Option (List (Instruction width) × List (Fin 32))
   | .skip => some ([], [])
+  | .move _ moves => do
+      let instructions ← wordMoveToInstructions moves
+      pure (instructions, [])
   | .assign name value => do
       let instructions ← wordExpToInstructions name value
       pure (instructions, [])
