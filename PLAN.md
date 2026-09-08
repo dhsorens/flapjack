@@ -587,6 +587,8 @@ definitions, pass ordering, examples, and proof obligations.
   non-interference contract for unrelated spill and register values.
 - [x] Prove the direct WordProg `get` lowering preserves unrelated mapped
   values for a spilled destination and explicit StackStore mapping.
+- [x] Prove direct WordProg memory load/store lowering preserves the spill
+  relation, including separate address and value scratch materialization.
 - [x] Expose soundness of the entry-aware SSA spill allocator, including its
   clash, special-location, and clash-tree checks.
 - [x] Expose location coverage for every variable in the entry-aware SSA spill
