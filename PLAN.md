@@ -1598,6 +1598,8 @@ definitions, pass ordering, examples, and proof obligations.
   function pipeline, including a compositional append equation.
 - [x] Add abstract and bounded FFI loop-break simulation equations, with
   FFI-in-loop regressions.
+- [x] Add the corresponding FFI loop-continue lowering equation and compiler
+  shape regression.
 - [x] Expose the abstract StackLang FFI returned-callee continuation equation,
   matching the bounded frame boundary.
 - [x] Prove that a Word-to-Stack FFI argument move preserves every unrelated

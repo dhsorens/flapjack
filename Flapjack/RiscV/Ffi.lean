@@ -380,4 +380,14 @@ theorem wordFunctionToRiscVWithCallsAndFfiAndLoops_break [NeZero width] :
     wordFunctionToRiscVWithCallsAndFfiAndLoopsAux, resolveWordLoopBody,
     resolveWordLoopBodyAux, wordControlInstructions]
 
+theorem wordFunctionToRiscVWithCallsAndFfiAndLoops_continue [NeZero width] :
+    wordFunctionToRiscVWithCallsAndFfiAndLoops
+      ({ targets := [], services := [] } : WordCallFfiContext width)
+      ((.loop [] (.continue 0) []) : WordProg (Word width)) =
+      some ([.jal 0 0,
+        .jal 0 (0 - BitVec.ofNat width 4)], []) := by
+  simp [wordFunctionToRiscVWithCallsAndFfiAndLoops,
+    wordFunctionToRiscVWithCallsAndFfiAndLoopsAux, resolveWordLoopBody,
+    resolveWordLoopBodyAux, wordControlInstructions]
+
 end Flapjack.RiscV
