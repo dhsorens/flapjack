@@ -84,6 +84,7 @@ def pipelineWordFunctionsToStack [NeZero width] :
   | [] => some []
   | (label, parameters, body) :: functions => do
       let config := { RiscV.wordStackIdentityConfig body with
+        sectionId := label
         handlerLabel := label }
       let stackBody ← RiscV.wordToStackProgWord config body
       let rest ← pipelineWordFunctionsToStack functions
@@ -122,6 +123,7 @@ def pipelineWordFunctionsAllocatedWithSpills [NeZero width] :
           scratch := 31
           stackBase := 0
           addressScratch := 29
+          sectionId := label
           handlerLabel := label }
       let stackBody ← RiscV.wordToStackFunctionWithParameters config renamedParameters
         renamedBody
@@ -151,6 +153,7 @@ def pipelineWordFunctionAllocatedWithSpillsAndBitmaps [NeZero width]
         scratch := 31
         stackBase := 0
         addressScratch := 29
+        sectionId := label
         handlerLabel := label }
     let (stackBody, bitmaps) ←
       RiscV.wordToStackFunctionWithParametersAndLocationBitmaps config
@@ -227,6 +230,7 @@ def pipelineWordFunctionAllocatedWithSpillsAndFullSsaAndBitmaps [NeZero width]
         scratch := 31
         stackBase := 0
         addressScratch := 29
+        sectionId := label
         handlerLabel := label }
     let (stackBody, bitmaps) ←
       RiscV.wordToStackFunctionWithParametersAndLocationBitmaps config
@@ -316,7 +320,9 @@ def pipelineWordFunctionsAllocatedWithGraph [NeZero width] :
         { locations := wordGraphLocations allocation 13 14
           scratch := 31
           stackBase := 0
-          addressScratch := 29 }
+          addressScratch := 29
+          sectionId := label
+          handlerLabel := label }
       let stackBody ← RiscV.wordToStackFunctionWithParameters config
         renamedParameters renamedBody
       let rest ← pipelineWordFunctionsAllocatedWithGraph functions
@@ -342,7 +348,9 @@ def pipelineWordFunctionsAllocatedWithGraphAndFullSsa [NeZero width] :
         { locations := wordGraphLocations allocation 13 14
           scratch := 31
           stackBase := 0
-          addressScratch := 29 }
+          addressScratch := 29
+          sectionId := label
+          handlerLabel := label }
       let stackBody ← RiscV.wordToStackFunctionWithParameters config
         renamedParameters renamedProgram
       let rest ← pipelineWordFunctionsAllocatedWithGraphAndFullSsa functions
@@ -371,7 +379,9 @@ def pipelineWordFunctionsAllocatedWithSpillsAndFullSsa [NeZero width] :
         { locations := allocation.locations
           scratch := 31
           stackBase := 0
-          addressScratch := 29 }
+          addressScratch := 29
+          sectionId := label
+          handlerLabel := label }
       let (stackBody, _) ←
         RiscV.wordToStackFunctionWithParametersAndLocationBitmaps config
           renamedParameters wordAllocatableRegisters.length config.scratch

@@ -509,9 +509,9 @@ theorem wordToStackProgNatWithBitmapBuilder_call_handler
       (.call returns (some target) arguments
         (some (exception, body, handlerLabel, entryLabel))) =
       some (wordStackJoin argumentMoves
-        (wordToStackCallWithHandler config.perf target arguments.length
+        (wordToStackCallWithHandlerInSection config.perf target arguments.length
           config.frameOffset config.scratch returnCode handlerCode
-          config.returnLabel config.entryLabel config.handlerLabel exception),
+          config.returnLabel config.entryLabel config.sectionId config.handlerLabel exception),
         finalState) := by
   simp [wordToStackProgNatWithBitmapBuilder, hargs, hreturn, hhandler]
 
@@ -581,9 +581,9 @@ theorem wordToStackProgNatWithLocationBitmaps_call_handler
       (.call returns (some target) arguments
         (some (exception, body, handlerLabel, entryLabel))) =
       some (wordStackJoin argumentMoves
-        (wordToStackCallWithHandler config.perf target arguments.length
+        (wordToStackCallWithHandlerInSection config.perf target arguments.length
           config.frameOffset config.scratch returnCode handlerCode
-          config.returnLabel config.entryLabel config.handlerLabel exception),
+          config.returnLabel config.entryLabel config.sectionId config.handlerLabel exception),
         finalState) := by
   simpa [wordToStackProgNatWithLocationBitmaps] using
     (wordToStackProgNatWithBitmapBuilder_call_handler
@@ -614,7 +614,7 @@ theorem evalStackProgFuelWithCodeAndFfi_wordToStackCallWithHandler_raise_of_eval
     (returnCode handlerCode : StackProg Nat)
     (result : StackMachineControl width)
     (hsetup : evalStackProgFuelWithCodeAndFfi host (fuel + 3) code state
-      (stackPushHandler config.perf config.handlerLabel exception config.scratch) =
+      (stackPushHandler config.perf config.sectionId config.handlerLabel config.scratch) =
       some (.normal setupState))
     (hargs : evalStackProgFuelWithCodeAndFfi host (fuel + 2) code setupState
       (stackHandlerArgs config.perf (argumentCount + 1) config.frameOffset
@@ -627,9 +627,9 @@ theorem evalStackProgFuelWithCodeAndFfi_wordToStackCallWithHandler_raise_of_eval
       (wordStackMachineWriteRegister calleeState exception value)
       handlerCode = some result) :
     evalStackProgFuelWithCodeAndFfi host (fuel + 4) code state
-      (wordToStackCallWithHandler config.perf target argumentCount
+      (wordToStackCallWithHandlerInSection config.perf target argumentCount
         config.frameOffset config.scratch returnCode handlerCode
-        config.returnLabel config.entryLabel config.handlerLabel exception) =
+        config.returnLabel config.entryLabel config.sectionId config.handlerLabel exception) =
       some result := by
   have hcall :
       evalStackProgFuelWithCodeAndFfi host (fuel + 2) code calleeState
@@ -659,7 +659,7 @@ theorem evalStackProgFuelWithCodeAndFfi_wordToStackCallWithHandler_raise_of_eval
   have houter := evalStackProgFuelWithCodeAndFfi_seq_normal_result
     (host := host) (fuel := fuel + 3) (code := code) (state := state)
     (middle := setupState)
-    (first := stackPushHandler config.perf config.handlerLabel exception
+    (first := stackPushHandler config.perf config.sectionId config.handlerLabel
       config.scratch)
     (second :=
       (stackSeq [
@@ -669,7 +669,7 @@ theorem evalStackProgFuelWithCodeAndFfi_wordToStackCallWithHandler_raise_of_eval
           (.label target)
           (some (handlerCode, exception, config.handlerLabel))) ]))
     (result := some result) hsetup hinner
-  simpa [wordToStackCallWithHandler, stackSeq] using houter
+  simpa [wordToStackCallWithHandlerInSection, stackSeq] using houter
 
 theorem evalStackProgFuelWithCodeAndFfi_wordToStackCallWithHandler_return_of_eval
     [NeZero width]
@@ -681,7 +681,7 @@ theorem evalStackProgFuelWithCodeAndFfi_wordToStackCallWithHandler_return_of_eva
     (returnCode handlerCode : StackProg Nat)
     (result : StackMachineControl width)
     (hsetup : evalStackProgFuelWithCodeAndFfi host (fuel + 3) code state
-      (stackPushHandler config.perf config.handlerLabel exception
+      (stackPushHandler config.perf config.sectionId config.handlerLabel
         config.scratch) = some (.normal setupState))
     (hargs : evalStackProgFuelWithCodeAndFfi host (fuel + 2) code setupState
       (stackHandlerArgs config.perf (argumentCount + 1) config.frameOffset
@@ -693,9 +693,9 @@ theorem evalStackProgFuelWithCodeAndFfi_wordToStackCallWithHandler_return_of_eva
     (hreturn : evalStackProgFuelWithCodeAndFfi host (fuel + 1) code calleeState
       returnCode = some result) :
     evalStackProgFuelWithCodeAndFfi host (fuel + 4) code state
-      (wordToStackCallWithHandler config.perf target argumentCount
+      (wordToStackCallWithHandlerInSection config.perf target argumentCount
         config.frameOffset config.scratch returnCode handlerCode
-        config.returnLabel config.entryLabel config.handlerLabel exception) =
+        config.returnLabel config.entryLabel config.sectionId config.handlerLabel exception) =
       some result := by
   have hcall :
       evalStackProgFuelWithCodeAndFfi host (fuel + 2) code calleeState
@@ -734,7 +734,7 @@ theorem evalStackProgFuelWithCodeAndFfi_wordToStackCallWithHandler_return_of_eva
   have houter := evalStackProgFuelWithCodeAndFfi_seq_normal_result
     (host := host) (fuel := fuel + 3) (code := code) (state := state)
     (middle := setupState)
-      (first := stackPushHandler config.perf config.handlerLabel exception
+    (first := stackPushHandler config.perf config.sectionId config.handlerLabel
         config.scratch)
     (second :=
       (stackSeq [
@@ -744,7 +744,7 @@ theorem evalStackProgFuelWithCodeAndFfi_wordToStackCallWithHandler_return_of_eva
           (.label target)
           (some (handlerCode, exception, config.handlerLabel))) ]))
     (result := some result) hsetup hinner'
-  simpa [wordToStackCallWithHandler, stackSeq] using houter
+  simpa [wordToStackCallWithHandlerInSection, stackSeq] using houter
 
 theorem evalStackProgFuelWithCodeAndFfi_wordToStackProgNatWithBitmapBuilder_call_handler_raise_of_eval
     [BEq Nat] [NeZero width]
@@ -771,7 +771,7 @@ theorem evalStackProgFuelWithCodeAndFfi_wordToStackProgNatWithBitmapBuilder_call
     (hmove : evalStackProgFuelWithCodeAndFfi host (fuel + 4) code machineState
       argumentMoves = some (.normal middle))
     (hsetup : evalStackProgFuelWithCodeAndFfi host (fuel + 3) code middle
-      (stackPushHandler config.perf config.handlerLabel exception config.scratch) =
+      (stackPushHandler config.perf config.sectionId config.handlerLabel config.scratch) =
       some (.normal setupState))
     (hhandlerArgs : evalStackProgFuelWithCodeAndFfi host (fuel + 2) code setupState
       (stackHandlerArgs config.perf (arguments.length + 1) config.frameOffset
@@ -804,11 +804,11 @@ theorem evalStackProgFuelWithCodeAndFfi_wordToStackProgNatWithBitmapBuilder_call
   rw [hcompile]
   simp only [Option.bind_some]
   have hcallNe :
-      wordToStackCallWithHandler config.perf target arguments.length
+      wordToStackCallWithHandlerInSection config.perf target arguments.length
         config.frameOffset config.scratch returnCode handlerCode
-        config.returnLabel config.entryLabel config.handlerLabel exception ≠
+        config.returnLabel config.entryLabel config.sectionId config.handlerLabel exception ≠
         (.skip : StackProg Nat) := by
-    simp [wordToStackCallWithHandler, stackSeq, stackPushHandler,
+    simp [wordToStackCallWithHandlerInSection, stackSeq, stackPushHandler,
       stackHandlerArgs, stackArgs, stackMove]
   rw [wordStackJoin_eq_seq_of_ne_skip argumentMoves _ hargumentMovesNe hcallNe]
   have hcall :=
@@ -822,9 +822,9 @@ theorem evalStackProgFuelWithCodeAndFfi_wordToStackProgNatWithBitmapBuilder_call
   have hseq := evalStackProgFuelWithCodeAndFfi_seq_normal_result
     (host := host) (fuel := fuel + 4) (code := code) (state := machineState)
     (middle := middle) (first := argumentMoves)
-    (second := wordToStackCallWithHandler config.perf target arguments.length
+    (second := wordToStackCallWithHandlerInSection config.perf target arguments.length
       config.frameOffset config.scratch returnCode handlerCode
-      config.returnLabel config.entryLabel config.handlerLabel exception)
+      config.returnLabel config.entryLabel config.sectionId config.handlerLabel exception)
     (result := some result) hmove hcall
   simp [hseq]
 
@@ -852,9 +852,9 @@ theorem evalStackProgFuelWithCodeAndFfi_wordToStackProgNatWithBitmapBuilder_call
     (hmove : evalStackProgFuelWithCodeAndFfi host fuel code machineState
       argumentMoves = some (.normal middle))
     (hcall : evalStackProgFuelWithCodeAndFfi host fuel code middle
-      (wordToStackCallWithHandler config.perf target arguments.length
+      (wordToStackCallWithHandlerInSection config.perf target arguments.length
         config.frameOffset config.scratch returnCode handlerCode
-        config.returnLabel config.entryLabel config.handlerLabel exception) =
+        config.returnLabel config.entryLabel config.sectionId config.handlerLabel exception) =
       some result) :
     (wordToStackProgNatWithBitmapBuilder config bitmapBuilder
       registerCount bitmapRegister frameSlots wordBits storeConstsStub bitmapState
@@ -878,19 +878,19 @@ theorem evalStackProgFuelWithCodeAndFfi_wordToStackProgNatWithBitmapBuilder_call
   rw [hcompile]
   simp only [Option.bind_some]
   have hcallNe :
-      wordToStackCallWithHandler config.perf target arguments.length
+      wordToStackCallWithHandlerInSection config.perf target arguments.length
         config.frameOffset config.scratch returnCode handlerCode
-        config.returnLabel config.entryLabel config.handlerLabel exception ≠
+        config.returnLabel config.entryLabel config.sectionId config.handlerLabel exception ≠
         (.skip : StackProg Nat) := by
-    simp [wordToStackCallWithHandler, stackSeq, stackPushHandler,
+    simp [wordToStackCallWithHandlerInSection, stackSeq, stackPushHandler,
       stackHandlerArgs, stackArgs, stackMove, stackHandlerSlots]
   rw [wordStackJoin_eq_seq_of_ne_skip argumentMoves _ hargumentMovesNe hcallNe]
   have hseq := evalStackProgFuelWithCodeAndFfi_seq_normal_result
     (host := host) (fuel := fuel) (code := code) (state := machineState)
     (middle := middle) (first := argumentMoves)
-    (second := wordToStackCallWithHandler config.perf target arguments.length
+    (second := wordToStackCallWithHandlerInSection config.perf target arguments.length
       config.frameOffset config.scratch returnCode handlerCode
-      config.returnLabel config.entryLabel config.handlerLabel exception)
+      config.returnLabel config.entryLabel config.sectionId config.handlerLabel exception)
     (result := some result) hmove hcall
   simp [hseq]
 

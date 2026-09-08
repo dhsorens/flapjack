@@ -328,6 +328,8 @@ definitions, pass ordering, examples, and proof obligations.
   pipeline result.
 - [x] Expose the call-aware two-pass linked artifacts alongside the original
   straight-line artifact table, preserving the first correctness theorem.
+- [x] Carry cross-section function identities into handler-address lowering,
+  and regress the emitted RISC-V setup address for a linked raised call.
 - [x] Port complete program checking, context transitions, and diagnostics for
   the current AST, including declaration environments, missing returns,
   unreachable-tail warnings, and location annotations. The diagnostic surface

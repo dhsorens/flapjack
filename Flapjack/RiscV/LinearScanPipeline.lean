@@ -28,7 +28,9 @@ def pipelineWordFunctionsAllocatedWithLinearScan [NeZero width]
         { locations := wordLinearScanLocations allocation
           scratch := 31
           stackBase := 0
-          addressScratch := 29 }
+          addressScratch := 29
+          sectionId := label
+          handlerLabel := label }
       let stackBody ← RiscV.wordToStackFunctionWithParameters config
         renamedParameters renamedBody
       let rest ← pipelineWordFunctionsAllocatedWithLinearScan functions
