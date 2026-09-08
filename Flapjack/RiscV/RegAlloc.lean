@@ -395,6 +395,20 @@ def wordRaSimplifyAll : Nat → Nat → WordRaState → WordRaState
                 (wordRaRemoveNode colours chosen true state)
           | [] => state
 
+def wordRaSimplifyLow : Nat → Nat → WordRaState → WordRaState
+  | 0, _, state => state
+  | fuel + 1, colours, state =>
+      match state.simpWl with
+      | node :: _ =>
+          wordRaSimplifyLow fuel colours
+            (wordRaRemoveNode colours node false state)
+      | [] => state
+
+def wordRaInitialSimplify (colours : Nat)
+    (graph : WordRegGraph) : WordRaState :=
+  let state := wordRaInit colours graph
+  wordRaSimplifyLow (state.active.length + 1) colours state
+
 def wordRaFinalizeStemps (state : WordRaState) : WordRaState :=
   let stempNodes := state.active.filter (wordRaNodeIsStemp state.graph)
   { state with
@@ -822,6 +836,14 @@ def wordInitMoveStateWithColours (colours : Nat) (graph : WordRegGraph)
     freezeWl := wordMoveFreezeCandidates colours graph parents related
     stack := [] }
 
+def wordInitMoveStateWithColoursFromStack (colours : Nat)
+    (graph : WordRegGraph) (moves : List WordMove)
+    (preStack : List Nat) : WordMoveState :=
+  let moves := moves.filter (fun move =>
+    !preStack.contains move.left && !preStack.contains move.right)
+  let state := wordInitMoveStateWithColours colours graph moves
+  { state with stack := preStack }
+
 def wordMoveReplaceNode (oldNode newNode : Nat) (move : WordMove) : WordMove :=
   { move with
     left := if move.left = oldNode then newNode else move.left
@@ -1107,7 +1129,9 @@ def wordAllocateGraphWithSpillCosts (tree : WordClashTree)
   let input := wordInitRegAlloc tree forced fixedSources
   let costs := wordSpillCostsToNodes input.bijection costs
   let moves := wordRemapMoves input.bijection (wordPreferenceMoves moves)
-  let moveState := wordInitMoveStateWithColours colours input.graph moves
+  let initial := wordRaInitialSimplify colours input.graph
+  let moveState := wordInitMoveStateWithColoursFromStack colours input.graph moves
+    initial.stack
   let moveState := wordCoalesceAllAvailable colours moveState
   let moveState := wordFreezeAllAvailable colours moveState
   let graph := wordColourGraphWithWorklistAndSpillCostsFromStack colours stackStart costs moves
@@ -1132,7 +1156,9 @@ def wordAllocateGraphWithPrioritizedMovesAndSpillCosts (tree : WordClashTree)
     (costs : NatInfoMap Nat) : Option WordGraphAllocation :=
   let input := wordInitRegAlloc tree forced fixedSources
   let moves := wordRemapMoves input.bijection moves
-  let moveState := wordInitMoveStateWithColours colours input.graph moves
+  let initial := wordRaInitialSimplify colours input.graph
+  let moveState := wordInitMoveStateWithColoursFromStack colours input.graph moves
+    initial.stack
   let moveState := wordCoalesceAllAvailable colours moveState
   let moveState := wordFreezeAllAvailable colours moveState
   let graph := wordColourGraphWithWorklistAndSpillCostsFromStack colours stackStart costs moves
@@ -1191,7 +1217,9 @@ def wordAllocateGraphSimpleWithColourMoves (tree : WordClashTree)
     Option WordGraphAllocation :=
   let input := wordInitRegAlloc tree forced fixedSources
   let colourMoves := wordRemapMoves input.bijection colourMoves
-  let moveState := wordInitMoveStateWithColours colours input.graph []
+  let initial := wordRaInitialSimplify colours input.graph
+  let moveState := wordInitMoveStateWithColoursFromStack colours input.graph []
+    initial.stack
   let moveState := wordCoalesceAllAvailable colours moveState
   let moveState := wordFreezeAllAvailable colours moveState
   let graph := wordColourGraphWithWorklistAndMovesFromStack colours stackStart colourMoves
@@ -1217,7 +1245,9 @@ def wordAllocateGraphSimpleWithColourMovesAndSpillCosts (tree : WordClashTree)
   let input := wordInitRegAlloc tree forced fixedSources
   let costs := wordSpillCostsToNodes input.bijection costs
   let colourMoves := wordRemapMoves input.bijection colourMoves
-  let moveState := wordInitMoveStateWithColours colours input.graph []
+  let initial := wordRaInitialSimplify colours input.graph
+  let moveState := wordInitMoveStateWithColoursFromStack colours input.graph []
+    initial.stack
   let moveState := wordCoalesceAllAvailable colours moveState
   let moveState := wordFreezeAllAvailable colours moveState
   let graph := wordColourGraphWithWorklistAndSpillCostsFromStack colours stackStart costs
@@ -1276,7 +1306,9 @@ def wordAllocateGraphWithPrioritizedMovesAndColourMoves (tree : WordClashTree)
   let input := wordInitRegAlloc tree forced fixedSources
   let coalesceMoves := wordRemapMoves input.bijection coalesceMoves
   let colourMoves := wordRemapMoves input.bijection colourMoves
-  let moveState := wordInitMoveStateWithColours colours input.graph coalesceMoves
+  let initial := wordRaInitialSimplify colours input.graph
+  let moveState := wordInitMoveStateWithColoursFromStack colours input.graph coalesceMoves
+    initial.stack
   let moveState := wordCoalesceAllAvailable colours moveState
   let moveState := wordFreezeAllAvailable colours moveState
   let graph := wordColourGraphWithWorklistAndMovesFromStack colours stackStart colourMoves
@@ -1304,7 +1336,9 @@ def wordAllocateGraphWithPrioritizedMovesAndColourMovesAndSpillCosts
   let costs := wordSpillCostsToNodes input.bijection costs
   let coalesceMoves := wordRemapMoves input.bijection coalesceMoves
   let colourMoves := wordRemapMoves input.bijection colourMoves
-  let moveState := wordInitMoveStateWithColours colours input.graph coalesceMoves
+  let initial := wordRaInitialSimplify colours input.graph
+  let moveState := wordInitMoveStateWithColoursFromStack colours input.graph coalesceMoves
+    initial.stack
   let moveState := wordCoalesceAllAvailable colours moveState
   let moveState := wordFreezeAllAvailable colours moveState
   let graph := wordColourGraphWithWorklistAndSpillCostsFromStack colours stackStart costs

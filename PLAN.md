@@ -590,6 +590,8 @@ definitions, pass ordering, examples, and proof obligations.
   coloring phase, preserving CakeML's push_stack order.
 - [x] Initialize residual coloring over the active subgraph after prior stack
   removals, so stacked-node degrees do not affect later spill selection.
+- [x] Run the initial low-degree simplification phase before coalescing and
+  retire moves touching nodes already placed on the allocator stack.
 - [x] Expose the ABI-correct full-SSA spill allocator at the location-aware
   Word-to-Stack entry boundary, retaining renamed parameters and allocation slots.
 - [x] Port CakeML odd-mode spill-cost candidate selection into the graph

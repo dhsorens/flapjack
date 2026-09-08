@@ -97,6 +97,15 @@ def move01 : WordMove :=
   { priority := 7, left := 0, right := 1 }
 
 example :
+    (wordRaInitialSimplify 1 moveWorklistGraph).stack = [1, 0] := by
+  decide +kernel
+
+example :
+    let state := wordInitMoveStateWithColoursFromStack 1 moveWorklistGraph [move01] [0]
+    state.stack = [0] ∧ state.available = [] ∧ state.unavailable = [] := by
+  decide
+
+example :
     (wordColourGraphWithWorklistAndMovesFromStack 1 1 [] [] [0]
       moveWorklistGraph).tags =
       [(0, .fixed 1), (1, .fixed 1)] := by
