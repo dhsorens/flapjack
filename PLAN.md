@@ -602,6 +602,9 @@ definitions, pass ordering, examples, and proof obligations.
   allocation pipeline so its Simple/IRC path consumes full-SSA functions.
 - [x] Prove graph-colouring soundness for the full-SSA heuristic allocator,
   including its Simple and prioritized-move branches.
+- [x] Route both ordinary and full-SSA heuristic wrappers through the shared
+  Simple/IRC spill-cost dispatcher, keeping coalescing and coloring preferences
+  separate while reusing its allocation soundness contract.
 - [x] Expose the full-SSA oracle/heuristic/spill decision boundary with a
   graph-allocation soundness contract.
 - [x] Prove that a successful Word-to-Stack move preserves every unrelated
