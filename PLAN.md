@@ -411,6 +411,8 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Wire the available SSA/spill allocation, graph-derived concrete locations,
   and graph-backed entry point into the allocated RISC-V path; the full CakeML
   allocator remains separate.
+- [x] Prove that call-aware RISC-V selection agrees with the base
+  straight-line selector and preserves the Word function result.
 - [x] Port the CakeML-shaped RISC-V Word clash-tree boundary and its backward
   live-set analysis, including `Delta`, sequencing, branch live sets, loop cut
   sets, handler paths, and a tree-driven spill-allocation entry point.

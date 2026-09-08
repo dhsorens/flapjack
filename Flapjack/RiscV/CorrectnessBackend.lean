@@ -165,6 +165,119 @@ theorem wordProgToRiscV_sound_of_straightLine [NeZero width]
           subst code
           simp [evalWordProg, evalWordShareInst, h]
 
+/-! On the straight-line fragment the call-aware selector is definitionally the
+    base selector with an empty return carrier.  This agreement is the bridge
+    that lets the existing instruction-level theorem be reused after calls
+    have been introduced into the surrounding compiler. -/
+
+theorem wordFunctionToRiscVWithCalls_agrees_straightLine [NeZero width]
+    (context : WordCallContext width)
+    (program : WordProg (Word width))
+    (hstraight : WordRiscVStraightLine program) :
+    wordFunctionToRiscVWithCalls context program =
+      (wordProgToRiscV program).map (fun code => (code, [])) := by
+  induction hstraight with
+  | skip => simp [wordFunctionToRiscVWithCalls, wordProgToRiscV]
+  | move store moves =>
+      cases h : wordMoveToInstructions (width := width) moves <;>
+        simp [wordFunctionToRiscVWithCalls, wordProgToRiscV, h]
+  | assign destination value =>
+      cases h : wordExpToInstructions (width := width) destination value <;>
+        simp [wordFunctionToRiscVWithCalls, wordProgToRiscV, h]
+  | inst instruction =>
+      cases instruction with
+      | arith operation =>
+          cases h : wordArithToInstructions (width := width) operation <;>
+            simp [wordFunctionToRiscVWithCalls, wordProgToRiscV, h]
+      | mem operator destination address =>
+          cases h : wordInstToInstruction (width := width)
+              (.mem operator destination address) <;>
+            simp [wordFunctionToRiscVWithCalls, wordProgToRiscV, h]
+  | store address value =>
+      cases h : wordStoreToInstructions (width := width) address value <;>
+        simp [wordFunctionToRiscVWithCalls, wordProgToRiscV, h]
+  | locValue destination source =>
+      cases h : wordExpToInstruction (width := width) destination (.var source) <;>
+        simp [wordFunctionToRiscVWithCalls, wordProgToRiscV, h]
+  | tick => simp [wordFunctionToRiscVWithCalls, wordProgToRiscV]
+  | shareInst operator name address =>
+      cases h : wordShareInstToInstructions (width := width) operator name address <;>
+        simp [wordFunctionToRiscVWithCalls, wordProgToRiscV, h]
+  | seq first second hfirst hsecond ihfirst ihsecond =>
+      cases hfirstCode : wordProgToRiscV first with
+      | none => simp [wordFunctionToRiscVWithCalls, wordProgToRiscV, ihfirst,
+          hfirstCode]
+      | some firstCode =>
+          cases hsecondCode : wordProgToRiscV second with
+          | none => simp [wordFunctionToRiscVWithCalls, wordProgToRiscV, ihfirst,
+              ihsecond, hfirstCode, hsecondCode]
+          | some secondCode =>
+              simp [wordFunctionToRiscVWithCalls, wordProgToRiscV, ihfirst,
+                ihsecond, hfirstCode, hsecondCode]
+
+theorem evalWordFunction_wordRiscVStraightLine_eq_evalWordProg [NeZero width]
+    (state : State width) (program : WordProg (Word width))
+    (hstraight : WordRiscVStraightLine program) :
+    evalWordFunction state program =
+      (evalWordProg state program).map (fun state => (state, [])) := by
+  induction hstraight generalizing state with
+  | skip => simp [evalWordFunction, evalWordProg]
+  | move store moves => simp [evalWordFunction, evalWordProg, Function.comp_def]
+  | assign destination value =>
+      simp [evalWordFunction, evalWordProg, Function.comp_def]
+  | inst instruction =>
+      cases instruction with
+      | arith operation =>
+          simp [evalWordFunction, evalWordProg, Function.comp_def]
+      | mem operator destination address =>
+          cases operator <;>
+            simp [evalWordFunction, evalWordProg, Function.comp_def]
+  | store address value =>
+      cases h : wordShareInstToInstructions (width := width) .store value address <;>
+        simp [evalWordFunction, evalWordProg, evalWordShareInst, h]
+  | locValue destination source =>
+      simp [evalWordFunction, evalWordProg, Function.comp_def]
+  | tick => simp [evalWordFunction, evalWordProg]
+  | shareInst operator name address =>
+      cases h : wordShareInstToInstructions (width := width) operator name address <;>
+        simp [evalWordFunction, evalWordProg, evalWordShareInst, h]
+  | @seq first second hfirst hsecond ihfirst ihsecond =>
+      simp only [evalWordFunction, evalWordProg]
+      rw [ihfirst state]
+      cases hfirstEval : evalWordProg state first with
+      | none => simp
+      | some firstState =>
+          simp [ihsecond firstState]
+          cases hsecondEval : evalWordProg firstState second with
+          | none => simp
+          | some secondState => simp
+
+theorem wordFunctionToRiscVWithCalls_sound_of_straightLine [NeZero width]
+    (context : WordCallContext width) (state : State width)
+    (program : WordProg (Word width))
+    (hstraight : WordRiscVStraightLine program)
+    (code : List (Instruction width))
+    (hcompile : wordFunctionToRiscVWithCalls context program =
+      some (code, [])) :
+    evalWordFunction state program =
+      some (executeInstructions state code, []) := by
+  have hagree := wordFunctionToRiscVWithCalls_agrees_straightLine
+    context program hstraight
+  rw [hagree] at hcompile
+  have hbase : wordProgToRiscV program = some code := by
+    cases hcode : wordProgToRiscV program with
+    | none => simp [hcode] at hcompile
+    | some instructions =>
+        have hinstructions : instructions = code := by
+          simpa [hcode] using hcompile
+        exact congrArg (fun xs : List (Instruction width) => some xs)
+          hinstructions
+  have hword := wordProgToRiscV_sound_of_straightLine state program
+    hstraight code hbase
+  rw [evalWordFunction_wordRiscVStraightLine_eq_evalWordProg state
+    program hstraight, hword]
+  rfl
+
 theorem wordFunctionToRiscVWithCalls_move_sound [NeZero width]
     (context : WordCallContext width) (state : State width)
     (store : Nat) (moves : List (Nat × Nat))
