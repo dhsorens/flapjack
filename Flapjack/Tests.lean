@@ -76,6 +76,8 @@ import Flapjack.RiscV.CorrectnessDirectMove
 import Flapjack.Test.DirectMoveRelation
 import Flapjack.RiscV.CorrectnessAddCarrySpill
 import Flapjack.Test.AddCarrySpillRelation
+import Flapjack.RiscV.CorrectnessDirectAddCarry
+import Flapjack.Test.DirectAddCarryRelation
 
 /-!
 # Flapjack regression tests

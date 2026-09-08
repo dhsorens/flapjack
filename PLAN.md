@@ -599,6 +599,7 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Compose public assign and locValue moves with the spill relation.
 - [x] Prove fully spilled AddCarry lowering preserves unrelated register and
   stack values.
+- [x] Compose public fully spilled AddCarry lowering with its spill relation.
 - [x] Expose soundness of the entry-aware SSA spill allocator, including its
   clash, special-location, and clash-tree checks.
 - [x] Expose location coverage for every variable in the entry-aware SSA spill
