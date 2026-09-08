@@ -110,7 +110,7 @@ def wordAllocateGraphForHeuristics (algorithm : Nat)
   else
     match spillCosts with
     | none =>
-        wordAllocateGraphWithPrioritizedMovesAndColourMoves tree forced fixedSources
+        wordAllocateGraphWithPrefreezeMoves tree forced fixedSources
           moves colourMoves colours stackStart
     | some costs =>
         wordAllocateGraphWithPrefreezeMovesAndSpillCosts tree
@@ -144,11 +144,11 @@ theorem wordAllocateGraphForHeuristics_sound
           tree forced fixedSources colourMoves colours stackStart costs allocation hgraph
   · cases spillCosts with
     | none =>
-        have hgraph : wordAllocateGraphWithPrioritizedMovesAndColourMoves tree
+        have hgraph : wordAllocateGraphWithPrefreezeMoves tree
             forced fixedSources moves colourMoves colours stackStart =
             some allocation := by
           simpa [wordAllocateGraphForHeuristics, hsimple] using halloc
-        exact wordAllocateGraphWithPrioritizedMovesAndColourMoves_sound tree
+        exact wordAllocateGraphWithPrefreezeMoves_sound tree
           forced fixedSources moves colourMoves colours stackStart allocation hgraph
     | some costs =>
         have hgraph : wordAllocateGraphWithPrefreezeMovesAndSpillCosts

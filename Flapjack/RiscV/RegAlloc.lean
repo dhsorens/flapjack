@@ -1368,6 +1368,54 @@ theorem wordGraphCheckAllocation_sound
     | some value => simp
   exact ⟨hfixed, hedges, htree⟩
 
+def wordAllocateGraphWithPrefreezeMovesCandidate
+    (tree : WordClashTree) (forced : List (Nat × Nat))
+    (fixedSources : List Nat) (coalesceMoves colourMoves : List WordMove)
+    (colours stackStart : Nat) : WordGraphAllocation :=
+  let input := wordInitRegAlloc tree forced fixedSources
+  let coalesceMoves := wordRemapMoves input.bijection coalesceMoves
+  let colourMoves := wordRemapMoves input.bijection colourMoves
+  let initial := wordRaInitialSimplify colours input.graph
+  let moveState := wordInitMoveStateWithColoursFromStack colours input.graph
+    coalesceMoves initial.stack
+  let moveState := wordCoalesceAllAvailable colours moveState
+  let moveState := wordMovePrefreeze colours moveState
+  let moveState := wordFreezeAllAvailable colours moveState
+  let moveState := wordMoveSpillAll (moveState.active.length + 1) colours moveState
+  let graph := wordColourGraphWithWorklistAndMovesFromStack colours stackStart
+    colourMoves moveState.parents moveState.stack moveState.graph
+  let colouring := wordGraphTotalColouring input graph moveState.parents
+  { bijection := input.bijection
+    initialTags := input.graph.tags
+    graph := graph
+    colouring := colouring
+    parents := moveState.parents }
+
+def wordAllocateGraphWithPrefreezeMoves
+    (tree : WordClashTree) (forced : List (Nat × Nat))
+    (fixedSources : List Nat) (coalesceMoves colourMoves : List WordMove)
+    (colours stackStart : Nat) : Option WordGraphAllocation :=
+  let candidate := wordAllocateGraphWithPrefreezeMovesCandidate tree forced
+    fixedSources coalesceMoves colourMoves colours stackStart
+  wordGraphCheckAllocation tree candidate
+
+theorem wordAllocateGraphWithPrefreezeMoves_sound
+    (tree : WordClashTree) (forced : List (Nat × Nat))
+    (fixedSources : List Nat) (coalesceMoves colourMoves : List WordMove)
+    (colours stackStart : Nat) (allocation : WordGraphAllocation)
+    (halloc : wordAllocateGraphWithPrefreezeMoves tree forced
+      fixedSources coalesceMoves colourMoves colours stackStart =
+      some allocation) :
+    wordGraphTagsAreFixed allocation.graph = true ∧
+      wordGraphColouringRespectsEdges allocation.graph = true ∧
+      (wordClashTreeCheck (wordGraphColouringAt allocation.colouring)
+        tree [] []).isSome = true := by
+  simp [wordAllocateGraphWithPrefreezeMoves, wordGraphCheckAllocation] at halloc
+  rcases halloc with ⟨hchecks, heq⟩
+  cases heq
+  rcases hchecks with ⟨⟨hfixed, hedges⟩, htree⟩
+  exact ⟨hfixed, hedges, htree⟩
+
 def wordAllocateGraphWithPrefreezeMovesAndSpillCostsCandidate
     (tree : WordClashTree) (forced : List (Nat × Nat))
     (fixedSources : List Nat) (coalesceMoves colourMoves : List WordMove)
