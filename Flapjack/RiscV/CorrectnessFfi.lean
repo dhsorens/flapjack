@@ -1261,4 +1261,114 @@ theorem wordFunctionToRiscVWithCallsAndFfi_agrees_straightLine [NeZero width]
       simp [wordFunctionToRiscVWithCallsAndFfi,
         wordFunctionToRiscVWithCalls, ihfirst, ihsecond]
 
+/-! The loop-capable FFI selector has the same ordinary straight-line
+    normalization as the non-loop FFI selector, and also admits an ECALL leaf.
+    No control-flow marker is present in this fragment. -/
+
+inductive WordRiscVFFIStraightLine : WordProg α → Prop where
+  | skip : WordRiscVFFIStraightLine (.skip : WordProg α)
+  | move (store : Nat) (moves : List (Nat × Nat)) :
+      WordRiscVFFIStraightLine (.move store moves)
+  | assign (destination : Nat) (value : WordExp α) :
+      WordRiscVFFIStraightLine (.assign destination value)
+  | inst (instruction : WordInst) :
+      WordRiscVFFIStraightLine (.inst instruction)
+  | store (address : WordExp α) (value : Nat) :
+      WordRiscVFFIStraightLine (.store address value)
+  | ffi (function : FunName) (configuration configurationLength array arrayLength : Nat)
+      (live : List Nat × List Nat) :
+      WordRiscVFFIStraightLine
+        (.ffi function configuration configurationLength array arrayLength live)
+  | seq (first second : WordProg α) :
+      WordRiscVFFIStraightLine first → WordRiscVFFIStraightLine second →
+      WordRiscVFFIStraightLine (.seq first second)
+  | locValue (destination source : Nat) :
+      WordRiscVFFIStraightLine (.locValue destination source)
+  | tick : WordRiscVFFIStraightLine (.tick : WordProg α)
+  | shareInst (operator : WordMemOp) (name : Nat) (address : WordExp α) :
+      WordRiscVFFIStraightLine (.shareInst operator name address)
+
+theorem wordFunctionToRiscVWithCallsAndFfiAndLoopsAux_agrees_straightLine
+    [NeZero width] (context : WordCallFfiContext width)
+    (program : WordProg (Word width))
+    (hstraight : WordRiscVFFIStraightLine program) :
+    wordFunctionToRiscVWithCallsAndFfiAndLoopsAux context program =
+      (wordFunctionToRiscVWithCallsAndFfi context program).map
+        (fun result => (result.1.map .instruction, result.2)) := by
+  induction hstraight with
+  | skip =>
+      cases h : wordFunctionToRiscVWithCallsAndFfi context
+          (.skip : WordProg (Word width)) <;>
+        simp [wordFunctionToRiscVWithCallsAndFfiAndLoopsAux, h]
+  | move store moves =>
+      cases h : wordFunctionToRiscVWithCallsAndFfi context (.move store moves) <;>
+        simp [wordFunctionToRiscVWithCallsAndFfiAndLoopsAux, h]
+  | assign destination value =>
+      cases h : wordFunctionToRiscVWithCallsAndFfi context
+          (.assign destination value) <;>
+        simp [wordFunctionToRiscVWithCallsAndFfiAndLoopsAux, h]
+  | inst instruction =>
+      cases h : wordFunctionToRiscVWithCallsAndFfi context (.inst instruction) <;>
+        simp [wordFunctionToRiscVWithCallsAndFfiAndLoopsAux, h]
+  | store address value =>
+      cases h : wordFunctionToRiscVWithCallsAndFfi context (.store address value) <;>
+        simp [wordFunctionToRiscVWithCallsAndFfiAndLoopsAux, h]
+  | ffi function configuration configurationLength array arrayLength live =>
+      cases h : wordFunctionToRiscVWithCallsAndFfi context
+          (.ffi function configuration configurationLength array arrayLength live) <;>
+        simp [wordFunctionToRiscVWithCallsAndFfiAndLoopsAux, h]
+  | locValue destination source =>
+      cases h : wordFunctionToRiscVWithCallsAndFfi context
+          (.locValue destination source) <;>
+        simp [wordFunctionToRiscVWithCallsAndFfiAndLoopsAux, h]
+  | tick =>
+      cases h : wordFunctionToRiscVWithCallsAndFfi context
+          (.tick : WordProg (Word width)) <;>
+        simp [wordFunctionToRiscVWithCallsAndFfiAndLoopsAux, h]
+  | shareInst operator name address =>
+      cases h : wordFunctionToRiscVWithCallsAndFfi context
+          (.shareInst operator name address) <;>
+        simp [wordFunctionToRiscVWithCallsAndFfiAndLoopsAux, h]
+  | seq first second hfirst hsecond ihfirst ihsecond =>
+      simp only [wordFunctionToRiscVWithCallsAndFfiAndLoopsAux]
+      rw [ihfirst, ihsecond]
+      simp only [wordFunctionToRiscVWithCallsAndFfi]
+      cases hfirstCode : wordFunctionToRiscVWithCallsAndFfi context first with
+      | none => simp
+      | some firstResult =>
+          cases hsecondCode : wordFunctionToRiscVWithCallsAndFfi context second with
+          | none =>
+              cases firstResult with
+              | mk firstCode firstReturns =>
+                  cases firstReturns with
+                  | nil => simp
+                  | cons firstReturn firstReturns => simp
+          | some secondResult =>
+              cases firstResult with
+              | mk firstCode firstReturns =>
+                  cases firstReturns with
+                  | nil =>
+                      cases secondResult with
+                      | mk secondCode secondReturns =>
+                          simp
+                  | cons firstReturn firstReturns =>
+                      simp
+
+theorem wordFunctionToRiscVWithCallsAndFfiAndLoops_agrees_straightLine
+    [NeZero width] (context : WordCallFfiContext width)
+    (program : WordProg (Word width))
+    (hstraight : WordRiscVFFIStraightLine program) :
+    wordFunctionToRiscVWithCallsAndFfiAndLoops context program =
+      wordFunctionToRiscVWithCallsAndFfi context program := by
+  simp only [wordFunctionToRiscVWithCallsAndFfiAndLoops]
+  rw [wordFunctionToRiscVWithCallsAndFfiAndLoopsAux_agrees_straightLine
+    context program hstraight]
+  cases h : wordFunctionToRiscVWithCallsAndFfi context program with
+  | none => simp
+  | some result =>
+      cases result with
+      | mk code returns =>
+          simp [wordControlInstructions_map_instruction]
+
+
 end Flapjack.RiscV
