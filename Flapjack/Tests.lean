@@ -19,6 +19,7 @@ import Flapjack.Test.AllocationModePipeline
 import Flapjack.Test.CorrectnessCondition
 import Flapjack.Test.CorrectnessCode
 import Flapjack.Test.SourceToLoop
+import Flapjack.Test.SourceToLoopCalls
 import Flapjack.Test.CorrectnessConditional
 import Flapjack.Test.CorrectnessColour
 import Flapjack.Test.FrameMachineCalls
