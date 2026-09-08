@@ -609,6 +609,8 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Cover mixed-source LongMul lowering with spilled destinations.
 - [x] Compose public mixed-source LongMul lowering with its state relation.
 - [x] Prove the linker’s cumulative byte-offset equation for resolved prefixes.
+- [x] Expose the ordinary and FFI-aware linked-function artifact shape,
+  including the return jump appended by linking.
 - [x] Expose soundness of the entry-aware SSA spill allocator, including its
   clash, special-location, and clash-tree checks.
 - [x] Expose location coverage for every variable in the entry-aware SSA spill
