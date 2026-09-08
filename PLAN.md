@@ -576,6 +576,8 @@ definitions, pass ordering, examples, and proof obligations.
   stack-based RISC-V calling convention.
 - [x] Expose the arbitrary-list Loop-to-Word argument-reading agreement used
   at the call-entry boundary.
+- [x] Generalize Loop-to-Word tail-call dispatch to arbitrary argument and
+  parameter lists with explicit Loop and Word callee binding witnesses.
 - [x] Add the corresponding parameterized Word tail-call semantic contract.
 - [x] Generalize FrameMachine call equations from leaf callees to explicit
   evaluated callee-state witnesses, with compound return and handler tests.
