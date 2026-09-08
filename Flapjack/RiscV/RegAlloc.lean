@@ -888,11 +888,22 @@ def wordSpillCostsToNodes (bijection : WordBijection)
 def wordRaSpillCost (costs : NatInfoMap Nat) (node : Nat) : Nat :=
   (lookupNatInfo node costs).getD 0
 
-def wordRaChooseSpillNode (costs : NatInfoMap Nat) : Nat → List Nat → Nat
+/-! CakeML's `safe_div` ranks a spill candidate by its cost divided by
+    its current degree.  The degree map is the mutable active-graph degree
+    maintained by the worklist state. -/
+def wordRaSafeDiv (numerator denominator : Nat) : Nat :=
+  if denominator = 0 then 0 else numerator / denominator
+
+def wordRaSpillPriority (costs degrees : NatInfoMap Nat) (node : Nat) : Nat :=
+  wordRaSafeDiv (wordRaSpillCost costs node)
+    ((lookupNatInfo node degrees).getD 0)
+
+def wordRaChooseSpillNode (costs degrees : NatInfoMap Nat) : Nat → List Nat → Nat
   | node, [] => node
   | node, candidate :: candidates =>
-      let best := wordRaChooseSpillNode costs node candidates
-      if wordRaSpillCost costs candidate < wordRaSpillCost costs best then
+      let best := wordRaChooseSpillNode costs degrees node candidates
+      if wordRaSpillPriority costs degrees candidate <
+          wordRaSpillPriority costs degrees best then
         candidate
       else
         best
@@ -909,7 +920,7 @@ def wordRaSimplifyAllWithSpillCosts : Nat → Nat → NatInfoMap Nat →
           match state.spillWl with
           | [] => state
           | node :: nodes =>
-              let chosen := wordRaChooseSpillNode costs node nodes
+              let chosen := wordRaChooseSpillNode costs state.degrees node nodes
               wordRaSimplifyAllWithSpillCosts fuel colours costs
                 (wordRaRemoveNode colours chosen true state)
 

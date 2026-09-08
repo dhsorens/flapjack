@@ -17,7 +17,7 @@ example :
   decide
 
 example :
-    wordRaChooseSpillNode [(3, 40), (5, 10), (7, 20)] 3 [5, 7] = 5 := by
+    wordRaChooseSpillNode [(3, 100), (5, 20), (7, 30)] [(3, 10), (5, 1), (7, 2)] 3 [5, 7] = 3 := by
   decide
 
 example :
