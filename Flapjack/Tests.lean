@@ -50,6 +50,8 @@ import Flapjack.RiscV.CorrectnessStoreSpill
 import Flapjack.Test.StoreSpillRelation
 import Flapjack.RiscV.CorrectnessConstSpill
 import Flapjack.Test.ConstSpillRelation
+import Flapjack.RiscV.CorrectnessLookupSpill
+import Flapjack.Test.LookupSpillRelation
 
 /-!
 # Flapjack regression tests
