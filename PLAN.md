@@ -515,6 +515,8 @@ definitions, pass ordering, examples, and proof obligations.
   Word-to-Stack/StackRemove pipeline boundaries.
 - [x] Port CakeML numeric allocation-mode decoding and dispatch modes 4+ to
   the checked linear-scan RISC-V pipeline.
+- [x] Thread formal-entry moves through the linear-scan function allocator and
+  pipeline, with safety and parameter-location contracts.
 - [x] Prove the checked linear-scan safety predicate and lift it through the
   SSA-renamed function allocation boundary.
 - [x] Expose linear-scan location coverage for every renamed formal parameter
