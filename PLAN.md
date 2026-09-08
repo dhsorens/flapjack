@@ -592,6 +592,8 @@ definitions, pass ordering, examples, and proof obligations.
   removals, so stacked-node degrees do not affect later spill selection.
 - [x] Run the initial low-degree simplification phase before coalescing and
   retire moves touching nodes already placed on the allocator stack.
+- [x] Port and test CakeML do_prefreeze cleanup: retire invalid unavailable
+  moves and simplify newly non-move-related low-degree nodes before freezing.
 - [x] Expose the ABI-correct full-SSA spill allocator at the location-aware
   Word-to-Stack entry boundary, retaining renamed parameters and allocation slots.
 - [x] Port CakeML odd-mode spill-cost candidate selection into the graph

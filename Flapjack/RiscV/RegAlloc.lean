@@ -924,6 +924,26 @@ def wordFreezeNode (colours : Nat) (node : Nat)
     stack := if node ∈ state.stack then state.stack else node :: state.stack }
   wordMoveRefreshFreeze colours state
 
+/- CakeML do_prefreeze repairs the worklists after coalescing has stopped.
+   Invalid unavailable moves are retired, and nodes which are no longer
+   move-related are simplified before the remaining freeze candidates are
+   processed. The stack is also the active-set boundary used by the later
+   coloring pass, so using wordFreezeNode here records the same retirement
+   for both moves and nodes. -/
+def wordMovePrefreeze (colours : Nat) (state : WordMoveState) : WordMoveState :=
+  let unavailable := state.unavailable.filter (wordMoveConsistent state.graph state.related)
+  let state := { state with
+    available := []
+    unavailable := unavailable }
+  let state := wordMoveRefreshFreeze colours state
+  let simplifiable := (List.range state.graph.dimension).filter (fun node =>
+    wordParentOf state.parents node = node &&
+      wordGraphTagIs wordTagIsAtemp state.graph node &&
+      wordRaDegree state.graph node < colours &&
+      !state.related.contains node &&
+      !state.stack.contains node)
+  simplifiable.foldl (fun state node => wordFreezeNode colours node state) state
+
 def wordFreezeAll : Nat → Nat → WordMoveState → WordMoveState
   | 0, _, state => state
   | fuel + 1, colours, state =>

@@ -159,6 +159,19 @@ example : wordCoalesceSafe 1 briggsMoveGraph [0, 1] move01 = false := by
   decide
 
 example :
+    let state := wordInitMoveStateWithColours 2 moveWorklistGraph [move01]
+    let state := wordMovePrefreeze 2 state
+    state.available = [] ∧ state.unavailable = [] ∧
+      state.stack = [1, 0] := by
+  decide
+
+example :
+    let state := wordInitMoveStateWithColours 2 moveWorklistGraph [move01]
+    let state := wordMovePrefreeze 2 state
+    state.related = [] ∧ state.freezeWl = [] := by
+  decide
+
+example :
     wordMoveFreezeCandidates 2 moveWorklistGraph
       [(0, 0), (1, 1)] [0, 1] = [0, 1] := by
   decide
