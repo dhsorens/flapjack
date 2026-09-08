@@ -41,4 +41,25 @@ theorem sourceToLoop_add_const_executes :
         loopResultValues = some [BitVec.ofNat 64 42] := by
   decide +kernel
 
+def sourceToLoopMulProgram : Prog (RiscV.Word 64) :=
+  .return (.panOp .mul
+    [.const (BitVec.ofNat 64 2), .const (BitVec.ofNat 64 3)])
+
+theorem sourceToLoop_mul_const_simulation :
+    (evalLoopProg 16 sourceToLoopState
+      (loopCompileProg sourceToLoopLoopContext []
+        (compileProg sourceToLoopCompileContext sourceToLoopMulProgram))).map
+        loopResultValues =
+      evalPanProg (fun _ => none) sourceToLoopMulProgram := by
+  exact compilePanToLoop_return_mul_const_correct
+    sourceToLoopCompileContext sourceToLoopLoopContext [] sourceToLoopState
+    (BitVec.ofNat 64 2) (BitVec.ofNat 64 3)
+
+theorem sourceToLoop_mul_const_executes :
+    (evalLoopProg 16 sourceToLoopState
+      (loopCompileProg sourceToLoopLoopContext []
+        (compileProg sourceToLoopCompileContext sourceToLoopMulProgram))).map
+        loopResultValues = some [BitVec.ofNat 64 6] := by
+  decide +kernel
+
 end Flapjack

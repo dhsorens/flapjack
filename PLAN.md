@@ -211,6 +211,8 @@ definitions, pass ordering, examples, and proof obligations.
   preserve the returned product.
 - [x] Extend the source-to-Loop bridge through a constant Pancake binary
   addition, including executable RV64 regression coverage.
+- [x] Extend the source-to-Loop bridge through constant Pancake multiplication
+  and its Crepe-to-Loop `longMul` expansion, with executable RV64 coverage.
 - [x] Prove RISC-V instruction-selection and evaluator agreement for the
   emitted constant-return artifact.
 - [x] Lower register-based equality and inequality conditionals to RISC-V,
