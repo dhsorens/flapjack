@@ -54,6 +54,11 @@ example :
       [] (.move 9 [(0, 1)] : WordProg Nat) [] 2 7 13 26).isSome = true := by
   decide +kernel
 
+example :
+    (wordAllocateGraphFunctionWithHeuristicsEntryRenamed
+      [] (.move 9 [(0, 1)] : WordProg Nat) [] 1 7 13 26).isSome = true := by
+  decide +kernel
+
 example (parameters : List Nat) (program : WordProg Nat)
     (fixedSources : List Nat) (algorithm currentFunction colours stackStart : Nat)
     (state : WordSsaState) (renamedParameters : List Nat)
@@ -63,6 +68,18 @@ example (parameters : List Nat) (program : WordProg Nat)
       some (state, renamedParameters, allocation, renamedProgram)) :
     wordGraphTagsAreFixed allocation.graph = true := by
   exact (wordAllocateGraphFunctionWithHeuristics_sound parameters program
+    fixedSources algorithm currentFunction colours stackStart state
+    renamedParameters allocation renamedProgram halloc).1
+
+example (parameters : List Nat) (program : WordProg Nat)
+    (fixedSources : List Nat) (algorithm currentFunction colours stackStart : Nat)
+    (state : WordSsaState) (renamedParameters : List Nat)
+    (allocation : WordGraphAllocation) (renamedProgram : WordProg Nat)
+    (halloc : wordAllocateGraphFunctionWithHeuristicsEntryRenamed parameters program
+      fixedSources algorithm currentFunction colours stackStart =
+      some (state, renamedParameters, allocation, renamedProgram)) :
+    wordGraphTagsAreFixed allocation.graph = true := by
+  exact (wordAllocateGraphFunctionWithHeuristicsEntryRenamed_sound parameters program
     fixedSources algorithm currentFunction colours stackStart state
     renamedParameters allocation renamedProgram halloc).1
 

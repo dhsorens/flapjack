@@ -261,4 +261,78 @@ def wordAllocateGraphFunctionWithHeuristicsEntryRenamed (parameters : List Nat)
     (fun allocation =>
       (state, renamedParameters, allocation, renamedProgram))
 
+theorem wordAllocateGraphFunctionWithHeuristicsEntryRenamed_sound
+    (parameters : List Nat) (program : WordProg α)
+    (fixedSources : List Nat)
+    (algorithm currentFunction colours stackStart : Nat)
+    (state : WordSsaState) (renamedParameters : List Nat)
+    (allocation : WordGraphAllocation) (renamedProgram : WordProg α)
+    (halloc : wordAllocateGraphFunctionWithHeuristicsEntryRenamed parameters program
+      fixedSources algorithm currentFunction colours stackStart =
+      some (state, renamedParameters, allocation, renamedProgram)) :
+    wordGraphTagsAreFixed allocation.graph = true ∧
+      wordGraphColouringRespectsEdges allocation.graph = true ∧
+      (wordClashTreeCheck (wordGraphColouringAt allocation.colouring)
+        (WordClashTree.seq
+          (.set (wordSsaRenameFunctionWithEntry parameters program).2.fst)
+          (wordClashTree (wordSsaRenameFunctionWithEntry parameters program).2.snd []))
+        [] []).isSome = true := by
+  simp [wordAllocateGraphFunctionWithHeuristicsEntryRenamed] at halloc
+  rcases halloc with ⟨allocation_, hgraph, hstate, hparameters,
+    hallocation, hprogram⟩
+  subst allocation_
+  have hgraphFull :
+      (if algorithm < 2 then
+          wordAllocateGraph
+            ((WordClashTree.set renamedParameters).seq
+              (wordClashTree renamedProgram []))
+            (wordProgForcedClashes renamedProgram)
+            (wordStackOnlyUnion fixedSources
+              (wordStackOnly renamedProgram).forced) [] colours stackStart
+        else
+          wordAllocateGraphWithPrioritizedMoves
+            ((WordClashTree.set renamedParameters).seq
+              (wordClashTree renamedProgram []))
+            (wordProgForcedClashes renamedProgram)
+            (wordStackOnlyUnion fixedSources
+              (wordStackOnly renamedProgram).forced)
+            (wordGetHeuristics algorithm currentFunction renamedProgram).1
+            colours stackStart) = some allocation := by
+    simpa [hstate, hparameters, hprogram] using hgraph
+  by_cases hsimple : algorithm < 2
+  · have hsimpleAlloc : wordAllocateGraph
+        ((WordClashTree.set renamedParameters).seq
+          (wordClashTree renamedProgram []))
+        (wordProgForcedClashes renamedProgram)
+        (wordStackOnlyUnion fixedSources
+          (wordStackOnly renamedProgram).forced) [] colours stackStart =
+        some allocation := by
+      simpa [hsimple] using hgraphFull
+    have hsound := wordAllocateGraph_sound
+      ((WordClashTree.set renamedParameters).seq
+        (wordClashTree renamedProgram []))
+      (wordProgForcedClashes renamedProgram)
+      (wordStackOnlyUnion fixedSources
+        (wordStackOnly renamedProgram).forced)
+      [] colours stackStart allocation hsimpleAlloc
+    simpa [hstate, hparameters, hprogram] using hsound
+  · have hprioritizedAlloc : wordAllocateGraphWithPrioritizedMoves
+        ((WordClashTree.set renamedParameters).seq
+          (wordClashTree renamedProgram []))
+        (wordProgForcedClashes renamedProgram)
+        (wordStackOnlyUnion fixedSources
+          (wordStackOnly renamedProgram).forced)
+        (wordGetHeuristics algorithm currentFunction renamedProgram).1
+        colours stackStart = some allocation := by
+      simpa [hsimple] using hgraphFull
+    have hsound := wordAllocateGraphWithPrioritizedMoves_sound
+      ((WordClashTree.set renamedParameters).seq
+        (wordClashTree renamedProgram []))
+      (wordProgForcedClashes renamedProgram)
+      (wordStackOnlyUnion fixedSources
+        (wordStackOnly renamedProgram).forced)
+      (wordGetHeuristics algorithm currentFunction renamedProgram).1
+      colours stackStart allocation hprioritizedAlloc
+    simpa [hstate, hparameters, hprogram] using hsound
+
 end Flapjack
