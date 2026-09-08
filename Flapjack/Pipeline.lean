@@ -652,6 +652,34 @@ def compileFlapjackRiscVViaAllocatedStackWithFullSsaAndBitmaps [NeZero width]
       (functions.map (fun (label, _, body) => (label, body)))
   pure (bitmaps, instructions)
 
+/- Full-SSA bitmap entry point with the executable CakeML-shaped runtime
+   sections linked in. Its section namespace reserves raise, StoreConsts,
+   and the collector before function labels, so StoreConsts calls cannot
+   alias the first compiled function. -/
+def compileFlapjackRiscVViaAllocatedStackWithFullSsaAndBitmapsAndSimpleGc
+    [NeZero width]
+    [BEq (RiscV.Word width)]
+    [OfNat (RiscV.Word width) 0] [OfNat (RiscV.Word width) 1]
+    [Add (RiscV.Word width)] [Mul (RiscV.Word width)]
+    (architecture : RiscV.Architecture) (bytesInWord : RiscV.Word width)
+    (fromNat : Nat → RiscV.Word width) (services : List (FunName × Nat))
+    (removeConfig : StackRemoveConfig)
+    (declarations : List (Decl (RiscV.Word width))) :
+    Option (RiscV.WordStackBitmapState × List (RiscV.Instruction width)) := do
+  let pipeline := compileFlapjack architecture bytesInWord fromNat declarations
+  let loop := pipelineLoopFunctions architecture stackFunctionFirstLabel pipeline.crepe
+  let (functions, bitmaps) ←
+    pipelineWordFunctionsAllocatedWithSpillsAndFullSsaAndBitmaps
+      (RiscV.wordStackInitialBitmaps false) loop
+  let instructions ←
+    RiscV.compileStackProgramNatListWithSimpleGcAndStoreConstsToRiscV
+      { services := services } removeConfig
+      { gcStubLocation := stackGcStubLocation, returnLabel := 0,
+        firstFreshLabel := stackFunctionFirstLabel }
+      { } stackStoreConstsStubLocation wordAllocatableRegisters.length 0 0
+      (functions.map (fun (label, _, body) => (label, body)))
+  pure (bitmaps, instructions)
+
 /-! End-to-end entry point using the graph-coloured allocator.  This keeps the
 graph allocator selectable while its complete CakeML spill metadata is still
 being filled in. -/
