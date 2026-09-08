@@ -1536,6 +1536,9 @@ definitions, pass ordering, examples, and proof obligations.
   replacement and fresh-label accounting.
 - [x] Compose state-threaded `StoreConsts` lowering with optional `StackAlloc`
   runtime replacement and fresh-label accounting.
+- [x] Add a bitmap-carrying full-SSA spill pipeline and RISC-V entrypoint,
+  retaining entry-inclusive parameter allocation and the generated bitmap
+  artifact.
 - [x] Expose source-order bitmap threading through the allocated Word-to-Stack
   function pipeline, including a compositional append equation.
 - [x] Add abstract and bounded FFI loop-break simulation equations, with

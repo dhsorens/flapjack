@@ -202,6 +202,94 @@ theorem pipelineWordFunctionsAllocatedWithSpillsAndBitmaps_append [NeZero width]
                 simp [pipelineWordFunctionsAllocatedWithSpillsAndBitmaps, hfunction, hrest,
                   hsecond, ih compiled.2]
 
+/-! Bitmap-carrying spill pipeline using the complete CakeML-shaped SSA
+    function entry.  Unlike the historical bitmap path above, this variant
+    allocates the explicit formal-parameter moves together with the renamed
+    body and feeds the same location map to the state-threaded
+    Word-to-Stack compiler. -/
+
+def pipelineWordFunctionAllocatedWithSpillsAndFullSsaAndBitmaps [NeZero width]
+    (bitmaps : RiscV.WordStackBitmapState)
+    (function : Nat × List Nat × LoopProg (RiscV.Word width)) :
+    Option ((Nat × List Nat × StackProg Nat) × RiscV.WordStackBitmapState) :=
+  let (label, parameters, body) := function
+  do
+    let slots := loopAccVars body parameters
+    let context : WordContext :=
+      { vars := slots.map (fun name => (name, name + 2)) }
+    let wordParameters := parameters.map (fun name => name + 2)
+    let unallocatedBody := loopToWordProg context body
+    let (_, renamedParameters, renamedProgram, allocation) ←
+      wordAllocateSsaFunctionWithEntryAndClashTreeWithSpillsAndPreferencesFixed
+        wordParameters unallocatedBody
+    let config : RiscV.WordStackConfig :=
+      { locations := allocation.locations
+        scratch := 31
+        stackBase := 0
+        addressScratch := 29
+        handlerLabel := label }
+    let (stackBody, bitmaps) ←
+      RiscV.wordToStackFunctionWithParametersAndLocationBitmaps config
+        renamedParameters wordAllocatableRegisters.length config.scratch
+        allocation.nextSpill (some 1) bitmaps renamedProgram
+    pure ((label, wordParameters, stackBody), bitmaps)
+
+def pipelineWordFunctionsAllocatedWithSpillsAndFullSsaAndBitmaps [NeZero width]
+    (bitmaps : RiscV.WordStackBitmapState) :
+    List (Nat × List Nat × LoopProg (RiscV.Word width)) →
+      Option
+        (List (Nat × List Nat × StackProg Nat) × RiscV.WordStackBitmapState)
+  | [] => some ([], bitmaps)
+  | function :: functions => do
+      let (compiled, bitmaps) ←
+        pipelineWordFunctionAllocatedWithSpillsAndFullSsaAndBitmaps bitmaps function
+      let (rest, bitmaps) ←
+        pipelineWordFunctionsAllocatedWithSpillsAndFullSsaAndBitmaps bitmaps functions
+      pure (compiled :: rest, bitmaps)
+
+theorem pipelineWordFunctionsAllocatedWithSpillsAndFullSsaAndBitmaps_append
+    [NeZero width] (bitmaps : RiscV.WordStackBitmapState)
+    (first second : List (Nat × List Nat × LoopProg (RiscV.Word width))) :
+    pipelineWordFunctionsAllocatedWithSpillsAndFullSsaAndBitmaps bitmaps
+        (first ++ second) =
+      match pipelineWordFunctionsAllocatedWithSpillsAndFullSsaAndBitmaps
+          bitmaps first with
+      | none => none
+      | some (firstCode, middleBitmaps) =>
+          match pipelineWordFunctionsAllocatedWithSpillsAndFullSsaAndBitmaps
+              middleBitmaps second with
+          | none => none
+          | some (secondCode, finalBitmaps) =>
+              some (firstCode ++ secondCode, finalBitmaps) := by
+  induction first generalizing bitmaps with
+  | nil =>
+      cases hsecond :
+          pipelineWordFunctionsAllocatedWithSpillsAndFullSsaAndBitmaps
+            bitmaps second <;>
+        simp [pipelineWordFunctionsAllocatedWithSpillsAndFullSsaAndBitmaps,
+          hsecond]
+  | cons function functions ih =>
+      cases hfunction :
+          pipelineWordFunctionAllocatedWithSpillsAndFullSsaAndBitmaps
+            bitmaps function with
+      | none =>
+          simp [pipelineWordFunctionsAllocatedWithSpillsAndFullSsaAndBitmaps,
+            hfunction]
+      | some compiled =>
+          cases hrest :
+              pipelineWordFunctionsAllocatedWithSpillsAndFullSsaAndBitmaps
+                compiled.2 functions with
+          | none =>
+              have htail := ih (bitmaps := compiled.2)
+              simp [pipelineWordFunctionsAllocatedWithSpillsAndFullSsaAndBitmaps,
+                hfunction, hrest, htail]
+          | some rest =>
+              cases hsecond :
+                  pipelineWordFunctionsAllocatedWithSpillsAndFullSsaAndBitmaps
+                    rest.2 second <;>
+                simp [pipelineWordFunctionsAllocatedWithSpillsAndFullSsaAndBitmaps,
+                  hfunction, hrest, hsecond, ih compiled.2]
+
 /-! Graph-coloured Word-to-Stack pipeline.
 
 This is the first pipeline entry point that consumes the CakeML-shaped graph
@@ -533,6 +621,30 @@ def compileFlapjackRiscVViaAllocatedStackWithBitmaps [NeZero width]
   let pipeline := compileFlapjack architecture bytesInWord fromNat declarations
   let (functions, bitmaps) ←
     pipelineWordFunctionsAllocatedWithSpillsAndBitmaps
+      (RiscV.wordStackInitialBitmaps false) pipeline.loop
+  let instructions ←
+    RiscV.compileStackProgramNatListWithRaiseStubToRiscV { services := services }
+      removeConfig 0 0
+      (functions.map (fun (label, _, body) => (label, body)))
+  pure (bitmaps, instructions)
+
+/-! Full-SSA bitmap-carrying entry point.  This is the state-threaded sibling
+    of `compileFlapjackRiscVViaAllocatedStackWithFullSsa`; it retains the
+    generated bitmap table while compiling the complete entry-inclusive
+    function program through StackRemove and LabLang. -/
+
+def compileFlapjackRiscVViaAllocatedStackWithFullSsaAndBitmaps [NeZero width]
+    [BEq (RiscV.Word width)]
+    [OfNat (RiscV.Word width) 0] [OfNat (RiscV.Word width) 1]
+    [Add (RiscV.Word width)] [Mul (RiscV.Word width)]
+    (architecture : RiscV.Architecture) (bytesInWord : RiscV.Word width)
+    (fromNat : Nat → RiscV.Word width) (services : List (FunName × Nat))
+    (removeConfig : StackRemoveConfig)
+    (declarations : List (Decl (RiscV.Word width))) :
+    Option (RiscV.WordStackBitmapState × List (RiscV.Instruction width)) := do
+  let pipeline := compileFlapjack architecture bytesInWord fromNat declarations
+  let (functions, bitmaps) ←
+    pipelineWordFunctionsAllocatedWithSpillsAndFullSsaAndBitmaps
       (RiscV.wordStackInitialBitmaps false) pipeline.loop
   let instructions ←
     RiscV.compileStackProgramNatListWithRaiseStubToRiscV { services := services }
