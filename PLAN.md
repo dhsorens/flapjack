@@ -592,6 +592,8 @@ definitions, pass ordering, examples, and proof obligations.
   graph worklist, preserving checked allocation soundness.
 - [x] Remap source-keyed CakeML heuristic moves through the graph-node
   bijection before coalescing, coloring, and spill-aware allocation.
+- [x] Apply sorted CakeML move preferences during Atemp and Stemp graph
+  coloring, with the existing safe fallback when no preference matches.
 - [x] Thread CakeML-shaped formal-entry moves through the heuristic
   allocation pipeline so its Simple/IRC path consumes full-SSA functions.
 - [x] Prove graph-colouring soundness for the full-SSA heuristic allocator,

@@ -639,6 +639,75 @@ def wordCoalesceParentFuel : Nat → WordRegGraph → NatInfoMap Nat → Nat →
           wordCoalesceParentFuel fuel graph parents parent
         (ancestor, wordParentUpdate node ancestor parents)
 
+def wordRaMovePreferredNodes (moves : List WordMove)
+    (node : Nat) : List Nat :=
+  match moves with
+  | [] => []
+  | head :: moves =>
+      if head.left = node then
+        head.right :: wordRaMovePreferredNodes moves node
+      else if head.right = node then
+        head.left :: wordRaMovePreferredNodes moves node
+      else
+        wordRaMovePreferredNodes moves node
+
+def wordRaFirstMatchingFixedColour (available : List Nat)
+    (graph : WordRegGraph) : List Nat → Option Nat
+  | [] => none
+  | node :: nodes =>
+      match lookupNatInfo node graph.tags with
+      | some (.fixed colour) =>
+          if colour ∈ available then some colour
+          else wordRaFirstMatchingFixedColour available graph nodes
+      | some .atemp | some .stemp | none =>
+          wordRaFirstMatchingFixedColour available graph nodes
+
+def wordRaChooseColourWithMoves (colours stackStart : Nat)
+    (moves : List WordMove) (parents : NatInfoMap Nat)
+    (graph : WordRegGraph) (node : Nat) : Nat :=
+  let blocked := wordFixedNeighbourColours
+    (wordGraphNeighbours graph node) graph.tags
+  let preferred := wordRaMovePreferredNodes moves node
+  match lookupNatInfo node graph.tags with
+  | some .stemp =>
+      match wordRaFirstMatchingFixedColour
+          (wordStackColourCandidates stackStart blocked) graph preferred with
+      | some colour => colour
+      | none => wordUnboundColour stackStart blocked
+  | some .atemp =>
+      let available := wordRemoveColours blocked
+        ((List.range colours).map (fun colour => colour + 1))
+      let (root, _) := wordCoalesceParentFuel
+        (graph.dimension + 1) graph parents node
+      match wordRaFirstMatchingFixedColour available graph (root :: preferred) with
+      | some colour => colour
+      | none =>
+          match wordFirstAvailable available blocked with
+          | some colour => colour
+          | none => wordUnboundColour stackStart blocked
+  | some (.fixed colour) => colour
+  | none => 0
+
+def wordRaColourStackWithMoves (colours stackStart : Nat)
+    (moves : List WordMove) (parents : NatInfoMap Nat) :
+    List Nat → WordRegGraph → WordRegGraph
+  | [], graph => graph
+  | node :: nodes, graph =>
+      let colour := wordRaChooseColourWithMoves colours stackStart moves
+        parents graph node
+      let graph := { graph with
+        tags := wordGraphUpdateTag node (.fixed colour) graph.tags }
+      wordRaColourStackWithMoves colours stackStart moves parents nodes graph
+
+def wordColourGraphWithWorklistAndMoves (colours stackStart : Nat)
+    (moves : List WordMove) (parents : NatInfoMap Nat)
+    (graph : WordRegGraph) : WordRegGraph :=
+  let state := wordRaInit colours graph
+  let state := wordRaSimplifyAll (state.active.length + 1) colours state
+  let state := wordRaFinalizeStemps state
+  wordRaColourStackWithMoves colours stackStart (wordSortMoves moves) parents
+    state.stack state.graph
+
 structure WordMoveState where
   graph : WordRegGraph
   parents : NatInfoMap Nat
@@ -945,12 +1014,14 @@ def wordRaSimplifyAllWithSpillCosts : Nat → Nat → NatInfoMap Nat →
                 (wordRaRemoveNode colours chosen true state)
 
 def wordColourGraphWithWorklistAndSpillCosts (colours stackStart : Nat)
-    (costs : NatInfoMap Nat) (graph : WordRegGraph) : WordRegGraph :=
+    (costs : NatInfoMap Nat) (moves : List WordMove)
+    (parents : NatInfoMap Nat) (graph : WordRegGraph) : WordRegGraph :=
   let state := wordRaInit colours graph
   let state := wordRaSimplifyAllWithSpillCosts
     (state.active.length + 1) colours costs state
   let state := wordRaFinalizeStemps state
-  wordRaColourStack colours stackStart state.stack state.graph
+  wordRaColourStackWithMoves colours stackStart (wordSortMoves moves) parents
+    state.stack state.graph
 
 def wordAllocateGraphWithSpillCosts (tree : WordClashTree)
     (forced : List (Nat × Nat)) (fixedSources : List Nat)
@@ -958,12 +1029,12 @@ def wordAllocateGraphWithSpillCosts (tree : WordClashTree)
     (costs : NatInfoMap Nat) : Option WordGraphAllocation :=
   let input := wordInitRegAlloc tree forced fixedSources
   let costs := wordSpillCostsToNodes input.bijection costs
-  let moveState := wordInitMoveStateWithColours colours input.graph
-    (wordRemapMoves input.bijection (wordPreferenceMoves moves))
+  let moves := wordRemapMoves input.bijection (wordPreferenceMoves moves)
+  let moveState := wordInitMoveStateWithColours colours input.graph moves
   let moveState := wordCoalesceAllAvailable colours moveState
   let moveState := wordFreezeAllAvailable colours moveState
-  let graph := wordColourGraphWithWorklistAndSpillCosts colours stackStart costs
-    moveState.graph
+  let graph := wordColourGraphWithWorklistAndSpillCosts colours stackStart costs moves
+    moveState.parents moveState.graph
   let colouring := wordGraphTotalColouring input graph moveState.parents
   let colour := wordGraphColouringAt colouring
   if wordGraphTagsAreFixed graph &&
@@ -983,12 +1054,12 @@ def wordAllocateGraphWithPrioritizedMovesAndSpillCosts (tree : WordClashTree)
     (moves : List WordMove) (colours stackStart : Nat)
     (costs : NatInfoMap Nat) : Option WordGraphAllocation :=
   let input := wordInitRegAlloc tree forced fixedSources
-  let moveState := wordInitMoveStateWithColours colours input.graph
-    (wordRemapMoves input.bijection moves)
+  let moves := wordRemapMoves input.bijection moves
+  let moveState := wordInitMoveStateWithColours colours input.graph moves
   let moveState := wordCoalesceAllAvailable colours moveState
   let moveState := wordFreezeAllAvailable colours moveState
-  let graph := wordColourGraphWithWorklistAndSpillCosts colours stackStart costs
-    moveState.graph
+  let graph := wordColourGraphWithWorklistAndSpillCosts colours stackStart costs moves
+    moveState.parents moveState.graph
   let colouring := wordGraphTotalColouring input graph moveState.parents
   let colour := wordGraphColouringAt colouring
   if wordGraphTagsAreFixed graph &&
@@ -1042,11 +1113,12 @@ def wordAllocateGraph (tree : WordClashTree)
     (moves : List (Nat × Nat)) (colours stackStart : Nat) :
     Option WordGraphAllocation :=
   let input := wordInitRegAlloc tree forced fixedSources
-  let moveState := wordInitMoveStateWithColours colours input.graph
-    (wordRemapMoves input.bijection (wordPreferenceMoves moves))
+  let moves := wordRemapMoves input.bijection (wordPreferenceMoves moves)
+  let moveState := wordInitMoveStateWithColours colours input.graph moves
   let moveState := wordCoalesceAllAvailable colours moveState
   let moveState := wordFreezeAllAvailable colours moveState
-  let graph := wordColourGraphWithWorklist colours stackStart moveState.graph
+  let graph := wordColourGraphWithWorklistAndMoves colours stackStart moves
+    moveState.parents moveState.graph
   let colouring := wordGraphTotalColouring input graph moveState.parents
   let colour := wordGraphColouringAt colouring
   if wordGraphTagsAreFixed graph &&
@@ -1066,11 +1138,12 @@ def wordAllocateGraphWithPrioritizedMoves (tree : WordClashTree)
     (moves : List WordMove) (colours stackStart : Nat) :
     Option WordGraphAllocation :=
   let input := wordInitRegAlloc tree forced fixedSources
-  let moveState := wordInitMoveStateWithColours colours input.graph
-    (wordRemapMoves input.bijection moves)
+  let moves := wordRemapMoves input.bijection moves
+  let moveState := wordInitMoveStateWithColours colours input.graph moves
   let moveState := wordCoalesceAllAvailable colours moveState
   let moveState := wordFreezeAllAvailable colours moveState
-  let graph := wordColourGraphWithWorklist colours stackStart moveState.graph
+  let graph := wordColourGraphWithWorklistAndMoves colours stackStart moves
+    moveState.parents moveState.graph
   let colouring := wordGraphTotalColouring input graph moveState.parents
   let colour := wordGraphColouringAt colouring
   if wordGraphTagsAreFixed graph &&
