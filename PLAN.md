@@ -1708,6 +1708,8 @@ definitions, pass ordering, examples, and proof obligations.
   selection, and ECALL emission.
 - [x] Prove the Lab-level FFI-to-machine boundary: service materialization
   followed by ECALL agrees with the FFI host transition.
+- [x] Lift the Lab FFI machine boundary through singleton section
+  compilation, hiding label collection and code-shape normalization.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 - [x] Expose location-aware bitmap sequence compilation and evaluator

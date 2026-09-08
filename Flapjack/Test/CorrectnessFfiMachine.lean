@@ -45,6 +45,20 @@ example :
   simp [ffiMachineHost]
 
 example :
+    (compileLabSection ({ services := [("echo", 7)] } : WordFfiContext)
+      ⟨2, [.labAsm (.callFfi "echo") [] 0]⟩).bind
+        (executeInstructionsWithFfi ffiMachineHost ffiMachineState) =
+      some (executeInstructions ffiMachineState
+        [.addi 14 0 (BitVec.ofNat 64 7)]) := by
+  apply compileLabSection_callFfi_execute_agreement
+    ({ services := [("echo", 7)] } : WordFfiContext)
+    ffiMachineHost ffiMachineState 2 "echo" 7
+    (some (executeInstructions ffiMachineState
+      [.addi 14 0 (BitVec.ofNat 64 7)]))
+  all_goals try decide
+  simp [ffiMachineHost]
+
+example :
     (wordFfiToRiscV ({ services := [("echo", 7)] } : WordFfiContext)
       "echo" 2 3 4 5).bind (fun code =>
         (executeInstructionsWithFfi ffiMachineHost ffiMachineState code).map
