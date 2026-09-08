@@ -583,6 +583,8 @@ definitions, pass ordering, examples, and proof obligations.
   relation while materializing a spilled source through `scratch`.
 - [x] Prove shared-load lowering preserves unrelated mapped values while
   reading through a spilled address from the separate shared-memory state.
+- [x] Lift the existing division value theorem with a full location-matrix
+  non-interference contract for unrelated spill and register values.
 - [x] Expose soundness of the entry-aware SSA spill allocator, including its
   clash, special-location, and clash-tree checks.
 - [x] Expose location coverage for every variable in the entry-aware SSA spill

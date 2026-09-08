@@ -56,6 +56,8 @@ import Flapjack.RiscV.CorrectnessSetSpill
 import Flapjack.Test.SetSpillRelation
 import Flapjack.RiscV.CorrectnessSharedLoadSpill
 import Flapjack.Test.SharedLoadSpillRelation
+import Flapjack.RiscV.CorrectnessDivSpill
+import Flapjack.Test.DivSpillRelation
 
 /-!
 # Flapjack regression tests
