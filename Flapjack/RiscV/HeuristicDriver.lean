@@ -167,4 +167,77 @@ theorem wordAllocateFunctionWithOracleOrHeuristicOrSpillEntry_graph_sound
                       colours stackStart graphState graphParameters
                       graphAllocation graphProgram hgraph
 
+theorem wordAllocateFunctionWithOracleOrHeuristicOrSpillEntry_oracle_sound
+    (parameters : List Nat) (program : WordProg α)
+    (fixedSources : List Nat)
+    (algorithm currentFunction colours stackStart : Nat)
+    (oracle : NatInfoMap Nat) (state : WordSsaState)
+    (renamedParameters : List Nat) (renamedProgram : WordProg α)
+    (halloc :
+      wordAllocateFunctionWithOracleOrHeuristicOrSpillEntry parameters program
+        fixedSources algorithm currentFunction colours stackStart oracle =
+        some (.oracle state renamedParameters renamedProgram)) :
+    wordOracleColouringOk colours stackStart
+      (WordClashTree.seq
+        (.set (wordSsaRenameFunctionWithEntry parameters program).2.fst)
+        (wordClashTree (wordSsaRenameFunctionWithEntry parameters program).2.snd []))
+      (wordProgForcedClashes
+        (wordSsaRenameFunctionWithEntry parameters program).2.snd) oracle = true := by
+  simp [wordAllocateFunctionWithOracleOrHeuristicOrSpillEntry] at halloc
+  split at halloc
+  · assumption
+  · cases hgraph : wordAllocateGraphFunctionWithHeuristicsEntryRenamed parameters
+      program fixedSources algorithm currentFunction colours stackStart with
+    | some value => simp [hgraph] at halloc
+    | none =>
+        cases hspill :
+            wordAllocateSsaFunctionWithEntryAndClashTreeWithSpillsAndPreferences
+              parameters program with
+        | none => simp [hgraph, hspill] at halloc
+        | some value => simp [hgraph, hspill] at halloc
+
+theorem wordAllocateFunctionWithOracleOrHeuristicOrSpillEntry_spill_sound
+    (parameters : List Nat) (program : WordProg α)
+    (fixedSources : List Nat)
+    (algorithm currentFunction colours stackStart : Nat)
+    (oracle : NatInfoMap Nat) (state : WordSsaState)
+    (renamedParameters : List Nat) (allocation : WordSpillState)
+    (renamedProgram : WordProg α)
+    (halloc :
+      wordAllocateFunctionWithOracleOrHeuristicOrSpillEntry parameters program
+        fixedSources algorithm currentFunction colours stackStart oracle =
+        some (.spill state renamedParameters allocation renamedProgram)) :
+    wordSpillAllocationRespectsClashes
+        (wordClashTreeAnalyze
+          (wordClashTree (wordSsaRenameFunctionWithEntry parameters program).2.snd [])
+          []).snd allocation.locations = true ∧
+      wordProgSpecialLocationsSafe allocation.locations
+        (wordSsaRenameFunctionWithEntry parameters program).2.snd = true ∧
+      wordSpillClashTreeChecked
+        (wordClashTree (wordSsaRenameFunctionWithEntry parameters program).2.snd [])
+        allocation.locations = true := by
+  simp [wordAllocateFunctionWithOracleOrHeuristicOrSpillEntry] at halloc
+  split at halloc
+  · simp_all
+  · cases hgraph : wordAllocateGraphFunctionWithHeuristicsEntryRenamed parameters
+      program fixedSources algorithm currentFunction colours stackStart with
+    | some value => simp [hgraph] at halloc
+    | none =>
+        cases hspill :
+            wordAllocateSsaFunctionWithEntryAndClashTreeWithSpillsAndPreferences
+              parameters program with
+        | none => simp [hgraph, hspill] at halloc
+        | some value =>
+            cases value with
+            | mk spillState rest =>
+                cases rest with
+                | mk spillParameters rest =>
+                    cases rest with
+                    | mk spillProgram spillAllocation =>
+                        simp [hgraph, hspill] at halloc
+                        rcases halloc with ⟨rfl, rfl, rfl, rfl⟩
+                        exact wordAllocateSsaFunctionWithEntryAndClashTreeWithSpillsAndPreferences_sound
+                          parameters program spillState spillParameters spillProgram
+                          spillAllocation hspill
+
 end Flapjack
