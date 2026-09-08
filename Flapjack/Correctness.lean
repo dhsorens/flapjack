@@ -692,6 +692,33 @@ theorem compilePanToLoop_ite_equal_const_correct
   all_goals rfl
 
 /-!
+This environment-sensitive bridge follows CakeML's slot allocation: a source
+local assignment is lowered to its declared Crepe slot, and the subsequent
+source-local return reads the same slot through the Loop evaluator.
+-/
+theorem compilePanToLoop_local_assign_return_const_correct
+    [BEq α] [OfNat α 0] [OfNat α 1] [Add α] [Mul α] [Div α]
+    [Sub α] [AndOp α] [OrOp α] [HXor α α α] [ShiftLeft α] [ShiftRight α]
+    [LT α] [DecidableRel (fun left right : α => left < right)]
+    (compileContext : CompileContext α) (loopContext : LoopContext α)
+    (live : List Nat) (state : LoopState α) (name : VarName) (slot : Nat)
+    (value : α)
+    (lookup : lookupInfo name compileContext.vars = some (.one, [slot])) :
+    (evalLoopProg 30 state
+      (loopCompileProg loopContext live
+        (compileProg compileContext
+          (.seq (.assign .local name (.const value))
+            (.return (.var .local name)))))).map loopResultValues =
+      (evalPanStateProg (fun _ => none)
+        (.seq (.assign .local name (.const value))
+          (.return (.var .local name)))).map Prod.snd := by
+  simp [compileProg, compileExp, crepNestedSeq, loopCompileProg, loopCompileExp,
+    loopCompileExp.loopCompileExps, loopCompileExps, loopNestedSeq,
+    loopTempNames, loopAssignTemps, evalLoopProg, evalLoopExp,
+    loopReadLocals, updateLoopLocal, updatePanLocal, loopResultValues,
+    evalPanStateProg, evalPanExp, lookup, distinctLists]
+
+/-!
 The first compositional bridge between the Loop and Word semantic states.
 Only the destination register is observed here; the full state relation will
 add globals, memory, live-register preservation, and control results as the

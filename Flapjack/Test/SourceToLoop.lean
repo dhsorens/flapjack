@@ -133,4 +133,32 @@ theorem sourceToLoop_conditional_false_executes :
         some [BitVec.ofNat 64 22] := by
   decide +kernel
 
+def sourceToLoopLocalCompileContext : CompileContext (RiscV.Word 64) :=
+  { vars := [("x", (.one, [1]))], functions := [], exceptions := [],
+    maxVar := 0, bytesInWord := BitVec.ofNat 64 8 }
+
+def sourceToLoopLocalProgram : Prog (RiscV.Word 64) :=
+  .seq (.assign .local "x" (.const (BitVec.ofNat 64 42)))
+    (.return (.var .local "x"))
+
+theorem sourceToLoop_local_assign_return_simulation :
+    (evalLoopProg 30 sourceToLoopState
+      (loopCompileProg sourceToLoopLoopContext []
+        (compileProg sourceToLoopLocalCompileContext
+          sourceToLoopLocalProgram))).map loopResultValues =
+      (evalPanStateProg (fun _ => none) sourceToLoopLocalProgram).map
+        Prod.snd := by
+  exact compilePanToLoop_local_assign_return_const_correct
+    sourceToLoopLocalCompileContext sourceToLoopLoopContext []
+    sourceToLoopState "x" 1 (BitVec.ofNat 64 42)
+    (by simp [sourceToLoopLocalCompileContext, lookupInfo])
+
+theorem sourceToLoop_local_assign_return_executes :
+    (evalLoopProg 30 sourceToLoopState
+      (loopCompileProg sourceToLoopLoopContext []
+        (compileProg sourceToLoopLocalCompileContext
+          sourceToLoopLocalProgram))).map loopResultValues =
+        some [BitVec.ofNat 64 42] := by
+  decide +kernel
+
 end Flapjack
