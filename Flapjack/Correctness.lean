@@ -634,6 +634,64 @@ theorem compilePanToLoop_return_mul_const_correct
     evalPanProg, evalPanExp]
 
 /-!
+Comparison lowering materializes both operands and executes the selected
+condition in a Loop ite.  This equality case is the first source-to-Loop
+bridge that checks the generated control flow as well as expression values.
+-/
+theorem compilePanToLoop_return_equal_const_correct
+    [BEq α] [OfNat α 0] [OfNat α 1] [Add α] [Mul α] [Div α]
+    [Sub α] [AndOp α] [OrOp α] [HXor α α α] [ShiftLeft α] [ShiftRight α]
+    [LT α] [DecidableRel (fun left right : α => left < right)]
+    (compileContext : CompileContext α) (loopContext : LoopContext α)
+    (live : List Nat) (state : LoopState α) (left right : α) :
+    (evalLoopProg 30 state
+      (loopCompileProg loopContext live
+        (compileProg compileContext
+          (.return (.cmp .equal (.const left) (.const right)))))).map
+        loopResultValues =
+      evalPanProg (fun _ => none)
+        (.return (.cmp .equal (.const left) (.const right))) := by
+  simp [compileProg, compileExp, loopCompileProg, loopCompileExp,
+    loopCompileExp.loopCompileExps, loopCompileExps, loopNestedSeq,
+    loopTempNames, loopAssignTemps, evalLoopProg, evalLoopExp,
+    evalLoopCondition, loopReadLocals, updateLoopLocal, evalPanProg,
+    evalPanExp, evalPanCmp]
+  by_cases h : left == right <;>
+    simp [h, updateLoopLocal]
+  all_goals rfl
+
+/-!
+The previous comparison bridge is used here as a condition: compiling a
+constant Pancake conditional must materialize the comparison, branch in Loop,
+and then preserve the selected return value.
+-/
+theorem compilePanToLoop_ite_equal_const_correct
+    [BEq α] [LawfulBEq α] [OfNat α 0] [OfNat α 1] [Add α] [Mul α] [Div α]
+    [Sub α] [AndOp α] [OrOp α] [HXor α α α] [ShiftLeft α] [ShiftRight α]
+    [LT α] [DecidableRel (fun left right : α => left < right)]
+    (compileContext : CompileContext α) (loopContext : LoopContext α)
+    (live : List Nat) (state : LoopState α)
+    (conditionLeft conditionRight thenValue elseValue : α)
+    (one_ne_zero : (1 : α) ≠ 0) :
+    (evalLoopProg 60 state
+      (loopCompileProg loopContext live
+        (compileProg compileContext
+          (.ite (.cmp .equal (.const conditionLeft) (.const conditionRight))
+            (.return (.const thenValue)) (.return (.const elseValue)))))).map
+        loopResultValues =
+      evalPanProg (fun _ => none)
+        (.ite (.cmp .equal (.const conditionLeft) (.const conditionRight))
+          (.return (.const thenValue)) (.return (.const elseValue))) := by
+  simp [compileProg, compileExp, loopCompileProg, loopCompileExp,
+    loopCompileExp.loopCompileExps, loopCompileExps, loopNestedSeq,
+    loopTempNames, loopAssignTemps, evalLoopProg, evalLoopExp,
+    evalLoopCondition, loopReadLocals, updateLoopLocal, evalPanProg,
+    evalPanExp, evalPanCondition]
+  by_cases h : conditionLeft == conditionRight <;>
+    simp [h, one_ne_zero, updateLoopLocal]
+  all_goals rfl
+
+/-!
 The first compositional bridge between the Loop and Word semantic states.
 Only the destination register is observed here; the full state relation will
 add globals, memory, live-register preservation, and control results as the
