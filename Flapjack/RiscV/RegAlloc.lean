@@ -1279,6 +1279,19 @@ def wordRaSimplifyAllWithSpillCosts : Nat → Nat → NatInfoMap Nat →
               wordRaSimplifyAllWithSpillCosts fuel colours costs
                 (wordRaRemoveNode colours chosen true state)
 
+def wordMoveSpillAllWithCosts : Nat → Nat → NatInfoMap Nat →
+    WordMoveState → WordMoveState
+  | 0, _, _, state => state
+  | fuel + 1, colours, costs, state =>
+      match state.spillWl with
+      | [] => state
+      | node :: nodes =>
+          let chosen := wordRaChooseSpillNode costs state.degrees node nodes
+          let state := wordMoveSpillNode chosen state
+          let state := wordMovePrefreeze colours state
+          let state := wordFreezeAllAvailable colours state
+          wordMoveSpillAllWithCosts fuel colours costs state
+
 def wordColourGraphWithWorklistAndSpillCostsFromStack (colours stackStart : Nat)
     (costs : NatInfoMap Nat) (moves : List WordMove)
     (parents : NatInfoMap Nat) (preStack : List Nat)
@@ -1321,6 +1334,74 @@ def wordAllocateGraphWithSpillCosts (tree : WordClashTree)
         parents := moveState.parents }
   else
     none
+
+def wordGraphCheckAllocation (tree : WordClashTree)
+    (candidate : WordGraphAllocation) : Option WordGraphAllocation :=
+  let colour := wordGraphColouringAt candidate.colouring
+  if wordGraphTagsAreFixed candidate.graph &&
+      wordGraphColouringRespectsEdges candidate.graph &&
+      (wordClashTreeCheck colour tree [] []).isSome then
+    some candidate
+  else
+    none
+
+theorem wordGraphCheckAllocation_sound
+    (tree : WordClashTree) (allocation : WordGraphAllocation)
+    (hcheck : wordGraphCheckAllocation tree allocation = some allocation) :
+    wordGraphTagsAreFixed allocation.graph = true ∧
+      wordGraphColouringRespectsEdges allocation.graph = true ∧
+      (wordClashTreeCheck (wordGraphColouringAt allocation.colouring)
+        tree [] []).isSome = true := by
+  have hcheck' :
+      wordGraphTagsAreFixed allocation.graph = true ∧
+        wordGraphColouringRespectsEdges allocation.graph = true ∧
+        wordClashTreeCheck (wordGraphColouringAt allocation.colouring)
+          tree [] [] ≠ none := by
+    simpa [wordGraphCheckAllocation] using hcheck
+  rcases hcheck' with ⟨hfixed, hedges, hnotnone⟩
+  have htree :
+      (wordClashTreeCheck (wordGraphColouringAt allocation.colouring)
+        tree [] []).isSome = true := by
+    cases hresult : wordClashTreeCheck
+        (wordGraphColouringAt allocation.colouring) tree [] [] with
+    | none => exact (hnotnone hresult).elim
+    | some value => simp
+  exact ⟨hfixed, hedges, htree⟩
+
+def wordAllocateGraphWithPrefreezeMovesAndSpillCostsCandidate
+    (tree : WordClashTree) (forced : List (Nat × Nat))
+    (fixedSources : List Nat) (coalesceMoves colourMoves : List WordMove)
+    (colours stackStart : Nat) (spillCosts : NatInfoMap Nat) :
+    WordGraphAllocation :=
+  let input := wordInitRegAlloc tree forced fixedSources
+  let costs := wordSpillCostsToNodes input.bijection spillCosts
+  let coalesceMoves := wordRemapMoves input.bijection coalesceMoves
+  let colourMoves := wordRemapMoves input.bijection colourMoves
+  let initial := wordRaInitialSimplify colours input.graph
+  let moveState := wordInitMoveStateWithColoursFromStack colours input.graph
+    coalesceMoves initial.stack
+  let moveState := wordCoalesceAllAvailable colours moveState
+  let moveState := wordMovePrefreeze colours moveState
+  let moveState := wordFreezeAllAvailable colours moveState
+  let moveState := wordMoveSpillAllWithCosts
+    (moveState.active.length + 1) colours costs moveState
+  let graph := wordColourGraphWithWorklistAndSpillCostsFromStack colours stackStart
+    costs colourMoves moveState.parents moveState.stack moveState.graph
+  let colouring := wordGraphTotalColouring input graph moveState.parents
+  { bijection := input.bijection
+    initialTags := input.graph.tags
+    graph := graph
+    colouring := colouring
+    parents := moveState.parents }
+
+def wordAllocateGraphWithPrefreezeMovesAndSpillCosts
+    (tree : WordClashTree) (forced : List (Nat × Nat))
+    (fixedSources : List Nat) (coalesceMoves colourMoves : List WordMove)
+    (colours stackStart : Nat) (spillCosts : NatInfoMap Nat) :
+    Option WordGraphAllocation :=
+  let candidate := wordAllocateGraphWithPrefreezeMovesAndSpillCostsCandidate
+    tree forced fixedSources coalesceMoves colourMoves colours stackStart spillCosts
+  wordGraphCheckAllocation tree candidate
 
 def wordAllocateGraphWithPrioritizedMovesAndSpillCosts (tree : WordClashTree)
     (forced : List (Nat × Nat)) (fixedSources : List Nat)
