@@ -39,12 +39,11 @@ theorem sourceToLoop_ffi_simulation :
           | _ => []) := by
   native_decide
 
-theorem sourceToLoop_ffi_executes :
+#guard
     (do
       let (_, main) ← lookupLoopFunction 2 sourceFfiPipeline.pipeline.loop
       let result ← evalLoopProgWithCallsAndFfi sourceFfiPipeline.pipeline.loop
         sourceToLoopFfiHandler 60 sourceToLoopFfiState main
-      pure (loopResultValues result)) = some [BitVec.ofNat 64 42] := by
-  native_decide
+      pure (loopResultValues result)) = some [BitVec.ofNat 64 42]
 
 end Flapjack

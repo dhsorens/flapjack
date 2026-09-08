@@ -49,15 +49,11 @@
 # Supplies a proof term to the surrounding proof, so `#guard` does not apply.
 1 Flapjack/Test/AllocatorSpills.lean
 
-# --- Pending removal ---------------------------------------------------------
-# These two are listed only so this check passes whichever way the open PRs
-# merge. The conversions in the companion PR take three of them to `decide`
-# and two to `#guard`; once it lands, both lines drop to zero and should be
-# deleted. Until then the check will pass here, and afterwards it will print a
-# "please lower" note rather than failing.
-#
-# For the record, the blocker in AllocatorRegAlloc.lean is `wordClashTree`
-# applied to an expression program -- `.move` programs carry no expression to
-# recurse into and reduce fine.
-3 Flapjack/RiscV/CorrectnessFfiMachine.lean
-3 Flapjack/Test/AllocatorRegAlloc.lean
+# --- Source-to-Loop FFI agreement ------------------------------------------
+# `sourceToLoop_ffi_simulation` relates Loop evaluation to Pan evaluation
+# across an FFI call. Same `compileExp` stall as above; `decide` and
+# `decide +kernel` both fail. Kept as a theorem rather than a `#guard`
+# because it states an agreement between two semantics, not a single
+# execution outcome -- the companion `sourceToLoop_ffi_executes` was the
+# execution check and is now a `#guard`.
+1 Flapjack/Test/SourceToLoopFfi.lean
