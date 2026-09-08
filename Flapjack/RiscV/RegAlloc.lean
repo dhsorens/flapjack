@@ -1437,6 +1437,35 @@ def wordAllocateGraph (tree : WordClashTree)
   else
     none
 
+/-! The graph allocator performs a prefreeze repair between coalescing and
+    freezing.  Keep this entry point separate from `wordAllocateGraph` so the
+    existing graph-colouring contract keeps its small unfolding proofs. -/
+def wordAllocateGraphWithPrefreeze (tree : WordClashTree)
+    (forced : List (Nat × Nat)) (fixedSources : List Nat)
+    (moves : List (Nat × Nat)) (colours stackStart : Nat) :
+    Option WordGraphAllocation :=
+  let input := wordInitRegAlloc tree forced fixedSources
+  let moves := wordRemapMoves input.bijection (wordPreferenceMoves moves)
+  let moveState := wordInitMoveStateWithColours colours input.graph moves
+  let moveState := wordCoalesceAllAvailable colours moveState
+  let moveState := wordMovePrefreeze colours moveState
+  let moveState := wordFreezeAllAvailable colours moveState
+  let graph := wordColourGraphWithWorklistAndMovesFromStack colours stackStart moves
+    moveState.parents moveState.stack moveState.graph
+  let colouring := wordGraphTotalColouring input graph moveState.parents
+  let colour := wordGraphColouringAt colouring
+  if wordGraphTagsAreFixed graph &&
+      wordGraphColouringRespectsEdges graph &&
+      (wordClashTreeCheck colour tree [] []).isSome then
+    some
+      { bijection := input.bijection
+        initialTags := input.graph.tags
+        graph := graph
+        colouring := colouring
+        parents := moveState.parents }
+  else
+    none
+
 def wordAllocateGraphWithPrioritizedMoves (tree : WordClashTree)
     (forced : List (Nat × Nat)) (fixedSources : List Nat)
     (moves : List WordMove) (colours stackStart : Nat) :
@@ -1721,5 +1750,32 @@ def wordAllocateGraphFunctionWithStackOnlyRenamed (parameters : List Nat)
       moves colours stackStart).map
     (fun allocation =>
       (state, renamedParameters, allocation, renamedProgram))
+
+def wordAllocateGraphFunctionWithStackOnlyPrefreezeRenamed (parameters : List Nat)
+    (program : WordProg α) (fixedSources : List Nat) (colours stackStart : Nat) :
+    Option (WordSsaState × List Nat × WordGraphAllocation × WordProg α) :=
+  let (state, renamedParameters, renamedProgram) :=
+    wordSsaRenameFunction parameters program
+  let stackOnly := wordStackOnly renamedProgram
+  let tree := WordClashTree.seq (.set renamedParameters)
+    (wordClashTree renamedProgram [])
+  let forced := wordProgForcedClashes renamedProgram
+  let moves := wordProgPreferenceEdges renamedProgram
+  (wordAllocateGraphWithPrefreeze tree forced
+      (wordStackOnlyUnion fixedSources stackOnly.forced)
+      moves colours stackStart).map
+    (fun allocation => (state, renamedParameters, allocation, renamedProgram))
+
+def wordAllocateGraphFunctionWithEntryPrefreezeRenamed (parameters : List Nat)
+    (program : WordProg α) (fixedSources : List Nat) (colours stackStart : Nat) :
+    Option (WordSsaState × List Nat × WordGraphAllocation × WordProg α) :=
+  let (state, renamedParameters, renamedProgram) :=
+    wordSsaRenameFunctionWithEntry parameters program
+  let tree := WordClashTree.seq (.set renamedParameters)
+    (wordClashTree renamedProgram [])
+  let forced := wordProgForcedClashes renamedProgram
+  let moves := wordProgPreferenceEdges renamedProgram
+  (wordAllocateGraphWithPrefreeze tree forced fixedSources moves colours stackStart).map
+    (fun allocation => (state, renamedParameters, allocation, renamedProgram))
 
 end Flapjack

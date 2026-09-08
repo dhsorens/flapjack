@@ -594,6 +594,8 @@ definitions, pass ordering, examples, and proof obligations.
   retire moves touching nodes already placed on the allocator stack.
 - [x] Port and test CakeML do_prefreeze cleanup: retire invalid unavailable
   moves and simplify newly non-move-related low-degree nodes before freezing.
+- [x] Wire the prefreeze worklist phase into both graph-backed Word-to-Stack
+  pipelines while retaining the original allocator API for existing proofs.
 - [x] Expose the ABI-correct full-SSA spill allocator at the location-aware
   Word-to-Stack entry boundary, retaining renamed parameters and allocation slots.
 - [x] Port CakeML odd-mode spill-cost candidate selection into the graph

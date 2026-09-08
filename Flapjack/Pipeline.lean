@@ -310,7 +310,7 @@ def pipelineWordFunctionsAllocatedWithGraph [NeZero width] :
       let wordParameters := parameters.map (fun name => name + 2)
       let unallocatedBody := loopToWordProg context body
       let (_, renamedParameters, allocation, renamedBody) ←
-        wordAllocateGraphFunctionWithStackOnlyRenamed wordParameters unallocatedBody
+        wordAllocateGraphFunctionWithStackOnlyPrefreezeRenamed wordParameters unallocatedBody
           [] 13 14
       let config : RiscV.WordStackConfig :=
         { locations := wordGraphLocations allocation 13 14
@@ -336,7 +336,7 @@ def pipelineWordFunctionsAllocatedWithGraphAndFullSsa [NeZero width] :
       let wordParameters := parameters.map (fun name => name + 2)
       let unallocatedBody := loopToWordProg context body
       let (_, renamedParameters, allocation, renamedProgram) ←
-        wordAllocateGraphFunctionWithEntryRenamed wordParameters unallocatedBody
+        wordAllocateGraphFunctionWithEntryPrefreezeRenamed wordParameters unallocatedBody
           wordParameters 13 14
       let config : RiscV.WordStackConfig :=
         { locations := wordGraphLocations allocation 13 14

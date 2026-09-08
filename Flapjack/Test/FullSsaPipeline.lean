@@ -36,6 +36,10 @@ def fullSsaMainGraphImage : Option (List (RiscV.Instruction 64)) :=
       [(0, [0], (.assign 1 (.var 0) : LoopProg (RiscV.Word 64))) ]).isSome
 
 #guard
+    (wordAllocateGraphFunctionWithEntryPrefreezeRenamed [2]
+      (.assign 3 (.var 2) : WordProg (RiscV.Word 64)) [2] 13 14).isSome
+
+#guard
     (pipelineWordFunctionsAllocatedWithSpillsAndFullSsa
       [(0, [0], (.assign 1 (.var 0) : LoopProg (RiscV.Word 64))) ]).isSome
 

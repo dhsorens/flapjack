@@ -58,6 +58,10 @@ example [NeZero width] :
     (pipelineWordFunctionsAllocatedWithGraph
       [(0, [0], (.assign 1 (.var 0) : LoopProg (RiscV.Word 64))) ]).isSome
 
+#guard
+    (wordAllocateGraphFunctionWithStackOnlyPrefreezeRenamed [2]
+      (.assign 3 (.var 2) : WordProg (RiscV.Word 64)) [] 13 14).isSome
+
 example :
     RiscV.wordToStackFunctionWithParameters
         { locations := [(0, .stack 0)], scratch := 31, stackBase := 10 }
