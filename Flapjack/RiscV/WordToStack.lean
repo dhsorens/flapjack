@@ -2508,6 +2508,26 @@ def wordToStackFunctionWithGraphAllocationAndLocationBitmaps [NeZero width]
     StackLang entry point.  The allocation witness and renamed metadata are
     retained in the result so later linking and correctness layers can use
     the same graph proof that justified the locations. -/
+/-! Compose the ABI-correct full-SSA spill allocator with the location-aware
+    Word-to-Stack entry point.  This is the public bridge used before the
+    frame-machine proof consumes the generated program. -/
+def wordAllocateSsaFunctionWithEntryAndSpillToStack [NeZero width]
+    (config : WordStackConfig) (parameters : List Nat)
+    (program : WordProg (Word width))
+    (registerCount bitmapRegister frameSlots : Nat)
+    (storeConstsStub : Option Nat) (state : WordStackBitmapState) :
+    Option (WordSsaState × List Nat × WordProg (Word width) ×
+      WordSpillState × StackProg Nat × WordStackBitmapState) := do
+  let (ssaState, renamedParameters, renamedProgram, allocation) ←
+    wordAllocateSsaFunctionWithEntryAndClashTreeWithSpillsAndPreferencesFixed
+      parameters program
+  let (stackProgram, finalState) ←
+    wordToStackFunctionWithSpillStateAndLocationBitmaps config
+      renamedParameters allocation registerCount bitmapRegister frameSlots
+      storeConstsStub state renamedProgram
+  pure (ssaState, renamedParameters, renamedProgram, allocation,
+    stackProgram, finalState)
+
 def wordAllocateGraphFunctionWithStackOnlyToStack [NeZero width]
     (config : WordStackConfig) (parameters : List Nat)
     (program : WordProg (Word width)) (fixedSources : List Nat)

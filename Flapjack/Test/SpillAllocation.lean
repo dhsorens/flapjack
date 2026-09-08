@@ -32,6 +32,13 @@ example [NeZero width] (config : WordStackConfig) (parameters : List Nat)
         parameters registerCount bitmapRegister frameSlots storeConstsStub state program := by
   rfl
 
+/-! The full-SSA spill allocator also reaches the same location-aware entry. -/
+#guard
+    (wordAllocateSsaFunctionWithEntryAndSpillToStack
+      { locations := [], scratch := 31, stackBase := 0, addressScratch := 29 }
+      [2] (.skip : WordProg (Word 64)) 13 14 13 none
+      (wordStackInitialBitmaps false)).isSome = true
+
 /-! The graph allocator, rather than only its location-map adapter, reaches
 the bitmap-aware StackLang function entry point on a concrete function. -/
 #guard
