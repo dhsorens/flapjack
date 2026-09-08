@@ -351,6 +351,26 @@ def wordRaInitFromStack (colours : Nat) (preStack : List Nat)
       stack := preStack }
   wordRaRefreshWorklists colours state
 
+def wordRaPartitionBy (predicate : Nat → Bool) : List Nat →
+    List Nat × List Nat
+  | [] => ([], [])
+  | node :: nodes =>
+      let (yes, no) := wordRaPartitionBy predicate nodes
+      if predicate node then
+        (node :: yes, no)
+      else
+        (yes, node :: no)
+
+/- Move spill candidates that have become low degree into the simplify
+   worklist. This is the register-side part of CakeML unspill; move revival
+   is handled by WordMoveState after coalescing. -/
+def wordRaUnspill (colours : Nat) (state : WordRaState) : WordRaState :=
+  let (low, high) := wordRaPartitionBy (fun node =>
+    (lookupNatInfo node state.degrees).getD 0 < colours) state.spillWl
+  { state with
+    simpWl := low ++ state.simpWl
+    spillWl := high }
+
 def wordRaRemoveNode (colours : Nat) (node : Nat)
     (_forceSpill : Bool) (state : WordRaState) : WordRaState :=
   let graph := state.graph
@@ -369,7 +389,8 @@ def wordRaRemoveNode (colours : Nat) (node : Nat)
     simpWl := state.simpWl.erase node
     spillWl := state.spillWl.erase node
     stack := node :: state.stack }
-  wordRaRefreshWorklists colours state
+  wordRaUnspill colours state
+
 
 def wordRaChooseSpillNodeByDegree (degrees : NatInfoMap Nat) :
     Nat → List Nat → Nat

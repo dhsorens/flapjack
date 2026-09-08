@@ -78,6 +78,17 @@ example :
         (wordInitRegAlloc (.delta [1, 5] []) [] []).graph) = true := by
   decide +kernel
 
+example :
+    let graph : WordRegGraph :=
+      { adjacency := [], tags := [(0, .atemp), (1, .atemp)], dimension := 2 }
+    let state : WordRaState :=
+      { graph := graph, active := [0, 1],
+        degrees := [(0, 1), (1, 2)], simpWl := [],
+        spillWl := [0, 1], stack := [] }
+    let state := wordRaUnspill 2 state
+    state.simpWl = [0] ∧ state.spillWl = [1] := by
+  decide
+
 def moveWorklistGraph : WordRegGraph :=
   { adjacency := []
     tags := [(0, .atemp), (1, .atemp)]

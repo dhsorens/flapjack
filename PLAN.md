@@ -598,6 +598,8 @@ definitions, pass ordering, examples, and proof obligations.
   pipelines while retaining the original allocator API for existing proofs.
 - [x] Port unavailable-move revival after coalescing, including priority sorting
   and freeze-worklist refresh, with a focused regression.
+- [x] Make register-side unspill explicit: lower-degree spill candidates move
+  to the simplify worklist when graph nodes are removed.
 - [x] Expose the ABI-correct full-SSA spill allocator at the location-aware
   Word-to-Stack entry boundary, retaining renamed parameters and allocation slots.
 - [x] Port CakeML odd-mode spill-cost candidate selection into the graph
