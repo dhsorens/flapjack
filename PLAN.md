@@ -594,6 +594,8 @@ definitions, pass ordering, examples, and proof obligations.
   graph worklist, preserving checked allocation soundness.
 - [x] Remap source-keyed CakeML heuristic moves through the graph-node
   bijection before coalescing, coloring, and spill-aware allocation.
+- [x] Port CakeML get_stack_only exactly for Word Move, branch, loop, and
+  handler-aware call cases, with clash-tree fallback for ordinary instructions.
 - [x] Apply sorted CakeML move preferences during Atemp and Stemp graph
   coloring, with the existing safe fallback when no preference matches.
 - [x] Preserve CakeML allocation order by coloring all Atemps before the

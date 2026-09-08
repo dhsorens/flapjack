@@ -231,8 +231,13 @@ example :
 example :
     wordStackOnly
       ((.seq (.assign 5 (.var 7)) (.assign 3 (.var 5))) : WordProg Nat) =
-      { temporary := [5], forced := [5] } := by
-  decide
+      { temporary := [], forced := [] } := by
+  native_decide
+
+example :
+    wordStackOnly (.move 0 [(3, 5)] : WordProg Nat) =
+      { temporary := [5], forced := [] } := by
+  native_decide
 
 #guard
     (wordAllocateGraphFunctionWithStackOnly [2]
@@ -247,7 +252,7 @@ example :
 example :
     wordStackOnly (.assign 9 (.var 5) : WordProg Nat) =
       { temporary := [], forced := [] } := by
-  decide
+  native_decide
 
 #guard
     (wordAllocateGraphFunctionWithStackOnly [2]

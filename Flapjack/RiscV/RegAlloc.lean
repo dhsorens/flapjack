@@ -1541,24 +1541,19 @@ def wordStackOnlyMergeBranches (base left right : WordStackOnlyState) :
   { temporary := wordStackOnlyUnion keep newOnly
     forced := wordStackOnlyUnion left.forced right.forced }
 
-def wordStackOnlyTerminalVars (program : WordProg α) : List Nat :=
-  wordProgVariables program
+def wordStackOnlyFallback (program : WordProg α)
+      (state : WordStackOnlyState) : WordStackOnlyState :=
+  match wordClashTree program [] with
+  | .delta writes reads =>
+      wordStackOnlyRemoveTemps (writes ++ reads) state
+  | _ => state
 
 def wordStackOnlyProgramAux (program : WordProg α)
       (state : WordStackOnlyState) : WordStackOnlyState :=
     match program with
-    | .assign destination (.var source) =>
-        wordStackOnlyMergeMove destination source state
     | .move _ moves =>
-        moves.foldl (fun state move =>
-          wordStackOnlyMergeMove move.1 move.2 state) state
-    | .assign _ _ | .inst _ | .get _ _ | .store _ _ | .set _ _ | .raise _ |
-        .return _ _ | .tick | .locValue _ _ | .ffi _ _ _ _ _ _ |
-        .shareInst _ _ _ | .alloc _ _ | .storeConsts _ _ _ _ _ |
-        .opCurrHeap _ _ _ | .install _ _ _ _ _ | .codeBufferWrite _ _ |
-        .dataBufferWrite _ _ =>
-        wordStackOnlyRemoveTemps (wordStackOnlyTerminalVars program) state
-    | .skip => wordStackOnlyRemoveTemps [] state
+        List.foldr (fun move state =>
+          wordStackOnlyMergeMove move.1 move.2 state) state moves
     | .seq first second =>
         wordStackOnlyProgramAux first
           (wordStackOnlyProgramAux second state)
@@ -1572,17 +1567,22 @@ def wordStackOnlyProgramAux (program : WordProg α)
           | .imm _ => []
         wordStackOnlyRemoveTemps conditionNames merged
     | .loop _ body _ => wordStackOnlyProgramAux body state
-    | .break _ | .continue _ =>
-        wordStackOnlyRemoveTemps (wordStackOnlyTerminalVars program) state
-    | .call returns _ arguments handler =>
-        let state := match handler with
-          | none => state
-          | some (_, body, _, _) => wordStackOnlyProgramAux body state
-        let returnNames := match returns with
-          | none => []
-          | some (values, cutsets, _, _, _) =>
-              values ++ cutsets.1 ++ cutsets.2
-        wordStackOnlyRemoveTemps (arguments ++ returnNames) state
+    | .call returns _ _ handler =>
+        match returns with
+        | none => state
+        | some (_, _, returnHandler, _, _) =>
+            let returnState := wordStackOnlyProgramAux returnHandler state
+            match handler with
+            | none => returnState
+            | some (_, handlerBody, _, _) =>
+                let handlerState := wordStackOnlyProgramAux handlerBody state
+                wordStackOnlyMergeBranches state returnState handlerState
+    | .skip | .assign _ _ | .inst _ | .get _ _ | .store _ _ | .set _ _ |
+        .raise _ | .return _ _ | .tick | .locValue _ _ | .ffi _ _ _ _ _ _ |
+        .shareInst _ _ _ | .alloc _ _ | .storeConsts _ _ _ _ _ |
+        .opCurrHeap _ _ _ | .install _ _ _ _ _ | .codeBufferWrite _ _ |
+        .dataBufferWrite _ _ | .break _ | .continue _ =>
+        wordStackOnlyFallback program state
 
 def wordStackOnly (program : WordProg α) : WordStackOnlyState :=
   wordStackOnlyProgramAux program { temporary := [], forced := [] }
