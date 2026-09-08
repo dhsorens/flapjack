@@ -1695,6 +1695,9 @@ definitions, pass ordering, examples, and proof obligations.
   contracts for the spill-aware Word-to-Stack boundary.
 - [x] Expose location-aware bitmap handler-call and FFI lowering equations
   for the spill-aware Word-to-Stack correctness boundary.
+- [x] Compose a raised StackLang callee with generated handler-call setup,
+  argument transfer, exception-register write, and handler execution, with
+  explicit fuel accounting.
 - [x] Close the generated Word-to-Stack/StackRemove/LabLang FFI path with a
   machine-level RISC-V execution theorem, retaining the host transition as
   an explicit hypothesis.
