@@ -11,3 +11,9 @@ jobs:
     steps:
       - uses: actions/checkout@v5
       - uses: leanprover/lean-action@v1
+
+      - name: Check for new native_decide uses
+        run: ./scripts/check-native-decide.sh
+
+      - name: Check the build is warning-free
+        run: ./scripts/check-warnings.sh

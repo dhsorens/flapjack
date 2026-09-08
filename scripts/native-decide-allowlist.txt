@@ -1,0 +1,51 @@
+# Permitted `native_decide` uses, as `<count> <path>`.
+#
+# `native_decide` discharges a goal by compiling it and trusting the result,
+# which attaches a per-theorem axiom:
+#
+#   'viaNative' depends on axioms: [propext, Quot.sound, viaNative._native.native_decide.ax_1_1]
+#   'viaKernel' depends on axioms: [propext, Quot.sound]
+#
+# This file is a ceiling, not a target. Counts may go down freely; any
+# increase, or any use in a file not listed here, fails CI. When a count
+# drops the check says so and asks for this file to be lowered.
+#
+# Before adding an entry, try in order: `decide`; then `decide +kernel`, which
+# unfolds `termination_by` definitions the elaborator's `whnf` stalls on; then
+# `#guard <prop>` for an `example` or an uncited regression check, which keeps
+# the check but produces no proof term and so needs no axiom.
+
+# --- Cited pipeline shape theorems -------------------------------------------
+# Each runs the compiler over a program and compares the result to a literal,
+# and each is cited by a neighbouring proof via `rw [...]`, so the equation has
+# to exist as a theorem -- `#guard` cannot stand in. No tactic reaches them:
+# the term needs more unfolding of well-founded recursion than the kernel will
+# do, and `simp` stalls on `compileFlapjackRiscV` itself.
+5 Flapjack/Correctness.lean
+3 Flapjack/Test/CorrectnessTarget.lean
+
+# --- Named execution theorems ------------------------------------------------
+# These run a linked image on the RISC-V machine (`executeFunctionAt`,
+# `executeFunctionAtWithFfi`) or evaluate a compiled Loop program. Execution is
+# past what kernel reduction will unfold, so `native_decide` is what lets these
+# results be stated with a name at all.
+3 Flapjack/Test/FullSsaPipeline.lean
+1 Flapjack/Test/CorrectnessFfi.lean
+1 Flapjack/Test/SourceToLoop.lean
+
+# --- Nested `have` inside a larger proof -------------------------------------
+# Supplies a proof term to the surrounding proof, so `#guard` does not apply.
+1 Flapjack/Test/AllocatorSpills.lean
+
+# --- Pending removal ---------------------------------------------------------
+# These two are listed only so this check passes whichever way the open PRs
+# merge. The conversions in the companion PR take three of them to `decide`
+# and two to `#guard`; once it lands, both lines drop to zero and should be
+# deleted. Until then the check will pass here, and afterwards it will print a
+# "please lower" note rather than failing.
+#
+# For the record, the blocker in AllocatorRegAlloc.lean is `wordClashTree`
+# applied to an expression program -- `.move` programs carry no expression to
+# recurse into and reduce fine.
+3 Flapjack/RiscV/CorrectnessFfiMachine.lean
+3 Flapjack/Test/AllocatorRegAlloc.lean
