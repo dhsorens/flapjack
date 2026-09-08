@@ -83,6 +83,7 @@ import Flapjack.Test.LongMulSpillRelation
 import Flapjack.RiscV.CorrectnessDirectLongMul
 import Flapjack.RiscV.CorrectnessLongMulRegister
 import Flapjack.Test.LongMulRegisterRelation
+import Flapjack.RiscV.CorrectnessDirectLongMulRegister
 
 /-!
 # Flapjack regression tests
