@@ -602,6 +602,8 @@ definitions, pass ordering, examples, and proof obligations.
   under explicit scratch non-aliasing hypotheses.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware
   RISC-V contracts before claiming general call-aware allocation correctness.
+- [x] Package the entry-inclusive spill allocator's clash, special-location,
+  tree, variable-coverage, and ABI-parameter witnesses for downstream lowering.
 - [x] Thread coalescing and freeze stack entries into the subsequent Atemp/Stemp
   coloring phase, preserving CakeML's push_stack order.
 - [x] Initialize residual coloring over the active subgraph after prior stack
