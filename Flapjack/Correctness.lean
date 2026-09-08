@@ -719,6 +719,34 @@ theorem compilePanToLoop_local_assign_return_const_correct
     evalPanStateProg, evalPanExp, lookup, distinctLists]
 
 /-!
+Returning an existing source local requires an explicit state relation: the
+source name is resolved to its declared Crepe slot, and the Loop state must
+contain the same value at that slot.
+-/
+theorem compilePanToLoop_local_return_correct
+    [BEq α] [OfNat α 0] [OfNat α 1] [Add α] [Mul α] [Div α]
+    [Sub α] [AndOp α] [OrOp α] [HXor α α α] [ShiftLeft α] [ShiftRight α]
+    [LT α] [DecidableRel (fun left right : α => left < right)]
+    (compileContext : CompileContext α) (loopContext : LoopContext α)
+    (live : List Nat) (state : LoopState α) (locals : VarName → Option α)
+    (name : VarName) (slot : Nat)
+    (lookup : lookupInfo name compileContext.vars = some (.one, [slot]))
+    (environment_agrees : state.locals slot = locals name) :
+    (evalLoopProg 16 state
+      (loopCompileProg loopContext live
+        (compileProg compileContext (.return (.var .local name))))).map
+        loopResultValues =
+      (evalPanStateProg locals
+        (.return (.var .local name) : Prog α)).map Prod.snd := by
+  simp [compileProg, compileExp, loopCompileProg, loopCompileExp,
+    loopCompileExp.loopCompileExps, loopCompileExps, loopNestedSeq,
+    loopTempNames, loopAssignTemps, evalLoopProg, evalLoopExp,
+    loopReadLocals, evalPanStateProg,
+    evalPanExp, lookup, environment_agrees]
+  cases h : locals name <;>
+    simp [updateLoopLocal] <;> rfl
+
+/-!
 The first compositional bridge between the Loop and Word semantic states.
 Only the destination register is observed here; the full state relation will
 add globals, memory, live-register preservation, and control results as the
