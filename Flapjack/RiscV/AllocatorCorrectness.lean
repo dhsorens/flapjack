@@ -345,6 +345,45 @@ theorem wordAllocateSsaFunctionWithEntryAndClashTreeWithSpillsAndPreferences_map
   apply hslots name
   simp [hname]
 
+/-!
+Package the entry-inclusive spill allocator's independent obligations into the
+single witness consumed by the location-aware Word-to-Stack boundary.  This
+keeps callers from unfolding the allocator merely to recover its safety,
+coverage, and ABI-entry facts.
+-/
+theorem wordAllocateSsaFunctionWithEntryAndClashTreeWithSpillsAndPreferences_witness
+    (parameters : List Nat) (program : WordProg α)
+    (state : WordSsaState) (renamedParameters : List Nat)
+    (renamedProgram : WordProg α) (allocation : WordSpillState)
+    (halloc :
+      wordAllocateSsaFunctionWithEntryAndClashTreeWithSpillsAndPreferencesFixed
+        parameters program =
+        some (state, renamedParameters, renamedProgram, allocation)) :
+    wordSpillAllocationRespectsClashes
+        (wordClashTreeAnalyze
+          (wordClashTree
+            (wordSsaRenameFunctionWithEntry parameters program).2.snd [])
+          []).snd allocation.locations = true ∧
+      wordProgSpecialLocationsSafe allocation.locations
+        (wordSsaRenameFunctionWithEntry parameters program).2.snd = true ∧
+      wordSpillClashTreeChecked
+        (wordClashTree (wordSsaRenameFunctionWithEntry parameters program).2.snd [])
+        allocation.locations = true ∧
+      (∀ name, name ∈ wordProgVariables renamedProgram →
+        ∃ location, lookupNatInfo name allocation.locations = some location) ∧
+      (∀ name, name ∈ parameters →
+        lookupNatInfo name allocation.locations = some (.register name)) := by
+  have hsound :=
+    wordAllocateSsaFunctionWithEntryAndClashTreeWithSpillsAndPreferencesFixed_sound
+      parameters program state renamedParameters renamedProgram allocation halloc
+  have hvariables :=
+    wordAllocateSsaFunctionWithEntryAndClashTreeWithSpillsAndPreferencesFixed_maps_variables
+      parameters program state renamedParameters renamedProgram allocation halloc
+  have hparameters :=
+    wordAllocateSsaFunctionWithEntryAndClashTreeWithSpillsAndPreferencesFixed_preserves_parameters
+      parameters program state renamedParameters renamedProgram allocation halloc
+  exact ⟨hsound.1, hsound.2.1, hsound.2.2, hvariables, hparameters⟩
+
 def wordControlResultValues [NeZero width] :
     WordControlResult width → List (Word width)
   | .returned _ values => values
