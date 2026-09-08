@@ -13,7 +13,7 @@ theorem evalWordStackMachine_longMul_register_preserves_other_value [NeZero widt
     (config : WordStackConfig) (state final : WordStackMachineState width)
     (destinationLeft destinationRight sourceLeft sourceRight other : Nat)
     (destinationLeftRegister destinationRightRegister sourceLeftRegister
-      sourceRightRegister otherRegister : Nat)
+      sourceRightRegister : Nat) (otherLocation : WordLocation)
     (hdestinationLeft : wordStackLocation config destinationLeft =
       some (.register destinationLeftRegister))
     (hdestinationRight : wordStackLocation config destinationRight =
@@ -22,11 +22,11 @@ theorem evalWordStackMachine_longMul_register_preserves_other_value [NeZero widt
       some (.register sourceLeftRegister))
     (hsourceRight : wordStackLocation config sourceRight =
       some (.register sourceRightRegister))
-    (hother : wordStackLocation config other = some (.register otherRegister))
+    (hother : wordStackLocation config other = some otherLocation)
     (hsafe : wordStackLongMulLocationsSafe config
       (.longMul destinationLeft destinationRight sourceLeft sourceRight) = true)
-    (hother_destinationLeft : otherRegister ≠ destinationLeftRegister)
-    (hother_destinationRight : otherRegister ≠ destinationRightRegister)
+    (hother_destinationLeft : otherLocation ≠ .register destinationLeftRegister)
+    (hother_destinationRight : otherLocation ≠ .register destinationRightRegister)
     (heval : (wordStackLongMulInst config
       (.longMul destinationLeft destinationRight sourceLeft sourceRight)).bind
       (evalWordStackMachine state) = some final) :
@@ -40,12 +40,15 @@ theorem evalWordStackMachine_longMul_register_preserves_other_value [NeZero widt
       some (.register sourceLeftRegister) at hsourceLeft
   change lookupNatInfo sourceRight config.locations =
       some (.register sourceRightRegister) at hsourceRight
-  change lookupNatInfo other config.locations = some (.register otherRegister) at hother
+  change lookupNatInfo other config.locations = some otherLocation at hother
   simp [wordStackLongMulInst, hsafe, wordStackLocation, hdestinationLeft,
     hdestinationRight, hsourceLeft, hsourceRight] at heval
   cases heval
-  simp [wordStackMachineValue, wordStackLocation, hother,
-    wordStackMachineWriteRegister, hother_destinationLeft,
-    hother_destinationRight]
+  cases otherLocation <;>
+    simp at hother_destinationLeft hother_destinationRight
+  all_goals
+    simp [wordStackMachineValue, wordStackLocation, hother,
+      wordStackMachineWriteRegister, hother_destinationLeft,
+      hother_destinationRight]
 
 end Flapjack.RiscV
