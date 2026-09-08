@@ -879,6 +879,29 @@ def wordCoalesceSafe (colours : Nat) (graph : WordRegGraph)
     let absorbed := move.right
     (wordBgOk colours graph target absorbed).isSome
 
+def wordPartitionMoves (predicate : WordMove → Bool) : List WordMove →
+    List WordMove × List WordMove
+  | [] => ([], [])
+  | move :: moves =>
+      let (yes, no) := wordPartitionMoves predicate moves
+      if predicate move then
+        (move :: yes, no)
+      else
+        (yes, move :: no)
+
+/- Revive unavailable moves incident on neighbors whose degree may have
+   decreased after a coalescing step. This is the CakeML revive_moves phase:
+   revived moves return to the priority-sorted available worklist. -/
+def wordMoveReviveUnavailable (colours : Nat) (nodes : List Nat)
+    (state : WordMoveState) : WordMoveState :=
+  let neighbours := nodes.flatMap (wordGraphNeighbours state.graph)
+  let (revived, unavailable) := wordPartitionMoves (fun move =>
+    (wordMoveEndpoints move).any (fun endpoint => neighbours.contains endpoint))
+    state.unavailable
+  let state := { state with
+    available := wordSortMoves (revived ++ state.available)
+    unavailable := unavailable }
+  wordMoveRefreshFreeze colours state
 def wordCoalesceMove (colours : Nat) (state : WordMoveState)
     (move : WordMove) : Option WordMoveState :=
   let (move, parents) := wordResolveMove state move
@@ -887,24 +910,28 @@ def wordCoalesceMove (colours : Nat) (state : WordMoveState)
   if !wordCoalesceSafe colours state.graph state.related move then
     none
   else
-    let fresh := wordCoalesceFreshNeighbours
-      state.graph move.left move.right
-    let graph := fresh.foldl
-      (fun graph node => wordGraphInsertEdge move.left node graph)
-      state.graph
-    let parents := wordParentUpdate move.right move.left state.parents
-    let pending := (state.available ++ state.unavailable).map
-      (wordMoveReplaceNode move.right move.left)
-    let worklists := wordPrepareMoveWorklists graph pending
-    some
-      { graph := graph
-        parents := parents
-        related := wordMoveRelatedNodes pending
-        available := worklists.available
-        unavailable := worklists.unavailable
-        freezeWl := wordMoveFreezeCandidates colours graph parents
-          (wordMoveRelatedNodes pending)
-        stack := move.right :: state.stack }
+    match wordBgOk colours state.graph move.left move.right with
+    | none => none
+    | some (case1, _case2) =>
+      let fresh := wordCoalesceFreshNeighbours
+        state.graph move.left move.right
+      let graph := fresh.foldl
+        (fun graph node => wordGraphInsertEdge move.left node graph)
+        state.graph
+      let parents := wordParentUpdate move.right move.left state.parents
+      let pending := (state.available ++ state.unavailable).map
+        (wordMoveReplaceNode move.right move.left)
+      let worklists := wordPrepareMoveWorklists graph pending
+      let state : WordMoveState :=
+        { graph := graph
+          parents := parents
+          related := wordMoveRelatedNodes pending
+          available := worklists.available
+          unavailable := worklists.unavailable
+          freezeWl := wordMoveFreezeCandidates colours graph parents
+            (wordMoveRelatedNodes pending)
+          stack := move.right :: state.stack }
+      some (wordMoveReviveUnavailable colours case1 state)
 
 def wordMoveTouches (node : Nat) (move : WordMove) : Bool :=
   move.left = node || move.right = node

@@ -172,6 +172,24 @@ example :
   decide
 
 example :
+    let graph : WordRegGraph :=
+      { adjacency := [(2, [0]), (0, [2])]
+        tags := [(0, .atemp), (1, .atemp), (2, .atemp)]
+        dimension := 3 }
+    let move : WordMove := { priority := 3, left := 0, right := 1 }
+    let state : WordMoveState :=
+      { graph := graph
+        parents := [(0, 0), (1, 1), (2, 2)]
+        related := [0, 1]
+        available := []
+        unavailable := [move]
+        freezeWl := []
+        stack := [] }
+    let state := wordMoveReviveUnavailable 2 [2] state
+    state.available = [move] ∧ state.unavailable = [] := by
+  decide
+
+example :
     wordMoveFreezeCandidates 2 moveWorklistGraph
       [(0, 0), (1, 1)] [0, 1] = [0, 1] := by
   decide
