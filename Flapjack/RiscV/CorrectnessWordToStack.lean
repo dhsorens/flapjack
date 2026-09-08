@@ -1309,6 +1309,38 @@ theorem evalStackProgFuelWithCodeAndFfi_wordToStackProgNatWithBitmapBuilder_must
   rw [hcompile]
   simp [heval]
 
+/-! Heap-producing Word nodes are lowered by the state-threaded compiler before
+    `StackAlloc` replaces their runtime operations with collector calls.  Keep
+    the exact pair returned by each lowering visible here so that the bitmap
+    state can be threaded into the later runtime and machine proofs. -/
+
+theorem wordToStackProgNatWithBitmapBuilder_alloc
+    [BEq Nat] (config : WordStackConfig)
+    (bitmapBuilder : List Nat → List Nat)
+    (registerCount bitmapRegister frameSlots wordBits : Nat)
+    (storeConstsStub : Option Nat) (state : WordStackBitmapState)
+    (destination : Nat) (nonGc gc : List Nat) :
+    wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+      registerCount bitmapRegister frameSlots wordBits storeConstsStub state
+      (.alloc destination (nonGc, gc)) =
+      some (wordStackAllocWithBitmapBuilder config bitmapRegister frameSlots
+        state gc bitmapBuilder) := by
+  simp [wordToStackProgNatWithBitmapBuilder]
+
+theorem wordToStackProgNatWithBitmapBuilder_storeConsts
+    [BEq Nat] (config : WordStackConfig)
+    (bitmapBuilder : List Nat → List Nat)
+    (registerCount bitmapRegister frameSlots wordBits : Nat)
+    (storeConstsStub : Option Nat) (state : WordStackBitmapState)
+    (source bitmap codeLength dataLength : Nat)
+    (constants : List (Bool × Nat)) :
+    wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+      registerCount bitmapRegister frameSlots wordBits storeConstsStub state
+      (.storeConsts source bitmap codeLength dataLength constants) =
+      some (wordStackStoreConstsWithBitmaps config registerCount
+        config.specialScratch wordBits storeConstsStub state constants) := by
+  simp [wordToStackProgNatWithBitmapBuilder]
+
 /-! The state-threaded compiler has no special bitmap effect for an FFI
     instruction.  Its lowering equation therefore returns the original
     accumulator while exposing the same four-move ABI prefix as the

@@ -1528,6 +1528,10 @@ definitions, pass ordering, examples, and proof obligations.
   recursive remainder evaluation as an explicit premise.
 - [x] Compose state-threaded `MustTerminate` lowering with bounded StackLang
   execution.
+- [x] Expose the state-threaded `Alloc` lowering pair, including its bitmap
+  state transition before `StackAlloc` runtime replacement.
+- [x] Expose the state-threaded `StoreConsts` lowering pair, including its
+  bitmap table append before `StackAlloc` runtime replacement.
 - [x] Expose source-order bitmap threading through the allocated Word-to-Stack
   function pipeline, including a compositional append equation.
 - [x] Add abstract and bounded FFI loop-break simulation equations, with
