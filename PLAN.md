@@ -229,6 +229,8 @@ definitions, pass ordering, examples, and proof obligations.
   verify scoped multiplication declarations through source-to-Loop execution.
 - [x] Prove the generated Loop declaration-call pipeline agrees with the
   source call evaluator, including argument temporaries and the return slot.
+- [x] Prove the generated Loop FFI call pipeline agrees with the source FFI
+  evaluator, including declaration-slot updates and the caller continuation.
 - [x] Prove RISC-V instruction-selection and evaluator agreement for the
   emitted constant-return artifact.
 - [x] Lower register-based equality and inequality conditionals to RISC-V,
