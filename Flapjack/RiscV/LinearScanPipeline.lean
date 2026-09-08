@@ -23,12 +23,14 @@ def pipelineWordFunctionsAllocatedWithLinearScan [NeZero width]
       let wordParameters := parameters.map (fun name => name + 2)
       let unallocatedBody := loopToWordProg context body
       let (_, renamedParameters, allocation, renamedBody) ←
-        wordAllocateLinearScanFunction wordParameters unallocatedBody 13 14
+        wordAllocateLinearScanFunctionWithEntry wordParameters unallocatedBody 13 14
       let config : RiscV.WordStackConfig :=
         { locations := wordLinearScanLocations allocation
           scratch := 31
           stackBase := 0
-          addressScratch := 29 }
+          addressScratch := 29
+          sectionId := label
+          handlerLabel := label }
       let stackBody ← RiscV.wordToStackFunctionWithParameters config
         renamedParameters renamedBody
       let rest ← pipelineWordFunctionsAllocatedWithLinearScan functions

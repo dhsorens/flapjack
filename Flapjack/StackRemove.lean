@@ -140,19 +140,23 @@ def stackRemoveOpCurrHeap (config : StackRemoveConfig) (operator : BinOp)
 
 def stackRemoveStackGetSize (config : StackRemoveConfig) (register : Nat) :
     StackProg α :=
+  let shiftRegister :=
+    if register = config.scratch then config.addressScratch else config.scratch
   stackRemoveJoin (stackRemoveMove register config.stackPointer)
     (stackRemoveJoin
       (.arith .sub register register config.stackBase)
       (stackRemoveJoin
-        (.const config.scratch config.wordShift)
-        (.shift .lsr register register config.scratch)))
+        (.const shiftRegister config.wordShift)
+        (.shift .lsr register register shiftRegister)))
 
 def stackRemoveStackSetSize (config : StackRemoveConfig) (register : Nat) :
     StackProg α :=
+  let shiftRegister :=
+    if register = config.scratch then config.addressScratch else config.scratch
   stackRemoveJoin
-    (.const config.scratch config.wordShift)
+    (.const shiftRegister config.wordShift)
     (stackRemoveJoin
-      (.shift .lsl register register config.scratch)
+      (.shift .lsl register register shiftRegister)
       (stackRemoveJoin
         (.arith .or config.stackPointer config.stackBase config.stackBase)
         (.arith .add config.stackPointer config.stackPointer register)))

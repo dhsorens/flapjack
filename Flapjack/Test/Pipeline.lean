@@ -65,6 +65,20 @@ def pipelineAllocatedCallDeclarations : List (Decl (RiscV.Word 64)) :=
       (BitVec.ofNat 64 8) (fun value => BitVec.ofNat 64 value) []
       pipelineStackRemoveConfig pipelineHandlerDeclarations).isSome
 
+/- The handler address is a cross-section address.  This checks the emitted
+   setup code directly: the handler for `main` must not be encoded as a local
+   offset or as the exception-register number. -/
+def pipelineHandlerHasCrossSectionAddress : Bool :=
+  match compileFlapjackRiscVViaStack (width := 64) .rv64i
+      (BitVec.ofNat 64 8) (fun value => BitVec.ofNat 64 value) []
+      pipelineStackRemoveConfig pipelineHandlerDeclarations with
+  | some instructions =>
+      instructions.any (fun instruction =>
+        instruction == .addi 31 0 (BitVec.ofNat 64 244))
+  | none => false
+
+#guard pipelineHandlerHasCrossSectionAddress
+
 #guard
     (compileFlapjackRiscVViaAllocatedStack (width := 64) .rv64i
       (BitVec.ofNat 64 8) (fun value => BitVec.ofNat 64 value) []

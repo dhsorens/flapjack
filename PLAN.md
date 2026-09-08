@@ -276,6 +276,12 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Add a RISC-V ECALL FFI ABI boundary with service-name resolution,
   argument marshalling, option-valued host execution, and executable
   instruction-level regressions.
+- [x] Prove that FFI-aware RISC-V selection preserves the ordinary
+  call-aware selector on the straight-line Word fragment.
+- [x] Extend the FFI selector contract through loop-capable lowering for
+  straight-line programs, including an explicit ECALL leaf.
+- [x] Compose loop-capable FFI lowering with the one-step ECALL machine
+  simulation theorem at the named RISC-V correctness boundary.
 - [x] Port the StackLang handler/FFI carriers and initial `word_to_stack`
   call, raise, and foreign-call boundary equations, with a local HOL
   copyright notice and structural regressions.
@@ -322,6 +328,8 @@ definitions, pass ordering, examples, and proof obligations.
   pipeline result.
 - [x] Expose the call-aware two-pass linked artifacts alongside the original
   straight-line artifact table, preserving the first correctness theorem.
+- [x] Carry cross-section function identities into handler-address lowering,
+  and regress the emitted RISC-V setup address for a linked raised call.
 - [x] Port complete program checking, context transitions, and diagnostics for
   the current AST, including declaration environments, missing returns,
   unreachable-tail warnings, and location annotations. The diagnostic surface
@@ -415,6 +423,12 @@ definitions, pass ordering, examples, and proof obligations.
   straight-line selector and preserves the Word function result.
 - [x] Prove that the loop-capable call-aware selector reduces to the
   call-aware straight-line selector on the straight-line Word fragment.
+- [x] Connect the call-aware RISC-V selector to source-level `AddCarry`
+  and `LongMul` results through parameterized emitted-code contracts.
+- [x] Connect call-aware `DIVU` lowering to the source-level Word division
+  result under its nonzero-divisor precondition.
+- [x] Connect call-aware return-carrier shapes to the Word evaluator while
+  preserving failure when a returned register name is not encodable.
 - [x] Port the CakeML-shaped RISC-V Word clash-tree boundary and its backward
   live-set analysis, including `Delta`, sequencing, branch live sets, loop cut
   sets, handler paths, and a tree-driven spill-allocation entry point.
@@ -503,6 +517,8 @@ definitions, pass ordering, examples, and proof obligations.
   Word-to-Stack/StackRemove pipeline boundaries.
 - [x] Port CakeML numeric allocation-mode decoding and dispatch modes 4+ to
   the checked linear-scan RISC-V pipeline.
+- [x] Thread formal-entry moves through the linear-scan function allocator and
+  pipeline, with safety and parameter-location contracts.
 - [x] Prove the checked linear-scan safety predicate and lift it through the
   SSA-renamed function allocation boundary.
 - [x] Expose linear-scan location coverage for every renamed formal parameter
@@ -564,14 +580,62 @@ definitions, pass ordering, examples, and proof obligations.
   state-only evaluator, preserving an explicit empty return carrier.
 - [x] Lift straight-line colouring simulation to handler-aware Word evaluation,
   including preservation of the empty return carrier.
-- [x] Match CakeML's Simple/IRC distinction in graph allocation modes: modes
-  0--1 omit move preferences, while modes 2--3 retain prioritized moves.
+- [x] Match CakeML Simple/IRC distinction in graph allocation modes: modes
+  0--1 omit move preferences during coalescing but retain the original move table for coloring, while modes 2--3 use the prioritized list for coalescing and the original move table for coloring.
 - [x] Preserve SSA-renamed virtual names at the heuristic allocator's
   location-aware StackLang boundary; color only the register-semantic result.
 - [x] Prove the reserved-x31 five-instruction rotate-right colouring boundary
   under explicit scratch non-aliasing hypotheses.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware
   RISC-V contracts before claiming general call-aware allocation correctness.
+- [x] Thread coalescing and freeze stack entries into the subsequent Atemp/Stemp
+  coloring phase, preserving CakeML's push_stack order.
+- [x] Initialize residual coloring over the active subgraph after prior stack
+  removals, so stacked-node degrees do not affect later spill selection.
+- [x] Run the initial low-degree simplification phase before coalescing and
+  retire moves touching nodes already placed on the allocator stack.
+- [x] Port and test CakeML do_prefreeze cleanup: retire invalid unavailable
+  moves and simplify newly non-move-related low-degree nodes before freezing.
+- [x] Wire the prefreeze worklist phase into both graph-backed Word-to-Stack
+  pipelines while retaining the original allocator API for existing proofs.
+- [x] Port unavailable-move revival after coalescing, including priority sorting
+  and freeze-worklist refresh, with a focused regression.
+- [x] Make register-side unspill explicit: lower-degree spill candidates move
+  to the simplify worklist when graph nodes are removed.
+- [x] Port move-state spill worklists and respill cleanup after coalescing and
+  freezing, with explicit regressions for both transitions.
+- [x] Thread active-node sets and dynamic degrees through move coalescing and
+  freezing, matching CakeML case1/case2 degree updates.
+- [x] Add the spill step loop: choose the highest-degree spill candidate, update
+  neighboring degrees, and recurse through unspill/freeze before coloring.
+- [x] Expose the ABI-correct full-SSA spill allocator at the location-aware
+  Word-to-Stack entry boundary, retaining renamed parameters and allocation slots.
+- [x] Route the legacy flat full-SSA spill pipeline through state-threaded
+  location-aware lowering, so `Alloc` and `StoreConsts` are supported instead
+  of being rejected by the stateless compiler.
+- [x] Port CakeML odd-mode spill-cost candidate selection into the graph
+  worklist, preserving checked allocation soundness.
+- [x] Port CakeML no-cost highest-degree spill candidate selection into the
+  graph worklist, preserving checked allocation soundness.
+- [x] Remap source-keyed CakeML heuristic moves through the graph-node
+  bijection before coalescing, coloring, and spill-aware allocation.
+- [x] Port CakeML get_stack_only exactly for Word Move, branch, loop, and
+  handler-aware call cases, with clash-tree fallback for ordinary instructions.
+- [x] Preserve Atemp candidates through spill-worklist selection and defer
+  Stemp conversion until the register-coloring phase exhausts ABI colors.
+- [x] Apply sorted CakeML move preferences during Atemp and Stemp graph
+  coloring, with the existing safe fallback when no preference matches.
+- [x] Preserve CakeML allocation order by coloring all Atemps before the
+  second Stemp preference pass.
+- [x] Thread CakeML-shaped formal-entry moves through the heuristic
+  allocation pipeline so its Simple/IRC path consumes full-SSA functions.
+- [x] Prove graph-colouring soundness for the full-SSA heuristic allocator,
+  including its Simple and prioritized-move branches.
+- [x] Route both ordinary and full-SSA heuristic wrappers through the shared
+  Simple/IRC spill-cost dispatcher, keeping coalescing and coloring preferences
+  separate while reusing its allocation soundness contract.
+- [x] Expose the full-SSA oracle/heuristic/spill decision boundary with a
+  graph-allocation soundness contract.
 - [x] Prove that a successful Word-to-Stack move preserves every unrelated
   spilled or register-backed value under explicit scratch and destination
   non-alias conditions.
@@ -774,6 +838,18 @@ definitions, pass ordering, examples, and proof obligations.
   source value for both register and spill locations.
 - [x] State a concrete end-to-end FFI theorem relating source call-aware
   evaluation to execution of the generated linked RISC-V image.
+- [x] Separate StackLang continuation metadata from the RISC-V x1 ABI at the
+  LabLang boundary: ordinary calls write dedicated x1 links, returns use
+  `JALR x0,x1,0`, and FFI's logical return-address field retains its original
+  non-link behavior.
+- [x] Allocate fresh return labels for lowered calls and keep handler bodies
+  in a non-overlapping label range, preserving linked cross-section targets.
+- [x] Correct LabLang conditional polarity to match the Lean branch semantics
+  and restore the concrete 244-byte handler-address regression.
+- [x] Avoid scratch-register aliasing in StackLang stack-size get/set lowering
+  and cover the x31 edge cases with executable tests.
+- [x] Validate the current port increment with a complete no-cache build of
+  all 238 Lake targets.
 - [x] Add concrete `Nat` Word-to-Stack expression lowering for constants,
   register/stack atoms, binary operations, loads, stores, and stack-backed
   destinations, with separate value/address scratch registers.
@@ -1632,6 +1708,16 @@ definitions, pass ordering, examples, and proof obligations.
   selection, and ECALL emission.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
+- [x] Expose location-aware bitmap sequence compilation and evaluator
+  contracts for the spill-aware Word-to-Stack boundary.
+- [x] Expose location-aware bitmap handler-call and FFI lowering equations
+  for the spill-aware Word-to-Stack correctness boundary.
+- [x] Compose a raised StackLang callee with generated handler-call setup,
+  argument transfer, exception-register write, and handler execution, with
+  explicit fuel accounting.
+- [x] Compose a normally returned StackLang callee with generated handler-call
+  setup, argument transfer, and return continuation execution, with explicit
+  fuel accounting.
 - [x] Close the generated Word-to-Stack/StackRemove/LabLang FFI path with a
   machine-level RISC-V execution theorem, retaining the host transition as
   an explicit hypothesis.

@@ -36,6 +36,10 @@ def fullSsaMainGraphImage : Option (List (RiscV.Instruction 64)) :=
       [(0, [0], (.assign 1 (.var 0) : LoopProg (RiscV.Word 64))) ]).isSome
 
 #guard
+    (wordAllocateGraphFunctionWithEntryPrefreezeRenamed [2]
+      (.assign 3 (.var 2) : WordProg (RiscV.Word 64)) [2] 13 14).isSome
+
+#guard
     (pipelineWordFunctionsAllocatedWithSpillsAndFullSsa
       [(0, [0], (.assign 1 (.var 0) : LoopProg (RiscV.Word 64))) ]).isSome
 
@@ -54,14 +58,16 @@ theorem fullSsaMain_compiled_execution :
     (do
       let image ← fullSsaMainImage
       RiscV.executeFunctionAt 100 0 76 6 [] image [2] []
-        (RiscV.zeroState 64)) = some [BitVec.ofNat 64 7] := by
+        (RiscV.writeRegister (RiscV.zeroState 64) 1 (BitVec.ofNat 64 6))) =
+      some [BitVec.ofNat 64 7] := by
   native_decide
 
 theorem fullSsaMain_graph_compiled_execution :
     (do
       let image ← fullSsaMainGraphImage
       RiscV.executeFunctionAt 100 0 76 6 [] image [2] []
-        (RiscV.zeroState 64)) = some [BitVec.ofNat 64 7] := by
+        (RiscV.writeRegister (RiscV.zeroState 64) 1 (BitVec.ofNat 64 6))) =
+      some [BitVec.ofNat 64 7] := by
   native_decide
 
 def fullSsaFfiMainBody : Prog (RiscV.Word 64) :=
@@ -101,7 +107,8 @@ theorem fullSsaFfi_compiled_execution :
     (do
       let image ← fullSsaFfiImage
       RiscV.executeFunctionAtWithFfi fullSsaFfiHost 100 0 76 42 [] image [2] []
-        (RiscV.zeroState 64)) = some [BitVec.ofNat 64 42] := by
+        (RiscV.writeRegister (RiscV.zeroState 64) 1 (BitVec.ofNat 64 42))) =
+      some [BitVec.ofNat 64 42] := by
   native_decide
 
 theorem fullSsaFfi_source_execution :
@@ -121,7 +128,8 @@ theorem fullSsaFfi_source_machine_agreement :
       (do
         let image ← fullSsaFfiImage
         RiscV.executeFunctionAtWithFfi fullSsaFfiHost 100 0 76 42 [] image [2] []
-          (RiscV.zeroState 64)) = some [BitVec.ofNat 64 42] :=
+          (RiscV.writeRegister (RiscV.zeroState 64) 1 (BitVec.ofNat 64 42))) =
+        some [BitVec.ofNat 64 42] :=
   ⟨fullSsaFfi_source_execution, fullSsaFfi_compiled_execution⟩
 
 end Flapjack

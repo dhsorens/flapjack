@@ -23,8 +23,8 @@ example :
       2 26 0 64 none handlerLoweringInitial
       (.call (some ([], ([], []), .skip, 0, 0)) (some 7) []
         (some (1, handlerLoweringBody, 30, 21))) =
-      some (wordToStackCallWithHandler false 7 0 0 31 .skip
-        (.seq .skip (.call none (.label 0) none)) 20 21 30 1,
+      some (wordToStackCallWithHandlerInSection false 7 0 0 31 .skip
+        (.seq .skip (.call none (.label 0) none)) 20 21 0 30 1,
         handlerLoweringInitial) := by
   apply wordToStackProgNatWithBitmapBuilder_call_handler
     (config := handlerLoweringConfig) (bitmapBuilder := fun live => live)

@@ -197,6 +197,19 @@ def wordToStackCallNoHandler (_perf : Bool) (target : Nat)
     .stackFree (returnValues.length)
   ]
 
+def wordToStackCallWithHandlerInSection (perf : Bool) (target : Nat)
+    (argumentCount frameOffset scratch : Nat)
+    (returnCode handlerCode : StackProg α)
+    (returnLabel entryLabel sectionId handlerLabel exceptionLabel : Nat) : StackProg α :=
+  let callCode :=
+    .call (some (returnCode, 0, returnLabel, entryLabel)) (.label target)
+      (some (handlerCode, exceptionLabel, handlerLabel))
+  stackSeq [
+    stackPushHandler perf sectionId handlerLabel scratch,
+    stackHandlerArgs perf (argumentCount + 1) frameOffset scratch,
+    callCode
+  ]
+
 def wordToStackCallWithHandler (perf : Bool) (target : Nat)
     (argumentCount frameOffset scratch : Nat)
     (returnCode handlerCode : StackProg α)

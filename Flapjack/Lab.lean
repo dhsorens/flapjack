@@ -23,6 +23,8 @@ inductive LabAsm (α : Type u) where
       (target : LabRef)
   | call (target : LabRef)
   | locValue (register : Nat) (target : LabRef)
+  | linkValue (target : LabRef)
+  | return
   | callFfi (function : FunName)
   | heapAlloc (words : Nat)
   | install
@@ -122,8 +124,10 @@ def labFlatten (tail : Bool) (sectionId counter : Nat)
   | .const destination value =>
       ⟨[.asm (.const destination value) [] 0], false, counter⟩
   | .tick => ⟨[.asm .tick [] 0], false, counter⟩
-  | .raise register | .return register =>
+  | .raise register =>
       ⟨[.asm (.jumpReg register) [] 0], true, counter⟩
+  | .return _ =>
+      ⟨[.labAsm .return [] 0], true, counter⟩
   | .break label =>
       ⟨[labJump sectionId (labFindLabel label breaks)], true, counter⟩
   | .continue label =>
@@ -157,10 +161,11 @@ def labFlatten (tail : Bool) (sectionId counter : Nat)
       ⟨[match labCompileJump target with
         | .direct target => .labAsm (.jump target) [] 0
         | .register register => .asm (.jumpReg register) [] 0], true, counter⟩
-  | .call (some (returnCode, linkRegister, returnLabel, _entryLabel)) target handler =>
+  | .call (some (returnCode, _linkRegister, _returnLabel, _entryLabel)) target handler =>
       let returnResult := labFlatten false sectionId counter continues breaks returnCode
+      let returnLabel := returnResult.nextLabel
       let callPrefix : List (LabLine α) :=
-        [.labAsm (.locValue linkRegister ⟨sectionId, returnLabel⟩) [] 0,
+        [.labAsm (.linkValue ⟨sectionId, returnLabel⟩) [] 0,
          match labCompileJump target with
          | .direct target => .labAsm (.jump target) [] 0
          | .register register => .asm (.jumpReg register) [] 0,
@@ -168,9 +173,10 @@ def labFlatten (tail : Bool) (sectionId counter : Nat)
       match handler with
       | none =>
           ⟨callPrefix ++ returnResult.lines, returnResult.terminal, returnResult.nextLabel⟩
-      | some (handlerCode, handlerLabel, exceptionLabel) =>
+      | some (handlerCode, exceptionLabel, handlerLabel) =>
+          let handlerCounter := max (returnLabel + 1) (handlerLabel + 1)
           let handlerResult :=
-            labFlatten false sectionId returnResult.nextLabel continues breaks handlerCode
+            labFlatten false sectionId handlerCounter continues breaks handlerCode
           ⟨callPrefix ++ returnResult.lines ++
             [labJump sectionId handlerResult.nextLabel,
              labLabel sectionId handlerLabel] ++ handlerResult.lines ++
@@ -198,19 +204,19 @@ def labFlatten (tail : Bool) (sectionId counter : Nat)
           elseResult.lines ++ [labLabel sectionId counter],
           false, elseResult.nextLabel + 1⟩
       else if labIsSkip elseBranch then
-        ⟨[labJumpCmp (labNegateCmp operator) condition right sectionId counter] ++
+        ⟨[labJumpCmp operator condition right sectionId counter] ++
           thenResult.lines ++ [labLabel sectionId counter],
           false, thenResult.nextLabel + 1⟩
       else if thenResult.terminal then
-        ⟨[labJumpCmp (labNegateCmp operator) condition right sectionId counter] ++
+        ⟨[labJumpCmp operator condition right sectionId counter] ++
           thenResult.lines ++ [labLabel sectionId counter] ++ elseResult.lines,
           elseResult.terminal, elseResult.nextLabel + 1⟩
       else if elseResult.terminal then
-        ⟨[labJumpCmp operator condition right sectionId counter] ++
+        ⟨[labJumpCmp (labNegateCmp operator) condition right sectionId counter] ++
           elseResult.lines ++ [labLabel sectionId counter] ++ thenResult.lines,
           thenResult.terminal, thenResult.nextLabel + 1⟩
       else
-        ⟨[labJumpCmp operator condition right sectionId counter] ++
+        ⟨[labJumpCmp (labNegateCmp operator) condition right sectionId counter] ++
           elseResult.lines ++ [labJump sectionId (elseResult.nextLabel + 1),
             labLabel sectionId counter] ++ thenResult.lines ++
           [labLabel sectionId (elseResult.nextLabel + 1)],

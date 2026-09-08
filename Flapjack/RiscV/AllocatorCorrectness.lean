@@ -130,11 +130,14 @@ theorem wordAllocateGraphFunctionWithEntryRenamed_sound
         [] []).isSome = true := by
   simp [wordAllocateGraphFunctionWithEntryRenamed] at halloc
   rcases halloc with ⟨allocation', hgraph, rfl, rfl, rfl, rfl⟩
-  simp [wordAllocateGraph] at hgraph
-  rcases hgraph with ⟨hchecks, heq⟩
-  cases heq
-  rcases hchecks with ⟨⟨hfixed, hedges⟩, htree⟩
-  exact ⟨hfixed, hedges, htree⟩
+  exact wordAllocateGraph_sound
+    (WordClashTree.seq
+      (.set (wordSsaRenameFunctionWithEntry parameters program).2.fst)
+      (wordClashTree (wordSsaRenameFunctionWithEntry parameters program).2.snd []))
+    (wordProgForcedClashes (wordSsaRenameFunctionWithEntry parameters program).2.snd)
+    fixedSources
+    (wordProgPreferenceEdges (wordSsaRenameFunctionWithEntry parameters program).2.snd)
+    colours stackStart allocation' hgraph
 
 theorem wordAllocateGraphFunctionWithEntryRenamed_maps_parameters
     (parameters : List Nat) (program : WordProg α)

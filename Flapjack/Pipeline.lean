@@ -84,6 +84,7 @@ def pipelineWordFunctionsToStack [NeZero width] :
   | [] => some []
   | (label, parameters, body) :: functions => do
       let config := { RiscV.wordStackIdentityConfig body with
+        sectionId := label
         handlerLabel := label }
       let stackBody ← RiscV.wordToStackProgWord config body
       let rest ← pipelineWordFunctionsToStack functions
@@ -122,6 +123,7 @@ def pipelineWordFunctionsAllocatedWithSpills [NeZero width] :
           scratch := 31
           stackBase := 0
           addressScratch := 29
+          sectionId := label
           handlerLabel := label }
       let stackBody ← RiscV.wordToStackFunctionWithParameters config renamedParameters
         renamedBody
@@ -151,6 +153,7 @@ def pipelineWordFunctionAllocatedWithSpillsAndBitmaps [NeZero width]
         scratch := 31
         stackBase := 0
         addressScratch := 29
+        sectionId := label
         handlerLabel := label }
     let (stackBody, bitmaps) ←
       RiscV.wordToStackFunctionWithParametersAndLocationBitmaps config
@@ -227,6 +230,7 @@ def pipelineWordFunctionAllocatedWithSpillsAndFullSsaAndBitmaps [NeZero width]
         scratch := 31
         stackBase := 0
         addressScratch := 29
+        sectionId := label
         handlerLabel := label }
     let (stackBody, bitmaps) ←
       RiscV.wordToStackFunctionWithParametersAndLocationBitmaps config
@@ -310,13 +314,15 @@ def pipelineWordFunctionsAllocatedWithGraph [NeZero width] :
       let wordParameters := parameters.map (fun name => name + 2)
       let unallocatedBody := loopToWordProg context body
       let (_, renamedParameters, allocation, renamedBody) ←
-        wordAllocateGraphFunctionWithStackOnlyRenamed wordParameters unallocatedBody
+        wordAllocateGraphFunctionWithStackOnlyPrefreezeRenamed wordParameters unallocatedBody
           [] 13 14
       let config : RiscV.WordStackConfig :=
         { locations := wordGraphLocations allocation 13 14
           scratch := 31
           stackBase := 0
-          addressScratch := 29 }
+          addressScratch := 29
+          sectionId := label
+          handlerLabel := label }
       let stackBody ← RiscV.wordToStackFunctionWithParameters config
         renamedParameters renamedBody
       let rest ← pipelineWordFunctionsAllocatedWithGraph functions
@@ -336,13 +342,15 @@ def pipelineWordFunctionsAllocatedWithGraphAndFullSsa [NeZero width] :
       let wordParameters := parameters.map (fun name => name + 2)
       let unallocatedBody := loopToWordProg context body
       let (_, renamedParameters, allocation, renamedProgram) ←
-        wordAllocateGraphFunctionWithEntryRenamed wordParameters unallocatedBody
+        wordAllocateGraphFunctionWithEntryPrefreezeRenamed wordParameters unallocatedBody
           wordParameters 13 14
       let config : RiscV.WordStackConfig :=
         { locations := wordGraphLocations allocation 13 14
           scratch := 31
           stackBase := 0
-          addressScratch := 29 }
+          addressScratch := 29
+          sectionId := label
+          handlerLabel := label }
       let stackBody ← RiscV.wordToStackFunctionWithParameters config
         renamedParameters renamedProgram
       let rest ← pipelineWordFunctionsAllocatedWithGraphAndFullSsa functions
@@ -350,7 +358,10 @@ def pipelineWordFunctionsAllocatedWithGraphAndFullSsa [NeZero width] :
 
 /-! Spill-backed pipeline variant using the ABI-correct full-SSA entry
     allocator.  The generated entry moves therefore read the same physical
-    argument registers that `wordToStackFunctionWithParameters` initializes. -/
+    argument registers that the location-aware Word-to-Stack lowering
+    initializes.  This legacy flat-code API discards the bitmap artifact, but
+    still uses the state-threaded lowering so full-SSA `Alloc` and
+    `StoreConsts` constructors are not rejected by the old stateless path. -/
 def pipelineWordFunctionsAllocatedWithSpillsAndFullSsa [NeZero width] :
     List (Nat × List Nat × LoopProg (RiscV.Word width)) →
       Option (List (Nat × List Nat × StackProg Nat))
@@ -368,9 +379,14 @@ def pipelineWordFunctionsAllocatedWithSpillsAndFullSsa [NeZero width] :
         { locations := allocation.locations
           scratch := 31
           stackBase := 0
-          addressScratch := 29 }
-      let stackBody ← RiscV.wordToStackFunctionWithParameters config
-        renamedParameters renamedProgram
+          addressScratch := 29
+          sectionId := label
+          handlerLabel := label }
+      let (stackBody, _) ←
+        RiscV.wordToStackFunctionWithParametersAndLocationBitmaps config
+          renamedParameters wordAllocatableRegisters.length config.scratch
+          allocation.nextSpill (some 1)
+          (RiscV.wordStackInitialBitmaps false) renamedProgram
       let rest ← pipelineWordFunctionsAllocatedWithSpillsAndFullSsa functions
       pure ((label, wordParameters, stackBody) :: rest)
 

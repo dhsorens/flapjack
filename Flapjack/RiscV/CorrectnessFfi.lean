@@ -1,4 +1,7 @@
 import Flapjack.Correctness
+import Flapjack.RiscV.CorrectnessBackend
+import Flapjack.RiscV.Ffi
+import Flapjack.RiscV.CorrectnessFfiMachine
 
 /-!
 Simulation boundary for foreign calls.
@@ -1218,5 +1221,226 @@ theorem loopToWord_call_loop_control_simulation_single_parameter_with_handler
                   simp [loopResultMappedToWordLoop] at hbodyResult
               | continued bodyWordState label =>
                   simp [loopResultMappedToWordLoop] at hbodyResult
+
+/-! The FFI-aware selector delegates ordinary straight-line instructions to
+    the call-aware selector unchanged.  This keeps the host-effect boundary
+    isolated from the deterministic instruction-selection contract. -/
+
+theorem wordFunctionToRiscVWithCallsAndFfi_agrees_straightLine [NeZero width]
+    (context : WordCallFfiContext width)
+    (program : WordProg (Word width))
+    (hstraight : WordRiscVStraightLine program) :
+    wordFunctionToRiscVWithCallsAndFfi context program =
+      wordFunctionToRiscVWithCalls
+        { targets := context.targets } program := by
+  induction hstraight with
+  | skip =>
+      simp [wordFunctionToRiscVWithCallsAndFfi, wordFunctionToRiscVWithCalls]
+  | move store moves =>
+      cases h : wordMoveToInstructions (width := width) moves <;>
+        simp [wordFunctionToRiscVWithCallsAndFfi, wordFunctionToRiscVWithCalls, h]
+  | assign destination value =>
+      cases h : wordExpToInstructions (width := width) destination value <;>
+        simp [wordFunctionToRiscVWithCallsAndFfi, wordFunctionToRiscVWithCalls, h]
+  | inst instruction =>
+      cases h : wordFunctionToRiscVWithCalls { targets := context.targets }
+          (.inst instruction) <;>
+        simp [wordFunctionToRiscVWithCallsAndFfi, h]
+  | store address value =>
+      cases h : wordStoreToInstructions (width := width) address value <;>
+        simp [wordFunctionToRiscVWithCallsAndFfi, wordFunctionToRiscVWithCalls, h]
+  | locValue destination source =>
+      cases h : wordExpToInstruction (width := width) destination (.var source) <;>
+        simp [wordFunctionToRiscVWithCallsAndFfi, wordFunctionToRiscVWithCalls,
+          wordExpToInstructions, h]
+  | tick =>
+      simp [wordFunctionToRiscVWithCallsAndFfi, wordFunctionToRiscVWithCalls]
+  | shareInst operator name address =>
+      cases h : wordShareInstToInstructions (width := width) operator name address <;>
+        simp [wordFunctionToRiscVWithCallsAndFfi, wordFunctionToRiscVWithCalls, h]
+  | seq first second hfirst hsecond ihfirst ihsecond =>
+      simp [wordFunctionToRiscVWithCallsAndFfi,
+        wordFunctionToRiscVWithCalls, ihfirst, ihsecond]
+
+/-! The loop-capable FFI selector has the same ordinary straight-line
+    normalization as the non-loop FFI selector, and also admits an ECALL leaf.
+    No control-flow marker is present in this fragment. -/
+
+inductive WordRiscVFFIStraightLine : WordProg α → Prop where
+  | skip : WordRiscVFFIStraightLine (.skip : WordProg α)
+  | move (store : Nat) (moves : List (Nat × Nat)) :
+      WordRiscVFFIStraightLine (.move store moves)
+  | assign (destination : Nat) (value : WordExp α) :
+      WordRiscVFFIStraightLine (.assign destination value)
+  | inst (instruction : WordInst) :
+      WordRiscVFFIStraightLine (.inst instruction)
+  | store (address : WordExp α) (value : Nat) :
+      WordRiscVFFIStraightLine (.store address value)
+  | ffi (function : FunName) (configuration configurationLength array arrayLength : Nat)
+      (live : List Nat × List Nat) :
+      WordRiscVFFIStraightLine
+        (.ffi function configuration configurationLength array arrayLength live)
+  | seq (first second : WordProg α) :
+      WordRiscVFFIStraightLine first → WordRiscVFFIStraightLine second →
+      WordRiscVFFIStraightLine (.seq first second)
+  | locValue (destination source : Nat) :
+      WordRiscVFFIStraightLine (.locValue destination source)
+  | tick : WordRiscVFFIStraightLine (.tick : WordProg α)
+  | shareInst (operator : WordMemOp) (name : Nat) (address : WordExp α) :
+      WordRiscVFFIStraightLine (.shareInst operator name address)
+
+theorem wordFunctionToRiscVWithCallsAndFfiAndLoopsAux_agrees_straightLine
+    [NeZero width] (context : WordCallFfiContext width)
+    (program : WordProg (Word width))
+    (hstraight : WordRiscVFFIStraightLine program) :
+    wordFunctionToRiscVWithCallsAndFfiAndLoopsAux context program =
+      (wordFunctionToRiscVWithCallsAndFfi context program).map
+        (fun result => (result.1.map .instruction, result.2)) := by
+  induction hstraight with
+  | skip =>
+      cases h : wordFunctionToRiscVWithCallsAndFfi context
+          (.skip : WordProg (Word width)) <;>
+        simp [wordFunctionToRiscVWithCallsAndFfiAndLoopsAux, h]
+  | move store moves =>
+      cases h : wordFunctionToRiscVWithCallsAndFfi context (.move store moves) <;>
+        simp [wordFunctionToRiscVWithCallsAndFfiAndLoopsAux, h]
+  | assign destination value =>
+      cases h : wordFunctionToRiscVWithCallsAndFfi context
+          (.assign destination value) <;>
+        simp [wordFunctionToRiscVWithCallsAndFfiAndLoopsAux, h]
+  | inst instruction =>
+      cases h : wordFunctionToRiscVWithCallsAndFfi context (.inst instruction) <;>
+        simp [wordFunctionToRiscVWithCallsAndFfiAndLoopsAux, h]
+  | store address value =>
+      cases h : wordFunctionToRiscVWithCallsAndFfi context (.store address value) <;>
+        simp [wordFunctionToRiscVWithCallsAndFfiAndLoopsAux, h]
+  | ffi function configuration configurationLength array arrayLength live =>
+      cases h : wordFunctionToRiscVWithCallsAndFfi context
+          (.ffi function configuration configurationLength array arrayLength live) <;>
+        simp [wordFunctionToRiscVWithCallsAndFfiAndLoopsAux, h]
+  | locValue destination source =>
+      cases h : wordFunctionToRiscVWithCallsAndFfi context
+          (.locValue destination source) <;>
+        simp [wordFunctionToRiscVWithCallsAndFfiAndLoopsAux, h]
+  | tick =>
+      cases h : wordFunctionToRiscVWithCallsAndFfi context
+          (.tick : WordProg (Word width)) <;>
+        simp [wordFunctionToRiscVWithCallsAndFfiAndLoopsAux, h]
+  | shareInst operator name address =>
+      cases h : wordFunctionToRiscVWithCallsAndFfi context
+          (.shareInst operator name address) <;>
+        simp [wordFunctionToRiscVWithCallsAndFfiAndLoopsAux, h]
+  | seq first second hfirst hsecond ihfirst ihsecond =>
+      simp only [wordFunctionToRiscVWithCallsAndFfiAndLoopsAux]
+      rw [ihfirst, ihsecond]
+      simp only [wordFunctionToRiscVWithCallsAndFfi]
+      cases hfirstCode : wordFunctionToRiscVWithCallsAndFfi context first with
+      | none => simp
+      | some firstResult =>
+          cases hsecondCode : wordFunctionToRiscVWithCallsAndFfi context second with
+          | none =>
+              cases firstResult with
+              | mk firstCode firstReturns =>
+                  cases firstReturns with
+                  | nil => simp
+                  | cons firstReturn firstReturns => simp
+          | some secondResult =>
+              cases firstResult with
+              | mk firstCode firstReturns =>
+                  cases firstReturns with
+                  | nil =>
+                      cases secondResult with
+                      | mk secondCode secondReturns =>
+                          simp
+                  | cons firstReturn firstReturns =>
+                      simp
+
+theorem wordFunctionToRiscVWithCallsAndFfiAndLoops_agrees_straightLine
+    [NeZero width] (context : WordCallFfiContext width)
+    (program : WordProg (Word width))
+    (hstraight : WordRiscVFFIStraightLine program) :
+    wordFunctionToRiscVWithCallsAndFfiAndLoops context program =
+      wordFunctionToRiscVWithCallsAndFfi context program := by
+  simp only [wordFunctionToRiscVWithCallsAndFfiAndLoops]
+  rw [wordFunctionToRiscVWithCallsAndFfiAndLoopsAux_agrees_straightLine
+    context program hstraight]
+  cases h : wordFunctionToRiscVWithCallsAndFfi context program with
+  | none => simp
+  | some result =>
+      cases result with
+      | mk code returns =>
+          simp [wordControlInstructions_map_instruction]
+
+
+/-! The loop-capable selector preserves the one-step ECALL simulation boundary.
+    This is the first named machine-correctness theorem for an FFI operation
+    after loop-aware lowering. -/
+theorem wordFunctionToRiscVWithCallsAndFfiAndLoops_ffi_simulation
+    [NeZero width] (context : WordFfiContext)
+    (host : WordFfiHost width)
+    (wordHandler : FunName → Word width → Word width → Word width → Word width →
+      State width → Option (State width))
+    (state : State width) (function : FunName)
+    (configuration configurationLength array arrayLength : Nat)
+    (service : Nat) (configurationRegister configurationLengthRegister
+      arrayRegister arrayLengthRegister : Fin 32)
+    (hservice : lookupWordFfiService function context.services = some service)
+    (hservice_bounded : service < 2 ^ width)
+    (hconfiguration : registerOfNat configuration = some configurationRegister)
+    (hconfigurationLength : registerOfNat configurationLength =
+      some configurationLengthRegister)
+    (harray : registerOfNat array = some arrayRegister)
+    (harrayLength : registerOfNat arrayLength = some arrayLengthRegister)
+    (hzero : readRegister state 0 = 0)
+    (hsource : ∀ source : Fin 32, source ∈
+      [configurationRegister, configurationLengthRegister, arrayRegister,
+        arrayLengthRegister] →
+      ∀ destination : Fin 32, destination ∈ [10, 11, 12, 13] →
+        source ≠ destination)
+    (hhandler : host service
+      (readRegister state configurationRegister)
+      (readRegister state configurationLengthRegister)
+      (readRegister state arrayRegister)
+      (readRegister state arrayLengthRegister)
+      (executeInstructions state
+        [.addi 10 configurationRegister (0#width),
+         .addi 11 configurationLengthRegister (0#width),
+         .addi 12 arrayRegister (0#width), .addi 13 arrayLengthRegister (0#width),
+         .addi 14 0 (BitVec.ofNat width service)]) =
+      wordHandler function
+        (readRegister state configurationRegister)
+        (readRegister state configurationLengthRegister)
+        (readRegister state arrayRegister)
+        (readRegister state arrayLengthRegister) state) :
+    (wordFunctionToRiscVWithCallsAndFfiAndLoops
+      ({ targets := [], services := context.services } : WordCallFfiContext width)
+      (.ffi function configuration configurationLength array arrayLength ([], []))).bind
+        (fun result =>
+          (executeInstructionsWithFfi host state result.1).map
+            (fun final => (final, ([] : List (Word width))))) =
+      evalWordFunctionWithCallsAndFfi [] wordHandler 1 state
+        (.ffi function configuration configurationLength array arrayLength ([], [])) := by
+  cases hcode : wordFfiToRiscV (width := width) { services := context.services } function
+      configuration configurationLength array arrayLength with
+  | none =>
+      simpa [wordFunctionToRiscVWithCallsAndFfiAndLoops,
+        wordFunctionToRiscVWithCallsAndFfiAndLoopsAux,
+        wordFunctionToRiscVWithCallsAndFfi, hcode] using
+        (wordFunctionToRiscVWithCallsAndFfi_ffi_simulation context host wordHandler
+          state function configuration configurationLength array arrayLength service
+          configurationRegister configurationLengthRegister arrayRegister
+          arrayLengthRegister hservice hservice_bounded hconfiguration
+          hconfigurationLength harray harrayLength hzero hsource hhandler)
+  | some code =>
+      simpa [wordFunctionToRiscVWithCallsAndFfiAndLoops,
+        wordFunctionToRiscVWithCallsAndFfiAndLoopsAux,
+        wordFunctionToRiscVWithCallsAndFfi,
+        wordControlInstructions_map_instruction, hcode] using
+        (wordFunctionToRiscVWithCallsAndFfi_ffi_simulation context host wordHandler
+          state function configuration configurationLength array arrayLength service
+          configurationRegister configurationLengthRegister arrayRegister
+          arrayLengthRegister hservice hservice_bounded hconfiguration
+          hconfigurationLength harray harrayLength hzero hsource hhandler)
+
 
 end Flapjack.RiscV

@@ -78,6 +78,40 @@ example :
         (wordInitRegAlloc (.delta [1, 5] []) [] []).graph) = true := by
   decide +kernel
 
+example :
+    let graph : WordRegGraph :=
+      { adjacency := [], tags := [(0, .atemp), (1, .atemp)], dimension := 2 }
+    let state : WordRaState :=
+      { graph := graph, active := [0, 1],
+        degrees := [(0, 1), (1, 2)], simpWl := [],
+        spillWl := [0, 1], stack := [] }
+    let state := wordRaUnspill 2 state
+    state.simpWl = [0] ∧ state.spillWl = [1] := by
+  decide
+
+example :
+    let graph : WordRegGraph :=
+      { adjacency := [(0, [1]), (1, [0, 2]), (2, [1])]
+        tags := [(0, .atemp), (1, .atemp), (2, .atemp)]
+        dimension := 3 }
+    let state := wordInitMoveStateWithColours 1 graph []
+    let state := wordMoveSpillAll (state.active.length + 1) 1 state
+    state.active = [] ∧ state.spillWl = [] ∧
+      state.stack = [2, 0, 1] := by
+  decide
+
+example :
+    let graph : WordRegGraph :=
+      { adjacency := [(0, [1, 2]), (1, [0]), (2, [0])]
+        tags := [(0, .atemp), (1, .atemp), (2, .atemp)]
+        dimension := 3 }
+    let state := wordInitMoveStateWithColours 1 graph []
+    let state := wordMoveSpillAllWithCosts 1 1
+      [(0, 1000), (1, 1), (2, 1000)] state
+    state.stack = [1] ∧ state.active = [0, 2] ∧
+      state.spillWl = [0, 2] := by
+  decide
+
 def moveWorklistGraph : WordRegGraph :=
   { adjacency := []
     tags := [(0, .atemp), (1, .atemp)]
@@ -95,6 +129,29 @@ def fixedRightMoveWorklistGraph : WordRegGraph :=
 
 def move01 : WordMove :=
   { priority := 7, left := 0, right := 1 }
+
+example :
+    (wordRaInitialSimplify 1 moveWorklistGraph).stack = [1, 0] := by
+  decide +kernel
+
+example :
+    let state := wordInitMoveStateWithColoursFromStack 1 moveWorklistGraph [move01] [0]
+    state.stack = [0] ∧ state.available = [] ∧ state.unavailable = [] := by
+  decide
+
+example :
+    (wordColourGraphWithWorklistAndMovesFromStack 1 1 [] [] [0]
+      moveWorklistGraph).tags =
+      [(0, .fixed 1), (1, .fixed 1)] := by
+  decide +kernel
+
+example :
+    (wordColourGraphWithWorklistAndMovesFromStack 1 2 [] [] [0]
+      { adjacency := [(0, [1]), (1, [0])]
+        tags := [(0, .atemp), (1, .atemp)]
+        dimension := 2 }).tags =
+      [(0, .fixed 2), (1, .fixed 1)] := by
+  decide +kernel
 
 example :
     wordSortMoves
@@ -133,6 +190,55 @@ example : wordBgOk 1 briggsMoveGraph 0 1 = none := by
   decide
 
 example : wordCoalesceSafe 1 briggsMoveGraph [0, 1] move01 = false := by
+  decide
+
+example :
+    let state := wordInitMoveStateWithColours 2 moveWorklistGraph [move01]
+    let state := wordMovePrefreeze 2 state
+    state.available = [] ∧ state.unavailable = [] ∧
+      state.stack = [1, 0] := by
+  decide
+
+example :
+    let state := wordInitMoveStateWithColours 2 moveWorklistGraph [move01]
+    let state := wordMovePrefreeze 2 state
+    state.related = [] ∧ state.freezeWl = [] := by
+  decide
+
+example :
+    let graph : WordRegGraph :=
+      { adjacency := [(2, [0]), (0, [2])]
+        tags := [(0, .atemp), (1, .atemp), (2, .atemp)]
+        dimension := 3 }
+    let move : WordMove := { priority := 3, left := 0, right := 1 }
+    let state : WordMoveState :=
+      { graph := graph
+        active := [0, 1, 2]
+        degrees := [(0, 1), (1, 0), (2, 1)]
+        parents := [(0, 0), (1, 1), (2, 2)]
+        related := [0, 1]
+        available := []
+        unavailable := [move]
+        freezeWl := []
+        spillWl := []
+        stack := [] }
+    let state := wordMoveReviveUnavailable 2 [2] state
+    state.available = [move] ∧ state.unavailable = [] := by
+  decide
+
+example :
+    let graph : WordRegGraph :=
+      { adjacency := [(0, [1, 2]), (1, [0]), (2, [0])]
+        tags := [(0, .atemp), (1, .atemp), (2, .atemp)]
+        dimension := 3 }
+    let state : WordMoveState :=
+      { graph := graph, active := [0, 1, 2],
+        degrees := [(0, 2), (1, 1), (2, 1)],
+        parents := [(0, 0), (1, 1), (2, 2)],
+        related := [0], available := [], unavailable := [],
+        freezeWl := [0], spillWl := [], stack := [] }
+    let state := wordMoveRespill 2 0 state
+    state.freezeWl = [] ∧ state.spillWl = [0] := by
   decide
 
 example :
@@ -231,8 +337,13 @@ example :
 example :
     wordStackOnly
       ((.seq (.assign 5 (.var 7)) (.assign 3 (.var 5))) : WordProg Nat) =
-      { temporary := [5], forced := [5] } := by
-  decide
+      { temporary := [], forced := [] } := by
+  native_decide
+
+example :
+    wordStackOnly (.move 0 [(3, 5)] : WordProg Nat) =
+      { temporary := [5], forced := [] } := by
+  native_decide
 
 #guard
     (wordAllocateGraphFunctionWithStackOnly [2]
@@ -247,7 +358,7 @@ example :
 example :
     wordStackOnly (.assign 9 (.var 5) : WordProg Nat) =
       { temporary := [], forced := [] } := by
-  decide
+  native_decide
 
 #guard
     (wordAllocateGraphFunctionWithStackOnly [2]

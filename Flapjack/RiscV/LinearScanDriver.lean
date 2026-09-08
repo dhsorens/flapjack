@@ -102,4 +102,80 @@ theorem wordAllocateLinearScanFunction_maps_parameters
   apply wordLinearScanLocationsComplete_mem allocation' _ hcomplete name
   simp [wordGetLiveTree, wordLiveTreeRegisters, wordListUnion, hname]
 
+/-! Full-SSA linear-scan allocation, including the explicit formal-entry
+    move prefix used by the CakeML calling convention. -/
+def wordAllocateLinearScanFunctionWithEntry (parameters : List Nat)
+    (program : WordProg α) (colours stackStart : Nat) :
+    Option (WordSsaState × List Nat × WordLinearScanState × WordProg α) :=
+  let (state, renamedParameters, renamedProgram) :=
+    wordSsaRenameFunctionWithEntry parameters program
+  let tree := WordClashTree.seq (.set renamedParameters)
+    (wordClashTree renamedProgram [])
+  let forced := wordProgForcedClashes renamedProgram
+  let moves := wordPreferenceMoves
+    (wordProgPreferenceEdges renamedProgram)
+  (wordLinearScanAllocateClashTreeChecked colours stackStart tree forced moves).map
+    (fun allocation =>
+      (state, renamedParameters, allocation, renamedProgram))
+
+theorem wordAllocateLinearScanFunctionWithEntry_safe
+    (parameters : List Nat) (program : WordProg α)
+    (colours stackStart : Nat)
+    (state : WordSsaState) (renamedParameters : List Nat)
+    (allocation : WordLinearScanState) (renamedProgram : WordProg α)
+    (halloc : wordAllocateLinearScanFunctionWithEntry parameters program colours stackStart =
+      some (state, renamedParameters, allocation, renamedProgram)) :
+    wordLinearScanAllocationSafe
+      (WordClashTree.seq
+        (.set (wordSsaRenameFunctionWithEntry parameters program).2.fst)
+        (wordClashTree (wordSsaRenameFunctionWithEntry parameters program).2.snd []))
+      (wordProgForcedClashes (wordSsaRenameFunctionWithEntry parameters program).2.snd)
+      allocation = true := by
+  simp [wordAllocateLinearScanFunctionWithEntry] at halloc
+  rcases halloc with ⟨allocation_, hchecked, rfl, rfl, rfl, rfl⟩
+  exact wordLinearScanAllocateClashTreeChecked_safe
+    colours stackStart
+    (WordClashTree.seq
+      (.set (wordSsaRenameFunctionWithEntry parameters program).2.fst)
+      (wordClashTree (wordSsaRenameFunctionWithEntry parameters program).2.snd []))
+    (wordProgForcedClashes (wordSsaRenameFunctionWithEntry parameters program).2.snd)
+    (wordPreferenceMoves
+      (wordProgPreferenceEdges (wordSsaRenameFunctionWithEntry parameters program).2.snd))
+    allocation_ hchecked
+
+theorem wordAllocateLinearScanFunctionWithEntry_maps_parameters
+    (parameters : List Nat) (program : WordProg α)
+    (colours stackStart : Nat)
+    (state : WordSsaState) (renamedParameters : List Nat)
+    (allocation : WordLinearScanState) (renamedProgram : WordProg α)
+    (halloc : wordAllocateLinearScanFunctionWithEntry parameters program colours stackStart =
+      some (state, renamedParameters, allocation, renamedProgram)) :
+    ∀ name, name ∈ renamedParameters →
+      ∃ location, lookupNatInfo name allocation.locations = some location := by
+  simp [wordAllocateLinearScanFunctionWithEntry] at halloc
+  rcases halloc with ⟨allocation_, hchecked, rfl, rfl, rfl, rfl⟩
+  have hsafe := wordLinearScanAllocateClashTreeChecked_safe
+    colours stackStart
+    (WordClashTree.seq
+      (.set (wordSsaRenameFunctionWithEntry parameters program).2.fst)
+      (wordClashTree (wordSsaRenameFunctionWithEntry parameters program).2.snd []))
+    (wordProgForcedClashes (wordSsaRenameFunctionWithEntry parameters program).2.snd)
+    (wordPreferenceMoves
+      (wordProgPreferenceEdges
+        (wordSsaRenameFunctionWithEntry parameters program).2.snd))
+    allocation_ hchecked
+  have hcomplete :
+      wordLinearScanLocationsComplete allocation_
+        (wordLiveTreeRegisters
+          (wordGetLiveTree
+            (WordClashTree.seq
+              (.set (wordSsaRenameFunctionWithEntry parameters program).2.fst)
+              (wordClashTree
+                (wordSsaRenameFunctionWithEntry parameters program).2.snd [])))) = true := by
+    simp [wordLinearScanAllocationSafe] at hsafe
+    exact hsafe.1.1
+  intro name hname
+  apply wordLinearScanLocationsComplete_mem allocation_ _ hcomplete name
+  simp [wordGetLiveTree, wordLiveTreeRegisters, wordListUnion, hname]
+
 end Flapjack
