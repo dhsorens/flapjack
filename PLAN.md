@@ -588,6 +588,8 @@ definitions, pass ordering, examples, and proof obligations.
   RISC-V contracts before claiming general call-aware allocation correctness.
 - [x] Port CakeML odd-mode spill-cost candidate selection into the graph
   worklist, preserving checked allocation soundness.
+- [x] Port CakeML no-cost highest-degree spill candidate selection into the
+  graph worklist, preserving checked allocation soundness.
 - [x] Thread CakeML-shaped formal-entry moves through the heuristic
   allocation pipeline so its Simple/IRC path consumes full-SSA functions.
 - [x] Prove graph-colouring soundness for the full-SSA heuristic allocator,

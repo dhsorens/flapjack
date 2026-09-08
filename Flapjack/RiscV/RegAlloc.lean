@@ -356,6 +356,15 @@ def wordRaRemoveNode (colours : Nat) (node : Nat)
     stack := node :: state.stack }
   wordRaRefreshWorklists colours state
 
+def wordRaChooseSpillNodeByDegree (degrees : NatInfoMap Nat) :
+    Nat → List Nat → Nat
+  | node, [] => node
+  | node, candidate :: candidates =>
+      let best := wordRaChooseSpillNodeByDegree degrees node candidates
+      let candidateDegree := (lookupNatInfo candidate degrees).getD 0
+      let bestDegree := (lookupNatInfo best degrees).getD 0
+      if bestDegree < candidateDegree then candidate else best
+
 def wordRaSimplifyAll : Nat → Nat → WordRaState → WordRaState
   | 0, _, state => state
   | fuel + 1, colours, state =>
@@ -365,9 +374,10 @@ def wordRaSimplifyAll : Nat → Nat → WordRaState → WordRaState
             (wordRaRemoveNode colours node false state)
       | [] =>
           match state.spillWl with
-          | node :: _ =>
+          | node :: nodes =>
+              let chosen := wordRaChooseSpillNodeByDegree state.degrees node nodes
               wordRaSimplifyAll fuel colours
-                (wordRaRemoveNode colours node true state)
+                (wordRaRemoveNode colours chosen true state)
           | [] => state
 
 def wordRaFinalizeStemps (state : WordRaState) : WordRaState :=
