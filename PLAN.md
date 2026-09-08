@@ -1532,6 +1532,10 @@ definitions, pass ordering, examples, and proof obligations.
   state transition before `StackAlloc` runtime replacement.
 - [x] Expose the state-threaded `StoreConsts` lowering pair, including its
   bitmap table append before `StackAlloc` runtime replacement.
+- [x] Compose state-threaded `Alloc` lowering with `StackAlloc` collector-call
+  replacement and fresh-label accounting.
+- [x] Compose state-threaded `StoreConsts` lowering with optional `StackAlloc`
+  runtime replacement and fresh-label accounting.
 - [x] Expose source-order bitmap threading through the allocated Word-to-Stack
   function pipeline, including a compositional append equation.
 - [x] Add abstract and bounded FFI loop-break simulation equations, with
