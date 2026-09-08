@@ -350,7 +350,10 @@ def pipelineWordFunctionsAllocatedWithGraphAndFullSsa [NeZero width] :
 
 /-! Spill-backed pipeline variant using the ABI-correct full-SSA entry
     allocator.  The generated entry moves therefore read the same physical
-    argument registers that `wordToStackFunctionWithParameters` initializes. -/
+    argument registers that the location-aware Word-to-Stack lowering
+    initializes.  This legacy flat-code API discards the bitmap artifact, but
+    still uses the state-threaded lowering so full-SSA `Alloc` and
+    `StoreConsts` constructors are not rejected by the old stateless path. -/
 def pipelineWordFunctionsAllocatedWithSpillsAndFullSsa [NeZero width] :
     List (Nat × List Nat × LoopProg (RiscV.Word width)) →
       Option (List (Nat × List Nat × StackProg Nat))
@@ -369,8 +372,11 @@ def pipelineWordFunctionsAllocatedWithSpillsAndFullSsa [NeZero width] :
           scratch := 31
           stackBase := 0
           addressScratch := 29 }
-      let stackBody ← RiscV.wordToStackFunctionWithParameters config
-        renamedParameters renamedProgram
+      let (stackBody, _) ←
+        RiscV.wordToStackFunctionWithParametersAndLocationBitmaps config
+          renamedParameters wordAllocatableRegisters.length config.scratch
+          allocation.nextSpill (some 1)
+          (RiscV.wordStackInitialBitmaps false) renamedProgram
       let rest ← pipelineWordFunctionsAllocatedWithSpillsAndFullSsa functions
       pure ((label, wordParameters, stackBody) :: rest)
 

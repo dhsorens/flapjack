@@ -608,6 +608,9 @@ definitions, pass ordering, examples, and proof obligations.
   neighboring degrees, and recurse through unspill/freeze before coloring.
 - [x] Expose the ABI-correct full-SSA spill allocator at the location-aware
   Word-to-Stack entry boundary, retaining renamed parameters and allocation slots.
+- [x] Route the legacy flat full-SSA spill pipeline through state-threaded
+  location-aware lowering, so `Alloc` and `StoreConsts` are supported instead
+  of being rejected by the stateless compiler.
 - [x] Port CakeML odd-mode spill-cost candidate selection into the graph
   worklist, preserving checked allocation soundness.
 - [x] Port CakeML no-cost highest-degree spill candidate selection into the
