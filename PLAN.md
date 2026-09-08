@@ -213,6 +213,8 @@ definitions, pass ordering, examples, and proof obligations.
   addition, including executable RV64 regression coverage.
 - [x] Extend the source-to-Loop bridge through constant Pancake multiplication
   and its Crepe-to-Loop `longMul` expansion, with executable RV64 coverage.
+- [x] Extend the source-to-Loop bridge through constant equality comparison
+  lowering and Loop branch execution, with true and false RV64 regressions.
 - [x] Prove RISC-V instruction-selection and evaluator agreement for the
   emitted constant-return artifact.
 - [x] Lower register-based equality and inequality conditionals to RISC-V,
