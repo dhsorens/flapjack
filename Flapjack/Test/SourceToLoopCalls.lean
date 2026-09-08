@@ -14,7 +14,7 @@ namespace Flapjack
 
 open RiscV
 
-theorem sourceToLoop_call_simulation :
+#guard
     (do
       let (_, main) ← lookupLoopFunction 2 pipelineCallPipeline.pipeline.loop
       let result ← evalLoopProgWithFunctions pipelineCallPipeline.pipeline.loop
@@ -22,15 +22,13 @@ theorem sourceToLoop_call_simulation :
       pure (loopResultValues result)) =
       (evalPanProgWithCalls pipelineCallSourceFunctions 20
         (fun _ : VarName => none) pipelineCallSourceMain).map
-          (fun result => result.2) := by
-  native_decide
+          (fun result => result.2)
 
-theorem sourceToLoop_call_executes :
+#guard
     (do
       let (_, main) ← lookupLoopFunction 2 pipelineCallPipeline.pipeline.loop
       let result ← evalLoopProgWithFunctions pipelineCallPipeline.pipeline.loop
         40 sourceToLoopState main
-      pure (loopResultValues result)) = some [BitVec.ofNat 64 41] := by
-  native_decide
+      pure (loopResultValues result)) = some [BitVec.ofNat 64 41]
 
 end Flapjack
