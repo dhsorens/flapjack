@@ -591,6 +591,8 @@ definitions, pass ordering, examples, and proof obligations.
   relation, including separate address and value scratch materialization.
 - [x] Prove the public WordProg `set` lowering preserves the complete mapped
   relation while materializing a spilled source.
+- [x] Compose public WordProg arithmetic division with the spill relation,
+  including its reserved-location safety guard.
 - [x] Expose soundness of the entry-aware SSA spill allocator, including its
   clash, special-location, and clash-tree checks.
 - [x] Expose location coverage for every variable in the entry-aware SSA spill
