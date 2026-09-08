@@ -20,6 +20,20 @@ def ffiMachineHost : WordFfiHost 64 :=
   fun service _ _ _ _ state =>
     if service == 7 then some state else none
 
+def ffiReturnState : State 64 :=
+  writeRegister (zeroState 64) 1 (BitVec.ofNat 64 100)
+
+def ffiReturnHost : WordFfiHost 64 :=
+  fun service _ _ _ _ state =>
+    if service == 7 then some { state with pc := 8 } else none
+
+def ffiReturnHostState : State 64 :=
+  { pc := 8, registers := fun current =>
+      if current = 14 then BitVec.ofNat 64 7
+      else ffiReturnState.registers current,
+    memory := ffiReturnState.memory, privilege := ffiReturnState.privilege,
+    mode := ffiReturnState.mode }
+
 def ffiMachineWordHandler : FunName → Word 64 → Word 64 → Word 64 → Word 64 →
     State 64 → Option (State 64) :=
   fun function _ _ _ _ state =>
@@ -71,6 +85,23 @@ example :
       [.addi 14 0 (BitVec.ofNat 64 7)]))
   all_goals try decide
   simp [ffiMachineHost]
+
+example :
+    (compileLabProgram ({ services := [("echo", 7)] } : WordFfiContext)
+      [⟨2, [.labAsm (.callFfi "echo") [] 0,
+            .labAsm (.return) [] 0]⟩]).bind (fun code =>
+        executeFunctionAtWithFfi ffiReturnHost 4 0 0 (BitVec.ofNat 64 100)
+          [] code [] [] ffiReturnState) = some [] := by
+  apply compileLabProgram_callFfi_return_executeFunctionAt_agreement
+    ({ services := [("echo", 7)] } : WordFfiContext)
+    ffiReturnHost ffiReturnState ffiReturnHostState 2 "echo" 7
+  · rfl
+  · decide
+  · simp [ffiReturnState, zeroState, readRegister, writeRegister]
+  · simp [ffiReturnHost, ffiReturnHostState, ffiReturnState, zeroState,
+      writeRegister]
+  · rfl
+  · simp [ffiReturnHostState, ffiReturnState, readRegister, writeRegister]
 
 example :
     (wordFfiToRiscV ({ services := [("echo", 7)] } : WordFfiContext)

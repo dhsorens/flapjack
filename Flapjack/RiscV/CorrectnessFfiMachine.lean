@@ -104,6 +104,138 @@ theorem compileLabProgram_callFfi_execute_agreement
   exact labCompileAsm_callFfi_execute_agreement context host state sectionId
     [] 0 function service resultState hservice hservice_bounded hzero hhost
 
+/-!
+At the function boundary, an FFI call must return through the caller's x1
+continuation.  This theorem composes the linked program shape, ECALL host
+transition, and JALR x0, x1, 0 return path for the smallest call-and-return
+function.  The fixed four-step fuel is the exact cost of the generated
+addi, ecall, jalr, and return-address check.
+-/
+theorem compileLabProgram_callFfi_return_executeFunctionAt_agreement
+    (context : WordFfiContext)
+    (host : WordFfiHost 64) (state hostState : State 64)
+    (sectionId : Nat) (function : FunName) (service : Nat)
+    (hservice : lookupWordFfiService function context.services = some service)
+    (hservice_bounded : service < 2 ^ 64)
+    (hzero : readRegister state 0 = 0)
+    (hhost : host service
+      (state.registers 10) (state.registers 11)
+      (state.registers 12) (state.registers 13)
+      { pc := 4, registers := fun current =>
+          if current = 14 then BitVec.ofNat 64 service
+          else state.registers current,
+        memory := state.memory, privilege := state.privilege, mode := state.mode } =
+      some hostState)
+    (hhost_pc : hostState.pc = 8)
+    (hhost_return : readRegister hostState 1 = BitVec.ofNat 64 100) :
+    (compileLabProgram context
+      [⟨sectionId, [
+        .labAsm (.callFfi function) [] 0,
+        .labAsm (.return) [] 0]⟩]).bind
+    (fun code =>
+          (executeFunctionAtWithFfi host 4 0 0 (BitVec.ofNat 64 100)
+            [] code [] [] state)) = some [] := by
+  have hzero' : state.registers 0 = 0 := by
+    simpa [readRegister] using hzero
+  let afterAddi : State 64 :=
+    { pc := 4, registers := fun current =>
+        if current = 14 then BitVec.ofNat 64 service
+        else state.registers current,
+      memory := state.memory, privilege := state.privilege, mode := state.mode }
+  have hadd :
+      execute { state with pc := 0 }
+          (.addi 14 0 (BitVec.ofNat 64 service)) = afterAddi := by
+    simp [afterAddi, execute, writeRegister, readRegister, nextPc, hzero']
+  have haddWithFfi :
+      executeWithFfi host { state with pc := 0 }
+          (.addi 14 0 (BitVec.ofNat 64 service)) = some afterAddi := by
+    simpa [executeWithFfi] using congrArg some hadd
+  have hecall :
+      executeWithFfi host afterAddi .ecall = some hostState := by
+    simpa [executeWithFfi, afterAddi, readRegister,
+      Nat.mod_eq_of_lt hservice_bounded] using hhost
+  have hhost_return' : hostState.registers 1 = BitVec.ofNat 64 100 := by
+    simpa [readRegister] using hhost_return
+  have hmask :
+      (BitVec.ofNat 64 100) &&& (BitVec.ofNat 64 (2 ^ 64 - 2)) =
+        BitVec.ofNat 64 100 := by
+    native_decide
+  have hreturn :
+      execute hostState (.jalr 0 1 (0#64)) = { hostState with pc := 100 } := by
+    simp [execute, writeRegister, readRegister, hhost_return', hmask]
+  have hrun :
+      executeCodeUntilWithFfi host 4 (0#64) (BitVec.ofNat 64 100)
+            [.addi 14 0 (BitVec.ofNat 64 service), .ecall, .jalr 0 1 0]
+            { state with pc := 0 } =
+      some { hostState with pc := 100 } := by
+    have hzeroNe : (0#64) ≠ (BitVec.ofNat 64 100) := by native_decide
+    have hfourNe : (4#64) ≠ (BitVec.ofNat 64 100) := by native_decide
+    have hfirst :
+        executeCodeUntilWithFfi host 4 (0#64) (BitVec.ofNat 64 100)
+            [.addi 14 0 (BitVec.ofNat 64 service), .ecall, .jalr 0 1 0]
+            { state with pc := 0 } =
+          executeCodeUntilWithFfi host 3 (0#64) (BitVec.ofNat 64 100)
+            [.addi 14 0 (BitVec.ofNat 64 service), .ecall, .jalr 0 1 0]
+            afterAddi := by
+      rw [executeCodeUntilWithFfi]
+      simp [hzeroNe]
+      change
+        (executeWithFfi host { state with pc := 0 }
+          (.addi 14 0 (BitVec.ofNat 64 service))).bind
+            (fun nextState =>
+              executeCodeUntilWithFfi host 3 (0#64) (BitVec.ofNat 64 100)
+                [.addi 14 0 (BitVec.ofNat 64 service), .ecall, .jalr 0 1 0]
+                nextState) = _
+      rw [haddWithFfi]
+      simp
+    have hsecond :
+        executeCodeUntilWithFfi host 3 (0#64) (BitVec.ofNat 64 100)
+            [.addi 14 0 (BitVec.ofNat 64 service), .ecall, .jalr 0 1 0]
+            afterAddi =
+          executeCodeUntilWithFfi host 2 (0#64) (BitVec.ofNat 64 100)
+            [.addi 14 0 (BitVec.ofNat 64 service), .ecall, .jalr 0 1 0]
+            hostState := by
+      rw [executeCodeUntilWithFfi]
+      simp [afterAddi, hfourNe]
+      change
+        (executeWithFfi host afterAddi .ecall).bind
+            (fun nextState =>
+              executeCodeUntilWithFfi host 2 (0#64) (BitVec.ofNat 64 100)
+                [.addi 14 0 (BitVec.ofNat 64 service), .ecall, .jalr 0 1 0]
+                nextState) = _
+      rw [hecall]
+      simp
+    have hreturnWithFfi :
+        executeWithFfi host hostState (.jalr 0 1 (0#64)) =
+          some { hostState with pc := 100 } := by
+      simpa [executeWithFfi] using congrArg some hreturn
+    have hthird :
+        executeCodeUntilWithFfi host 2 (0#64) (BitVec.ofNat 64 100)
+            [.addi 14 0 (BitVec.ofNat 64 service), .ecall, .jalr 0 1 0]
+            hostState =
+          executeCodeUntilWithFfi host 1 (0#64) (BitVec.ofNat 64 100)
+            [.addi 14 0 (BitVec.ofNat 64 service), .ecall, .jalr 0 1 0]
+            { hostState with pc := 100 } := by
+      simp [executeCodeUntilWithFfi, hreturnWithFfi, hhost_pc]
+    rw [hfirst, hsecond, hthird]
+    simp [executeCodeUntilWithFfi]
+  have hcode :
+      compileLabProgram context
+        [⟨sectionId, [
+          .labAsm (.callFfi function) [] 0,
+          .labAsm (.return) [] 0]⟩] =
+        some [.addi 14 0 (BitVec.ofNat 64 service), .ecall, .jalr 0 1 0] := by
+    simp [compileLabProgram, labCompileProgramSections,
+      labCompileProgramLines, labCompileAsmProgram, hservice]
+  rw [hcode]
+  change
+    (executeCodeUntilWithFfi host 4 (0#64) (BitVec.ofNat 64 100)
+      [.addi 14 0 (BitVec.ofNat 64 service), .ecall, .jalr 0 1 0]
+      { state with pc := 0 }).map (fun _ => ([] : List (Word 64))) =
+      some []
+  rw [hrun]
+  simp
+
 theorem executeInstructionsWithFfi_wordFfi_abi
     [NeZero width] (host : WordFfiHost width) (state : State width)
     (service : Nat) (configuration configurationLength array arrayLength : Fin 32)

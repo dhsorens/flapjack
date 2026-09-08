@@ -1712,6 +1712,8 @@ definitions, pass ordering, examples, and proof obligations.
   compilation, hiding label collection and code-shape normalization.
 - [x] Lift the same boundary through singleton linked-program flattening,
   establishing the first program-level Lab-to-machine FFI simulation.
+- [x] Compose a singleton Lab FFI call-and-return through
+  `executeFunctionAtWithFfi`, including the caller's `x1` continuation.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 - [x] Expose location-aware bitmap sequence compilation and evaluator
