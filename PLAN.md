@@ -596,6 +596,7 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Compose public WordProg memory loads and stores with the spill relations.
 - [x] Compose public shared-memory loads with the shared spill relation.
 - [x] Prove public shared-memory stores preserve the mapped spill relation.
+- [x] Compose public assign and locValue moves with the spill relation.
 - [x] Expose soundness of the entry-aware SSA spill allocator, including its
   clash, special-location, and clash-tree checks.
 - [x] Expose location coverage for every variable in the entry-aware SSA spill
