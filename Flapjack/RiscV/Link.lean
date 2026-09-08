@@ -96,6 +96,26 @@ def wordCallToRiscVLabel [NeZero width]
   let entry ← lookupLinkedEntry label functions
   wordCallToRiscV entry parameters returns arguments destinations
 
+theorem wordCallToRiscVLabel_linkRiscVFunctionsAt_head [NeZero width]
+    (start : Word width) (offset label : Nat) (functionParameters : List Nat)
+    (code : List (Instruction width)) (functionReturns : List (Fin 32))
+    (functions :
+      List (Nat × List Nat × Option (List (Instruction width) × List (Fin 32))))
+    (linked :
+      List (Nat × Word width × List Nat × List (Instruction width) × List (Fin 32)))
+    (callParameters callReturns arguments destinations : List Nat)
+    (hrest : linkRiscVFunctionsAt start (offset + 4 * code.length) functions =
+      some linked) :
+    (linkRiscVFunctionsAt start offset
+      ((label, functionParameters, some (code, functionReturns)) :: functions)).bind
+        (fun linked =>
+          wordCallToRiscVLabel linked label callParameters callReturns arguments destinations) =
+      wordCallToRiscVLabel
+        ((label, start + BitVec.ofNat width offset, functionParameters, code,
+          functionReturns) :: linked)
+        label callParameters callReturns arguments destinations := by
+  simp [linkRiscVFunctionsAt, hrest, wordCallToRiscVLabel, lookupLinkedEntry]
+
 def wordFunctionReturnNames [NeZero width] :
     WordProg (Word width) → Option (List Nat)
   | .return _ values => some values
