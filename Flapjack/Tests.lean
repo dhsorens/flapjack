@@ -86,6 +86,7 @@ import Flapjack.Test.LongMulRegisterRelation
 import Flapjack.RiscV.CorrectnessDirectLongMulRegister
 import Flapjack.RiscV.CorrectnessAddCarryRegister
 import Flapjack.Test.AddCarryRegisterRelation
+import Flapjack.RiscV.CorrectnessDirectAddCarryRegister
 
 /-!
 # Flapjack regression tests
