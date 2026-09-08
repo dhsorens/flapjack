@@ -25,6 +25,46 @@ def linkRiscVFunctions [NeZero width]
     (functions : List (Nat × List Nat × Option (List (Instruction width) × List (Fin 32)))) :=
   linkRiscVFunctionsAt start 0 functions
 
+def linkRiscVCodeLength [NeZero width] :
+    List (Nat × List Nat × Option (List (Instruction width) × List (Fin 32))) → Nat
+  | [] => 0
+  | (_, _, some (code, _)) :: functions => code.length + linkRiscVCodeLength functions
+  | _ :: functions => linkRiscVCodeLength functions
+
+theorem linkRiscVFunctionsAt_append_resolved [NeZero width]
+    (start : Word width) (offset : Nat)
+    (functionsPrefix suffix :
+      List (Nat × List Nat × Option (List (Instruction width) × List (Fin 32))))
+    (hresolved : ∀ item ∈ functionsPrefix, ∃ code returns, item.2.2 = some (code, returns)) :
+    linkRiscVFunctionsAt start offset (functionsPrefix ++ suffix) = (do
+      let left ← linkRiscVFunctionsAt start offset functionsPrefix
+      let right ← linkRiscVFunctionsAt
+        start (offset + 4 * linkRiscVCodeLength functionsPrefix) suffix
+      pure (left ++ right)) := by
+  induction functionsPrefix generalizing offset with
+  | nil => simp [linkRiscVCodeLength, linkRiscVFunctionsAt]
+  | cons item functionsPrefix ih =>
+      rcases item with ⟨label, parameters, artifact⟩
+      cases artifact with
+      | none =>
+          have h := hresolved (label, parameters, none) (by simp)
+          simp at h
+      | some artifact =>
+          rcases artifact with ⟨code, returns⟩
+          have htail : ∀ item ∈ functionsPrefix, ∃ code returns, item.2.2 = some (code, returns) := by
+            intro item hitem
+            exact hresolved item (by simp [hitem])
+          simp only [linkRiscVFunctionsAt, linkRiscVCodeLength, List.cons_append]
+          rw [ih (offset := offset + 4 * code.length) htail]
+          generalize hlinked :
+            linkRiscVFunctionsAt start (offset + 4 * code.length) functionsPrefix = linkedPrefix
+          cases linkedPrefix <;> simp [Nat.add_assoc, Nat.mul_add]
+          generalize hrest :
+            linkRiscVFunctionsAt
+              start (offset + (4 * code.length + 4 * linkRiscVCodeLength functionsPrefix))
+              suffix = linkedSuffix
+          cases linkedSuffix <;> simp
+
 def lookupLinkedEntry [NeZero width]
     (label : Nat)
     (functions : List (Nat × Word width × List Nat × List (Instruction width) × List (Fin 32))) :

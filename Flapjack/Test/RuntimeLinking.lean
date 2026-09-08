@@ -43,4 +43,32 @@ def runtimeLinkDeclarations : List (Decl (RiscV.Word 64)) :=
     (fun value => BitVec.ofNat 64 value) [] runtimeLinkRemoveConfig
     runtimeLinkDeclarations).isSome
 
+example :
+    RiscV.linkRiscVFunctionsAt (0 : RiscV.Word 64) 12
+      [(7, [], some ([.addi 2 0 1, .jalr 0 1 0], [])),
+        (8, [2], some ([.addi 10 2 0], [10]))] =
+      some [(7, 12, [], [.addi 2 0 1, .jalr 0 1 0], []),
+        (8, 20, [2], [.addi 10 2 0], [10])] := by
+  rfl
+
+example :
+    RiscV.linkRiscVFunctionsAt (0 : RiscV.Word 64) 12
+      [(7, [], some ([.addi 2 0 1, .jalr 0 1 0], [])),
+       (8, [2], some ([.addi 10 2 0], [10]))] =
+      (do
+        let left ← RiscV.linkRiscVFunctionsAt (0 : RiscV.Word 64) 12
+          [(7, [], some ([.addi 2 0 1, .jalr 0 1 0], []))]
+        let right ← RiscV.linkRiscVFunctionsAt (0 : RiscV.Word 64) 20
+          [(8, [2], some ([.addi 10 2 0], [10]))]
+        pure (left ++ right)) := by
+  have h := RiscV.linkRiscVFunctionsAt_append_resolved
+    (start := (0 : RiscV.Word 64)) (offset := 12)
+    [(7, [], some ([.addi 2 0 1, .jalr 0 1 0], []))]
+    [(8, [2], some ([.addi 10 2 0], [10]))] (by
+      intro item hitem
+      simp only [List.mem_singleton] at hitem
+      subst item
+      exact ⟨_, _, rfl⟩)
+  simpa [RiscV.linkRiscVCodeLength] using h
+
 end Flapjack
