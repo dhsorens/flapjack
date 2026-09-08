@@ -100,4 +100,22 @@ example :
   apply RiscV.lookupLinkedEntry_linkRiscVFunctionsAt_head
   rfl
 
+example :
+    (RiscV.linkRiscVFunctionsAt (0 : RiscV.Word 64) 12
+      [(7, [], some ([.addi 2 0 1, .jalr 0 1 0], [])),
+       (8, [2], some ([.addi 10 2 0], [10]))]).bind
+        (fun linked =>
+          RiscV.wordCallToRiscVLabel linked 7 [2] [10] [6] [4]) =
+      some [.addi 2 6 0, .addi 31 0 12, .jalr 1 31 0, .addi 4 10 0] := by
+  have h := RiscV.wordCallToRiscVLabel_linkRiscVFunctionsAt_head
+    (start := (0 : RiscV.Word 64)) (offset := 12)
+    (label := 7) (functionParameters := [])
+    (code := [.addi 2 0 1, .jalr 0 1 0]) (functionReturns := [])
+    (functions := [(8, [2], some ([.addi 10 2 0], [10]))])
+    (linked := [(8, 20, [2], [.addi 10 2 0], [10])])
+    (callParameters := [2]) (callReturns := [10])
+    (arguments := [6]) (destinations := [4]) (by rfl)
+  rw [h]
+  exact RiscV.wordCallToRiscV_shape 12
+
 end Flapjack
