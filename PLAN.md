@@ -585,6 +585,8 @@ definitions, pass ordering, examples, and proof obligations.
   reading through a spilled address from the separate shared-memory state.
 - [x] Lift the existing division value theorem with a full location-matrix
   non-interference contract for unrelated spill and register values.
+- [x] Prove the direct WordProg `get` lowering preserves unrelated mapped
+  values for a spilled destination and explicit StackStore mapping.
 - [x] Expose soundness of the entry-aware SSA spill allocator, including its
   clash, special-location, and clash-tree checks.
 - [x] Expose location coverage for every variable in the entry-aware SSA spill
