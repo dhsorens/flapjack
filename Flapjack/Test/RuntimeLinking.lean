@@ -92,4 +92,12 @@ example :
     RiscV.wordFunctionToRiscVWithCallsAndFfi,
     RiscV.wordFunctionToRiscVWithCalls, RiscV.wordControlInstructions]
 
+example :
+    (RiscV.linkRiscVFunctionsAt (0 : RiscV.Word 64) 12
+      [(7, [], some ([.addi 2 0 1, .jalr 0 1 0], [])),
+       (8, [2], some ([.addi 10 2 0], [10]))]).bind
+      (RiscV.lookupLinkedEntry 7) = some 12 := by
+  apply RiscV.lookupLinkedEntry_linkRiscVFunctionsAt_head
+  rfl
+
 end Flapjack
