@@ -1706,6 +1706,8 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Exercise Word FFI lowering through StackRemove, LabLang, and the
   RISC-V backend, including ABI moves, return-label materialization, service
   selection, and ECALL emission.
+- [x] Prove the Lab-level FFI-to-machine boundary: service materialization
+  followed by ECALL agrees with the FFI host transition.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 - [x] Expose location-aware bitmap sequence compilation and evaluator
