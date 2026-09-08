@@ -613,6 +613,8 @@ definitions, pass ordering, examples, and proof obligations.
   including the return jump appended by linking.
 - [x] Connect a successfully linked head function to its resolved entry lookup.
 - [x] Connect linked head lookup to the call-sequence compiler at its entry.
+- [x] Add call-aware and FFI-aware lowering for allocator-generated register
+  moves.
 - [x] Expose soundness of the entry-aware SSA spill allocator, including its
   clash, special-location, and clash-tree checks.
 - [x] Expose location coverage for every variable in the entry-aware SSA spill

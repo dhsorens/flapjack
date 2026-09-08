@@ -1,4 +1,5 @@
 import Flapjack.RiscV.Backend
+import Flapjack.RiscV.Calls
 
 /-!
 Compositional correctness for the straight-line Word fragment.  The RISC-V
@@ -163,6 +164,27 @@ theorem wordProgToRiscV_sound_of_straightLine [NeZero width]
             Option.some.inj (h.symm.trans hcompile')
           subst code
           simp [evalWordProg, evalWordShareInst, h]
+
+theorem wordFunctionToRiscVWithCalls_move_sound [NeZero width]
+    (context : WordCallContext width) (state : State width)
+    (store : Nat) (moves : List (Nat × Nat))
+    (code : List (Instruction width))
+    (hcompile : wordFunctionToRiscVWithCalls context (.move store moves) =
+      some (code, [])) :
+    evalWordFunction state (.move store moves) =
+      some (executeInstructions state code, []) := by
+  cases hmove : wordMoveToInstructions (width := width) moves with
+  | none =>
+      simp [wordFunctionToRiscVWithCalls, hmove] at hcompile
+  | some instructions =>
+      have hcompile' :
+          some (instructions, ([] : List (Fin 32))) =
+            some (code, ([] : List (Fin 32))) := by
+        simpa [wordFunctionToRiscVWithCalls, hmove] using hcompile
+      have hcode : instructions = code :=
+        congrArg Prod.fst (Option.some.inj hcompile')
+      subst code
+      simp [evalWordFunction, hmove]
 
 /-!
 The RISC-V expansion of `LongMul` writes the high word first and the low
