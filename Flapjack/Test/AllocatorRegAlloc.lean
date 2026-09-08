@@ -190,6 +190,8 @@ example :
     let move : WordMove := { priority := 3, left := 0, right := 1 }
     let state : WordMoveState :=
       { graph := graph
+        active := [0, 1, 2]
+        degrees := [(0, 1), (1, 0), (2, 1)]
         parents := [(0, 0), (1, 1), (2, 2)]
         related := [0, 1]
         available := []
@@ -207,7 +209,9 @@ example :
         tags := [(0, .atemp), (1, .atemp), (2, .atemp)]
         dimension := 3 }
     let state : WordMoveState :=
-      { graph := graph, parents := [(0, 0), (1, 1), (2, 2)],
+      { graph := graph, active := [0, 1, 2],
+        degrees := [(0, 2), (1, 1), (2, 1)],
+        parents := [(0, 0), (1, 1), (2, 2)],
         related := [0], available := [], unavailable := [],
         freezeWl := [0], spillWl := [], stack := [] }
     let state := wordMoveRespill 2 0 state
