@@ -251,4 +251,13 @@ theorem sourceToLoop_declaration_mul_return_executes :
         some [BitVec.ofNat 64 6] := by
   native_decide
 
+theorem sourceToLoop_declaration_mul_return_simulation :
+    (evalLoopProg 30 sourceToLoopState
+      (loopCompileProg sourceToLoopLoopContext []
+        (compileProg sourceToLoopCompileContext
+          sourceToLoopDeclarationMulProgram))).map loopResultValues =
+      (evalPanStateProg (fun _ => none) sourceToLoopDeclarationMulProgram).map
+        Prod.snd := by
+  native_decide
+
 end Flapjack
