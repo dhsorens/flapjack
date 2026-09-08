@@ -749,12 +749,18 @@ def wordRaColourTwoPass (colours stackStart : Nat)
   wordRaColourStempsWithMoves colours stackStart moves parents
     (List.range graph.dimension) graph
 
+def wordColourGraphWithWorklistAndMovesFromStack (colours stackStart : Nat)
+    (moves : List WordMove) (parents : NatInfoMap Nat)
+    (preStack : List Nat) (graph : WordRegGraph) : WordRegGraph :=
+  let state := wordRaInit colours graph
+  let state := wordRaSimplifyAll (state.active.length + 1) colours state
+  let state := { state with stack := preStack ++ state.stack }
+  wordRaColourTwoPass colours stackStart moves parents state
+
 def wordColourGraphWithWorklistAndMoves (colours stackStart : Nat)
     (moves : List WordMove) (parents : NatInfoMap Nat)
     (graph : WordRegGraph) : WordRegGraph :=
-  let state := wordRaInit colours graph
-  let state := wordRaSimplifyAll (state.active.length + 1) colours state
-  wordRaColourTwoPass colours stackStart moves parents state
+  wordColourGraphWithWorklistAndMovesFromStack colours stackStart moves parents [] graph
 
 structure WordMoveState where
   graph : WordRegGraph
@@ -1061,13 +1067,21 @@ def wordRaSimplifyAllWithSpillCosts : Nat → Nat → NatInfoMap Nat →
               wordRaSimplifyAllWithSpillCosts fuel colours costs
                 (wordRaRemoveNode colours chosen true state)
 
-def wordColourGraphWithWorklistAndSpillCosts (colours stackStart : Nat)
+def wordColourGraphWithWorklistAndSpillCostsFromStack (colours stackStart : Nat)
     (costs : NatInfoMap Nat) (moves : List WordMove)
-    (parents : NatInfoMap Nat) (graph : WordRegGraph) : WordRegGraph :=
+    (parents : NatInfoMap Nat) (preStack : List Nat)
+    (graph : WordRegGraph) : WordRegGraph :=
   let state := wordRaInit colours graph
   let state := wordRaSimplifyAllWithSpillCosts
     (state.active.length + 1) colours costs state
+  let state := { state with stack := preStack ++ state.stack }
   wordRaColourTwoPass colours stackStart moves parents state
+
+def wordColourGraphWithWorklistAndSpillCosts (colours stackStart : Nat)
+    (costs : NatInfoMap Nat) (moves : List WordMove)
+    (parents : NatInfoMap Nat) (graph : WordRegGraph) : WordRegGraph :=
+  wordColourGraphWithWorklistAndSpillCostsFromStack colours stackStart costs
+    moves parents [] graph
 
 def wordAllocateGraphWithSpillCosts (tree : WordClashTree)
     (forced : List (Nat × Nat)) (fixedSources : List Nat)
@@ -1079,8 +1093,8 @@ def wordAllocateGraphWithSpillCosts (tree : WordClashTree)
   let moveState := wordInitMoveStateWithColours colours input.graph moves
   let moveState := wordCoalesceAllAvailable colours moveState
   let moveState := wordFreezeAllAvailable colours moveState
-  let graph := wordColourGraphWithWorklistAndSpillCosts colours stackStart costs moves
-    moveState.parents moveState.graph
+  let graph := wordColourGraphWithWorklistAndSpillCostsFromStack colours stackStart costs moves
+    moveState.parents moveState.stack moveState.graph
   let colouring := wordGraphTotalColouring input graph moveState.parents
   let colour := wordGraphColouringAt colouring
   if wordGraphTagsAreFixed graph &&
@@ -1104,8 +1118,8 @@ def wordAllocateGraphWithPrioritizedMovesAndSpillCosts (tree : WordClashTree)
   let moveState := wordInitMoveStateWithColours colours input.graph moves
   let moveState := wordCoalesceAllAvailable colours moveState
   let moveState := wordFreezeAllAvailable colours moveState
-  let graph := wordColourGraphWithWorklistAndSpillCosts colours stackStart costs moves
-    moveState.parents moveState.graph
+  let graph := wordColourGraphWithWorklistAndSpillCostsFromStack colours stackStart costs moves
+    moveState.parents moveState.stack moveState.graph
   let colouring := wordGraphTotalColouring input graph moveState.parents
   let colour := wordGraphColouringAt colouring
   if wordGraphTagsAreFixed graph &&
@@ -1163,8 +1177,8 @@ def wordAllocateGraphSimpleWithColourMoves (tree : WordClashTree)
   let moveState := wordInitMoveStateWithColours colours input.graph []
   let moveState := wordCoalesceAllAvailable colours moveState
   let moveState := wordFreezeAllAvailable colours moveState
-  let graph := wordColourGraphWithWorklistAndMoves colours stackStart colourMoves
-    moveState.parents moveState.graph
+  let graph := wordColourGraphWithWorklistAndMovesFromStack colours stackStart colourMoves
+    moveState.parents moveState.stack moveState.graph
   let colouring := wordGraphTotalColouring input graph moveState.parents
   let colour := wordGraphColouringAt colouring
   if wordGraphTagsAreFixed graph &&
@@ -1189,8 +1203,8 @@ def wordAllocateGraphSimpleWithColourMovesAndSpillCosts (tree : WordClashTree)
   let moveState := wordInitMoveStateWithColours colours input.graph []
   let moveState := wordCoalesceAllAvailable colours moveState
   let moveState := wordFreezeAllAvailable colours moveState
-  let graph := wordColourGraphWithWorklistAndSpillCosts colours stackStart costs
-    colourMoves moveState.parents moveState.graph
+  let graph := wordColourGraphWithWorklistAndSpillCostsFromStack colours stackStart costs
+    colourMoves moveState.parents moveState.stack moveState.graph
   let colouring := wordGraphTotalColouring input graph moveState.parents
   let colour := wordGraphColouringAt colouring
   if wordGraphTagsAreFixed graph &&
@@ -1248,8 +1262,8 @@ def wordAllocateGraphWithPrioritizedMovesAndColourMoves (tree : WordClashTree)
   let moveState := wordInitMoveStateWithColours colours input.graph coalesceMoves
   let moveState := wordCoalesceAllAvailable colours moveState
   let moveState := wordFreezeAllAvailable colours moveState
-  let graph := wordColourGraphWithWorklistAndMoves colours stackStart colourMoves
-    moveState.parents moveState.graph
+  let graph := wordColourGraphWithWorklistAndMovesFromStack colours stackStart colourMoves
+    moveState.parents moveState.stack moveState.graph
   let colouring := wordGraphTotalColouring input graph moveState.parents
   let colour := wordGraphColouringAt colouring
   if wordGraphTagsAreFixed graph &&
@@ -1276,8 +1290,8 @@ def wordAllocateGraphWithPrioritizedMovesAndColourMovesAndSpillCosts
   let moveState := wordInitMoveStateWithColours colours input.graph coalesceMoves
   let moveState := wordCoalesceAllAvailable colours moveState
   let moveState := wordFreezeAllAvailable colours moveState
-  let graph := wordColourGraphWithWorklistAndSpillCosts colours stackStart costs
-    colourMoves moveState.parents moveState.graph
+  let graph := wordColourGraphWithWorklistAndSpillCostsFromStack colours stackStart costs
+    colourMoves moveState.parents moveState.stack moveState.graph
   let colouring := wordGraphTotalColouring input graph moveState.parents
   let colour := wordGraphColouringAt colouring
   if wordGraphTagsAreFixed graph &&
@@ -1336,8 +1350,8 @@ def wordAllocateGraph (tree : WordClashTree)
   let moveState := wordInitMoveStateWithColours colours input.graph moves
   let moveState := wordCoalesceAllAvailable colours moveState
   let moveState := wordFreezeAllAvailable colours moveState
-  let graph := wordColourGraphWithWorklistAndMoves colours stackStart moves
-    moveState.parents moveState.graph
+  let graph := wordColourGraphWithWorklistAndMovesFromStack colours stackStart moves
+    moveState.parents moveState.stack moveState.graph
   let colouring := wordGraphTotalColouring input graph moveState.parents
   let colour := wordGraphColouringAt colouring
   if wordGraphTagsAreFixed graph &&
@@ -1361,8 +1375,8 @@ def wordAllocateGraphWithPrioritizedMoves (tree : WordClashTree)
   let moveState := wordInitMoveStateWithColours colours input.graph moves
   let moveState := wordCoalesceAllAvailable colours moveState
   let moveState := wordFreezeAllAvailable colours moveState
-  let graph := wordColourGraphWithWorklistAndMoves colours stackStart moves
-    moveState.parents moveState.graph
+  let graph := wordColourGraphWithWorklistAndMovesFromStack colours stackStart moves
+    moveState.parents moveState.stack moveState.graph
   let colouring := wordGraphTotalColouring input graph moveState.parents
   let colour := wordGraphColouringAt colouring
   if wordGraphTagsAreFixed graph &&

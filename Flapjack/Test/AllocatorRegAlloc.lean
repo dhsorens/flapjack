@@ -97,6 +97,12 @@ def move01 : WordMove :=
   { priority := 7, left := 0, right := 1 }
 
 example :
+    (wordColourGraphWithWorklistAndMovesFromStack 1 1 [] [] [0]
+      moveWorklistGraph).tags =
+      [(1, .fixed 1), (0, .fixed 1)] := by
+  decide +kernel
+
+example :
     wordSortMoves
       [{ priority := 1, left := 0, right := 1 },
        { priority := 3, left := 2, right := 3 },
