@@ -553,7 +553,8 @@ theorem compilePanToLoop_return_add_const_correct
         loopResultValues =
       evalPanProg (fun _ => none)
         (.return (.op .add [.const left, .const right])) := by
-  simp [compileProg, compileExp, loopCompileProg, loopCompileExp,
+  simp [compileProg, compileExp,
+    loopCompileProg, loopCompileExp,
     compileExp.compileExpList, cexpHeads, loopCompileExp.loopCompileExps,
     loopCompileExps, loopNestedSeq,
     loopTempNames, loopAssignTemps, evalLoopProg, evalLoopExp,
@@ -745,6 +746,45 @@ theorem compilePanToLoop_local_return_correct
     evalPanExp, lookup, environment_agrees]
   cases h : locals name <;>
     simp [updateLoopLocal] <;> rfl
+
+/-!
+A closed scalar declaration extends the source environment and the compiled
+Loop environment at the same allocated slot.  The body can then read that
+slot through the usual local-return path.
+-/
+theorem compilePanToLoop_dec_return_const_correct
+    [BEq α] [OfNat α 0] [OfNat α 1] [Add α] [Mul α] [Div α]
+    [Sub α] [AndOp α] [OrOp α] [HXor α α α] [ShiftLeft α] [ShiftRight α]
+    [LT α] [DecidableRel (fun left right : α => left < right)]
+    (compileContext : CompileContext α) (loopContext : LoopContext α)
+    (live : List Nat) (state : LoopState α) (locals : VarName → Option α)
+    (name : VarName) (value : α)
+    (maxVar_agrees : loopContext.maxVar = compileContext.maxVar) :
+    (evalLoopProg 16 state
+      (loopCompileProg loopContext live
+        (compileProg compileContext
+          (.dec name .one (.const value) (.return (.var .local name)))))).map
+        loopResultValues =
+      (evalPanStateProg locals
+        (.dec name .one (.const value) (.return (.var .local name)))).map
+        Prod.snd := by
+  have hcompiled :
+      loopCompileProg loopContext live
+        (.dec (compileContext.maxVar + 1) (.const value)
+          (.return [.var (compileContext.maxVar + 1)])) =
+        .seq .skip
+          (.seq (.assign (compileContext.maxVar + 1) (.const value))
+            (.seq
+              (.seq (.assign (loopContext.maxVar + 1 + 1)
+                (.var (compileContext.maxVar + 1))) .skip)
+              (.return [loopContext.maxVar + 1 + 1]))) := by
+    simp [loopCompileProg, loopCompileExp, loopCompileExps,
+      loopCompileExp.loopCompileExps, loopNestedSeq, loopTempNames,
+      loopAssignTemps, maxVar_agrees]
+  simp [compileProg, compileExp, allocatedNames, nestedDecs, hcompiled,
+    evalLoopProg, evalLoopExp,
+    loopReadLocals, updateLoopLocal, updatePanLocal, loopResultValues,
+    evalPanStateProg, evalPanExp, lookupInfo, maxVar_agrees]
 
 /-!
 The first compositional bridge between the Loop and Word semantic states.
