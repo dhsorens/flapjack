@@ -578,8 +578,8 @@ definitions, pass ordering, examples, and proof obligations.
   state-only evaluator, preserving an explicit empty return carrier.
 - [x] Lift straight-line colouring simulation to handler-aware Word evaluation,
   including preservation of the empty return carrier.
-- [x] Match CakeML's Simple/IRC distinction in graph allocation modes: modes
-  0--1 omit move preferences, while modes 2--3 retain prioritized moves.
+- [x] Match CakeML Simple/IRC distinction in graph allocation modes: modes
+  0--1 omit move preferences during coalescing but retain the original move table for coloring, while modes 2--3 retain prioritized moves throughout.
 - [x] Preserve SSA-renamed virtual names at the heuristic allocator's
   location-aware StackLang boundary; color only the register-semantic result.
 - [x] Prove the reserved-x31 five-instruction rotate-right colouring boundary
