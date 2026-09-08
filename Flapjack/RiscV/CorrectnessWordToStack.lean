@@ -562,6 +562,43 @@ theorem wordToStackProgNatWithBitmapBuilder_call_no_handler_none
     establish the intermediate state, the generated call code can be supplied
     with the corresponding callee/handler execution equation. -/
 
+theorem wordToStackProgNatWithLocationBitmaps_call_handler
+    [BEq Nat] (config : WordStackConfig)
+    (registerCount bitmapRegister frameSlots wordBits : Nat)
+    (storeConstsStub : Option Nat) (state finalState : WordStackBitmapState)
+    (returns : Option (List Nat × (List Nat × List Nat) × WordProg Nat × Nat × Nat))
+    (target : Nat) (arguments : List Nat)
+    (exception handlerLabel entryLabel : Nat)
+    (body : WordProg Nat)
+    (argumentMoves returnCode handlerCode : StackProg Nat)
+    (hargs : wordStackMovesToPhysical config arguments 2 = some argumentMoves)
+    (hreturn : wordStackReturnCode config returns = some returnCode)
+    (hhandler : wordToStackProgNatWithLocationBitmaps config registerCount
+      bitmapRegister frameSlots wordBits storeConstsStub state body =
+      some (handlerCode, finalState)) :
+    wordToStackProgNatWithLocationBitmaps config registerCount bitmapRegister
+      frameSlots wordBits storeConstsStub state
+      (.call returns (some target) arguments
+        (some (exception, body, handlerLabel, entryLabel))) =
+      some (wordStackJoin argumentMoves
+        (wordToStackCallWithHandler config.perf target arguments.length
+          config.frameOffset config.scratch returnCode handlerCode
+          config.returnLabel config.entryLabel config.handlerLabel exception),
+        finalState) := by
+  simpa [wordToStackProgNatWithLocationBitmaps] using
+    (wordToStackProgNatWithBitmapBuilder_call_handler
+      (config := config)
+      (bitmapBuilder := wordStackLiveBitmapFromLocations config frameSlots wordBits)
+      (registerCount := registerCount) (bitmapRegister := bitmapRegister)
+      (frameSlots := frameSlots) (wordBits := wordBits)
+      (storeConstsStub := storeConstsStub) (state := state)
+      (finalState := finalState) (returns := returns) (target := target)
+      (arguments := arguments) (exception := exception)
+      (handlerLabel := handlerLabel) (entryLabel := entryLabel)
+      (body := body) (argumentMoves := argumentMoves)
+      (returnCode := returnCode) (handlerCode := handlerCode)
+      (hargs := hargs) (hreturn := hreturn) (hhandler := hhandler))
+
 theorem evalStackProgFuelWithCodeAndFfi_wordToStackProgNatWithBitmapBuilder_call_handler
     [BEq Nat] [NeZero width] (host : StackMachineFfiHandler width)
     (fuel : Nat) (code : Nat → Option (StackProg Nat))
@@ -1501,6 +1538,50 @@ theorem wordToStackProgNatWithBitmapBuilder_ffi
 /-! Combine the state-threaded compiler equation with the bounded StackLang
     evaluator.  The bitmap accumulator is an explicit component of the
     result, so this theorem records that an FFI action does not alter it. -/
+
+theorem wordToStackProgNatWithLocationBitmaps_ffi
+    [BEq Nat] (config : WordStackConfig)
+    (registerCount bitmapRegister frameSlots wordBits : Nat)
+    (storeConstsStub : Option Nat) (state : WordStackBitmapState)
+    (function : FunName)
+    (configuration configurationLength array arrayLength : Nat)
+    (live : List Nat × List Nat)
+    (configurationMove configurationLengthMove arrayMove arrayLengthMove :
+      StackProg Nat)
+    (hsafe : wordStackFfiSourcesSafe config
+      [configuration, configurationLength, array, arrayLength] = true)
+    (hconfigurationMove : wordStackFfiMove config configuration 10 =
+      some configurationMove)
+    (hconfigurationLengthMove :
+      wordStackFfiMove config configurationLength 11 =
+        some configurationLengthMove)
+    (harrayMove : wordStackFfiMove config array 12 = some arrayMove)
+    (harrayLengthMove : wordStackFfiMove config arrayLength 13 =
+      some arrayLengthMove) :
+    wordToStackProgNatWithLocationBitmaps config registerCount bitmapRegister
+      frameSlots wordBits storeConstsStub state
+      (.ffi function configuration configurationLength array arrayLength live) =
+      some (wordStackJoin configurationMove
+        (wordStackJoin configurationLengthMove
+          (wordStackJoin arrayMove
+            (wordStackJoin arrayLengthMove
+              (.ffi function 10 11 12 13 0)))), state) := by
+  simpa [wordToStackProgNatWithLocationBitmaps] using
+    (wordToStackProgNatWithBitmapBuilder_ffi
+      (config := config)
+      (bitmapBuilder := wordStackLiveBitmapFromLocations config frameSlots wordBits)
+      (registerCount := registerCount) (bitmapRegister := bitmapRegister)
+      (frameSlots := frameSlots) (wordBits := wordBits)
+      (storeConstsStub := storeConstsStub) (state := state)
+      (function := function) (configuration := configuration)
+      (configurationLength := configurationLength) (array := array)
+      (arrayLength := arrayLength) (live := live)
+      (configurationMove := configurationMove)
+      (configurationLengthMove := configurationLengthMove)
+      (arrayMove := arrayMove) (arrayLengthMove := arrayLengthMove)
+      (hsafe := hsafe) (hconfigurationMove := hconfigurationMove)
+      (hconfigurationLengthMove := hconfigurationLengthMove)
+      (harrayMove := harrayMove) (harrayLengthMove := harrayLengthMove))
 
 theorem evalStackProgFuelWithCodeAndFfi_wordToStackProgNatWithBitmapBuilder_ffi
     [BEq Nat] [NeZero width] (host : StackMachineFfiHandler width)

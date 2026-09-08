@@ -1666,6 +1666,8 @@ definitions, pass ordering, examples, and proof obligations.
   for the complete pass.
 - [x] Expose location-aware bitmap sequence compilation and evaluator
   contracts for the spill-aware Word-to-Stack boundary.
+- [x] Expose location-aware bitmap handler-call and FFI lowering equations
+  for the spill-aware Word-to-Stack correctness boundary.
 - [x] Close the generated Word-to-Stack/StackRemove/LabLang FFI path with a
   machine-level RISC-V execution theorem, retaining the host transition as
   an explicit hypothesis.
