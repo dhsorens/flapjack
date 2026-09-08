@@ -1524,6 +1524,8 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Expose state-threaded Word-to-Stack loop and MustTerminate composition.
 - [x] Compose state-threaded loop lowering with bounded StackLang execution for
   a body that exits through `break`.
+- [x] Expose normal and `continue` loop-iteration equations, retaining the
+  recursive remainder evaluation as an explicit premise.
 - [x] Expose source-order bitmap threading through the allocated Word-to-Stack
   function pipeline, including a compositional append equation.
 - [x] Add abstract and bounded FFI loop-break simulation equations, with

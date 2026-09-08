@@ -1144,6 +1144,84 @@ theorem wordToStackProgNatWithBitmapBuilder_loop
       some (.loop bodyCode, finalState) := by
   simp [wordToStackProgNatWithBitmapBuilder, hbody]
 
+theorem evalStackProgFuelWithCodeAndFfi_wordToStackProgNatWithBitmapBuilder_loop_normal
+    [BEq Nat] [NeZero width] (host : StackMachineFfiHandler width)
+    (fuel : Nat) (code : Nat → Option (StackProg Nat))
+    (config : WordStackConfig)
+    (bitmapBuilder : List Nat → List Nat)
+    (registerCount bitmapRegister frameSlots wordBits : Nat)
+    (storeConstsStub : Option Nat)
+    (state finalState : WordStackBitmapState)
+    (machineState middle : WordStackMachineState width)
+    (liveIn liveOut : List Nat) (body : WordProg Nat)
+    (bodyCode : StackProg Nat) (result : StackMachineControl width)
+    (hbody : wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+      registerCount bitmapRegister frameSlots wordBits storeConstsStub state body =
+      some (bodyCode, finalState))
+    (hevalBody : evalStackProgFuelWithCodeAndFfi host fuel code machineState
+      bodyCode = some (.normal middle))
+    (hevalRest : evalStackProgFuelWithCodeAndFfi host fuel code middle
+      (.loop bodyCode) = some result) :
+    (wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+      registerCount bitmapRegister frameSlots wordBits storeConstsStub state
+      (.loop liveIn body liveOut)).bind
+        (fun compiled =>
+          (evalStackProgFuelWithCodeAndFfi host (fuel + 1) code machineState
+            compiled.1).map (fun control => (control, compiled.2))) =
+      some (result, finalState) := by
+  have hcompile := wordToStackProgNatWithBitmapBuilder_loop
+    (config := config) (bitmapBuilder := bitmapBuilder)
+    (registerCount := registerCount) (bitmapRegister := bitmapRegister)
+    (frameSlots := frameSlots) (wordBits := wordBits)
+    (storeConstsStub := storeConstsStub) (state := state)
+    (finalState := finalState) (liveIn := liveIn) (liveOut := liveOut)
+    (body := body) (bodyCode := bodyCode) (hbody := hbody)
+  rw [hcompile]
+  simp only [Option.bind_some]
+  have hloop : evalStackProgFuelWithCodeAndFfi host (fuel + 1) code
+      machineState (.loop bodyCode) = some result := by
+    simp [evalStackProgFuelWithCodeAndFfi, hevalBody, hevalRest]
+  simp [hloop]
+
+theorem evalStackProgFuelWithCodeAndFfi_wordToStackProgNatWithBitmapBuilder_loop_continue
+    [BEq Nat] [NeZero width] (host : StackMachineFfiHandler width)
+    (fuel : Nat) (code : Nat → Option (StackProg Nat))
+    (config : WordStackConfig)
+    (bitmapBuilder : List Nat → List Nat)
+    (registerCount bitmapRegister frameSlots wordBits : Nat)
+    (storeConstsStub : Option Nat)
+    (state finalState : WordStackBitmapState)
+    (machineState middle : WordStackMachineState width)
+    (liveIn liveOut : List Nat) (body : WordProg Nat)
+    (bodyCode : StackProg Nat) (result : StackMachineControl width)
+    (hbody : wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+      registerCount bitmapRegister frameSlots wordBits storeConstsStub state body =
+      some (bodyCode, finalState))
+    (hevalBody : evalStackProgFuelWithCodeAndFfi host fuel code machineState
+      bodyCode = some (.continue middle))
+    (hevalRest : evalStackProgFuelWithCodeAndFfi host fuel code middle
+      (.loop bodyCode) = some result) :
+    (wordToStackProgNatWithBitmapBuilder config bitmapBuilder
+      registerCount bitmapRegister frameSlots wordBits storeConstsStub state
+      (.loop liveIn body liveOut)).bind
+        (fun compiled =>
+          (evalStackProgFuelWithCodeAndFfi host (fuel + 1) code machineState
+            compiled.1).map (fun control => (control, compiled.2))) =
+      some (result, finalState) := by
+  have hcompile := wordToStackProgNatWithBitmapBuilder_loop
+    (config := config) (bitmapBuilder := bitmapBuilder)
+    (registerCount := registerCount) (bitmapRegister := bitmapRegister)
+    (frameSlots := frameSlots) (wordBits := wordBits)
+    (storeConstsStub := storeConstsStub) (state := state)
+    (finalState := finalState) (liveIn := liveIn) (liveOut := liveOut)
+    (body := body) (bodyCode := bodyCode) (hbody := hbody)
+  rw [hcompile]
+  simp only [Option.bind_some]
+  have hloop : evalStackProgFuelWithCodeAndFfi host (fuel + 1) code
+      machineState (.loop bodyCode) = some result := by
+    simp [evalStackProgFuelWithCodeAndFfi, hevalBody, hevalRest]
+  simp [hloop]
+
 theorem evalStackProgFuelWithCodeAndFfi_wordToStackProgNatWithBitmapBuilder_loop_break
     [BEq Nat] [NeZero width] (host : StackMachineFfiHandler width)
     (fuel : Nat) (code : Nat → Option (StackProg Nat))
