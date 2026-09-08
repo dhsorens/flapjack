@@ -596,6 +596,8 @@ definitions, pass ordering, examples, and proof obligations.
   bijection before coalescing, coloring, and spill-aware allocation.
 - [x] Port CakeML get_stack_only exactly for Word Move, branch, loop, and
   handler-aware call cases, with clash-tree fallback for ordinary instructions.
+- [x] Preserve Atemp candidates through spill-worklist selection and defer
+  Stemp conversion until the register-coloring phase exhausts ABI colors.
 - [x] Apply sorted CakeML move preferences during Atemp and Stemp graph
   coloring, with the existing safe fallback when no preference matches.
 - [x] Preserve CakeML allocation order by coloring all Atemps before the

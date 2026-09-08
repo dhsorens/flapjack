@@ -333,12 +333,8 @@ def wordRaInit (colours : Nat) (graph : WordRegGraph) : WordRaState :=
   wordRaRefreshWorklists colours state
 
 def wordRaRemoveNode (colours : Nat) (node : Nat)
-    (forceSpill : Bool) (state : WordRaState) : WordRaState :=
-  let graph := if forceSpill then
-      { state.graph with tags :=
-          wordGraphUpdateTag node .stemp state.graph.tags }
-    else
-      state.graph
+    (_forceSpill : Bool) (state : WordRaState) : WordRaState :=
+  let graph := state.graph
   let degrees := (wordGraphNeighbours state.graph node).foldl
     (fun degrees neighbour =>
       match lookupNatInfo neighbour degrees with
@@ -401,10 +397,27 @@ def wordRaChooseColour (colours stackStart : Nat)
   | some (.fixed colour) => colour
   | none => 0
 
+def wordRaAtempHasAvailableColour (colours : Nat)
+    (graph : WordRegGraph) (node : Nat) : Bool :=
+  let blocked := wordFixedNeighbourColours
+    (wordGraphNeighbours graph node) graph.tags
+  (wordFirstAvailable
+    (wordRemoveColours blocked ((List.range colours).map (fun colour => colour + 1))) blocked).isSome
+
+def wordRaMarkUncolourableAtemp (colours : Nat)
+    (graph : WordRegGraph) (node : Nat) : WordRegGraph :=
+  match lookupNatInfo node graph.tags with
+  | some .atemp =>
+      if wordRaAtempHasAvailableColour colours graph node then graph
+      else 
+        { graph with tags := wordGraphUpdateTag node .stemp graph.tags }
+  | some (.fixed _) | some .stemp | none => graph
+
 def wordRaColourStack (colours stackStart : Nat) :
     List Nat → WordRegGraph → WordRegGraph
   | [], graph => graph
   | node :: nodes, graph =>
+      let graph := wordRaMarkUncolourableAtemp colours graph node
       let colour := wordRaChooseColour colours stackStart graph node
       let graph := { graph with
         tags := wordGraphUpdateTag node (.fixed colour) graph.tags }
@@ -704,6 +717,7 @@ def wordRaColourAtempsWithMoves (colours stackStart : Nat)
     List Nat → WordRegGraph → WordRegGraph
   | [], graph => graph
   | node :: nodes, graph =>
+      let graph := wordRaMarkUncolourableAtemp colours graph node
       let graph := match lookupNatInfo node graph.tags with
         | some .atemp =>
             let colour := wordRaChooseColourWithMoves colours stackStart moves
