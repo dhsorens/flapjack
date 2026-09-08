@@ -1403,6 +1403,25 @@ def wordAllocateGraphWithPrefreezeMovesAndSpillCosts
     tree forced fixedSources coalesceMoves colourMoves colours stackStart spillCosts
   wordGraphCheckAllocation tree candidate
 
+theorem wordAllocateGraphWithPrefreezeMovesAndSpillCosts_sound
+    (tree : WordClashTree) (forced : List (Nat × Nat))
+    (fixedSources : List Nat) (coalesceMoves colourMoves : List WordMove)
+    (colours stackStart : Nat) (costs : NatInfoMap Nat)
+    (allocation : WordGraphAllocation)
+    (halloc : wordAllocateGraphWithPrefreezeMovesAndSpillCosts tree forced
+      fixedSources coalesceMoves colourMoves colours stackStart costs =
+      some allocation) :
+    wordGraphTagsAreFixed allocation.graph = true ∧
+      wordGraphColouringRespectsEdges allocation.graph = true ∧
+      (wordClashTreeCheck (wordGraphColouringAt allocation.colouring)
+        tree [] []).isSome = true := by
+  simp [wordAllocateGraphWithPrefreezeMovesAndSpillCosts,
+    wordGraphCheckAllocation] at halloc
+  rcases halloc with ⟨hchecks, heq⟩
+  cases heq
+  rcases hchecks with ⟨⟨hfixed, hedges⟩, htree⟩
+  exact ⟨hfixed, hedges, htree⟩
+
 def wordAllocateGraphWithPrioritizedMovesAndSpillCosts (tree : WordClashTree)
     (forced : List (Nat × Nat)) (fixedSources : List Nat)
     (moves : List WordMove) (colours stackStart : Nat)

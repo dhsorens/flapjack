@@ -113,7 +113,7 @@ def wordAllocateGraphForHeuristics (algorithm : Nat)
         wordAllocateGraphWithPrioritizedMovesAndColourMoves tree forced fixedSources
           moves colourMoves colours stackStart
     | some costs =>
-        wordAllocateGraphWithPrioritizedMovesAndColourMovesAndSpillCosts tree
+        wordAllocateGraphWithPrefreezeMovesAndSpillCosts tree
           forced fixedSources moves colourMoves colours stackStart costs
 
 theorem wordAllocateGraphForHeuristics_sound
@@ -151,11 +151,11 @@ theorem wordAllocateGraphForHeuristics_sound
         exact wordAllocateGraphWithPrioritizedMovesAndColourMoves_sound tree
           forced fixedSources moves colourMoves colours stackStart allocation hgraph
     | some costs =>
-        have hgraph : wordAllocateGraphWithPrioritizedMovesAndColourMovesAndSpillCosts
+        have hgraph : wordAllocateGraphWithPrefreezeMovesAndSpillCosts
             tree forced fixedSources moves colourMoves colours stackStart costs =
             some allocation := by
           simpa [wordAllocateGraphForHeuristics, hsimple] using halloc
-        exact wordAllocateGraphWithPrioritizedMovesAndColourMovesAndSpillCosts_sound
+        exact wordAllocateGraphWithPrefreezeMovesAndSpillCosts_sound
           tree forced fixedSources moves colourMoves colours stackStart costs allocation hgraph
 
 def wordAllocateGraphFunctionWithHeuristics (parameters : List Nat)
