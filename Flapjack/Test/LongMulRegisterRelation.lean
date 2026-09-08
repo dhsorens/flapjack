@@ -49,6 +49,6 @@ example :
   · simp [longMulRegisterConfig, longMulRegisterState, wordStackLongMulInst,
       wordStackLongMulLocationsSafe, wordStackLongMulLocationSafe,
       wordStackLocation, lookupNatInfo, evalWordStackMachine,
-      wordStackMachineWriteRegister, wordStackMachineValue]
+      wordStackMachineWriteRegister]
 
 end Flapjack.RiscV
