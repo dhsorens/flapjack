@@ -49,10 +49,9 @@ theorem evalWordStackMachine_longMul_stackDest_preserves_other_value [NeZero wid
     wordStackLocation, hdestinationLeft, hdestinationRight, hsourceLeft,
     hsourceRight] at hsafeConditions
   cases sourceLeftLocation <;> cases sourceRightLocation <;> cases otherLocation <;>
-    simp_all [wordStackLongMulInst, hsafe, wordStackLongMulMoveToPhysical,
+    simp_all [wordStackLongMulInst, wordStackLongMulMoveToPhysical,
       wordStackLongMulMoveFromPhysical, wordStackJoin, wordStackLocation,
-      wordStackOffset, evalWordStackMachine, hdestinationLeft,
-      hdestinationRight, hsourceLeft, hsourceRight, hsafeConditions]
+      wordStackOffset, evalWordStackMachine]
   all_goals
     cases heval
     simp only [wordStackMachineValue, wordStackLocation, wordStackOffset,
