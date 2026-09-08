@@ -23,6 +23,18 @@ example :
       .move 1 [(5, 2), (9, 3)] := by
   rfl
 
+example :
+    wordSsaAbiParameters 3 = [0, 2, 4] := by
+  rfl
+
+example :
+    wordFullSsaCcTrans 2
+        (.return 0 [0, 2] : WordProg Nat) =
+      wordSsaRenameFunctionWithEntry [0, 2]
+        (.return 0 [0, 2] : WordProg Nat) := by
+  exact wordFullSsaCcTrans_eq_named_entry 2 _
+
+
 /- The FFI SSA boundary refreshes the live cut set around the ABI call and
    restores it afterwards, matching CakeML's `ssa_cc_trans` shape. -/
 example :

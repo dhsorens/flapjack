@@ -1059,6 +1059,26 @@ def wordSsaRenameFunctionWithEntry (parameters : List Nat) (program : WordProg �
     wordSsaRenameFunction parameters program
   (state, renamedParameters, .seq (wordSsaEntryMove parameters renamedParameters) program)
 
+/-! CakeML's `full_ssa_cc_trans` is parameterised by the number of ABI
+    arguments rather than by their source names.  Word functions use the even
+    register names as their incoming ABI names, so expose that exact adapter
+    here while retaining the named-parameter entry point above for callers
+    that already have the ABI list. -/
+
+def wordSsaAbiParameters (count : Nat) : List Nat :=
+  (List.range count).map (fun index => 2 * index)
+
+def wordFullSsaCcTrans (parameterCount : Nat) (program : WordProg α) :
+    WordSsaState × List Nat × WordProg α :=
+  wordSsaRenameFunctionWithEntry (wordSsaAbiParameters parameterCount) program
+
+theorem wordFullSsaCcTrans_eq_named_entry
+    (parameterCount : Nat) (program : WordProg α) :
+    wordFullSsaCcTrans parameterCount program =
+      wordSsaRenameFunctionWithEntry
+        (wordSsaAbiParameters parameterCount) program := by
+  rfl
+
 def wordProgLiveBefore (program : WordProg α) (liveAfter : List Nat) : List Nat :=
   wordProgReadVars program ++
     liveAfter.filter (fun name => name ∉ wordProgWriteVars program)
