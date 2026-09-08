@@ -235,4 +235,30 @@ theorem wordAllocateGraphFunctionWithHeuristicsRenamed_sound
     (wordApplyColour (wordGraphColouringAt allocation.colouring)
       renamedProgram) hcol
 
+
+/-! Heuristic allocation over the complete CakeML-shaped SSA function.  The
+    formal-entry move is part of the allocated program, so the graph and its
+    preferences see the same boundary as the full-SSA spill pipeline. -/
+def wordAllocateGraphFunctionWithHeuristicsEntryRenamed (parameters : List Nat)
+    (program : WordProg α) (fixedSources : List Nat)
+    (algorithm currentFunction colours stackStart : Nat) :
+    Option (WordSsaState × List Nat × WordGraphAllocation × WordProg α) :=
+  let (state, renamedParameters, renamedProgram) :=
+    wordSsaRenameFunctionWithEntry parameters program
+  let stackOnly := wordStackOnly renamedProgram
+  let tree := WordClashTree.seq (.set renamedParameters)
+    (wordClashTree renamedProgram [])
+  let forced := wordProgForcedClashes renamedProgram
+  let (moves, _) := wordGetHeuristics algorithm currentFunction renamedProgram
+  let allocation := if algorithm < 2 then
+      wordAllocateGraph tree forced
+        (wordStackOnlyUnion fixedSources stackOnly.forced) [] colours stackStart
+    else
+      wordAllocateGraphWithPrioritizedMoves tree forced
+        (wordStackOnlyUnion fixedSources stackOnly.forced)
+        moves colours stackStart
+  allocation.map
+    (fun allocation =>
+      (state, renamedParameters, allocation, renamedProgram))
+
 end Flapjack

@@ -25,7 +25,7 @@ def pipelineWordFunctionsAllocatedWithHeuristics [NeZero width]
       let wordParameters := parameters.map (fun name => name + 2)
       let unallocatedBody := loopToWordProg context body
       let (_, renamedParameters, allocation, renamedBody) ←
-        wordAllocateGraphFunctionWithHeuristicsRenamed wordParameters unallocatedBody
+        wordAllocateGraphFunctionWithHeuristicsEntryRenamed wordParameters unallocatedBody
           [] algorithm label 13 14
       let config : RiscV.WordStackConfig :=
         { locations := wordGraphLocations allocation 13 14

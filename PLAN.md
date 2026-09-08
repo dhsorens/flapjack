@@ -584,6 +584,8 @@ definitions, pass ordering, examples, and proof obligations.
   under explicit scratch non-aliasing hypotheses.
 - [ ] Port CakeML's full SSA/clash-colouring Word allocator and its spill-aware
   RISC-V contracts before claiming general call-aware allocation correctness.
+- [x] Thread CakeML-shaped formal-entry moves through the heuristic
+  allocation pipeline so its Simple/IRC path consumes full-SSA functions.
 - [x] Prove that a successful Word-to-Stack move preserves every unrelated
   spilled or register-backed value under explicit scratch and destination
   non-alias conditions.
