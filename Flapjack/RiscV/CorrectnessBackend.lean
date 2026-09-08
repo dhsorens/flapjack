@@ -481,4 +481,26 @@ theorem wordFunctionToRiscVWithCalls_longMul_result [NeZero width]
   subst code
   exact executeInstructions_longMul_result state
 
+
+theorem wordFunctionToRiscVWithCalls_div_result [NeZero width]
+    (context : WordCallContext width) (state : State width)
+    (code : List (Instruction width))
+    (hdivisor : readRegister state 3 ≠ 0)
+    (hcompile : wordFunctionToRiscVWithCalls context
+      ((.inst (.arith (.div 5 2 3))) : WordProg (Word width)) =
+      some (code, [])) :
+    readRegister (executeInstructions state code) 5 =
+      BitVec.ofNat width
+        ((readRegister state 2).toNat / (readRegister state 3).toNat) := by
+  have hshape : wordFunctionToRiscVWithCalls context
+      ((.inst (.arith (.div 5 2 3))) : WordProg (Word width)) =
+      some ([.divU 5 2 3], []) := by
+    simp [wordFunctionToRiscVWithCalls, wordArithToInstructions,
+      wordArithToInstruction, registerOfNat]
+  have hcode : ([.divU 5 2 3] : List (Instruction width)) = code := by
+    exact congrArg Prod.fst (Option.some.inj (hshape.symm.trans hcompile))
+  subst code
+  rw [executeInstructions_single, execute_divU]
+  split <;> simp_all
+
 end Flapjack.RiscV
