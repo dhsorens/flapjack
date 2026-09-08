@@ -142,6 +142,15 @@ def compileLinkedWordFunction [NeZero width]
   let (code, returns) ← wordFunctionToRiscVWithCallsAndLoops context body
   pure (label, parameters, some (code ++ [.jalr 0 1 0], returns))
 
+theorem compileLinkedWordFunction_shape [NeZero width]
+    (context : WordCallContext width)
+    (label : Nat) (parameters : List Nat) (body : WordProg (Word width))
+    (code : List (Instruction width)) (returns : List (Fin 32))
+    (hcode : wordFunctionToRiscVWithCallsAndLoops context body = some (code, returns)) :
+    compileLinkedWordFunction context (label, parameters, body) =
+      some (label, parameters, some (code ++ [.jalr 0 1 0], returns)) := by
+  simp [compileLinkedWordFunction, hcode]
+
 def wordFunctionTargetSignaturesAux [NeZero width]
     (allFunctions : List (Nat × List Nat × WordProg (Word width))) :
     List (Nat × List Nat × WordProg (Word width)) →
@@ -197,6 +206,16 @@ def compileLinkedWordFunctionWithFfi [NeZero width]
   let (label, parameters, body) := function
   let (code, returns) ← wordFunctionToRiscVWithCallsAndFfiAndLoops context body
   pure (label, parameters, some (code ++ [.jalr 0 1 0], returns))
+
+theorem compileLinkedWordFunctionWithFfi_shape [NeZero width]
+    (context : WordCallFfiContext width)
+    (label : Nat) (parameters : List Nat) (body : WordProg (Word width))
+    (code : List (Instruction width)) (returns : List (Fin 32))
+    (hcode : wordFunctionToRiscVWithCallsAndFfiAndLoops context body =
+      some (code, returns)) :
+    compileLinkedWordFunctionWithFfi context (label, parameters, body) =
+      some (label, parameters, some (code ++ [.jalr 0 1 0], returns)) := by
+  simp [compileLinkedWordFunctionWithFfi, hcode]
 
 def linkWordFunctionsWithFfi [NeZero width]
     (start : Word width) (services : List (FunName × Nat))

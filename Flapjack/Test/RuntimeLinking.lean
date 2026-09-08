@@ -71,4 +71,25 @@ example :
       exact ⟨_, _, rfl⟩)
   simpa [RiscV.linkRiscVCodeLength] using h
 
+example :
+    RiscV.compileLinkedWordFunction
+      ({ targets := [] } : RiscV.WordCallContext 64)
+      (7, [], (.return 0 [] : WordProg (RiscV.Word 64))) =
+      some (7, [], some ([.jalr 0 1 0], [])) := by
+  apply RiscV.compileLinkedWordFunction_shape (code := []) (returns := [])
+  simp [RiscV.wordFunctionToRiscVWithCallsAndLoops,
+    RiscV.wordFunctionToRiscVWithCallsAndLoopsAux,
+    RiscV.wordFunctionToRiscVWithCalls, RiscV.wordControlInstructions]
+
+example :
+    RiscV.compileLinkedWordFunctionWithFfi
+      ({ targets := [], services := [] } : RiscV.WordCallFfiContext 64)
+      (7, [], (.return 0 [] : WordProg (RiscV.Word 64))) =
+      some (7, [], some ([.jalr 0 1 0], [])) := by
+  apply RiscV.compileLinkedWordFunctionWithFfi_shape (code := []) (returns := [])
+  simp [RiscV.wordFunctionToRiscVWithCallsAndFfiAndLoops,
+    RiscV.wordFunctionToRiscVWithCallsAndFfiAndLoopsAux,
+    RiscV.wordFunctionToRiscVWithCallsAndFfi,
+    RiscV.wordFunctionToRiscVWithCalls, RiscV.wordControlInstructions]
+
 end Flapjack
