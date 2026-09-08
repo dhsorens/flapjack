@@ -81,4 +81,19 @@ example [NeZero width] (state : State width)
       simp [wordFunctionToRiscVWithCalls, wordArithToInstructions,
         wordArithToInstruction, registerOfNat])
 
+
+example [NeZero width] (state : State width)
+    (returns : List (Fin 32))
+    (hcompile : wordFunctionToRiscVWithCalls
+      ({ targets := [] } : WordCallContext width)
+      ((.return 0 [2, 3]) : WordProg (Word width)) =
+      some ([], returns)) :
+    evalWordFunction state ((.return 0 [2, 3]) : WordProg (Word width)) =
+      Option.map (fun returned => (executeInstructions state [], returned))
+        (([2, 3] : List Nat).mapM (fun name => do
+          let register ← registerOfNat name
+          pure (readRegister state register))) := by
+  exact wordFunctionToRiscVWithCalls_return_sound
+    ({ targets := [] } : WordCallContext width) state 0 [2, 3] [] returns hcompile
+
 end Flapjack.RiscV

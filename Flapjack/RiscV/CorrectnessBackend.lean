@@ -503,4 +503,46 @@ theorem wordFunctionToRiscVWithCalls_div_result [NeZero width]
   rw [executeInstructions_single, execute_divU]
   split <;> simp_all
 
+
+theorem wordFunctionToRiscVWithCalls_return_sound [NeZero width]
+    (context : WordCallContext width) (state : State width)
+    (store : Nat) (values : List Nat)
+    (code : List (Instruction width)) (returns : List (Fin 32))
+    (hcompile : wordFunctionToRiscVWithCalls context
+      ((.return store values) : WordProg (Word width)) =
+      some (code, returns)) :
+    evalWordFunction state ((.return store values) : WordProg (Word width)) =
+      Option.map (fun returned => (executeInstructions state code, returned))
+        (values.mapM (fun name => do
+          let register ← registerOfNat name
+          pure (readRegister state register))) := by
+  cases hvalues : values.mapM registerOfNat with
+  | none =>
+      simp [wordFunctionToRiscVWithCalls, hvalues] at hcompile
+  | some registers =>
+      have hshape : wordFunctionToRiscVWithCalls context
+          ((.return store values) : WordProg (Word width)) =
+          some ([], registers) := by
+        simp [wordFunctionToRiscVWithCalls, hvalues]
+      have hpair : (([], registers) : List (Instruction width) × List (Fin 32)) =
+          (code, returns) := by
+        exact Option.some.inj (hshape.symm.trans hcompile)
+      have hcode : ([] : List (Instruction width)) = code :=
+        congrArg Prod.fst hpair
+      subst code
+      simp only [evalWordFunction, executeInstructions]
+      change (values.mapM (fun name => do
+        let register ← registerOfNat name
+        pure (readRegister state register)) : Option (List (Word width))).bind
+          (fun returned => some (state, returned)) =
+        Option.map (fun returned => (state, returned))
+          (values.mapM (fun name => do
+            let register ← registerOfNat name
+            pure (readRegister state register)))
+      cases hread : values.mapM (fun name => do
+        let register ← registerOfNat name
+        pure (readRegister state register)) with
+      | none => rfl
+      | some result => rfl
+
 end Flapjack.RiscV

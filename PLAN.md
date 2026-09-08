@@ -425,6 +425,8 @@ definitions, pass ordering, examples, and proof obligations.
   and `LongMul` results through parameterized emitted-code contracts.
 - [x] Connect call-aware `DIVU` lowering to the source-level Word division
   result under its nonzero-divisor precondition.
+- [x] Connect call-aware return-carrier shapes to the Word evaluator while
+  preserving failure when a returned register name is not encodable.
 - [x] Port the CakeML-shaped RISC-V Word clash-tree boundary and its backward
   live-set analysis, including `Delta`, sequencing, branch live sets, loop cut
   sets, handler paths, and a tree-driven spill-allocation entry point.
