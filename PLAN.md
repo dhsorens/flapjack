@@ -604,6 +604,8 @@ definitions, pass ordering, examples, and proof obligations.
   freezing, with explicit regressions for both transitions.
 - [x] Thread active-node sets and dynamic degrees through move coalescing and
   freezing, matching CakeML case1/case2 degree updates.
+- [x] Add the spill step loop: choose the highest-degree spill candidate, update
+  neighboring degrees, and recurse through unspill/freeze before coloring.
 - [x] Expose the ABI-correct full-SSA spill allocator at the location-aware
   Word-to-Stack entry boundary, retaining renamed parameters and allocation slots.
 - [x] Port CakeML odd-mode spill-cost candidate selection into the graph

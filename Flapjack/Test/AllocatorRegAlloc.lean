@@ -89,6 +89,17 @@ example :
     state.simpWl = [0] ∧ state.spillWl = [1] := by
   decide
 
+example :
+    let graph : WordRegGraph :=
+      { adjacency := [(0, [1]), (1, [0, 2]), (2, [1])]
+        tags := [(0, .atemp), (1, .atemp), (2, .atemp)]
+        dimension := 3 }
+    let state := wordInitMoveStateWithColours 1 graph []
+    let state := wordMoveSpillAll (state.active.length + 1) 1 state
+    state.active = [] ∧ state.spillWl = [] ∧
+      state.stack = [2, 0, 1] := by
+  decide
+
 def moveWorklistGraph : WordRegGraph :=
   { adjacency := []
     tags := [(0, .atemp), (1, .atemp)]

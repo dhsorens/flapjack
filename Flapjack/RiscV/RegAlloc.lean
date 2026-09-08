@@ -1090,6 +1090,28 @@ def wordFreezeAllAvailable (colours : Nat) (state : WordMoveState) :
     are retired to the unavailable list, while a successful merge rebuilds
     the pending worklists so moves that became useful are reconsidered. -/
 
+def wordMoveSpillNode (node : Nat) (state : WordMoveState) : WordMoveState :=
+  let degrees := wordMoveDecNeighbours state.graph node state.degrees
+  let degrees := wordMoveSetDegree node 0 degrees
+  { state with
+    active := state.active.erase node
+    degrees := degrees
+    freezeWl := state.freezeWl.erase node
+    spillWl := state.spillWl.erase node
+    stack := node :: state.stack }
+
+def wordMoveSpillAll : Nat → Nat → WordMoveState → WordMoveState
+  | 0, _, state => state
+  | fuel + 1, colours, state =>
+      match state.spillWl with
+      | [] => state
+      | node :: nodes =>
+          let chosen := wordRaChooseSpillNodeByDegree state.degrees node nodes
+          let state := wordMoveSpillNode chosen state
+          let state := wordMovePrefreeze colours state
+          let state := wordFreezeAllAvailable colours state
+          wordMoveSpillAll fuel colours state
+
 def wordCoalesceAll : Nat → Nat → WordMoveState → WordMoveState
   | 0, _, state => state
   | fuel + 1, colours, state =>
@@ -1580,6 +1602,7 @@ def wordAllocateGraphWithPrefreeze (tree : WordClashTree)
   let moveState := wordCoalesceAllAvailable colours moveState
   let moveState := wordMovePrefreeze colours moveState
   let moveState := wordFreezeAllAvailable colours moveState
+  let moveState := wordMoveSpillAll (moveState.active.length + 1) colours moveState
   let graph := wordColourGraphWithWorklistAndMovesFromStack colours stackStart moves
     moveState.parents moveState.stack moveState.graph
   let colouring := wordGraphTotalColouring input graph moveState.parents
