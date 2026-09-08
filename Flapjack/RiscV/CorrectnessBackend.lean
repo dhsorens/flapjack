@@ -252,6 +252,91 @@ theorem evalWordFunction_wordRiscVStraightLine_eq_evalWordProg [NeZero width]
           | none => simp
           | some secondState => simp
 
+theorem wordControlInstructions_map_instruction [NeZero width]
+    (code : List (Instruction width)) :
+    wordControlInstructions (code.map .instruction) = some code := by
+  induction code with
+  | nil => rfl
+  | cons instruction code ih =>
+      simp [wordControlInstructions, ih]
+
+theorem wordFunctionToRiscVWithCallsAndLoopsAux_agrees_straightLine [NeZero width]
+    (context : WordCallContext width)
+    (program : WordProg (Word width))
+    (hstraight : WordRiscVStraightLine program) :
+    wordFunctionToRiscVWithCallsAndLoopsAux context program =
+      (wordFunctionToRiscVWithCalls context program).map
+        (fun result => (result.1.map .instruction, result.2)) := by
+  induction hstraight with
+  | skip =>
+      cases h : wordFunctionToRiscVWithCalls context
+          (.skip : WordProg (Word width)) <;>
+        simp [wordFunctionToRiscVWithCallsAndLoopsAux, h]
+  | move store moves =>
+      cases h : wordFunctionToRiscVWithCalls context (.move store moves) <;>
+        simp [wordFunctionToRiscVWithCallsAndLoopsAux, h]
+  | assign destination value =>
+      cases h : wordFunctionToRiscVWithCalls context (.assign destination value) <;>
+        simp [wordFunctionToRiscVWithCallsAndLoopsAux, h]
+  | inst instruction =>
+      cases h : wordFunctionToRiscVWithCalls context (.inst instruction) <;>
+        simp [wordFunctionToRiscVWithCallsAndLoopsAux, h]
+  | store address value =>
+      cases h : wordFunctionToRiscVWithCalls context (.store address value) <;>
+        simp [wordFunctionToRiscVWithCallsAndLoopsAux, h]
+  | locValue destination source =>
+      cases h : wordFunctionToRiscVWithCalls context
+          (.locValue destination source) <;>
+        simp [wordFunctionToRiscVWithCallsAndLoopsAux, h]
+  | tick =>
+      cases h : wordFunctionToRiscVWithCalls context
+          (.tick : WordProg (Word width)) <;>
+        simp [wordFunctionToRiscVWithCallsAndLoopsAux, h]
+  | shareInst operator name address =>
+      cases h : wordFunctionToRiscVWithCalls context
+          (.shareInst operator name address) <;>
+        simp [wordFunctionToRiscVWithCallsAndLoopsAux, h]
+  | seq first second hfirst hsecond ihfirst ihsecond =>
+      simp only [wordFunctionToRiscVWithCallsAndLoopsAux]
+      rw [ihfirst, ihsecond]
+      simp only [wordFunctionToRiscVWithCalls]
+      cases hfirstCode : wordFunctionToRiscVWithCalls context first with
+      | none => simp
+      | some firstResult =>
+          cases hsecondCode : wordFunctionToRiscVWithCalls context second with
+          | none =>
+              cases firstResult with
+              | mk firstCode firstReturns =>
+                  cases firstReturns with
+                  | nil => simp
+                  | cons firstReturn firstReturns => simp
+          | some secondResult =>
+              cases firstResult with
+              | mk firstCode firstReturns =>
+                  cases firstReturns with
+                  | nil =>
+                      cases secondResult with
+                      | mk secondCode secondReturns =>
+                          simp
+                  | cons firstReturn firstReturns =>
+                      simp
+
+theorem wordFunctionToRiscVWithCallsAndLoops_agrees_straightLine [NeZero width]
+    (context : WordCallContext width)
+    (program : WordProg (Word width))
+    (hstraight : WordRiscVStraightLine program) :
+    wordFunctionToRiscVWithCallsAndLoops context program =
+      wordFunctionToRiscVWithCalls context program := by
+  simp only [wordFunctionToRiscVWithCallsAndLoops]
+  rw [wordFunctionToRiscVWithCallsAndLoopsAux_agrees_straightLine
+    context program hstraight]
+  cases h : wordFunctionToRiscVWithCalls context program with
+  | none => simp
+  | some result =>
+      cases result with
+      | mk code returns =>
+          simp [wordControlInstructions_map_instruction]
+
 theorem wordFunctionToRiscVWithCalls_sound_of_straightLine [NeZero width]
     (context : WordCallContext width) (state : State width)
     (program : WordProg (Word width))
