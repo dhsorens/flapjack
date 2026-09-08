@@ -74,7 +74,7 @@ def pipelineHandlerHasCrossSectionAddress : Bool :=
       pipelineStackRemoveConfig pipelineHandlerDeclarations with
   | some instructions =>
       instructions.any (fun instruction =>
-        instruction == .addi 31 0 (BitVec.ofNat 64 284))
+        instruction == .addi 31 0 (BitVec.ofNat 64 244))
   | none => false
 
 #guard pipelineHandlerHasCrossSectionAddress

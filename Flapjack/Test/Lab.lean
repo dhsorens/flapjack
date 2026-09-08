@@ -36,7 +36,7 @@ example :
       ⟨2, [
         .asm .tick [] 0,
         .label 2 1 0,
-        .asm (.jumpReg 4) [] 0,
+        .labAsm .return [] 0,
         .label 2 3 0]⟩ := by
   simp [labProgramToSection, labFlatten, labIsSequence, labLabel]
 

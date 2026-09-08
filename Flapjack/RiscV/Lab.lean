@@ -35,7 +35,7 @@ def labLineInstructionCount : LabLine (Word width) → Nat
       | _ => 1
   | .labAsm operation _ _ =>
       match operation with
-      | .jump _ | .call _ | .locValue _ _ | .install | .halt => 1
+      | .jump _ | .call _ | .locValue _ _ | .linkValue _ | .return | .install | .halt => 1
       | .jumpCmp operator _ right _ => 1 + labConditionPreludeCount operator right
       | .callFfi _ => 2
       | .heapAlloc _ => 1
@@ -142,6 +142,11 @@ def labCompileAsm [NeZero width] (context : WordFfiContext)
       let register ← registerOfNat register
       let target ← labResolveRef sectionId labels target
       pure [.addi register 0 (BitVec.ofNat width target)]
+  | .linkValue target => do
+      let target ← labResolveRef sectionId labels target
+      pure [.addi 1 0 (BitVec.ofNat width target)]
+  | .return =>
+      pure [.jalr 0 1 0]
   | .jumpCmp operator condition right target => do
       let (left, right, prelude) ← wordConditionOperands operator condition right
       let target ← labResolveRef sectionId labels target
@@ -197,6 +202,8 @@ def labAsmNatToWord [NeZero width] : LabAsm Nat → LabAsm (Word width)
       .jumpCmp operator condition (.reg register) target
   | .call target => .call target
   | .locValue register target => .locValue register target
+  | .linkValue target => .linkValue target
+  | .return => .return
   | .callFfi function => .callFfi function
   | .heapAlloc words => .heapAlloc words
   | .install => .install
@@ -292,6 +299,11 @@ def labCompileAsmProgram [NeZero width] (context : WordFfiContext)
       let register ← registerOfNat register
       let target ← labResolveProgramRef labels target
       pure [.addi register 0 (BitVec.ofNat width target)]
+  | .linkValue target => do
+      let target ← labResolveProgramRef labels target
+      pure [.addi 1 0 (BitVec.ofNat width target)]
+  | .return =>
+      pure [.jalr 0 1 0]
   | .jumpCmp operator condition right target => do
       let (left, right, prelude) ← wordConditionOperands operator condition right
       let target ← labResolveProgramRef labels target
@@ -352,6 +364,11 @@ def labCompileAsmWithHalt [NeZero width] (context : WordFfiContext)
       let register ← registerOfNat register
       let target ← labResolveProgramRef labels target
       pure [.addi register 0 (BitVec.ofNat width target)]
+  | .linkValue target => do
+      let target ← labResolveProgramRef labels target
+      pure [.addi 1 0 (BitVec.ofNat width target)]
+  | .return =>
+      pure [.jalr 0 1 0]
   | .jumpCmp operator condition right target => do
       let (left, right, prelude) ← wordConditionOperands operator condition right
       let target ← labResolveProgramRef labels target
@@ -465,7 +482,7 @@ def compileStackProgramNatListWithRaiseStubToRiscV [NeZero width]
     (programs : List (Nat × StackProg Nat)) :
     Option (List (Instruction width)) :=
   compileStackProgramNatListToRiscV context config entryLabel initialLabel
-    ((stackRaiseStubLocation, stackRaiseStub false config.scratch) :: programs)
+    ((stackRaiseStubLocation, stackRaiseStub false config.addressScratch) :: programs)
 
 def compileStackProgramNatListWithHaltToRiscV [NeZero width]
     (context : WordFfiContext) (config : StackRemoveConfig)
@@ -508,7 +525,7 @@ def compileStackProgramNatListWithSimpleGcAndStoreConstsToRiscV [NeZero width]
     Option (List (Instruction width)) :=
   compileStackProgramNatListWithHaltToRiscV context removeConfig
     entryLabel initialLabel
-    ((stackRaiseStubLocation, stackRaiseStub false removeConfig.scratch) ::
+    ((stackRaiseStubLocation, stackRaiseStub false removeConfig.addressScratch) ::
       stackAllocCompileWithSimpleGcAndStoreConsts allocConfig gcConfig
         storeConstsLocation registerCount programs)
 
@@ -528,7 +545,7 @@ def compileStackProgramNatListLinkedWithRaiseStubToRiscV [NeZero width]
     (programs : List (Nat × StackProg Nat)) :
     Option (List (Nat × Word width × List (Instruction width))) :=
   compileStackProgramNatListLinkedToRiscV context config entryLabel initialLabel
-    ((stackRaiseStubLocation, stackRaiseStub false config.scratch) :: programs)
+    ((stackRaiseStubLocation, stackRaiseStub false config.addressScratch) :: programs)
 
 theorem labLineInstructionCount_ffi :
     labLineInstructionCount

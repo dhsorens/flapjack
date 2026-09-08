@@ -96,6 +96,22 @@ example :
     stackRemoveJoin, stackRemoveTestConfig]
 
 example :
+    stackRemove stackRemoveTestConfig (.stackGetSize 31 : StackProg Nat) =
+      .seq (.arith .or 31 20 20)
+        (.seq (.arith .sub 31 31 21)
+          (.seq (.const 29 3) (.shift .lsr 31 31 29))) := by
+  simp [stackRemove, stackRemoveFuel, stackRemoveStackGetSize,
+    stackRemoveMove, stackRemoveJoin, stackRemoveTestConfig]
+
+example :
+    stackRemove stackRemoveTestConfig (.stackSetSize 31 : StackProg Nat) =
+      .seq (.const 29 3)
+        (.seq (.shift .lsl 31 31 29)
+          (.seq (.arith .or 20 21 21) (.arith .add 20 20 31))) := by
+  simp [stackRemove, stackRemoveFuel, stackRemoveStackSetSize,
+    stackRemoveJoin, stackRemoveTestConfig]
+
+example :
     stackRemove stackRemoveTestConfig (.bitmapLoad 6 7 : StackProg Nat) =
       .seq
         (.seq (.seq (.const 29 88) (.arith .sub 29 10 29))

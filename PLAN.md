@@ -838,6 +838,18 @@ definitions, pass ordering, examples, and proof obligations.
   source value for both register and spill locations.
 - [x] State a concrete end-to-end FFI theorem relating source call-aware
   evaluation to execution of the generated linked RISC-V image.
+- [x] Separate StackLang continuation metadata from the RISC-V x1 ABI at the
+  LabLang boundary: ordinary calls write dedicated x1 links, returns use
+  `JALR x0,x1,0`, and FFI's logical return-address field retains its original
+  non-link behavior.
+- [x] Allocate fresh return labels for lowered calls and keep handler bodies
+  in a non-overlapping label range, preserving linked cross-section targets.
+- [x] Correct LabLang conditional polarity to match the Lean branch semantics
+  and restore the concrete 244-byte handler-address regression.
+- [x] Avoid scratch-register aliasing in StackLang stack-size get/set lowering
+  and cover the x31 edge cases with executable tests.
+- [x] Validate the current port increment with a complete no-cache build of
+  all 238 Lake targets.
 - [x] Add concrete `Nat` Word-to-Stack expression lowering for constants,
   register/stack atoms, binary operations, loads, stores, and stack-backed
   destinations, with separate value/address scratch registers.
