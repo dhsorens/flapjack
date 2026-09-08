@@ -21,6 +21,13 @@ example :
   decide
 
 example :
+    wordRemapMove
+      { toNode := [(10, 3), (20, 4)], fromNode := [], next := 5 }
+      { priority := 7, left := 10, right := 20 } =
+      { priority := 7, left := 3, right := 4 } := by
+  decide
+
+example :
     wordRaChooseSpillNode [(3, 100), (5, 20), (7, 30)] [(3, 10), (5, 1), (7, 2)] 3 [5, 7] = 3 := by
   decide
 
