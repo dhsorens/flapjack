@@ -787,6 +787,49 @@ theorem compilePanToLoop_dec_return_const_correct
     evalPanStateProg, evalPanExp, lookupInfo, maxVar_agrees]
 
 /-!
+The declaration bridge also preserves a computed value: the arithmetic
+expression is evaluated once into the declaration slot, then the body reads
+that slot through the compiled local variable.
+-/
+theorem compilePanToLoop_dec_return_add_const_correct
+    [BEq α] [OfNat α 0] [OfNat α 1] [Add α] [Mul α] [Div α]
+    [Sub α] [AndOp α] [OrOp α] [HXor α α α] [ShiftLeft α] [ShiftRight α]
+    [LT α] [DecidableRel (fun left right : α => left < right)]
+    (compileContext : CompileContext α) (loopContext : LoopContext α)
+    (live : List Nat) (state : LoopState α) (locals : VarName → Option α)
+    (name : VarName) (left right : α)
+    (maxVar_agrees : loopContext.maxVar = compileContext.maxVar) :
+    (evalLoopProg 20 state
+      (loopCompileProg loopContext live
+        (compileProg compileContext
+          (.dec name .one (.op .add [.const left, .const right])
+            (.return (.var .local name)))))).map loopResultValues =
+      (evalPanStateProg locals
+        (.dec name .one (.op .add [.const left, .const right])
+          (.return (.var .local name)))).map Prod.snd := by
+  have hcompiled :
+      loopCompileProg loopContext live
+        (.dec (compileContext.maxVar + 1)
+          (.op .add [.const left, .const right])
+          (.return [.var (compileContext.maxVar + 1)])) =
+        .seq .skip
+          (.seq
+            (.assign (compileContext.maxVar + 1)
+              (.op .add [.const left, .const right]))
+            (.seq
+              (.seq (.assign (loopContext.maxVar + 1 + 1)
+                (.var (compileContext.maxVar + 1))) .skip)
+              (.return [loopContext.maxVar + 1 + 1]))) := by
+    simp [loopCompileProg, loopCompileExp, loopCompileExps,
+      loopCompileExp.loopCompileExps, loopNestedSeq, loopTempNames,
+      loopAssignTemps, maxVar_agrees]
+  simp [compileProg, compileExp, compileExp.compileExpList, cexpHeads,
+    allocatedNames, nestedDecs, hcompiled,
+    evalLoopProg, evalLoopExp, evalLoopBinOp,
+    loopReadLocals, updateLoopLocal, updatePanLocal, loopResultValues,
+    evalPanStateProg, evalPanExp, evalPanBinOp, lookupInfo, maxVar_agrees]
+
+/-!
 The first compositional bridge between the Loop and Word semantic states.
 Only the destination register is observed here; the full state relation will
 add globals, memory, live-register preservation, and control results as the

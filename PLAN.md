@@ -223,6 +223,8 @@ definitions, pass ordering, examples, and proof obligations.
   explicit source/slot state relation, with a bound-local RV64 regression.
 - [x] Prove source-to-Loop agreement for a scoped declaration followed by a
   local return, including the compiler's context extension and Loop binding.
+- [x] Extend scoped declaration agreement through binary addition before the
+  bound local is returned, with an executable RV64 regression.
 - [x] Prove RISC-V instruction-selection and evaluator agreement for the
   emitted constant-return artifact.
 - [x] Lower register-based equality and inequality conditionals to RISC-V,
