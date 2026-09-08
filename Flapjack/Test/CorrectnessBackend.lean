@@ -42,4 +42,32 @@ example [NeZero width] (state : State width)
     sourceLeft sourceRight hdestinationLeft_nonzero hdestinationRight_nonzero
     hdestination_distinct hdestinationLeft_sourceLeft hdestinationLeft_sourceRight
 
+example [NeZero width] (state : State width)
+    (zero : readRegister state 0 = 0) :
+    (readRegister (executeInstructions state
+      [.sltu 31 0 4, .add 5 2 3, .sltu 6 5 3,
+        .add 5 5 31, .sltu 31 5 31, .or 6 6 31]) 5,
+      readRegister (executeInstructions state
+        [.sltu 31 0 4, .add 5 2 3, .sltu 6 5 3,
+          .add 5 5 31, .sltu 31 5 31, .or 6 6 31]) 6) =
+      addCarryWords (readRegister state 2) (readRegister state 3)
+        (readRegister state 4) := by
+  exact wordFunctionToRiscVWithCalls_addCarry_result
+    ({ targets := [] } : WordCallContext width) state _ zero (by
+      simp [wordFunctionToRiscVWithCalls, wordArithToInstructions,
+        registerOfNat])
+
+example [NeZero width] (state : State width) :
+    (readRegister (executeInstructions state
+      [.mulHU 5 2 3, .mul 6 2 3]) 5,
+      readRegister (executeInstructions state
+        [.mulHU 5 2 3, .mul 6 2 3]) 6) =
+      (BitVec.ofNat width
+        ((readRegister state 2).toNat * (readRegister state 3).toNat / 2 ^ width),
+       readRegister state 2 * readRegister state 3) := by
+  exact wordFunctionToRiscVWithCalls_longMul_result
+    ({ targets := [] } : WordCallContext width) state _ (by
+      simp [wordFunctionToRiscVWithCalls, wordArithToInstructions,
+        registerOfNat])
+
 end Flapjack.RiscV
