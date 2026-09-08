@@ -550,6 +550,8 @@ definitions, pass ordering, examples, and proof obligations.
   straight-line simulation contract at the Word allocator boundary.
 - [x] Connect the executable graph allocator output to the reusable straight-line
   colouring simulation contract.
+- [x] Lift the graph-colouring simulation contract to the SSA-renamed function
+  allocator boundary.
 - [x] Prove register-coloured condition preservation and conditional-branch
   simulation for executable Word `ite` programs.
 - [x] Relate straight-line handler-aware Word evaluation to the executable
