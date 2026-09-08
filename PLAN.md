@@ -227,6 +227,8 @@ definitions, pass ordering, examples, and proof obligations.
   bound local is returned, with an executable RV64 regression.
 - [x] Correct Loop declaration binding for temporary-consuming expressions and
   verify scoped multiplication declarations through source-to-Loop execution.
+- [x] Prove the generated Loop declaration-call pipeline agrees with the
+  source call evaluator, including argument temporaries and the return slot.
 - [x] Prove RISC-V instruction-selection and evaluator agreement for the
   emitted constant-return artifact.
 - [x] Lower register-based equality and inequality conditionals to RISC-V,
