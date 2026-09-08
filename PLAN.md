@@ -276,6 +276,8 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Add a RISC-V ECALL FFI ABI boundary with service-name resolution,
   argument marshalling, option-valued host execution, and executable
   instruction-level regressions.
+- [x] Prove that FFI-aware RISC-V selection preserves the ordinary
+  call-aware selector on the straight-line Word fragment.
 - [x] Port the StackLang handler/FFI carriers and initial `word_to_stack`
   call, raise, and foreign-call boundary equations, with a local HOL
   copyright notice and structural regressions.

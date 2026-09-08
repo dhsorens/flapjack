@@ -1,4 +1,6 @@
 import Flapjack.Correctness
+import Flapjack.RiscV.CorrectnessBackend
+import Flapjack.RiscV.Ffi
 
 /-!
 Simulation boundary for foreign calls.
@@ -1218,5 +1220,45 @@ theorem loopToWord_call_loop_control_simulation_single_parameter_with_handler
                   simp [loopResultMappedToWordLoop] at hbodyResult
               | continued bodyWordState label =>
                   simp [loopResultMappedToWordLoop] at hbodyResult
+
+/-! The FFI-aware selector delegates ordinary straight-line instructions to
+    the call-aware selector unchanged.  This keeps the host-effect boundary
+    isolated from the deterministic instruction-selection contract. -/
+
+theorem wordFunctionToRiscVWithCallsAndFfi_agrees_straightLine [NeZero width]
+    (context : WordCallFfiContext width)
+    (program : WordProg (Word width))
+    (hstraight : WordRiscVStraightLine program) :
+    wordFunctionToRiscVWithCallsAndFfi context program =
+      wordFunctionToRiscVWithCalls
+        { targets := context.targets } program := by
+  induction hstraight with
+  | skip =>
+      simp [wordFunctionToRiscVWithCallsAndFfi, wordFunctionToRiscVWithCalls]
+  | move store moves =>
+      cases h : wordMoveToInstructions (width := width) moves <;>
+        simp [wordFunctionToRiscVWithCallsAndFfi, wordFunctionToRiscVWithCalls, h]
+  | assign destination value =>
+      cases h : wordExpToInstructions (width := width) destination value <;>
+        simp [wordFunctionToRiscVWithCallsAndFfi, wordFunctionToRiscVWithCalls, h]
+  | inst instruction =>
+      cases h : wordFunctionToRiscVWithCalls { targets := context.targets }
+          (.inst instruction) <;>
+        simp [wordFunctionToRiscVWithCallsAndFfi, h]
+  | store address value =>
+      cases h : wordStoreToInstructions (width := width) address value <;>
+        simp [wordFunctionToRiscVWithCallsAndFfi, wordFunctionToRiscVWithCalls, h]
+  | locValue destination source =>
+      cases h : wordExpToInstruction (width := width) destination (.var source) <;>
+        simp [wordFunctionToRiscVWithCallsAndFfi, wordFunctionToRiscVWithCalls,
+          wordExpToInstructions, h]
+  | tick =>
+      simp [wordFunctionToRiscVWithCallsAndFfi, wordFunctionToRiscVWithCalls]
+  | shareInst operator name address =>
+      cases h : wordShareInstToInstructions (width := width) operator name address <;>
+        simp [wordFunctionToRiscVWithCallsAndFfi, wordFunctionToRiscVWithCalls, h]
+  | seq first second hfirst hsecond ihfirst ihsecond =>
+      simp [wordFunctionToRiscVWithCallsAndFfi,
+        wordFunctionToRiscVWithCalls, ihfirst, ihsecond]
 
 end Flapjack.RiscV
