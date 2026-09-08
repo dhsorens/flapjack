@@ -334,16 +334,15 @@ example :
       some ([5], some 2) := by
   decide +kernel
 
-example :
+#guard
     wordStackOnly
       ((.seq (.assign 5 (.var 7)) (.assign 3 (.var 5))) : WordProg Nat) =
-      { temporary := [], forced := [] } := by
-  native_decide
+      { temporary := [], forced := [] }
 
 example :
     wordStackOnly (.move 0 [(3, 5)] : WordProg Nat) =
       { temporary := [5], forced := [] } := by
-  native_decide
+  decide
 
 #guard
     (wordAllocateGraphFunctionWithStackOnly [2]
@@ -355,10 +354,9 @@ example :
       (.seq (.set [5]) (.delta [9] [5])) [] [5] [(9, 5)] 13 13).isSome = true := by
   decide +kernel
 
-example :
+#guard
     wordStackOnly (.assign 9 (.var 5) : WordProg Nat) =
-      { temporary := [], forced := [] } := by
-  native_decide
+      { temporary := [], forced := [] }
 
 #guard
     (wordAllocateGraphFunctionWithStackOnly [2]

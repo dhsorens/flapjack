@@ -159,7 +159,7 @@ theorem compileLabProgram_callFfi_return_executeFunctionAt_agreement
   have hmask :
       (BitVec.ofNat 64 100) &&& (BitVec.ofNat 64 (2 ^ 64 - 2)) =
         BitVec.ofNat 64 100 := by
-    native_decide
+    decide
   have hreturn :
       execute hostState (.jalr 0 1 (0#64)) = { hostState with pc := 100 } := by
     simp [execute, writeRegister, readRegister, hhost_return', hmask]
@@ -168,8 +168,8 @@ theorem compileLabProgram_callFfi_return_executeFunctionAt_agreement
             [.addi 14 0 (BitVec.ofNat 64 service), .ecall, .jalr 0 1 0]
             { state with pc := 0 } =
       some { hostState with pc := 100 } := by
-    have hzeroNe : (0#64) ≠ (BitVec.ofNat 64 100) := by native_decide
-    have hfourNe : (4#64) ≠ (BitVec.ofNat 64 100) := by native_decide
+    have hzeroNe : (0#64) ≠ (BitVec.ofNat 64 100) := by decide
+    have hfourNe : (4#64) ≠ (BitVec.ofNat 64 100) := by decide
     have hfirst :
         executeCodeUntilWithFfi host 4 (0#64) (BitVec.ofNat 64 100)
             [.addi 14 0 (BitVec.ofNat 64 service), .ecall, .jalr 0 1 0]
