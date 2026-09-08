@@ -431,7 +431,7 @@ example :
     wordStackPhysicalMovesFrom, wordStackParallelLocationMove,
     wordStackParallelLocationMoveAux, wordStackLocationMoveDestinations,
     wordStackLocationMoveReady, wordStackLocationMoveRemoveDestination,
-    wordStackLocationMove, 
+    wordStackLocationMove,
     wordStackLocation, lookupNatInfo]
 
 example :
@@ -451,14 +451,12 @@ example :
         ((.call none (some 7) [0] (some (1, .raise 0, 0, 0))) : WordProg Nat)).isSome =
       true := by
   simp [wordToStackProg, wordStackReturnCode, wordStackMovesToPhysical,
-    wordStackPhysicalMovesTo, 
-    
+    wordStackPhysicalMovesTo,
     wordStackParallelLocationMove, wordStackParallelLocationMoveAux,
     wordStackLocationMoveDestinations, wordStackLocationMoveReady,
     wordStackLocationMoveRemoveDestination, wordStackLocationMove,
     wordStackLocation, wordStackOffset,
-    lookupNatInfo, wordToStackCallWithHandler, wordToStackRaise,
-    stackSeq, stackArgs, stackMove, stackPushHandler, stackHandlerArgs,
+    lookupNatInfo, wordToStackRaise,
     wordStackJoin]
 
 end Flapjack.RiscV
