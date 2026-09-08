@@ -602,6 +602,7 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Compose public fully spilled AddCarry lowering with its spill relation.
 - [x] Prove fully spilled LongMul lowering preserves unrelated values.
 - [x] Compose public fully spilled LongMul lowering with its spill relation.
+- [x] Prove register-resident LongMul lowering preserves unrelated values.
 - [x] Expose soundness of the entry-aware SSA spill allocator, including its
   clash, special-location, and clash-tree checks.
 - [x] Expose location coverage for every variable in the entry-aware SSA spill
