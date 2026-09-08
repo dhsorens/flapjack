@@ -1664,6 +1664,8 @@ definitions, pass ordering, examples, and proof obligations.
   selection, and ECALL emission.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
+- [x] Expose location-aware bitmap sequence compilation and evaluator
+  contracts for the spill-aware Word-to-Stack boundary.
 - [x] Close the generated Word-to-Stack/StackRemove/LabLang FFI path with a
   machine-level RISC-V execution theorem, retaining the host transition as
   an explicit hypothesis.
