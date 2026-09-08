@@ -535,6 +535,32 @@ theorem compilePanToLoop_return_const_correct
     evalPanExp]
 
 /-!
+The same pass-composed bridge also covers a constant binary operation.  This
+is the first source-to-Loop theorem that checks expression lowering beyond a
+literal: Pancake's `add` is represented by a Crepe operation and evaluated by
+the corresponding Loop operation.
+-/
+theorem compilePanToLoop_return_add_const_correct
+    [BEq α] [OfNat α 0] [OfNat α 1] [Add α] [Mul α] [Div α]
+    [Sub α] [AndOp α] [OrOp α] [HXor α α α] [ShiftLeft α] [ShiftRight α]
+    [LT α] [DecidableRel (fun left right : α => left < right)]
+    (compileContext : CompileContext α) (loopContext : LoopContext α)
+    (live : List Nat) (state : LoopState α) (left right : α) :
+    (evalLoopProg 12 state
+      (loopCompileProg loopContext live
+        (compileProg compileContext
+          (.return (.op .add [.const left, .const right]))))).map
+        loopResultValues =
+      evalPanProg (fun _ => none)
+        (.return (.op .add [.const left, .const right])) := by
+  simp [compileProg, compileExp, loopCompileProg, loopCompileExp,
+    compileExp.compileExpList, cexpHeads, loopCompileExp.loopCompileExps,
+    loopCompileExps, loopNestedSeq,
+    loopTempNames, loopAssignTemps, evalLoopProg, evalLoopExp,
+    evalLoopBinOp, loopReadLocals, updateLoopLocal, loopResultValues,
+    evalPanProg, evalPanExp, evalPanBinOp]
+
+/-!
 The first compositional bridge between the Loop and Word semantic states.
 Only the destination register is observed here; the full state relation will
 add globals, memory, live-register preservation, and control results as the

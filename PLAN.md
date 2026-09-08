@@ -209,6 +209,8 @@ definitions, pass ordering, examples, and proof obligations.
   lowering through the generated temporary assignment.
 - [x] Extend that bridge through Crepe `mul`/Loop `longMul` expansion and
   preserve the returned product.
+- [x] Extend the source-to-Loop bridge through a constant Pancake binary
+  addition, including executable RV64 regression coverage.
 - [x] Prove RISC-V instruction-selection and evaluator agreement for the
   emitted constant-return artifact.
 - [x] Lower register-based equality and inequality conditionals to RISC-V,
