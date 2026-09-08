@@ -78,6 +78,32 @@ theorem compileLabSection_callFfi_execute_agreement
   exact labCompileAsm_callFfi_execute_agreement context host state sectionId
     [] 0 function service resultState hservice hservice_bounded hzero hhost
 
+/-!
+The corresponding one-section program theorem closes the next linking
+boundary.  Since the section contains no labels, flattening preserves the
+same service materialization and ECALL sequence proved above.
+-/
+theorem compileLabProgram_callFfi_execute_agreement
+    [NeZero width] (context : WordFfiContext)
+    (host : WordFfiHost width) (state : State width)
+    (sectionId : Nat) (function : FunName) (service : Nat)
+    (resultState : Option (State width))
+    (hservice : lookupWordFfiService function context.services = some service)
+    (hservice_bounded : service < 2 ^ width)
+    (hzero : readRegister state 0 = 0)
+    (hhost : host service
+      (readRegister state 10) (readRegister state 11)
+      (readRegister state 12) (readRegister state 13)
+      (executeInstructions state
+        [.addi 14 0 (BitVec.ofNat width service)]) = resultState) :
+    (compileLabProgram context
+      [⟨sectionId, [.labAsm (.callFfi function) [] 0]⟩]).bind
+        (executeInstructionsWithFfi host state) = resultState := by
+  simp [compileLabProgram, labCompileProgramSections, labCompileProgramLines,
+    labCompileAsmProgram]
+  exact labCompileAsm_callFfi_execute_agreement context host state sectionId
+    [] 0 function service resultState hservice hservice_bounded hzero hhost
+
 theorem executeInstructionsWithFfi_wordFfi_abi
     [NeZero width] (host : WordFfiHost width) (state : State width)
     (service : Nat) (configuration configurationLength array arrayLength : Fin 32)

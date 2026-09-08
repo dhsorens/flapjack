@@ -1710,6 +1710,8 @@ definitions, pass ordering, examples, and proof obligations.
   followed by ECALL agrees with the FFI host transition.
 - [x] Lift the Lab FFI machine boundary through singleton section
   compilation, hiding label collection and code-shape normalization.
+- [x] Lift the same boundary through singleton linked-program flattening,
+  establishing the first program-level Lab-to-machine FFI simulation.
 - [ ] Port remaining handler/FFI lowering and a semantic simulation theorem
   for the complete pass.
 - [x] Expose location-aware bitmap sequence compilation and evaluator
