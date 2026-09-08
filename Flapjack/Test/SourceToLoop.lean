@@ -161,4 +161,34 @@ theorem sourceToLoop_local_assign_return_executes :
         some [BitVec.ofNat 64 42] := by
   decide +kernel
 
+def sourceToLoopBoundLocalState : LoopState (RiscV.Word 64) :=
+  { locals := fun slot =>
+      if slot = 1 then some (BitVec.ofNat 64 42) else none
+    globals := fun _ => none
+    memory := fun _ => none }
+
+def sourceToLoopBoundLocalSource : VarName → Option (RiscV.Word 64) :=
+  fun name => if name == "x" then some (BitVec.ofNat 64 42) else none
+
+theorem sourceToLoop_local_return_simulation :
+    (evalLoopProg 16 sourceToLoopBoundLocalState
+      (loopCompileProg sourceToLoopLoopContext []
+        (compileProg sourceToLoopLocalCompileContext
+          (.return (.var .local "x"))))).map loopResultValues =
+      (evalPanStateProg sourceToLoopBoundLocalSource
+        (.return (.var .local "x"))).map Prod.snd := by
+  exact compilePanToLoop_local_return_correct
+    sourceToLoopLocalCompileContext sourceToLoopLoopContext []
+    sourceToLoopBoundLocalState sourceToLoopBoundLocalSource "x" 1
+    (by simp [sourceToLoopLocalCompileContext, lookupInfo])
+    (by simp [sourceToLoopBoundLocalState, sourceToLoopBoundLocalSource])
+
+theorem sourceToLoop_local_return_executes :
+    (evalLoopProg 16 sourceToLoopBoundLocalState
+      (loopCompileProg sourceToLoopLoopContext []
+        (compileProg sourceToLoopLocalCompileContext
+          (.return (.var .local "x"))))).map loopResultValues =
+        some [BitVec.ofNat 64 42] := by
+  decide +kernel
+
 end Flapjack
