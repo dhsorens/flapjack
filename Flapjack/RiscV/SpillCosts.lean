@@ -110,11 +110,11 @@ def wordAllocateGraphForHeuristics (algorithm : Nat)
   else
     match spillCosts with
     | none =>
-        wordAllocateGraphWithPrioritizedMoves tree forced fixedSources moves
-          colours stackStart
+        wordAllocateGraphWithPrioritizedMovesAndColourMoves tree forced fixedSources
+          moves colourMoves colours stackStart
     | some costs =>
-        wordAllocateGraphWithPrioritizedMovesAndSpillCosts tree forced fixedSources
-          moves colours stackStart costs
+        wordAllocateGraphWithPrioritizedMovesAndColourMovesAndSpillCosts tree
+          forced fixedSources moves colourMoves colours stackStart costs
 
 theorem wordAllocateGraphForHeuristics_sound
     (algorithm : Nat) (tree : WordClashTree)
@@ -144,17 +144,19 @@ theorem wordAllocateGraphForHeuristics_sound
           tree forced fixedSources colourMoves colours stackStart costs allocation hgraph
   · cases spillCosts with
     | none =>
-        have hgraph : wordAllocateGraphWithPrioritizedMoves tree forced
-            fixedSources moves colours stackStart = some allocation := by
+        have hgraph : wordAllocateGraphWithPrioritizedMovesAndColourMoves tree
+            forced fixedSources moves colourMoves colours stackStart =
+            some allocation := by
           simpa [wordAllocateGraphForHeuristics, hsimple] using halloc
-        exact wordAllocateGraphWithPrioritizedMoves_sound tree forced fixedSources
-          moves colours stackStart allocation hgraph
+        exact wordAllocateGraphWithPrioritizedMovesAndColourMoves_sound tree
+          forced fixedSources moves colourMoves colours stackStart allocation hgraph
     | some costs =>
-        have hgraph : wordAllocateGraphWithPrioritizedMovesAndSpillCosts tree
-            forced fixedSources moves colours stackStart costs = some allocation := by
+        have hgraph : wordAllocateGraphWithPrioritizedMovesAndColourMovesAndSpillCosts
+            tree forced fixedSources moves colourMoves colours stackStart costs =
+            some allocation := by
           simpa [wordAllocateGraphForHeuristics, hsimple] using halloc
-        exact wordAllocateGraphWithPrioritizedMovesAndSpillCosts_sound tree forced
-          fixedSources moves colours stackStart costs allocation hgraph
+        exact wordAllocateGraphWithPrioritizedMovesAndColourMovesAndSpillCosts_sound
+          tree forced fixedSources moves colourMoves colours stackStart costs allocation hgraph
 
 def wordAllocateGraphFunctionWithHeuristics (parameters : List Nat)
     (program : WordProg α) (fixedSources : List Nat)
