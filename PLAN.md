@@ -217,6 +217,8 @@ definitions, pass ordering, examples, and proof obligations.
   lowering and Loop branch execution, with true and false RV64 regressions.
 - [x] Compose constant Pancake conditionals through comparison materialization,
   Loop branching, and selected returns, with true and false RV64 regressions.
+- [x] Prove source-to-Loop agreement for a local assignment followed by a
+  source-local return, including slot-mapped RV64 execution coverage.
 - [x] Prove RISC-V instruction-selection and evaluator agreement for the
   emitted constant-return artifact.
 - [x] Lower register-based equality and inequality conditionals to RISC-V,
