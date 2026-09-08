@@ -74,6 +74,21 @@ def lookupLinkedEntry [NeZero width]
   | (candidate, entry, _, _, _) :: functions =>
       if label == candidate then some entry else lookupLinkedEntry label functions
 
+theorem lookupLinkedEntry_linkRiscVFunctionsAt_head [NeZero width]
+    (start : Word width) (offset label : Nat) (parameters : List Nat)
+    (code : List (Instruction width)) (returns : List (Fin 32))
+    (functions :
+      List (Nat × List Nat × Option (List (Instruction width) × List (Fin 32))))
+    (linked :
+      List (Nat × Word width × List Nat × List (Instruction width) × List (Fin 32)))
+    (hrest : linkRiscVFunctionsAt start (offset + 4 * code.length) functions =
+      some linked) :
+    (linkRiscVFunctionsAt start offset
+      ((label, parameters, some (code, returns)) :: functions)).bind
+        (lookupLinkedEntry label) =
+      some (start + BitVec.ofNat width offset) := by
+  simp [linkRiscVFunctionsAt, hrest, lookupLinkedEntry]
+
 def wordCallToRiscVLabel [NeZero width]
     (functions : List (Nat × Word width × List Nat × List (Instruction width) × List (Fin 32)))
     (label : Nat) (parameters returns arguments destinations : List Nat) :
