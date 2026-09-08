@@ -280,6 +280,8 @@ definitions, pass ordering, examples, and proof obligations.
   call-aware selector on the straight-line Word fragment.
 - [x] Extend the FFI selector contract through loop-capable lowering for
   straight-line programs, including an explicit ECALL leaf.
+- [x] Compose loop-capable FFI lowering with the one-step ECALL machine
+  simulation theorem at the named RISC-V correctness boundary.
 - [x] Port the StackLang handler/FFI carriers and initial `word_to_stack`
   call, raise, and foreign-call boundary equations, with a local HOL
   copyright notice and structural regressions.

@@ -1,6 +1,7 @@
 import Flapjack.Correctness
 import Flapjack.RiscV.CorrectnessBackend
 import Flapjack.RiscV.Ffi
+import Flapjack.RiscV.CorrectnessFfiMachine
 
 /-!
 Simulation boundary for foreign calls.
@@ -1369,6 +1370,77 @@ theorem wordFunctionToRiscVWithCallsAndFfiAndLoops_agrees_straightLine
       cases result with
       | mk code returns =>
           simp [wordControlInstructions_map_instruction]
+
+
+/-! The loop-capable selector preserves the one-step ECALL simulation boundary.
+    This is the first named machine-correctness theorem for an FFI operation
+    after loop-aware lowering. -/
+theorem wordFunctionToRiscVWithCallsAndFfiAndLoops_ffi_simulation
+    [NeZero width] (context : WordFfiContext)
+    (host : WordFfiHost width)
+    (wordHandler : FunName → Word width → Word width → Word width → Word width →
+      State width → Option (State width))
+    (state : State width) (function : FunName)
+    (configuration configurationLength array arrayLength : Nat)
+    (service : Nat) (configurationRegister configurationLengthRegister
+      arrayRegister arrayLengthRegister : Fin 32)
+    (hservice : lookupWordFfiService function context.services = some service)
+    (hservice_bounded : service < 2 ^ width)
+    (hconfiguration : registerOfNat configuration = some configurationRegister)
+    (hconfigurationLength : registerOfNat configurationLength =
+      some configurationLengthRegister)
+    (harray : registerOfNat array = some arrayRegister)
+    (harrayLength : registerOfNat arrayLength = some arrayLengthRegister)
+    (hzero : readRegister state 0 = 0)
+    (hsource : ∀ source : Fin 32, source ∈
+      [configurationRegister, configurationLengthRegister, arrayRegister,
+        arrayLengthRegister] →
+      ∀ destination : Fin 32, destination ∈ [10, 11, 12, 13] →
+        source ≠ destination)
+    (hhandler : host service
+      (readRegister state configurationRegister)
+      (readRegister state configurationLengthRegister)
+      (readRegister state arrayRegister)
+      (readRegister state arrayLengthRegister)
+      (executeInstructions state
+        [.addi 10 configurationRegister (0#width),
+         .addi 11 configurationLengthRegister (0#width),
+         .addi 12 arrayRegister (0#width), .addi 13 arrayLengthRegister (0#width),
+         .addi 14 0 (BitVec.ofNat width service)]) =
+      wordHandler function
+        (readRegister state configurationRegister)
+        (readRegister state configurationLengthRegister)
+        (readRegister state arrayRegister)
+        (readRegister state arrayLengthRegister) state) :
+    (wordFunctionToRiscVWithCallsAndFfiAndLoops
+      ({ targets := [], services := context.services } : WordCallFfiContext width)
+      (.ffi function configuration configurationLength array arrayLength ([], []))).bind
+        (fun result =>
+          (executeInstructionsWithFfi host state result.1).map
+            (fun final => (final, ([] : List (Word width))))) =
+      evalWordFunctionWithCallsAndFfi [] wordHandler 1 state
+        (.ffi function configuration configurationLength array arrayLength ([], [])) := by
+  cases hcode : wordFfiToRiscV (width := width) { services := context.services } function
+      configuration configurationLength array arrayLength with
+  | none =>
+      simpa [wordFunctionToRiscVWithCallsAndFfiAndLoops,
+        wordFunctionToRiscVWithCallsAndFfiAndLoopsAux,
+        wordFunctionToRiscVWithCallsAndFfi, hcode] using
+        (wordFunctionToRiscVWithCallsAndFfi_ffi_simulation context host wordHandler
+          state function configuration configurationLength array arrayLength service
+          configurationRegister configurationLengthRegister arrayRegister
+          arrayLengthRegister hservice hservice_bounded hconfiguration
+          hconfigurationLength harray harrayLength hzero hsource hhandler)
+  | some code =>
+      simpa [wordFunctionToRiscVWithCallsAndFfiAndLoops,
+        wordFunctionToRiscVWithCallsAndFfiAndLoopsAux,
+        wordFunctionToRiscVWithCallsAndFfi,
+        wordControlInstructions_map_instruction, hcode] using
+        (wordFunctionToRiscVWithCallsAndFfi_ffi_simulation context host wordHandler
+          state function configuration configurationLength array arrayLength service
+          configurationRegister configurationLengthRegister arrayRegister
+          arrayLengthRegister hservice hservice_bounded hconfiguration
+          hconfigurationLength harray harrayLength hzero hsource hhandler)
 
 
 end Flapjack.RiscV
