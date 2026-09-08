@@ -41,11 +41,14 @@ example :
   · simp [longMulMixedConfig, wordStackLocation, lookupNatInfo]
   · simp [longMulMixedConfig, wordStackLocation, lookupNatInfo]
   · simp [longMulMixedConfig, wordStackLocation, lookupNatInfo]
+  · simp [longMulMixedConfig, wordStackLongMulLocationsSafe,
+      wordStackLongMulLocationSafe, wordStackLocation, lookupNatInfo]
   · decide
   · decide
   · decide
   · decide
   · decide
+  · simp [longMulMixedConfig]
   · simp [longMulMixedConfig, longMulMixedState, wordStackLongMulInst,
       wordStackLongMulLocationsSafe, wordStackLongMulLocationSafe,
       wordStackLongMulMoveToPhysical, wordStackLongMulMoveFromPhysical,
