@@ -215,6 +215,8 @@ definitions, pass ordering, examples, and proof obligations.
   and its Crepe-to-Loop `longMul` expansion, with executable RV64 coverage.
 - [x] Extend the source-to-Loop bridge through constant equality comparison
   lowering and Loop branch execution, with true and false RV64 regressions.
+- [x] Compose constant Pancake conditionals through comparison materialization,
+  Loop branching, and selected returns, with true and false RV64 regressions.
 - [x] Prove RISC-V instruction-selection and evaluator agreement for the
   emitted constant-return artifact.
 - [x] Lower register-based equality and inequality conditionals to RISC-V,

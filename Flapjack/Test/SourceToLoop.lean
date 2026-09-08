@@ -94,4 +94,43 @@ theorem sourceToLoop_not_equal_const_executes :
         loopResultValues = some [BitVec.ofNat 64 0] := by
   decide +kernel
 
+def sourceToLoopConditionalProgram : Prog (RiscV.Word 64) :=
+  .ite (.cmp .equal (.const (BitVec.ofNat 64 7))
+      (.const (BitVec.ofNat 64 7)))
+    (.return (.const (BitVec.ofNat 64 11)))
+    (.return (.const (BitVec.ofNat 64 22)))
+
+theorem sourceToLoop_conditional_simulation :
+    (evalLoopProg 60 sourceToLoopState
+      (loopCompileProg sourceToLoopLoopContext []
+        (compileProg sourceToLoopCompileContext
+          sourceToLoopConditionalProgram))).map loopResultValues =
+      evalPanProg (fun _ => none) sourceToLoopConditionalProgram := by
+  exact compilePanToLoop_ite_equal_const_correct
+    sourceToLoopCompileContext sourceToLoopLoopContext [] sourceToLoopState
+    (BitVec.ofNat 64 7) (BitVec.ofNat 64 7)
+    (BitVec.ofNat 64 11) (BitVec.ofNat 64 22) (by decide)
+
+theorem sourceToLoop_conditional_true_executes :
+    (evalLoopProg 60 sourceToLoopState
+      (loopCompileProg sourceToLoopLoopContext []
+        (compileProg sourceToLoopCompileContext
+          sourceToLoopConditionalProgram))).map loopResultValues =
+        some [BitVec.ofNat 64 11] := by
+  decide +kernel
+
+def sourceToLoopConditionalFalseProgram : Prog (RiscV.Word 64) :=
+  .ite (.cmp .equal (.const (BitVec.ofNat 64 7))
+      (.const (BitVec.ofNat 64 35)))
+    (.return (.const (BitVec.ofNat 64 11)))
+    (.return (.const (BitVec.ofNat 64 22)))
+
+theorem sourceToLoop_conditional_false_executes :
+    (evalLoopProg 60 sourceToLoopState
+      (loopCompileProg sourceToLoopLoopContext []
+        (compileProg sourceToLoopCompileContext
+          sourceToLoopConditionalFalseProgram))).map loopResultValues =
+        some [BitVec.ofNat 64 22] := by
+  decide +kernel
+
 end Flapjack
