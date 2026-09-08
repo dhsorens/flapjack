@@ -43,4 +43,27 @@ theorem ffiLoopRiscV_execution :
   rw [ffiLoopRiscVCompiler_shape]
   decide +kernel
 
+def ffiContinueRiscVProgram : WordProg (Word 64) :=
+  .loop []
+    (.seq (.ffi "echo" 1 2 3 4 ([], [])) (.continue 0))
+    []
+
+def ffiContinueRiscVCode : List (Instruction 64) :=
+  [.addi 10 1 0, .addi 11 2 0, .addi 12 3 0, .addi 13 4 0,
+   .addi 14 0 (BitVec.ofNat 64 7), .ecall,
+   .jal 0 (0 - BitVec.ofNat 64 24),
+   .jal 0 (0 - BitVec.ofNat 64 28)]
+
+theorem ffiContinueRiscVCompiler_shape :
+    wordFunctionToRiscVWithCallsAndFfiAndLoops ffiLoopRiscVContext
+        ffiContinueRiscVProgram =
+      some (ffiContinueRiscVCode, []) := by
+  simp [wordFunctionToRiscVWithCallsAndFfiAndLoops,
+    wordFunctionToRiscVWithCallsAndFfiAndLoopsAux,
+    ffiContinueRiscVProgram, ffiLoopRiscVContext,
+    wordFunctionToRiscVWithCallsAndFfi, wordFfiToRiscV,
+    lookupWordFfiService, wordRegisterMoves, registerOfNat,
+    resolveWordLoopBody, resolveWordLoopBodyAux, wordControlInstructions,
+    ffiContinueRiscVCode]
+
 end Flapjack.RiscV
