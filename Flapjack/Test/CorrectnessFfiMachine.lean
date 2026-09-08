@@ -31,6 +31,20 @@ def ffiMachineWordHandler : FunName → Word 64 → Word 64 → Word 64 → Word
     else none
 
 example :
+    (labCompileAsm ({ services := [("echo", 7)] } : WordFfiContext)
+      2 [] 0 (.callFfi "echo")).bind
+        (executeInstructionsWithFfi ffiMachineHost ffiMachineState) =
+      some (executeInstructions ffiMachineState
+        [.addi 14 0 (BitVec.ofNat 64 7)]) := by
+  apply labCompileAsm_callFfi_execute_agreement
+    ({ services := [("echo", 7)] } : WordFfiContext)
+    ffiMachineHost ffiMachineState 2 [] 0 "echo" 7
+    (some (executeInstructions ffiMachineState
+      [.addi 14 0 (BitVec.ofNat 64 7)]))
+  all_goals try decide
+  simp [ffiMachineHost]
+
+example :
     (wordFfiToRiscV ({ services := [("echo", 7)] } : WordFfiContext)
       "echo" 2 3 4 5).bind (fun code =>
         (executeInstructionsWithFfi ffiMachineHost ffiMachineState code).map

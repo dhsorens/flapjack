@@ -1,4 +1,5 @@
 import Flapjack.RiscV.Ffi
+import Flapjack.RiscV.Lab
 
 /-!
 Machine-level correctness for the RISC-V FFI ABI.  The abstract Word FFI
@@ -22,6 +23,35 @@ theorem executeInstructionsWithFfi_append
       cases hstep : executeWithFfi host state instruction with
       | none => simp []
       | some nextState => simp [ih]
+
+/-!
+The Lab FFI operation is the point at which the already-marshalled Word ABI
+is handed to the target machine.  Its compiler expansion only materializes
+the service number in x14 and then executes ECALL; the four argument
+registers are intentionally preserved.  This lemma exposes that boundary in
+a form that can be composed with Lab section and program compilation.
+-/
+theorem labCompileAsm_callFfi_execute_agreement
+    [NeZero width] (context : WordFfiContext)
+    (host : WordFfiHost width) (state : State width)
+    (sectionId : Nat) (labels : List (Nat × Nat)) (position : Nat)
+    (function : FunName) (service : Nat)
+    (resultState : Option (State width))
+    (hservice : lookupWordFfiService function context.services = some service)
+    (hservice_bounded : service < 2 ^ width)
+    (hzero : readRegister state 0 = 0)
+    (hhost : host service
+      (readRegister state 10) (readRegister state 11)
+      (readRegister state 12) (readRegister state 13)
+      (executeInstructions state
+        [.addi 14 0 (BitVec.ofNat width service)]) = resultState) :
+    (labCompileAsm context sectionId labels position (.callFfi function)).bind
+        (executeInstructionsWithFfi host state) = resultState := by
+  have hzero' : state.registers 0 = 0 := by
+    simpa [readRegister] using hzero
+  simpa [labCompileAsm, hservice, executeInstructionsWithFfi, executeWithFfi,
+    executeInstructions, execute, writeRegister, readRegister, nextPc,
+    hzero', Nat.mod_eq_of_lt hservice_bounded] using hhost
 
 theorem executeInstructionsWithFfi_wordFfi_abi
     [NeZero width] (host : WordFfiHost width) (state : State width)
