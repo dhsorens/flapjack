@@ -332,6 +332,25 @@ def wordRaInit (colours : Nat) (graph : WordRegGraph) : WordRaState :=
       stack := [] }
   wordRaRefreshWorklists colours state
 
+def wordRaDegreesForActive (graph : WordRegGraph)
+    (active : List Nat) : NatInfoMap Nat :=
+  active.map (fun node =>
+    (node, ((wordGraphNeighbours graph node).filter
+      (fun neighbour => active.contains neighbour)).length))
+
+def wordRaInitFromStack (colours : Nat) (preStack : List Nat)
+    (graph : WordRegGraph) : WordRaState :=
+  let active := (List.range graph.dimension).filter
+    (fun node => !preStack.contains node)
+  let state : WordRaState :=
+    { graph := graph
+      active := active
+      degrees := wordRaDegreesForActive graph active
+      simpWl := []
+      spillWl := []
+      stack := preStack }
+  wordRaRefreshWorklists colours state
+
 def wordRaRemoveNode (colours : Nat) (node : Nat)
     (_forceSpill : Bool) (state : WordRaState) : WordRaState :=
   let graph := state.graph
@@ -752,9 +771,8 @@ def wordRaColourTwoPass (colours stackStart : Nat)
 def wordColourGraphWithWorklistAndMovesFromStack (colours stackStart : Nat)
     (moves : List WordMove) (parents : NatInfoMap Nat)
     (preStack : List Nat) (graph : WordRegGraph) : WordRegGraph :=
-  let state := wordRaInit colours graph
+  let state := wordRaInitFromStack colours preStack graph
   let state := wordRaSimplifyAll (state.active.length + 1) colours state
-  let state := { state with stack := preStack ++ state.stack }
   wordRaColourTwoPass colours stackStart moves parents state
 
 def wordColourGraphWithWorklistAndMoves (colours stackStart : Nat)
@@ -1071,10 +1089,9 @@ def wordColourGraphWithWorklistAndSpillCostsFromStack (colours stackStart : Nat)
     (costs : NatInfoMap Nat) (moves : List WordMove)
     (parents : NatInfoMap Nat) (preStack : List Nat)
     (graph : WordRegGraph) : WordRegGraph :=
-  let state := wordRaInit colours graph
+  let state := wordRaInitFromStack colours preStack graph
   let state := wordRaSimplifyAllWithSpillCosts
     (state.active.length + 1) colours costs state
-  let state := { state with stack := preStack ++ state.stack }
   wordRaColourTwoPass colours stackStart moves parents state
 
 def wordColourGraphWithWorklistAndSpillCosts (colours stackStart : Nat)

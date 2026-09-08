@@ -99,7 +99,15 @@ def move01 : WordMove :=
 example :
     (wordColourGraphWithWorklistAndMovesFromStack 1 1 [] [] [0]
       moveWorklistGraph).tags =
-      [(1, .fixed 1), (0, .fixed 1)] := by
+      [(0, .fixed 1), (1, .fixed 1)] := by
+  decide +kernel
+
+example :
+    (wordColourGraphWithWorklistAndMovesFromStack 1 2 [] [] [0]
+      { adjacency := [(0, [1]), (1, [0])]
+        tags := [(0, .atemp), (1, .atemp)]
+        dimension := 2 }).tags =
+      [(0, .fixed 2), (1, .fixed 1)] := by
   decide +kernel
 
 example :

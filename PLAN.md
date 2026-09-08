@@ -588,6 +588,8 @@ definitions, pass ordering, examples, and proof obligations.
   RISC-V contracts before claiming general call-aware allocation correctness.
 - [x] Thread coalescing and freeze stack entries into the subsequent Atemp/Stemp
   coloring phase, preserving CakeML's push_stack order.
+- [x] Initialize residual coloring over the active subgraph after prior stack
+  removals, so stacked-node degrees do not affect later spill selection.
 - [x] Expose the ABI-correct full-SSA spill allocator at the location-aware
   Word-to-Stack entry boundary, retaining renamed parameters and allocation slots.
 - [x] Port CakeML odd-mode spill-cost candidate selection into the graph
