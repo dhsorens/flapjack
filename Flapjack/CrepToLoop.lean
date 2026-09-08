@@ -197,7 +197,7 @@ def loopCompileProg [OfNat α 0] [OfNat α 1]
         vars := (name, result.nextTemp) :: context.vars
         maxVar := result.nextTemp }
       .seq (loopNestedSeq result.code)
-        (.seq (.assign result.nextTemp result.expression)
+        (.seq (.assign name result.expression)
           (loopCompileProg nextContext (result.nextTemp :: result.live) body))
   | .assign name value =>
       let result := loopCompileExp context (context.maxVar + 1) live value
