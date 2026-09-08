@@ -195,9 +195,23 @@ example :
         available := []
         unavailable := [move]
         freezeWl := []
+        spillWl := []
         stack := [] }
     let state := wordMoveReviveUnavailable 2 [2] state
     state.available = [move] ∧ state.unavailable = [] := by
+  decide
+
+example :
+    let graph : WordRegGraph :=
+      { adjacency := [(0, [1, 2]), (1, [0]), (2, [0])]
+        tags := [(0, .atemp), (1, .atemp), (2, .atemp)]
+        dimension := 3 }
+    let state : WordMoveState :=
+      { graph := graph, parents := [(0, 0), (1, 1), (2, 2)],
+        related := [0], available := [], unavailable := [],
+        freezeWl := [0], spillWl := [], stack := [] }
+    let state := wordMoveRespill 2 0 state
+    state.freezeWl = [] ∧ state.spillWl = [0] := by
   decide
 
 example :

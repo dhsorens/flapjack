@@ -815,6 +815,11 @@ def wordColourGraphWithWorklistAndMoves (colours stackStart : Nat)
     (graph : WordRegGraph) : WordRegGraph :=
   wordColourGraphWithWorklistAndMovesFromStack colours stackStart moves parents [] graph
 
+def wordMoveSpillCandidates (colours : Nat) (graph : WordRegGraph) : List Nat :=
+  (List.range graph.dimension).filter (fun node =>
+    wordGraphTagIs wordTagIsAtemp graph node &&
+      wordRaDegree graph node >= colours)
+
 structure WordMoveState where
   graph : WordRegGraph
   parents : NatInfoMap Nat
@@ -822,6 +827,7 @@ structure WordMoveState where
   available : List WordMove
   unavailable : List WordMove
   freezeWl : List Nat
+  spillWl : List Nat
   stack : List Nat
   deriving Repr
 
@@ -842,6 +848,7 @@ def wordInitMoveState (graph : WordRegGraph)
     available := worklists.available
     unavailable := worklists.unavailable
     freezeWl := []
+    spillWl := []
     stack := [] }
 
 def wordInitMoveStateWithColours (colours : Nat) (graph : WordRegGraph)
@@ -855,6 +862,7 @@ def wordInitMoveStateWithColours (colours : Nat) (graph : WordRegGraph)
     available := worklists.available
     unavailable := worklists.unavailable
     freezeWl := wordMoveFreezeCandidates colours graph parents related
+    spillWl := wordMoveSpillCandidates colours graph
     stack := [] }
 
 def wordInitMoveStateWithColoursFromStack (colours : Nat)
@@ -863,7 +871,9 @@ def wordInitMoveStateWithColoursFromStack (colours : Nat)
   let moves := moves.filter (fun move =>
     !preStack.contains move.left && !preStack.contains move.right)
   let state := wordInitMoveStateWithColours colours graph moves
-  { state with stack := preStack }
+  { state with
+    stack := preStack
+    spillWl := state.spillWl.filter (fun node => !preStack.contains node) }
 
 def wordMoveReplaceNode (oldNode newNode : Nat) (move : WordMove) : WordMove :=
   { move with
@@ -923,6 +933,17 @@ def wordMoveReviveUnavailable (colours : Nat) (nodes : List Nat)
     available := wordSortMoves (revived ++ state.available)
     unavailable := unavailable }
   wordMoveRefreshFreeze colours state
+def wordMoveRespill (colours : Nat) (node : Nat)
+    (state : WordMoveState) : WordMoveState :=
+  if wordRaDegree state.graph node < colours ||
+      !state.freezeWl.contains node then
+    state
+  else
+    { state with
+      freezeWl := state.freezeWl.erase node
+      spillWl := if node ∈ state.spillWl then state.spillWl
+        else node :: state.spillWl }
+
 def wordCoalesceMove (colours : Nat) (state : WordMoveState)
     (move : WordMove) : Option WordMoveState :=
   let (move, parents) := wordResolveMove state move
@@ -951,8 +972,10 @@ def wordCoalesceMove (colours : Nat) (state : WordMoveState)
           unavailable := worklists.unavailable
           freezeWl := wordMoveFreezeCandidates colours graph parents
             (wordMoveRelatedNodes pending)
+          spillWl := state.spillWl.erase move.right
           stack := move.right :: state.stack }
-      some (wordMoveReviveUnavailable colours case1 state)
+      let state := wordMoveReviveUnavailable colours case1 state
+      some (wordMoveRespill colours move.left state)
 
 def wordMoveTouches (node : Nat) (move : WordMove) : Bool :=
   move.left = node || move.right = node
@@ -969,6 +992,7 @@ def wordFreezeNode (colours : Nat) (node : Nat)
   let state := { state with
     available := available
     unavailable := unavailable
+    spillWl := state.spillWl.erase node
     stack := if node ∈ state.stack then state.stack else node :: state.stack }
   wordMoveRefreshFreeze colours state
 
@@ -980,9 +1004,12 @@ def wordFreezeNode (colours : Nat) (node : Nat)
    for both moves and nodes. -/
 def wordMovePrefreeze (colours : Nat) (state : WordMoveState) : WordMoveState :=
   let unavailable := state.unavailable.filter (wordMoveConsistent state.graph state.related)
+  let spillWl := state.spillWl.filter (fun node =>
+    wordParentOf state.parents node = node)
   let state := { state with
     available := []
-    unavailable := unavailable }
+    unavailable := unavailable
+    spillWl := spillWl }
   let state := wordMoveRefreshFreeze colours state
   let simplifiable := (List.range state.graph.dimension).filter (fun node =>
     wordParentOf state.parents node = node &&
