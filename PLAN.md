@@ -594,6 +594,7 @@ definitions, pass ordering, examples, and proof obligations.
 - [x] Compose public WordProg arithmetic division with the spill relation,
   including its reserved-location safety guard.
 - [x] Compose public WordProg memory loads and stores with the spill relations.
+- [x] Compose public shared-memory loads with the shared spill relation.
 - [x] Expose soundness of the entry-aware SSA spill allocator, including its
   clash, special-location, and clash-tree checks.
 - [x] Expose location coverage for every variable in the entry-aware SSA spill
