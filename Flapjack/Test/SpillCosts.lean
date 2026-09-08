@@ -17,6 +17,10 @@ example :
   decide
 
 example :
+    wordRaChooseSpillNode [(3, 40), (5, 10), (7, 20)] 3 [5, 7] = 5 := by
+  decide
+
+example :
     wordCanonicalizeMoves
         [{ priority := 4, left := 7, right := 2 },
          { priority := 9, left := 2, right := 7 },

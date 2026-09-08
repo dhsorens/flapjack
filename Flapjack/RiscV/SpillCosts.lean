@@ -92,6 +92,68 @@ def wordGetHeuristics (algorithm currentFunction : Nat) (program : WordProg α) 
   else
     (moves, none)
 
+/-! Select the graph allocator at the heuristic mode boundary.  Odd modes
+    carry spill costs into the spill worklist; even modes retain the
+    unweighted path.  Simple modes intentionally do not pass move preferences. -/
+def wordAllocateGraphForHeuristics (algorithm : Nat)
+    (tree : WordClashTree) (forced : List (Nat × Nat))
+    (fixedSources : List Nat) (moves : List WordMove)
+    (colours stackStart : Nat)
+    (spillCosts : Option (NatInfoMap Nat)) : Option WordGraphAllocation :=
+  if algorithm < 2 then
+    match spillCosts with
+    | none => wordAllocateGraph tree forced fixedSources [] colours stackStart
+    | some costs =>
+        wordAllocateGraphWithSpillCosts tree forced fixedSources []
+          colours stackStart costs
+  else
+    match spillCosts with
+    | none =>
+        wordAllocateGraphWithPrioritizedMoves tree forced fixedSources moves
+          colours stackStart
+    | some costs =>
+        wordAllocateGraphWithPrioritizedMovesAndSpillCosts tree forced fixedSources
+          moves colours stackStart costs
+
+theorem wordAllocateGraphForHeuristics_sound
+    (algorithm : Nat) (tree : WordClashTree)
+    (forced : List (Nat × Nat)) (fixedSources : List Nat)
+    (moves : List WordMove) (colours stackStart : Nat)
+    (spillCosts : Option (NatInfoMap Nat)) (allocation : WordGraphAllocation)
+    (halloc : wordAllocateGraphForHeuristics algorithm tree forced fixedSources
+      moves colours stackStart spillCosts = some allocation) :
+    wordGraphTagsAreFixed allocation.graph = true ∧
+      wordGraphColouringRespectsEdges allocation.graph = true ∧
+      (wordClashTreeCheck (wordGraphColouringAt allocation.colouring)
+        tree [] []).isSome = true := by
+  by_cases hsimple : algorithm < 2
+  · cases spillCosts with
+    | none =>
+        have hgraph : wordAllocateGraph tree forced fixedSources [] colours stackStart =
+            some allocation := by
+          simpa [wordAllocateGraphForHeuristics, hsimple] using halloc
+        exact wordAllocateGraph_sound tree forced fixedSources [] colours stackStart
+          allocation hgraph
+    | some costs =>
+        have hgraph : wordAllocateGraphWithSpillCosts tree forced fixedSources []
+            colours stackStart costs = some allocation := by
+          simpa [wordAllocateGraphForHeuristics, hsimple] using halloc
+        exact wordAllocateGraphWithSpillCosts_sound tree forced fixedSources []
+          colours stackStart costs allocation hgraph
+  · cases spillCosts with
+    | none =>
+        have hgraph : wordAllocateGraphWithPrioritizedMoves tree forced
+            fixedSources moves colours stackStart = some allocation := by
+          simpa [wordAllocateGraphForHeuristics, hsimple] using halloc
+        exact wordAllocateGraphWithPrioritizedMoves_sound tree forced fixedSources
+          moves colours stackStart allocation hgraph
+    | some costs =>
+        have hgraph : wordAllocateGraphWithPrioritizedMovesAndSpillCosts tree
+            forced fixedSources moves colours stackStart costs = some allocation := by
+          simpa [wordAllocateGraphForHeuristics, hsimple] using halloc
+        exact wordAllocateGraphWithPrioritizedMovesAndSpillCosts_sound tree forced
+          fixedSources moves colours stackStart costs allocation hgraph
+
 def wordAllocateGraphFunctionWithHeuristics (parameters : List Nat)
     (program : WordProg α) (fixedSources : List Nat)
     (algorithm currentFunction colours stackStart : Nat) :
@@ -249,14 +311,9 @@ def wordAllocateGraphFunctionWithHeuristicsEntryRenamed (parameters : List Nat)
   let tree := WordClashTree.seq (.set renamedParameters)
     (wordClashTree renamedProgram [])
   let forced := wordProgForcedClashes renamedProgram
-  let (moves, _) := wordGetHeuristics algorithm currentFunction renamedProgram
-  let allocation := if algorithm < 2 then
-      wordAllocateGraph tree forced
-        (wordStackOnlyUnion fixedSources stackOnly.forced) [] colours stackStart
-    else
-      wordAllocateGraphWithPrioritizedMoves tree forced
-        (wordStackOnlyUnion fixedSources stackOnly.forced)
-        moves colours stackStart
+  let (moves, spillCosts) := wordGetHeuristics algorithm currentFunction renamedProgram
+  let allocation := wordAllocateGraphForHeuristics algorithm tree forced
+    (wordStackOnlyUnion fixedSources stackOnly.forced) moves colours stackStart spillCosts
   allocation.map
     (fun allocation =>
       (state, renamedParameters, allocation, renamedProgram))
@@ -282,57 +339,27 @@ theorem wordAllocateGraphFunctionWithHeuristicsEntryRenamed_sound
     hallocation, hprogram⟩
   subst allocation_
   have hgraphFull :
-      (if algorithm < 2 then
-          wordAllocateGraph
-            ((WordClashTree.set renamedParameters).seq
-              (wordClashTree renamedProgram []))
-            (wordProgForcedClashes renamedProgram)
-            (wordStackOnlyUnion fixedSources
-              (wordStackOnly renamedProgram).forced) [] colours stackStart
-        else
-          wordAllocateGraphWithPrioritizedMoves
-            ((WordClashTree.set renamedParameters).seq
-              (wordClashTree renamedProgram []))
-            (wordProgForcedClashes renamedProgram)
-            (wordStackOnlyUnion fixedSources
-              (wordStackOnly renamedProgram).forced)
-            (wordGetHeuristics algorithm currentFunction renamedProgram).1
-            colours stackStart) = some allocation := by
-    simpa [hstate, hparameters, hprogram] using hgraph
-  by_cases hsimple : algorithm < 2
-  · have hsimpleAlloc : wordAllocateGraph
-        ((WordClashTree.set renamedParameters).seq
-          (wordClashTree renamedProgram []))
-        (wordProgForcedClashes renamedProgram)
-        (wordStackOnlyUnion fixedSources
-          (wordStackOnly renamedProgram).forced) [] colours stackStart =
-        some allocation := by
-      simpa [hsimple] using hgraphFull
-    have hsound := wordAllocateGraph_sound
-      ((WordClashTree.set renamedParameters).seq
-        (wordClashTree renamedProgram []))
-      (wordProgForcedClashes renamedProgram)
-      (wordStackOnlyUnion fixedSources
-        (wordStackOnly renamedProgram).forced)
-      [] colours stackStart allocation hsimpleAlloc
-    simpa [hstate, hparameters, hprogram] using hsound
-  · have hprioritizedAlloc : wordAllocateGraphWithPrioritizedMoves
+      wordAllocateGraphForHeuristics algorithm
         ((WordClashTree.set renamedParameters).seq
           (wordClashTree renamedProgram []))
         (wordProgForcedClashes renamedProgram)
         (wordStackOnlyUnion fixedSources
           (wordStackOnly renamedProgram).forced)
         (wordGetHeuristics algorithm currentFunction renamedProgram).1
-        colours stackStart = some allocation := by
-      simpa [hsimple] using hgraphFull
-    have hsound := wordAllocateGraphWithPrioritizedMoves_sound
-      ((WordClashTree.set renamedParameters).seq
-        (wordClashTree renamedProgram []))
-      (wordProgForcedClashes renamedProgram)
-      (wordStackOnlyUnion fixedSources
-        (wordStackOnly renamedProgram).forced)
-      (wordGetHeuristics algorithm currentFunction renamedProgram).1
-      colours stackStart allocation hprioritizedAlloc
-    simpa [hstate, hparameters, hprogram] using hsound
+        colours stackStart
+        (wordGetHeuristics algorithm currentFunction renamedProgram).2 =
+        some allocation := by
+    simpa [hstate, hparameters, hprogram] using hgraph
+  have hsound := wordAllocateGraphForHeuristics_sound algorithm
+    ((WordClashTree.set renamedParameters).seq
+      (wordClashTree renamedProgram []))
+    (wordProgForcedClashes renamedProgram)
+    (wordStackOnlyUnion fixedSources
+      (wordStackOnly renamedProgram).forced)
+    (wordGetHeuristics algorithm currentFunction renamedProgram).1
+    colours stackStart
+    (wordGetHeuristics algorithm currentFunction renamedProgram).2
+    allocation hgraphFull
+  simpa [hstate, hparameters, hprogram] using hsound
 
 end Flapjack
