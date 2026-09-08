@@ -36,6 +36,7 @@ done < <(git grep -o '\bnative_decide\b' -- '*.lean' \
 
 status=0
 total=0
+needed=()
 for path in "${!actual[@]}"; do
   n=${actual[$path]}
   total=$((total + n))
@@ -46,6 +47,7 @@ for path in "${!actual[@]}"; do
     else
       echo "FAIL $path: $n use(s) of native_decide, allowlist permits $limit"
     fi
+    needed+=("$n $path")
     status=1
   elif [ "$n" -lt "$limit" ]; then
     echo "note $path: $n use(s), allowlist permits $limit -- please lower the allowlist"
@@ -67,13 +69,22 @@ per-theorem axiom. Try in order:
 
   decide            -- when the elaborator can reduce the Decidable instance
   decide +kernel    -- when it cannot, because reduction stalls on a
-                       `termination_by` definition; the kernel unfolds these
+                       `termination_by` definition; the kernel unfolds many,
+                       but not all: it does not get past `compileExp`, so a
+                       goal that runs the compiler over a program containing
+                       an expression is out of reach this way
   #guard <prop>     -- for an `example` or an uncited regression check: keeps
                        the check, produces no proof term, needs no axiom
 
-If none apply and the use is genuinely necessary, add it to
-scripts/native-decide-allowlist.txt with a note saying why.
+If no tactic reaches the goal, ask next whether the result needs to be a
+theorem. An uncited execution check does not, and `#guard` discharges it with
+no axiom. Check per site rather than per file -- sites in one file differ.
+
+If the use is genuinely necessary, add these lines to
+scripts/native-decide-allowlist.txt, under a note saying why:
+
 MSG
+  printf '  %s\n' "${needed[@]}" >&2
   exit 1
 fi
 

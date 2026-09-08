@@ -11,9 +11,21 @@
 # drops the check says so and asks for this file to be lowered.
 #
 # Before adding an entry, try in order: `decide`; then `decide +kernel`, which
-# unfolds `termination_by` definitions the elaborator's `whnf` stalls on; then
-# `#guard <prop>` for an `example` or an uncited regression check, which keeps
-# the check but produces no proof term and so needs no axiom.
+# unfolds many `termination_by` definitions the elaborator's `whnf` stalls on;
+# then `#guard <prop>` for an `example` or an uncited regression check, which
+# keeps the check but produces no proof term and so needs no axiom.
+#
+# `decide +kernel` does not reach everything. It stalls on `compileExp`
+# (Flapjack/PanToCrep.lean), which recurses with
+# `termination_by expression => sizeOf expression`, so a goal that runs the
+# compiler over a program containing an expression never gets the innermost
+# `compileProg` pass to a constructor. `.move` programs carry no expression to
+# recurse into and reduce fine. Bisecting by fuel distinguishes this from a
+# resource limit: a stalled goal fails at fuel 1 just as it does at fuel 16.
+#
+# When no tactic reaches a goal, the question is not settled -- ask next
+# whether the result needs to be a theorem. An uncited execution check does
+# not, and `#guard` discharges it with no axiom (see #343).
 
 # --- Cited pipeline shape theorems -------------------------------------------
 # Each runs the compiler over a program and compares the result to a literal,
