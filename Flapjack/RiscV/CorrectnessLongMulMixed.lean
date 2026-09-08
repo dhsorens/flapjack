@@ -10,7 +10,6 @@ keeping the proof’s simplification footprint local.
 
 namespace Flapjack.RiscV
 
-set_option maxHeartbeats 500000 in
 theorem evalWordStackMachine_longMul_stackDest_preserves_other_value [NeZero width]
     (config : WordStackConfig) (state final : WordStackMachineState width)
     (destinationLeft destinationRight sourceLeft sourceRight other : Nat)
@@ -56,7 +55,8 @@ theorem evalWordStackMachine_longMul_stackDest_preserves_other_value [NeZero wid
       hdestinationRight, hsourceLeft, hsourceRight, hsafeConditions]
   all_goals
     cases heval
-    simp_all [wordStackMachineValue, wordStackLocation, wordStackOffset,
+    simp only [wordStackMachineValue, wordStackLocation, wordStackOffset,
       wordStackMachineWriteRegister, wordStackMachineWriteSlot]
+    simp_all
 
 end Flapjack.RiscV
