@@ -1140,6 +1140,90 @@ theorem wordAllocateGraphWithPrioritizedMovesAndSpillCosts_sound
   rcases hchecks with ⟨⟨hfixed, hedges⟩, htree⟩
   exact ⟨hfixed, hedges, htree⟩
 
+def wordAllocateGraphSimpleWithColourMoves (tree : WordClashTree)
+    (forced : List (Nat × Nat)) (fixedSources : List Nat)
+    (colourMoves : List WordMove) (colours stackStart : Nat) :
+    Option WordGraphAllocation :=
+  let input := wordInitRegAlloc tree forced fixedSources
+  let colourMoves := wordRemapMoves input.bijection colourMoves
+  let moveState := wordInitMoveStateWithColours colours input.graph []
+  let moveState := wordCoalesceAllAvailable colours moveState
+  let moveState := wordFreezeAllAvailable colours moveState
+  let graph := wordColourGraphWithWorklistAndMoves colours stackStart colourMoves
+    moveState.parents moveState.graph
+  let colouring := wordGraphTotalColouring input graph moveState.parents
+  let colour := wordGraphColouringAt colouring
+  if wordGraphTagsAreFixed graph &&
+      wordGraphColouringRespectsEdges graph &&
+      (wordClashTreeCheck colour tree [] []).isSome then
+    some
+      { bijection := input.bijection
+        initialTags := input.graph.tags
+        graph := graph
+        colouring := colouring
+        parents := moveState.parents }
+  else
+    none
+
+def wordAllocateGraphSimpleWithColourMovesAndSpillCosts (tree : WordClashTree)
+    (forced : List (Nat × Nat)) (fixedSources : List Nat)
+    (colourMoves : List WordMove) (colours stackStart : Nat)
+    (costs : NatInfoMap Nat) : Option WordGraphAllocation :=
+  let input := wordInitRegAlloc tree forced fixedSources
+  let costs := wordSpillCostsToNodes input.bijection costs
+  let colourMoves := wordRemapMoves input.bijection colourMoves
+  let moveState := wordInitMoveStateWithColours colours input.graph []
+  let moveState := wordCoalesceAllAvailable colours moveState
+  let moveState := wordFreezeAllAvailable colours moveState
+  let graph := wordColourGraphWithWorklistAndSpillCosts colours stackStart costs
+    colourMoves moveState.parents moveState.graph
+  let colouring := wordGraphTotalColouring input graph moveState.parents
+  let colour := wordGraphColouringAt colouring
+  if wordGraphTagsAreFixed graph &&
+      wordGraphColouringRespectsEdges graph &&
+      (wordClashTreeCheck colour tree [] []).isSome then
+    some
+      { bijection := input.bijection
+        initialTags := input.graph.tags
+        graph := graph
+        colouring := colouring
+        parents := moveState.parents }
+  else
+    none
+
+theorem wordAllocateGraphSimpleWithColourMovesAndSpillCosts_sound
+    (tree : WordClashTree) (forced : List (Nat × Nat))
+    (fixedSources : List Nat) (colourMoves : List WordMove)
+    (colours stackStart : Nat) (costs : NatInfoMap Nat)
+    (allocation : WordGraphAllocation)
+    (halloc : wordAllocateGraphSimpleWithColourMovesAndSpillCosts tree
+      forced fixedSources colourMoves colours stackStart costs = some allocation) :
+    wordGraphTagsAreFixed allocation.graph = true ∧
+      wordGraphColouringRespectsEdges allocation.graph = true ∧
+      (wordClashTreeCheck (wordGraphColouringAt allocation.colouring)
+        tree [] []).isSome = true := by
+  simp [wordAllocateGraphSimpleWithColourMovesAndSpillCosts] at halloc
+  rcases halloc with ⟨hchecks, heq⟩
+  cases heq
+  rcases hchecks with ⟨⟨hfixed, hedges⟩, htree⟩
+  exact ⟨hfixed, hedges, htree⟩
+
+theorem wordAllocateGraphSimpleWithColourMoves_sound
+    (tree : WordClashTree) (forced : List (Nat × Nat))
+    (fixedSources : List Nat) (colourMoves : List WordMove)
+    (colours stackStart : Nat) (allocation : WordGraphAllocation)
+    (halloc : wordAllocateGraphSimpleWithColourMoves tree forced fixedSources
+      colourMoves colours stackStart = some allocation) :
+    wordGraphTagsAreFixed allocation.graph = true ∧
+      wordGraphColouringRespectsEdges allocation.graph = true ∧
+      (wordClashTreeCheck (wordGraphColouringAt allocation.colouring)
+        tree [] []).isSome = true := by
+  simp [wordAllocateGraphSimpleWithColourMoves] at halloc
+  rcases halloc with ⟨hchecks, heq⟩
+  cases heq
+  rcases hchecks with ⟨⟨hfixed, hedges⟩, htree⟩
+  exact ⟨hfixed, hedges, htree⟩
+
 def wordAllocateGraph (tree : WordClashTree)
     (forced : List (Nat × Nat)) (fixedSources : List Nat)
     (moves : List (Nat × Nat)) (colours stackStart : Nat) :
