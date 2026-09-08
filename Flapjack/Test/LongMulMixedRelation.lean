@@ -34,7 +34,6 @@ example :
     (destinationLeft := 0) (destinationRight := 1)
     (sourceLeft := 2) (sourceRight := 3) (other := 4)
     (destinationLeftSlot := 2) (destinationRightSlot := 3)
-    (destinationLeftLocation := .stack 2) (destinationRightLocation := .stack 3)
     (sourceLeftLocation := .register 6) (sourceRightLocation := .stack 4)
     (otherLocation := .register 8)
   · simp [longMulMixedConfig, wordStackLocation, lookupNatInfo]

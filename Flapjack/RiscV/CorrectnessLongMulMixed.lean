@@ -14,8 +14,7 @@ theorem evalWordStackMachine_longMul_stackDest_preserves_other_value [NeZero wid
     (config : WordStackConfig) (state final : WordStackMachineState width)
     (destinationLeft destinationRight sourceLeft sourceRight other : Nat)
     (destinationLeftSlot destinationRightSlot : Nat)
-    (destinationLeftLocation destinationRightLocation sourceLeftLocation
-      sourceRightLocation otherLocation : WordLocation)
+    (sourceLeftLocation sourceRightLocation otherLocation : WordLocation)
     (hdestinationLeft : wordStackLocation config destinationLeft =
       some (.stack destinationLeftSlot))
     (hdestinationRight : wordStackLocation config destinationRight =
