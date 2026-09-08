@@ -535,6 +535,105 @@ theorem compilePanToLoop_return_const_correct
     evalPanExp]
 
 /-!
+The same pass-composed bridge also covers a constant binary operation.  This
+is the first source-to-Loop theorem that checks expression lowering beyond a
+literal: Pancake's `add` is represented by a Crepe operation and evaluated by
+the corresponding Loop operation.
+-/
+theorem compilePanToLoop_return_add_const_correct
+    [BEq α] [OfNat α 0] [OfNat α 1] [Add α] [Mul α] [Div α]
+    [Sub α] [AndOp α] [OrOp α] [HXor α α α] [ShiftLeft α] [ShiftRight α]
+    [LT α] [DecidableRel (fun left right : α => left < right)]
+    (compileContext : CompileContext α) (loopContext : LoopContext α)
+    (live : List Nat) (state : LoopState α) (left right : α) :
+    (evalLoopProg 12 state
+      (loopCompileProg loopContext live
+        (compileProg compileContext
+          (.return (.op .add [.const left, .const right]))))).map
+        loopResultValues =
+      evalPanProg (fun _ => none)
+        (.return (.op .add [.const left, .const right])) := by
+  simp [compileProg, compileExp, loopCompileProg, loopCompileExp,
+    compileExp.compileExpList, cexpHeads, loopCompileExp.loopCompileExps,
+    loopCompileExps, loopNestedSeq,
+    loopTempNames, loopAssignTemps, evalLoopProg, evalLoopExp,
+    evalLoopBinOp, loopReadLocals, updateLoopLocal, loopResultValues,
+    evalPanProg, evalPanExp, evalPanBinOp]
+
+/-!
+Pancake multiplication takes the Crepe `crepOp` path and is expanded by the
+Loop compiler into the same-destination `longMul` operation.  This bridge
+checks that expansion at the executable Loop level, before the later
+Loop-to-Word/RISC-V simulation layers.
+-/
+theorem compilePanToLoop_return_mul_const_correct
+    [BEq α] [OfNat α 0] [OfNat α 1] [Add α] [Mul α] [Div α]
+    [Sub α] [AndOp α] [OrOp α] [HXor α α α] [ShiftLeft α] [ShiftRight α]
+    [LT α] [DecidableRel (fun left right : α => left < right)]
+    (compileContext : CompileContext α) (loopContext : LoopContext α)
+    (live : List Nat) (state : LoopState α) (left right : α) :
+    (evalLoopProg 16 state
+      (loopCompileProg loopContext live
+        (compileProg compileContext
+          (.return (.panOp .mul [.const left, .const right]))))).map
+        loopResultValues =
+      evalPanProg (fun _ => none)
+        (.return (.panOp .mul [.const left, .const right])) := by
+  let argsResult : LoopCompileExpsResult α :=
+    { expressions := [.const left, .const right], code := [],
+      nextTemp := loopContext.maxVar + 1, live := live }
+  have hargs :
+      loopCompileExp.loopCompileExps loopContext (loopContext.maxVar + 1) live
+        [.const left, .const right] = argsResult := by
+    rw [loopCompileExp.loopCompileExps.eq_2, loopCompileExp.eq_1,
+      loopCompileExp.loopCompileExps.eq_2, loopCompileExp.eq_1,
+      loopCompileExp.loopCompileExps.eq_1]
+    rfl
+  have hargsExpressions :
+      (loopCompileExp.loopCompileExps loopContext (loopContext.maxVar + 1) live
+        [.const left, .const right]).expressions =
+        [.const left, .const right] := by
+    simpa [argsResult] using congrArg (fun result => result.expressions) hargs
+  have hmulExp :
+      loopCompileExp loopContext (loopContext.maxVar + 1) live
+        (.crepOp .mul [.const left, .const right]) =
+      { code := argsResult.code ++
+          [.assign argsResult.nextTemp (.const left),
+           .assign (argsResult.nextTemp + 1) (.const right),
+           .arith (.longMul (argsResult.nextTemp + 1 + 1)
+             (argsResult.nextTemp + 1 + 1) argsResult.nextTemp
+             (argsResult.nextTemp + 1))],
+        expression := .var (argsResult.nextTemp + 1 + 1),
+        nextTemp := argsResult.nextTemp + 1 + 1 + 1,
+        live := (argsResult.nextTemp + 1 + 1) :: argsResult.nextTemp ::
+          (argsResult.nextTemp + 1) :: argsResult.live } := by
+    rw [loopCompileExp.eq_8 (context := loopContext)
+      (tmp := loopContext.maxVar + 1) (live := live)
+      (arguments := [.const left, .const right])
+      (left := .const left) (right := .const right) hargsExpressions]
+    rw [hargs]
+  have hmulList :
+      loopCompileExp.loopCompileExps loopContext (loopContext.maxVar + 1) live
+        [.crepOp .mul [.const left, .const right]] =
+      { expressions :=
+          [(loopCompileExp loopContext (loopContext.maxVar + 1) live
+            (.crepOp .mul [.const left, .const right])).expression],
+        code := (loopCompileExp loopContext (loopContext.maxVar + 1) live
+          (.crepOp .mul [.const left, .const right])).code,
+        nextTemp := (loopCompileExp loopContext (loopContext.maxVar + 1) live
+          (.crepOp .mul [.const left, .const right])).nextTemp,
+        live := (loopCompileExp loopContext (loopContext.maxVar + 1) live
+          (.crepOp .mul [.const left, .const right])).live } := by
+    rw [loopCompileExp.loopCompileExps.eq_2,
+      loopCompileExp.loopCompileExps.eq_1]
+    simp
+  simp [compileProg, compileExp, compilePanOp, compileExp.compileExpList,
+    cexpHeads, loopCompileProg, loopCompileExps, hmulList, hmulExp, argsResult]
+  simp [loopNestedSeq, loopTempNames, loopAssignTemps, evalLoopProg,
+    evalLoopExp, loopReadLocals, updateLoopLocal, loopResultValues,
+    evalPanProg, evalPanExp]
+
+/-!
 The first compositional bridge between the Loop and Word semantic states.
 Only the destination register is observed here; the full state relation will
 add globals, memory, live-register preservation, and control results as the
