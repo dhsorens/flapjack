@@ -955,6 +955,77 @@ theorem evalStackProgFuelWithCodeAndFfi_wordToStackProgNatWithBitmapBuilder_seq
     (result := some result) hevalFirst hevalSecond
   simp [hseq]
 
+/-! Location-aware specialization of the sequential bitmap contract. -/
+theorem wordToStackProgNatWithLocationBitmaps_seq
+    [BEq Nat] (config : WordStackConfig)
+    (registerCount bitmapRegister frameSlots wordBits : Nat)
+    (storeConstsStub : Option Nat)
+    (state state1 finalState : WordStackBitmapState)
+    (first second : WordProg Nat)
+    (firstCode secondCode : StackProg Nat)
+    (hfirst : wordToStackProgNatWithLocationBitmaps config registerCount
+      bitmapRegister frameSlots wordBits storeConstsStub state first =
+      some (firstCode, state1))
+    (hsecond : wordToStackProgNatWithLocationBitmaps config registerCount
+      bitmapRegister frameSlots wordBits storeConstsStub state1 second =
+      some (secondCode, finalState)) :
+    wordToStackProgNatWithLocationBitmaps config registerCount bitmapRegister
+      frameSlots wordBits storeConstsStub state (.seq first second) =
+      some (.seq firstCode secondCode, finalState) := by
+  simpa [wordToStackProgNatWithLocationBitmaps] using
+    (wordToStackProgNatWithBitmapBuilder_seq
+      (config := config)
+      (bitmapBuilder := wordStackLiveBitmapFromLocations config frameSlots wordBits)
+      (registerCount := registerCount) (bitmapRegister := bitmapRegister)
+      (frameSlots := frameSlots) (wordBits := wordBits)
+      (storeConstsStub := storeConstsStub) (state := state)
+      (state1 := state1) (finalState := finalState)
+      (first := first) (second := second)
+      (firstCode := firstCode) (secondCode := secondCode)
+      (hfirst := hfirst) (hsecond := hsecond))
+
+theorem evalStackFuel_wordToStackProgNatWithLocationBitmaps_seq
+    [BEq Nat] [NeZero width] (host : StackMachineFfiHandler width)
+    (fuel : Nat) (code : Nat → Option (StackProg Nat))
+    (config : WordStackConfig)
+    (registerCount bitmapRegister frameSlots wordBits : Nat)
+    (storeConstsStub : Option Nat)
+    (state state1 finalState : WordStackBitmapState)
+    (machineState middle : WordStackMachineState width)
+    (first second : WordProg Nat)
+    (firstCode secondCode : StackProg Nat)
+    (result : StackMachineControl width)
+    (hfirst : wordToStackProgNatWithLocationBitmaps config registerCount
+      bitmapRegister frameSlots wordBits storeConstsStub state first =
+      some (firstCode, state1))
+    (hsecond : wordToStackProgNatWithLocationBitmaps config registerCount
+      bitmapRegister frameSlots wordBits storeConstsStub state1 second =
+      some (secondCode, finalState))
+    (hevalFirst : evalStackProgFuelWithCodeAndFfi host fuel code machineState
+      firstCode = some (.normal middle))
+    (hevalSecond : evalStackProgFuelWithCodeAndFfi host fuel code middle
+      secondCode = some result) :
+    (wordToStackProgNatWithLocationBitmaps config registerCount bitmapRegister
+      frameSlots wordBits storeConstsStub state (.seq first second)).bind
+        (fun compiled =>
+          (evalStackProgFuelWithCodeAndFfi host (fuel + 1) code machineState
+            compiled.1).map (fun control => (control, compiled.2))) =
+      some (result, finalState) := by
+  simpa [wordToStackProgNatWithLocationBitmaps] using
+    (evalStackProgFuelWithCodeAndFfi_wordToStackProgNatWithBitmapBuilder_seq
+      (host := host) (fuel := fuel) (code := code)
+      (config := config)
+      (bitmapBuilder := wordStackLiveBitmapFromLocations config frameSlots wordBits)
+      (registerCount := registerCount) (bitmapRegister := bitmapRegister)
+      (frameSlots := frameSlots) (wordBits := wordBits)
+      (storeConstsStub := storeConstsStub) (state := state)
+      (state1 := state1) (finalState := finalState)
+      (machineState := machineState) (middle := middle)
+      (first := first) (second := second)
+      (firstCode := firstCode) (secondCode := secondCode)
+      (result := result) (hfirst := hfirst) (hsecond := hsecond)
+      (hevalFirst := hevalFirst) (hevalSecond := hevalSecond))
+
 /-! Conditional compilation threads the bitmap state through the two branch
     compilations in the same order as the executable compiler.  The explicit
     condition-prelude witness keeps this equation compositional for spilled
