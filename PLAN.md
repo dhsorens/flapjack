@@ -594,6 +594,8 @@ definitions, pass ordering, examples, and proof obligations.
   bijection before coalescing, coloring, and spill-aware allocation.
 - [x] Apply sorted CakeML move preferences during Atemp and Stemp graph
   coloring, with the existing safe fallback when no preference matches.
+- [x] Preserve CakeML allocation order by coloring all Atemps before the
+  second Stemp preference pass.
 - [x] Thread CakeML-shaped formal-entry moves through the heuristic
   allocation pipeline so its Simple/IRC path consumes full-SSA functions.
 - [x] Prove graph-colouring soundness for the full-SSA heuristic allocator,

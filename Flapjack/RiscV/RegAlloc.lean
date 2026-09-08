@@ -699,14 +699,48 @@ def wordRaColourStackWithMoves (colours stackStart : Nat)
         tags := wordGraphUpdateTag node (.fixed colour) graph.tags }
       wordRaColourStackWithMoves colours stackStart moves parents nodes graph
 
+def wordRaColourAtempsWithMoves (colours stackStart : Nat)
+    (moves : List WordMove) (parents : NatInfoMap Nat) :
+    List Nat → WordRegGraph → WordRegGraph
+  | [], graph => graph
+  | node :: nodes, graph =>
+      let graph := match lookupNatInfo node graph.tags with
+        | some .atemp =>
+            let colour := wordRaChooseColourWithMoves colours stackStart moves
+              parents graph node
+            { graph with tags := wordGraphUpdateTag node (.fixed colour) graph.tags }
+        | some (.fixed _) | some .stemp | none => graph
+      wordRaColourAtempsWithMoves colours stackStart moves parents nodes graph
+
+def wordRaColourStempsWithMoves (colours stackStart : Nat)
+    (moves : List WordMove) (parents : NatInfoMap Nat) :
+    List Nat → WordRegGraph → WordRegGraph
+  | [], graph => graph
+  | node :: nodes, graph =>
+      let graph := match lookupNatInfo node graph.tags with
+        | some .stemp =>
+            let colour := wordRaChooseColourWithMoves colours stackStart moves
+              parents graph node
+            { graph with tags := wordGraphUpdateTag node (.fixed colour) graph.tags }
+        | some (.fixed _) | some .atemp | none => graph
+      wordRaColourStempsWithMoves colours stackStart moves parents nodes graph
+
+def wordRaColourTwoPass (colours stackStart : Nat)
+    (moves : List WordMove) (parents : NatInfoMap Nat)
+    (state : WordRaState) : WordRegGraph :=
+  let moves := wordSortMoves moves
+  let nodes := state.stack ++ List.range state.graph.dimension
+  let graph := wordRaColourAtempsWithMoves colours stackStart moves parents
+    nodes state.graph
+  wordRaColourStempsWithMoves colours stackStart moves parents
+    (List.range graph.dimension) graph
+
 def wordColourGraphWithWorklistAndMoves (colours stackStart : Nat)
     (moves : List WordMove) (parents : NatInfoMap Nat)
     (graph : WordRegGraph) : WordRegGraph :=
   let state := wordRaInit colours graph
   let state := wordRaSimplifyAll (state.active.length + 1) colours state
-  let state := wordRaFinalizeStemps state
-  wordRaColourStackWithMoves colours stackStart (wordSortMoves moves) parents
-    state.stack state.graph
+  wordRaColourTwoPass colours stackStart moves parents state
 
 structure WordMoveState where
   graph : WordRegGraph
@@ -1019,9 +1053,7 @@ def wordColourGraphWithWorklistAndSpillCosts (colours stackStart : Nat)
   let state := wordRaInit colours graph
   let state := wordRaSimplifyAllWithSpillCosts
     (state.active.length + 1) colours costs state
-  let state := wordRaFinalizeStemps state
-  wordRaColourStackWithMoves colours stackStart (wordSortMoves moves) parents
-    state.stack state.graph
+  wordRaColourTwoPass colours stackStart moves parents state
 
 def wordAllocateGraphWithSpillCosts (tree : WordClashTree)
     (forced : List (Nat × Nat)) (fixedSources : List Nat)
