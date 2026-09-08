@@ -552,6 +552,8 @@ definitions, pass ordering, examples, and proof obligations.
   colouring simulation contract.
 - [x] Lift the graph-colouring simulation contract to the SSA-renamed function
   allocator boundary.
+- [x] Lift graph-colouring simulation through the full-SSA formal-entry move
+  prefix.
 - [x] Prove register-coloured condition preservation and conditional-branch
   simulation for executable Word `ite` programs.
 - [x] Relate straight-line handler-aware Word evaluation to the executable
